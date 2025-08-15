@@ -4,7 +4,7 @@ Welcome to the project documentation! This section provides detailed insights in
 
 ## Table of Contents
 
-- [Overall Architecture](architecture.md)
+- [Overall Architecture](Architecture.md)
 - [Authentication Module](#authentication-module)
   - [Overview](auth/overview.md)
   - [Auth Controller](auth/AuthController.md)
@@ -24,4 +24,4 @@ Welcome to the project documentation! This section provides detailed insights in
   - [Remote File Service](file/RemoteFileService.md)
   - [DTOs](file/DTOs.md)
   - [Enums](file/Enums.md)
-- [API Endpoints Reference](api-endpoints.md) (Coming Soon)
+- [API Endpoints Reference](api-endpoints.md)
