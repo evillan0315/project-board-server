@@ -1,0 +1,50 @@
+
+  <main class="min-h-screen flex items-center justify-center">
+    <form action="/setup" method="POST" class="max-w-3xl w-full p-8 space-y-6 bg-white shadow-lg rounded-xl">
+      <h2 class="text-2xl font-bold border-b pb-2">Server Configuration</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">APP_NAME</label>
+          <input name="APP_NAME" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">PORT</label>
+          <input name="PORT" type="number" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+      </div>
+
+      <h2 class="text-2xl font-bold border-b pt-4 pb-2">Database Configuration</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">DB_HOST</label>
+          <input name="DB_HOST" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">DB_PORT</label>
+          <input name="DB_PORT" type="number" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">DB_USER</label>
+          <input name="DB_USER" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">DB_PASSWORD</label>
+          <input name="DB_PASSWORD" type="password" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700">DB_NAME</label>
+          <input name="DB_NAME" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+      </div>
+
+      <div class="pt-6">
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 shadow">
+          Generate .env File
+        </button>
+      </div>
+    </form>
+  </main>
+
+

@@ -1,0 +1,95 @@
+import { Injectable, <% if (isProtected) { %>ForbiddenException,<% } %> BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+<% if (hasCreatedBy || isProtected) { %>import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+import { CreateJwtUserDto } from '../auth/dto/auth.dto';
+<% } %>
+import {
+  Create<%= className %>Dto,
+  Update<%= className %>Dto,
+  Pagination<%= className %>QueryDto,
+  Pagination<%= className %>ResultDto,
+} from './dto/create-<%= folderName %>.dto';
+
+@Injectable()
+export class <%= className %>Service {
+  constructor(
+    private readonly prisma: PrismaService,
+    <% if (hasCreatedBy || isProtected) { %>@Inject(REQUEST) private readonly request: Request & { user?: CreateJwtUserDto },<% } %>
+  ) {}
+
+  <% if (hasCreatedBy) { %>private get userId(): string | undefined {
+    return this.request.user?.id;
+  }<% } %>
+
+  async create(data: Create<%= className %>Dto) {
+    const createData: Prisma.<%= className %>CreateInput = {
+      ...data,
+      <% if (hasCreatedBy) { %>createdBy: this.userId ? { connect: { id: this.userId } } : undefined,<% } %>
+    };
+
+    return this.prisma.<%= fileName %>.create({ data: createData });
+  }
+
+  async findAllPaginated(
+    query: Pagination<%= className %>QueryDto,
+    select?: Prisma.<%= className %>Select
+  ): Promise<Pagination<%= className %>ResultDto> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const skip = (page - 1) * pageSize;
+
+    const where = this.buildWhereFromQuery(query);
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.<%= fileName %>.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+        ...(select ? { select } : {}),
+      }),
+      this.prisma.<%= fileName %>.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  findAll() {
+    return this.prisma.<%= fileName %>.findMany();
+  }
+
+  findOne(id: string) {
+    return this.prisma.<%= fileName %>.findUnique({ where: { id } });
+  }
+
+  update(id: string, data: Update<%= className %>Dto) {
+    return this.prisma.<%= fileName %>.update({
+      where: { id },
+      data,
+    });
+  }
+
+  remove(id: string) {
+    return this.prisma.<%= fileName %>.delete({ where: { id } });
+  }
+
+  private buildWhereFromQuery(query: Pagination<%= className %>QueryDto): Prisma.<%= className %>WhereInput {
+    const where: Prisma.<%= className %>WhereInput = {};
+
+    <% fields.forEach(field => { %>if (query.<%= field.name %> !== undefined) {
+      where.<%= field.name %> = query.<%= field.name %>;
+    }
+    <% }) %>
+
+    return where;
+  }
+}
+

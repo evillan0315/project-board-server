@@ -1,0 +1,31 @@
+
+  <div class="flex min-h-screen items-center justify-center">
+  <div class="w-full max-w-lg">
+  <h2>Execute Shell Command</h2>
+  <div class="rounded-xl border border-neutral-200 bg-white p-6 shadow-md dark:border-neutral-700 dark:bg-neutral-950">
+  <form action="/api/shell/run" method="POST">
+    <label for="command">Shell Command</label>
+    <input type="text" id="command" name="command" placeholder="e.g. ls -la" required />
+
+    <label for="cwd">Working Directory</label>
+    <input type="text" id="cwd" name="cwd" placeholder="e.g. /usr/src/app" required />
+
+    <button type="submit">Run Command</button>
+  </form>
+ 
+  {{#if result}}
+    <div class="result">
+      <h3>Output:</h3>
+      <strong>Stdout:</strong>
+      <pre>{{result.stdout}}</pre>
+      <strong>Stderr:</strong>
+      <pre>{{result.stderr}}</pre>
+      <strong>Exit Code:</strong>
+      <pre>{{result.exitCode}}</pre>
+    </div>
+  {{/if}}
+  </div>
+  </div>
+  </div>
+
+

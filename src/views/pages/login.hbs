@@ -1,0 +1,100 @@
+<div class="flex min-h-screen items-center justify-center">
+  <div class="w-full max-w-md">
+    <div class="rounded-xl border border-neutral-200 bg-white p-6 shadow-md dark:border-neutral-700 dark:bg-neutral-950">
+      <form action="/login" method="POST" class="space-y-6">
+        {{#if error}}
+          <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200">
+            {{error}}
+          </div>
+        {{/if}}
+
+        <!-- Email Field -->
+        <div>
+          <label for="email" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Email address
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            placeholder="you@example.com"
+            class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          />
+        </div>
+
+        <!-- Password Field -->
+        <div>
+          <label for="password" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Password
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            placeholder="••••••••"
+            class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          />
+        </div>
+
+        <!-- Remember Me & Forgot Password -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <input
+              id="remember-me"
+              name="remember-me"
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label for="remember-me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              Remember me
+            </label>
+          </div>
+          <div class="text-sm hidden">
+            <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
+              Forgot your password?
+            </a>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div>
+          <button
+            type="submit"
+            class="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-gray-700 p-3 text-gray-200 hover:bg-gray-600"
+            {{#if isLoading}}disabled{{/if}}
+          >
+            <span class="iconify text-gray-900" data-icon="mdi:login" data-width="24" data-height="24"></span>
+            {{#if isLoading}}Signing in...{{else}}Sign in{{/if}}
+          </button>
+        </div>
+      </form>
+
+      <!-- Sign in with Google -->
+      <form action="/api/auth/google" method="GET">
+        <button
+          type="submit"
+          class="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-gray-700 p-3 text-white hover:bg-gray-600"
+        >
+          <span class="iconify" data-icon="flat-color-icons:google" data-width="20" data-height="20"></span>
+          Sign in with Google
+        </button>
+      </form>
+
+      <!-- Sign in with GitHub -->
+      <form action="/api/auth/github" method="GET">
+        <button
+          type="submit"
+          class="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-gray-700 p-3 text-white hover:bg-gray-600"
+        >
+          <span class="iconify" data-icon="mdi:github" data-width="20" data-height="20"></span>
+          Sign in with GitHub
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+

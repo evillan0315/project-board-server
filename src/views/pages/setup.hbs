@@ -1,0 +1,176 @@
+<main class='min-h-screen flex items-center justify-center'>
+  <div class='max-w-3xl w-full'>
+    <div class='flex flex-col mt-6'>
+      <h1 class='text-3xl font-bold border-b pb-2'>{{title}}</h1>
+      <div class='text-sm text-muted'>{{description}}</div>
+    </div>
+    <div class='flex items-center justify-center my-6'>
+      <form
+        action='/setup'
+        method='POST'
+        class='p-8 space-y-6 bg-white shadow-lg rounded-xl w-full'
+      >
+        <h2 class='text-2xl font-bold border-b pb-2'>Server Configuration</h2>
+
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div>
+            <label class='block text-sm font-medium text-gray-700'>Application
+              Name</label>
+            <input
+              name='APP_NAME'
+              value='{{env.APP_NAME}}'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+          <div>
+            <label class='block text-sm font-medium text-gray-700'>Port</label>
+            <input
+              name='PORT'
+              type='number'
+              value='{{env.PORT}}'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+          <div>
+            <label class='block text-sm font-medium text-gray-700'>Base Url</label>
+            <input
+              name='BASE_URL'
+              type='text'
+              value='{{env.BASE_URL}}'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+          <div>
+            <label
+              class='block text-sm font-medium text-gray-700'
+            >Environment</label>
+            <input
+              name='NODE_ENV'
+              type='text'
+              value='{{env.NODE_ENV}}'
+              placeholder='development | production'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+          <div>
+            <label class='inline-flex items-center mt-6'>
+              <input
+                name='SWAGGER_ENABLED'
+                type='checkbox'
+                value='true'
+                {{checkedAttr env.SWAGGER_ENABLED}}
+                class='form-checkbox h-5 w-5 text-blue-600'
+              />
+              <span class='ml-2 text-sm text-gray-700'>Enable Swagger</span>
+            </label>
+          </div>
+
+        </div>
+
+        <h2 class='text-2xl font-bold border-b pt-4 pb-2'>Database Configuration</h2>
+
+        <div class='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div>
+            <label class='block text-sm font-medium text-gray-700'>Database
+              Provider</label>
+            <select
+              name='DB_PROVIDER'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            >
+              <option value=''>Select a provider</option>
+              <option
+                value='postgresql'
+                {{selectedAttr env.DB_PROVIDER 'postgresql'}}
+              >PostgreSQL</option>
+              <option
+                value='mysql'
+                {{selectedAttr env.DB_PROVIDER 'mysql'}}
+              >MySQL</option>
+              <option
+                value='mongodb'
+                {{selectedAttr env.DB_PROVIDER 'mongodb'}}
+              >MongoDB</option>
+              <option
+                value='other'
+                {{selectedAttr env.DB_PROVIDER 'other'}}
+              >Other</option>
+            </select>
+          </div>
+          <div>
+            <label class='block text-sm font-medium text-gray-700'>Database Host</label>
+            <input
+              name='DB_HOST'
+              value='{{env.DB_HOST}}'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+
+          <div>
+            <label class='block text-sm font-medium text-gray-700'>Database Port</label>
+            <input
+              name='DB_PORT'
+              value='{{env.DB_PORT}}'
+              type='number'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+
+          <div>
+            <label class='block text-sm font-medium text-gray-700'>Database User</label>
+            <input
+              name='DB_USER'
+              value='{{env.DB_USER}}'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+
+          <div>
+            <label class='block text-sm font-medium text-gray-700'>Database
+              Password</label>
+            <input
+              name='DB_PASSWORD'
+              value='{{env.DB_PASSWORD}}'
+              type='password'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+          <div>
+            <label class='block text-sm font-medium text-gray-700'>Database Name</label>
+            <input
+              name='DB_NAME'
+              value='{{env.DB_NAME}}'
+              required
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+          <div class='md:col-span-2'>
+            <label class='block text-sm font-medium text-gray-700'>Database
+              Connection String</label>
+            <input
+              name='DATABASE_URL'
+              value='{{env.DATABASE_URL}}'
+              class='mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500'
+            />
+          </div>
+        </div>
+        <div class='pt-6'>
+          <button
+            type='submit'
+            class='w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 shadow'
+          >
+            Submit
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>

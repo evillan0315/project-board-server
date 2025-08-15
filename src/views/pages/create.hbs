@@ -1,0 +1,87 @@
+<div class="flex min-h-screen items-center justify-center bg-gray-100 p-6">
+  <div class="w-full max-w-lg bg-white p-8 rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">{{title}}</h2>
+
+    {{!-- Display any error messages if passed from the controller (e.g., after a failed submission) --}}
+    {{#if errorMessage}}
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <strong class="font-bold">Error!</strong>
+        <span class="block sm:inline">{{errorMessage}}</span>
+      </div>
+    {{/if}}
+
+    <form action="{{action}}" method="POST" class="space-y-6">
+      {{#each fields}}
+        <div>
+          <label for="{{name}}" class="block text-sm font-medium text-gray-700">
+            {{label}}
+          </label>
+
+          {{#ifEquals type "text"}}
+            <input
+              type="text"
+              id="{{name}}"
+              name="{{name}}"
+              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              placeholder="{{label}}"
+              {{#unless isOptional}}required{{/unless}}
+            />
+          {{else ifEquals type "textarea"}}
+            <textarea
+              id="{{name}}"
+              name="{{name}}"
+              rows="6" {{!-- Increased rows for content --}}
+              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-mono"
+              placeholder="{{label}}"
+              {{#unless isOptional}}required{{/unless}}
+            ></textarea>
+          {{else ifEquals type "checkbox"}}
+            <div class="flex items-center mt-2">
+              <input
+                type="checkbox"
+                id="{{name}}"
+                name="{{name}}"
+                class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                value="true" {{!-- Send 'true' when checked --}}
+                {{!-- You might want to add 'checked' attribute if an initial value is passed --}}
+              />
+              <label for="{{name}}" class="ml-2 block text-sm text-gray-900">{{label}}</label>
+            </div>
+          {{else}}
+            {{!-- Fallback for any other types, though not expected for this specific form --}}
+            <input
+              type="text"
+              id="{{name}}"
+              name="{{name}}"
+              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              placeholder="{{label}}"
+              {{#unless isOptional}}required{{/unless}}
+            />
+          {{/ifEquals}}
+        </div>
+      {{/each}}
+
+      <div>
+        <button
+          type="submit"
+          class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          {{action}} {{model}}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{!-- Add a helper for capitalizing --}}
+{{#*inline "capitalize"}}
+  {{this.label}}
+{{/inline}}
+
+{{!-- You need a Handlebars helper for ifEquals if you don't have one --}}
+{{!-- Example of a simple 'ifEquals' helper (place this in your Handlebars configuration) --}}
+{{!--
+Handlebars.registerHelper('ifEquals', function(arg1, arg2, options) {
+    return (arg1 == arg2) ? options.fn(this) : options.inverse(this);
+});
+--}}

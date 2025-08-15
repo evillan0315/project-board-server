@@ -1,0 +1,70 @@
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  IsBoolean,
+  IsNumber,
+  IsInt,
+  IsDate,
+  IsObject,
+  IsPositive,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+export class Create<%= className %>Dto {
+<% fields
+  .filter(field => field.relationType !== 'one-to-many' && !['id', 'createdAt', 'updatedAt', 'createdById', 'deletedAt'].includes(field.name))
+  .forEach(field => { -%>
+  @ApiProperty({ description: '<%= field.name %> field' })
+  <% field.validators.forEach(validator => { -%>
+  <%= validator %>
+  <% }) -%>
+  <%= field.name %>: <%= field.type %>;
+<% }) %>
+}
+
+export class Pagination<%= className %>QueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsPositive()
+  @ApiPropertyOptional({ default: 1 })
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsPositive()
+  @ApiPropertyOptional({ default: 10 })
+  pageSize?: number = 10;
+
+<% fields
+  .filter(field => !['id', 'createdAt', 'updatedAt', 'createdById', 'deletedAt'].includes(field.name))
+  .forEach(field => { -%>
+  @IsOptional()
+  <% if (field.tsType === 'string') { %>@IsString()<% } 
+  else if (field.tsType === 'boolean') { %>@IsBoolean()<% } 
+  else if (field.tsType === 'number') { %>@IsNumber()<% } 
+  else if (field.tsType === 'Date') { %>@IsDate()
+  @Type(() => Date)<% } 
+  else if (field.tsType === 'any') { %>@IsObject()<% } %>
+  @ApiPropertyOptional({ description: 'Filter by <%= field.name %>' })
+  <%= field.name %>?: <%= field.tsType %>;
+<% }) %>
+}
+
+export class Pagination<%= className %>ResultDto {
+  @ApiProperty({ type: [Create<%= className %>Dto] })
+  items: Create<%= className %>Dto[];
+
+  @ApiProperty()
+  total: number;
+
+  @ApiProperty()
+  page: number;
+
+  @ApiProperty()
+  pageSize: number;
+
+  @ApiProperty()
+  totalPages: number;
+}
+

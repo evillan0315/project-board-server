@@ -1,0 +1,78 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  HttpStatus,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { <%= className %>Service } from './<%= folderName %>.service';
+import {
+  Create<%= className %>Dto,
+  Update<%= className %>Dto,
+  Pagination<%= className %>QueryDto,
+  Pagination<%= className %>ResultDto,
+} from './dto/create-<%= folderName %>.dto';
+<% if (isProtected) { %>import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '@prisma/client';
+import { RolesGuard } from '../auth/roles.guard';
+import { UseGuards } from '@nestjs/common';
+<% } %>
+
+@ApiTags('<%= className %>')
+@Controller('<%= folderName %>')
+<% if (isProtected) { %>@UseGuards(RolesGuard)<% } %>
+export class <%= className %>Controller {
+  constructor(private readonly service: <%= className %>Service) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create a new <%= className %>' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Created successfully.' })
+  <% if (isProtected) { %>@Roles(UserRole.ADMIN)<% } %>
+  create(@Body() dto: Create<%= className %>Dto) {
+    return this.service.create(dto);
+  }
+
+  @Get('paginated')
+  @ApiOperation({ summary: 'Get paginated <%= className %> records' })
+  @ApiResponse({ status: HttpStatus.OK, type: Pagination<%= className %>ResultDto })
+  <% if (isProtected) { %>@Roles(UserRole.ADMIN)<% } %>
+  findAllPaginated(@Query() query: Pagination<%= className %>QueryDto) {
+    return this.service.findAllPaginated(query);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all <%= className %> records' })
+  @ApiResponse({ status: HttpStatus.OK })
+  findAll() {
+    return this.service.findAll();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a <%= className %> by ID' })
+  @ApiResponse({ status: HttpStatus.OK })
+  findOne(@Param('id') id: string) {
+    return this.service.findOne(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a <%= className %>' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Updated successfully.' })
+  <% if (isProtected) { %>@Roles(UserRole.ADMIN)<% } %>
+  update(@Param('id') id: string, @Body() dto: Update<%= className %>Dto) {
+    return this.service.update(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a <%= className %>' })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT })
+  <% if (isProtected) { %>@Roles(UserRole.ADMIN)<% } %>
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
+  }
+}
+

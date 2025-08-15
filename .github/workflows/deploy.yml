@@ -1,0 +1,78 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches: [mainV2]
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install pm2
+        run: npm install -g pm2
+
+      - name: Deploy to EC2 via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: "."
+          target: "/var/www/webapps/board-api"
+          strip_components: 1
+
+      - name: Restart Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+            nvm use 22 || echo "⚠️ Node 22 not installed via NVM"
+
+            cd /var/www/webapps/board-api
+
+            echo "✅ Node version: $(node -v)"
+            echo "✅ Installing pm2..."
+            npm install -g pm2
+
+            echo "📦 Installing dependencies..."
+            npm install
+            
+            echo "Generating database..."
+            npx prisma generate
+            
+            echo "⚙️ Building project..."
+            npm run build
+
+            echo "🚀 Starting api server PM2 process..."
+            pm2 delete api-server
+            pm2 start ecosystem.config.cjs
+            
+            echo "Installing frontend dependencies..."
+            cd frontend
+            npm install
+            
+            echo "Building frontend..."
+            npm run build
+            
+            echo "🚀 Starting Frontend PM2 process..."
+            pm2 delete project-board
+            pm2 start ecosystem.config.cjs
+            pm2 save
+

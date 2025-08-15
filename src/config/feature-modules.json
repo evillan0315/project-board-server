@@ -1,0 +1,29 @@
+{
+  "featureModules": [
+    { "name": "AuthModule", "enabled": true },
+    { "name": "OrganizationModule", "enabled": true },
+    { "name": "AccountModule", "enabled": true },
+    { "name": "MailModule", "enabled": true },
+    { "name": "PrismaModule", "enabled": true },
+    { "name": "ProjectModule", "enabled": true },
+    { "name": "UserModule", "enabled": true },
+    { "name": "FileModule", "enabled": true },
+    { "name": "UtilsModule", "enabled": true },
+    { "name": "DatabaseModule", "enabled": true },
+    { "name": "TerminalModule", "enabled": true },
+    { "name": "FolderModule", "enabled": true },
+    { "name": "GoogleModule", "enabled": true },
+    { "name": "SchemaModule", "enabled": true },
+    { "name": "LogModule", "enabled": true },
+    { "name": "AudioModule", "enabled": true },
+    { "name": "SetupModule", "enabled": true },
+    { "name": "RecordingModule", "enabled": true },
+    { "name": "AwsModule", "enabled": true },
+    { "name": "TranspilerModule", "enabled": true },
+    { "name": "CodeModule", "enabled": true },
+    { "name": "ModuleControlModule", "enabled": true },
+    { "name": "FeatureModule", "enabled": true },
+    { "name": "LlmModule", "enabled": true },
+    { "name": "SchemaSubmissionModule", "enabled": true }
+  ]
+}

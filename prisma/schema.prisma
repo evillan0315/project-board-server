@@ -1,0 +1,336 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  username          String?
+  emailVerified     DateTime?
+  image             String?
+  name              String?
+  phone_number      String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime?           @updatedAt
+  deletedAt         DateTime?
+  role              Role?
+  Account           Account[]
+  Database          Database[]
+  Documentation     Documentation[]
+  File              File[]
+  Folder            Folder[]
+  Form              Form[]
+  Module            Module[]
+  Organization      Organization[]
+  password          Password?
+  Project           Project[]
+  Schema            Schema[]
+  Session           Session[]
+  Submission        Submission[]
+  geminiRequests    GeminiRequest[]
+  Recording         Recording[]
+  SchemaSubmission  SchemaSubmission[]
+  SystemInstruction SystemInstruction[]
+}
+
+model Password {
+  id          String   @id @default(uuid())
+  hash        String
+  createdById String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                String    @id @default(uuid())
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime? @updatedAt
+  createdById       String
+  createdBy         User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String    @id @default(uuid())
+  sessionToken String    @unique
+  expires      DateTime
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime? @updatedAt
+  createdById  String
+  createdBy    User      @relation(fields: [createdById], references: [id])
+}
+
+model Documentation {
+  id          String    @id @default(uuid())
+  name        String
+  content     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+}
+
+model File {
+  id          String    @id @default(uuid())
+  name        String
+  content     String
+  path        String    @unique
+  folderId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  folder      Folder?   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+}
+
+model Folder {
+  id          String    @id @default(uuid())
+  name        String
+  path        String    @unique
+  parentId    String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  files       File[]
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  parent      Folder?   @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children    Folder[]  @relation("FolderHierarchy")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+}
+
+model Recording {
+  id          String   @id @default(uuid())
+  path        String
+  type        String
+  pid         String
+  status      String
+  data        Json
+  createdAt   DateTime @default(now())
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@index([pid])
+  @@index([status])
+}
+
+model GeminiRequest {
+  id                String              @id @default(uuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  conversationId    String?
+  modelUsed         String
+  prompt            String
+  systemInstruction String?
+  requestType       RequestType
+  imageUrl          String?
+  imageData         String?             @db.Text
+  fileMimeType      String?
+  fileData          String?             @db.Text
+  files             Json?
+  createdAt         DateTime            @default(now())
+  geminiResponses   GeminiResponse[]
+  SystemInstruction SystemInstruction[]
+
+  @@index([userId])
+  @@index([conversationId]) // Add index for conversationId for efficient lookups
+}
+
+model GeminiResponse {
+  id            String        @id @default(uuid())
+  requestId     String
+  request       GeminiRequest @relation(fields: [requestId], references: [id])
+  responseText  String        @db.Text
+  finishReason  String?
+  safetyRatings Json?
+  tokenCount    Int?
+  createdAt     DateTime      @default(now())
+
+  @@index([requestId])
+}
+
+model SystemInstruction {
+  id          String        @id @default(uuid())
+  requestId   String
+  request     GeminiRequest @relation(fields: [requestId], references: [id])
+  instruction String        @db.Text
+  persona     String?
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  createdAt   DateTime      @default(now())
+
+  @@index([requestId])
+}
+
+enum RequestType {
+  TEXT_ONLY
+  TEXT_WITH_IMAGE
+  TEXT_WITH_FILE
+  RESUME_GENERATION
+  RESUME_OPTIMIZATION
+  RESUME_ENHANCEMENT
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+}
+
+model Database {
+  id               String   @id @default(uuid())
+  name             String
+  type             String
+  host             String?
+  port             Int?
+  username         String?
+  password         String?
+  databaseName     String?
+  connectionString String?
+  default          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  createdById      String
+  createdBy        User     @relation(fields: [createdById], references: [id])
+}
+
+model Schema {
+  id          String   @id @default(uuid())
+  name        String
+  schema      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@unique([name, createdById])
+}
+
+model SchemaSubmission {
+  id            String   @id @default(uuid())
+  schemaName    String
+  submittedById String
+  data          Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  schemaId      String
+  submittedBy   User     @relation(fields: [submittedById], references: [id])
+
+  @@index([schemaId])
+  @@index([submittedById])
+  @@index([createdAt])
+}
+
+model Module {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  parentId    String?
+  config      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@index([name])
+  @@index([parentId])
+}
+
+model Form {
+  id          String       @id @default(uuid())
+  name        String
+  fields      Json
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdById String
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  submissions Submission[]
+}
+
+model Submission {
+  id          String   @id @default(uuid())
+  data        Json
+  type        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  formId      String?
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  Form        Form?    @relation(fields: [formId], references: [id])
+}
+
+model Icon {
+  id        String   @id @default(uuid())
+  prefix    String
+  name      String
+  path      String
+  status    String
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@unique([prefix, name])
+}
+
+model Logs {
+  id        String   @id @default(uuid())
+  type      String
+  level     String   @default("INFO")
+  data      Json
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([level])
+  @@index([createdAt])
+}
+
+model Metadata {
+  id        String   @id @default(uuid())
+  type      String
+  data      Json
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum Role {
+  ADMIN
+  USER
+  MANAGER
+}
+
+enum Sender {
+  USER
+  AI
+  BOT
+}

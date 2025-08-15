@@ -1,0 +1,50 @@
+<div id="editor" style="height: 100vh;"></div>
+
+<script>
+  require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@latest/min/vs' } });
+
+  function getQueryParam(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+  }
+
+  const filepath = getQueryParam('filepath');
+  const url = getQueryParam('url');
+  const formData = new FormData();
+    formData.append('generateBlobUrl', '');
+  if (filepath) {
+    
+    formData.append('filePath', filepath);
+
+  } else if(url){
+  	formData.append('url', url);
+  } else  {
+    document.getElementById('editor').innerText = `Missing ?filepath= in query`;
+  }
+   console.log(formData, 'response formData');
+    fetch('/api/file/read', {
+      method: 'POST',
+      body: formData,
+    })
+    .then(response => {
+      console.log(response, 'response');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      return response.json();
+    })
+    .then(data => {
+      console.log(data.language, 'data');
+      require(['vs/editor/editor.main'], function () {
+        monaco.editor.create(document.getElementById('editor'), {
+          value: data.data,
+          language: data.language || 'javascript',
+          theme: 'vs-dark'
+        });
+      });
+    })
+    .catch(error => {
+      console.error('Failed to load file:', error);
+      document.getElementById('editor').innerText = `Error loading file: ${error.message}`;
+    });
+</script>
+

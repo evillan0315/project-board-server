@@ -1,0 +1,74 @@
+<div class="min-h-screen p-6 border">
+  <div class="w-full max-w-7xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-6 text-neutral-900 dark:text-white">{{title}}</h1>
+
+    <div class="overflow-x-auto shadow dark:bg-neutral-900 rounded-md">
+      <table class="min-w-full border border-neutral-200 dark:border-neutral-700">
+        <thead class="bg-neutral-100 dark:bg-neutral-950">
+          <tr>
+            {{!-- Dynamically render headers based on 'fields' array --}}
+            {{#each fields}}
+              <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700 dark:text-neutral-200 border-b dark:border-neutral-700">
+                {{capitalize name}}
+              </th>
+            {{/each}}
+            <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700 dark:text-neutral-200 border-b dark:border-neutral-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each lists}}
+            <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800">
+              {{!-- Loop through each item in 'lists' (fileSystemEntries) --}}
+              {{#each ../fields}}
+                <td class="px-4 py-2 border-b text-sm text-neutral-800 dark:text-neutral-300 dark:border-neutral-700">
+                  {{!-- Render content based on field name --}}
+                  {{#if (ifEquals name "name")}}
+                    {{!-- Link for directory navigation --}}
+                    {{#if ../isDirectory}}
+                      <a href="/file/lists?directory={{encodeURIComponent ../path}}" class="text-blue-600 hover:underline">
+                        <i class="fa-solid fa-folder mr-2"></i>{{lookup ../this name}}
+                      </a>
+                    {{else}}
+                      {{!-- Display file name --}}
+                      <i class="fa-solid fa-file mr-2"></i>{{lookup ../this name}}
+                    {{/if}}
+                  {{else if (ifEquals name "isDirectory")}}
+                    {{!-- Display boolean as Yes/No or icon --}}
+                    {{#if (lookup ../this name)}}
+                      <span class="text-green-500">Yes</span>
+                    {{else}}
+                      <span class="text-neutral-500">No</span>
+                    {{/if}}
+                  {{else if (ifEquals name "size")}}
+                    {{!-- Format file size if available --}}
+                    {{formatBytes (lookup ../this name)}}
+                  {{else}}
+                    {{!-- Default display for other fields --}}
+                    {{lookup ../this name}}
+                  {{/if}}
+                </td>
+              {{/each}}
+              <td class="px-4 py-2 border-b text-sm text-blue-600 dark:border-neutral-700">
+                {{!-- Actions for files/folders --}}
+                {{#if isDirectory}}
+                  {{!-- No direct edit/delete for directories in this example, but you could add them --}}
+                  <span class="text-neutral-500">N/A</span>
+                {{else}}
+                  <a href="/file/download?filePath={{encodeURIComponent path}}" class="hover:underline">Download</a> |
+                  <a href="/file/view?filePath={{encodeURIComponent path}}" class="hover:underline">View Content</a> |
+                  <a href="/file/delete?filePath={{encodeURIComponent path}}" class="hover:underline text-red-500">Delete</a>
+                {{/if}}
+              </td>
+            </tr>
+          {{else}}
+            <tr>
+              <td colspan="{{add (length fields) 1}}" class="px-4 py-4 text-center text-neutral-500 dark:text-neutral-100">
+                No records found.
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
