@@ -29,6 +29,7 @@ A comprehensive backend application built with **NestJS**, providing robust auth
   - Create, update, and delete remote files.
   - Download files from remote servers.
   - Execute shell commands on remote servers.
+- ✅ **GitHub Repository Management:** Create, commit, delete, list, and view contents of GitHub repositories.
 
 ### 🧠 Generative AI (Google Gemini)
 
@@ -63,6 +64,9 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 - ✅ **JSON/YAML Conversion:** Bidirectional conversion between JSON objects and YAML strings.
 - ✅ **Encoding/Decoding:** Base64 and URL encoding/decoding.
 - ✅ **Code Highlighting:** Syntax highlighting for various programming languages.
+- ✅ **ESLint Integration:** Lint code strings and retrieve detailed diagnostics (errors, warnings, fixes).
+- ✅ **Code Transpilation:** Transpile JavaScript/TypeScript, React JSX, SolidJS JSX using ESBuild, supporting single files, multiple files, and ZIP archives.
+- ✅ **Interactive Terminal & Remote Shell:** Execute local terminal commands and establish persistent SSH sessions to remote servers with real-time input/output (via WebSockets).
 
 ### 📹 Screen Recording & Screenshots
 
@@ -166,17 +170,22 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 
 ### 📁 File & Folder Management
 
-| Method | Endpoint              | Description                                 |
-| ------ | --------------------- | ------------------------------------------- |
-| `GET`  | `/api/file/list`      | List contents of a directory                |
-| `POST` | `/api/file/read`      | Read content of a file (upload, path, URL)  |
-| `POST` | `/api/file/create`    | Create a new file or folder                 |
-| `POST` | `/api/file/delete`    | Delete a file or folder                     |
-| `POST` | `/api/file/rename`    | Rename a file or folder                     |
-| `POST` | `/api/file/scan`      | Scan project directories for relevant files |
-| `GET`  | `/api/file/stream`    | Stream media files with range support       |
-| `GET`  | `/api/remote/list`    | List files on a remote server (SSH/SFTP)    |
-| `POST` | `/api/remote/command` | Run shell commands on a remote server (SSH) |
+| Method   | Endpoint                    | Description                                 |
+| -------- | --------------------------- | ------------------------------------------- |
+| `GET`    | `/api/file/list`            | List contents of a directory                |
+| `POST`   | `/api/file/read`            | Read content of a file (upload, path, URL)  |
+| `POST`   | `/api/file/create`          | Create a new file or folder                 |
+| `POST`   | `/api/file/delete`          | Delete a file or folder                     |
+| `POST`   | `/api/file/rename`          | Rename a file or folder                     |
+| `POST`   | `/api/file/scan`            | Scan project directories for relevant files |
+| `GET`    | `/api/file/stream`          | Stream media files with range support       |
+| `GET`    | `/api/remote/list`          | List files on a remote server (SSH/SFTP)    |
+| `GET`    | `/repos`                    | Get all repositories from GitHub            |
+| `GET`    | `/repos/:repoName`          | Get a single repository by name             |
+| `POST`   | `/repos`                    | Create a new GitHub repository              |
+| `PATCH`  | `/repos/:repoName/commit`   | Simulate a commit to a repository           |
+| `DELETE` | `/repos/:repoName`          | Delete a GitHub repository                  |
+| `GET`    | `/repos/:repoName/contents` | Get repository files and directory contents |
 
 ### 🧠 Generative AI (Google Gemini)
 
@@ -191,20 +200,27 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `POST` | `/api/gemini/file/generate-resume`     | Generate a new resume                   |
 | `POST` | `/api/gemini/file/optimize-resume`     | Optimize resume against job description |
 
-### 🔧 Developer Utilities
+### 💻 Developer Utilities & Shell
 
-| Method | Endpoint                       | Description                      |
-| ------ | ------------------------------ | -------------------------------- |
-| `POST` | `/api/utils/format-code`       | Format source code with Prettier |
-| `POST` | `/api/utils/json-to-env`       | Convert JSON to `.env` format    |
-| `POST` | `/api/utils/env-to-json`       | Convert `.env` to JSON format    |
-| `POST` | `/api/utils/markdown-to-html`  | Convert Markdown to HTML         |
-| `POST` | `/api/utils/markdown-to-docx`  | Convert Markdown to DOCX         |
-| `POST` | `/api/utils/html-to-docx`      | Convert HTML to DOCX             |
-| `POST` | `/api/utils/convert-to-svg`    | Convert image (PNG/JPG) to SVG   |
-| `GET`  | `/api/docs/generate`           | Generate Markdown from JSDoc     |
-| `POST` | `/api/utils/json-yaml/to-yaml` | Convert JSON to YAML             |
-| `POST` | `/api/encoding/base64/encode`  | Encode text to Base64            |
+| Method | Endpoint                       | Description                             |
+| ------ | ------------------------------ | --------------------------------------- |
+| `POST` | `/api/terminal/run`            | Execute a local terminal command        |
+| `POST` | `/api/terminal/ssh/run`        | Execute an SSH command on remote server |
+| `POST` | `/eslint/lint`                 | Lint a given code string using ESLint   |
+| `POST` | `/api/transpile`               | Transpile raw code string               |
+| `POST` | `/api/transpile/file`          | Transpile an uploaded file              |
+| `POST` | `/api/transpile/files`         | Transpile multiple uploaded files       |
+| `POST` | `/api/transpile/directory`     | Transpile files from a ZIP archive      |
+| `POST` | `/api/utils/format-code`       | Format source code with Prettier        |
+| `POST` | `/api/utils/json-to-env`       | Convert JSON to `.env` format           |
+| `POST` | `/api/utils/env-to-json`       | Convert `.env` to JSON format           |
+| `POST` | `/api/utils/markdown-to-html`  | Convert Markdown to HTML                |
+| `POST` | `/api/utils/markdown-to-docx`  | Convert Markdown to DOCX                |
+| `POST` | `/api/utils/html-to-docx`      | Convert HTML to DOCX                    |
+| `POST` | `/api/utils/convert-to-svg`    | Convert image (PNG/JPG) to SVG          |
+| `GET`  | `/api/docs/generate`           | Generate Markdown from JSDoc            |
+| `POST` | `/api/utils/json-yaml/to-yaml` | Convert JSON to YAML                    |
+| `POST` | `/api/encoding/base64/encode`  | Encode text to Base64                   |
 
 ### 📹 Screen Recording & Screenshots
 
@@ -230,8 +246,8 @@ src/
 ├── module-control/     # Toggle modules on/off
 ├── prisma/             # Prisma ORM setup and service
 ├── recording/          # Screen recording and screenshot capture
-├── terminal/           # Terminal command execution
-└── utils/              # General utilities (encoding, markdown, SQL parsing, image conversion, JSON/YAML)
+├── terminal/           # Terminal command execution, local and remote SSH shell
+└── utils/              # General utilities (encoding, markdown, SQL parsing, image conversion, JSON/YAML, transpilation, ESLint)
 ```
 
 ---
@@ -258,6 +274,8 @@ src/
 - **Environment Variables:** `dotenv`
 - **YAML Parsing:** `js-yaml`
 - **Event Emitter:** `@nestjs/event-emitter`
+- **Code Transpilation:** `esbuild`
+- **ESLint:** `eslint`
 
 ---
 
