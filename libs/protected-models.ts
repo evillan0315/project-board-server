@@ -17,4 +17,7 @@ export const protectedModels = [
   'Organization',
   'SchemaSubmission',
   'SystemInstruction',
+  'TerminalSession',
+  'TerminalCommand',
+  'CommandHistory',
 ];

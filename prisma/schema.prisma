@@ -338,6 +338,7 @@ model TerminalCommand {
 model TerminalSession {
   id             String                @id @default(uuid())
   name           String?
+  createdAt     DateTime              @default(now())
   startedAt      DateTime              @default(now())
   endedAt        DateTime?
   ipAddress      String?
@@ -357,6 +358,7 @@ model CommandHistory {
   id               String   @id @default(uuid())
   command          String   @db.Text
   executedAt       DateTime @default(now())
+  createdAt       DateTime @default(now())
   status           String?
   exitCode         Int?
   output           String?  @db.Text

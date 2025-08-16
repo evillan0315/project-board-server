@@ -68,10 +68,10 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
       }
 
       const clientId = client.id;
-      this.logger.log(`Client connected: ${clientId} (User: ${user.id})`);
+      this.logger.log(`Client connected: ${clientId} (User: ${user.sub})`);
 
       // Store user ID on the client socket for later use
-      (client as any).userId = user.id;
+      (client as any).userId = user.sub;
 
       // Initialize CWD for the client
       const initialCwd = this.BASE_DIR || os.homedir();
@@ -82,7 +82,7 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
         clientId,
         client,
         initialCwd,
-        user.id,
+        user.sub,
       );
       (client as any).dbSessionId = dbSessionId; // Store db session ID on client
 

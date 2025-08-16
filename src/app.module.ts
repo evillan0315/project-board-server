@@ -54,6 +54,9 @@ import { ReposModule } from './repos/repos.module';
 import { SystemInstructionModule } from './system-instruction/system-instruction.module';
 import { EslintModule } from './eslint/eslint.module';
 import { LlmModule } from './llm/llm.module';
+import { TerminalSessionModule } from './terminal-session/terminal-session.module';
+import { TerminalCommandModule } from './terminal-command/terminal-command.module';
+import { CommandHistoryModule } from './command-history/command-history.module';
 
 import fileConfig from './config/file.config';
 
@@ -197,6 +200,9 @@ import fileConfig from './config/file.config';
     SystemInstructionModule,
     EslintModule,
     LlmModule,
+    TerminalSessionModule,
+    TerminalCommandModule,
+    CommandHistoryModule,
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.

@@ -10245,6 +10245,1062 @@
           "LLM Operations"
         ]
       }
+    },
+    "/api/terminal-session": {
+      "post": {
+        "operationId": "TerminalSessionController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTerminalSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTerminalSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new TerminalSession",
+        "tags": [
+          "TerminalSession"
+        ]
+      },
+      "get": {
+        "operationId": "TerminalSessionController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of TerminalSession records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateTerminalSessionDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all TerminalSession records",
+        "tags": [
+          "TerminalSession"
+        ]
+      }
+    },
+    "/api/terminal-session/paginated": {
+      "get": {
+        "operationId": "TerminalSessionController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Filter by name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startedAt",
+            "required": false,
+            "in": "query",
+            "description": "Filter by startedAt",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "endedAt",
+            "required": false,
+            "in": "query",
+            "description": "Filter by endedAt",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "ipAddress",
+            "required": false,
+            "in": "query",
+            "description": "Filter by ipAddress",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userAgent",
+            "required": false,
+            "in": "query",
+            "description": "Filter by userAgent",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientInfo",
+            "required": false,
+            "in": "query",
+            "description": "Filter by clientInfo",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationTerminalSessionResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated TerminalSession records",
+        "tags": [
+          "TerminalSession"
+        ]
+      }
+    },
+    "/api/terminal-session/{id}": {
+      "get": {
+        "operationId": "TerminalSessionController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTerminalSessionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find TerminalSession by ID",
+        "tags": [
+          "TerminalSession"
+        ]
+      },
+      "patch": {
+        "operationId": "TerminalSessionController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTerminalSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTerminalSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update TerminalSession by ID",
+        "tags": [
+          "TerminalSession"
+        ]
+      },
+      "delete": {
+        "operationId": "TerminalSessionController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete TerminalSession by ID",
+        "tags": [
+          "TerminalSession"
+        ]
+      }
+    },
+    "/api/terminal-command": {
+      "post": {
+        "operationId": "TerminalCommandController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTerminalCommandDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTerminalCommandDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new TerminalCommand",
+        "tags": [
+          "TerminalCommand"
+        ]
+      },
+      "get": {
+        "operationId": "TerminalCommandController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of TerminalCommand records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateTerminalCommandDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all TerminalCommand records",
+        "tags": [
+          "TerminalCommand"
+        ]
+      }
+    },
+    "/api/terminal-command/paginated": {
+      "get": {
+        "operationId": "TerminalCommandController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "command",
+            "required": false,
+            "in": "query",
+            "description": "Filter by command",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "required": false,
+            "in": "query",
+            "description": "Filter by description",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "output",
+            "required": false,
+            "in": "query",
+            "description": "Filter by output",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tags",
+            "required": false,
+            "in": "query",
+            "description": "Filter by tags",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "isFavorite",
+            "required": false,
+            "in": "query",
+            "description": "Filter by isFavorite",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationTerminalCommandResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated TerminalCommand records",
+        "tags": [
+          "TerminalCommand"
+        ]
+      }
+    },
+    "/api/terminal-command/{id}": {
+      "get": {
+        "operationId": "TerminalCommandController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTerminalCommandDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find TerminalCommand by ID",
+        "tags": [
+          "TerminalCommand"
+        ]
+      },
+      "patch": {
+        "operationId": "TerminalCommandController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTerminalCommandDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTerminalCommandDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update TerminalCommand by ID",
+        "tags": [
+          "TerminalCommand"
+        ]
+      },
+      "delete": {
+        "operationId": "TerminalCommandController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete TerminalCommand by ID",
+        "tags": [
+          "TerminalCommand"
+        ]
+      }
+    },
+    "/api/command-history": {
+      "post": {
+        "operationId": "CommandHistoryController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommandHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCommandHistoryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new CommandHistory",
+        "tags": [
+          "CommandHistory"
+        ]
+      },
+      "get": {
+        "operationId": "CommandHistoryController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of CommandHistory records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateCommandHistoryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all CommandHistory records",
+        "tags": [
+          "CommandHistory"
+        ]
+      }
+    },
+    "/api/command-history/paginated": {
+      "get": {
+        "operationId": "CommandHistoryController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "command",
+            "required": false,
+            "in": "query",
+            "description": "Filter by command",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "executedAt",
+            "required": false,
+            "in": "query",
+            "description": "Filter by executedAt",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exitCode",
+            "required": false,
+            "in": "query",
+            "description": "Filter by exitCode",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "output",
+            "required": false,
+            "in": "query",
+            "description": "Filter by output",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "errorOutput",
+            "required": false,
+            "in": "query",
+            "description": "Filter by errorOutput",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "workingDirectory",
+            "required": false,
+            "in": "query",
+            "description": "Filter by workingDirectory",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "durationMs",
+            "required": false,
+            "in": "query",
+            "description": "Filter by durationMs",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "shellType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by shellType",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "terminalSessionId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by terminalSessionId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationCommandHistoryResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated CommandHistory records",
+        "tags": [
+          "CommandHistory"
+        ]
+      }
+    },
+    "/api/command-history/{id}": {
+      "get": {
+        "operationId": "CommandHistoryController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCommandHistoryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find CommandHistory by ID",
+        "tags": [
+          "CommandHistory"
+        ]
+      },
+      "patch": {
+        "operationId": "CommandHistoryController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommandHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCommandHistoryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update CommandHistory by ID",
+        "tags": [
+          "CommandHistory"
+        ]
+      },
+      "delete": {
+        "operationId": "CommandHistoryController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete CommandHistory by ID",
+        "tags": [
+          "CommandHistory"
+        ]
+      }
     }
   },
   "info": {
@@ -11405,7 +12461,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-16T06:35:41.208Z",
+            "example": "2025-08-16T08:19:35.873Z",
             "format": "date-time"
           }
         },
@@ -13061,6 +14117,333 @@
           "changes",
           "summary"
         ]
+      },
+      "CreateTerminalSessionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "startedAt field"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "endedAt field"
+          },
+          "ipAddress": {
+            "type": "string",
+            "description": "ipAddress field"
+          },
+          "userAgent": {
+            "type": "string",
+            "description": "userAgent field"
+          },
+          "clientInfo": {
+            "type": "object",
+            "description": "clientInfo field"
+          }
+        },
+        "required": [
+          "name",
+          "startedAt",
+          "endedAt",
+          "ipAddress",
+          "userAgent",
+          "clientInfo"
+        ]
+      },
+      "PaginationTerminalSessionResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateTerminalSessionDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateTerminalSessionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "startedAt field"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "endedAt field"
+          },
+          "ipAddress": {
+            "type": "string",
+            "description": "ipAddress field"
+          },
+          "userAgent": {
+            "type": "string",
+            "description": "userAgent field"
+          },
+          "clientInfo": {
+            "type": "object",
+            "description": "clientInfo field"
+          }
+        }
+      },
+      "CreateTerminalCommandDto": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "command field"
+          },
+          "description": {
+            "type": "string",
+            "description": "description field"
+          },
+          "output": {
+            "type": "string",
+            "description": "output field"
+          },
+          "tags": {
+            "description": "tags field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isFavorite": {
+            "type": "boolean",
+            "description": "isFavorite field"
+          }
+        },
+        "required": [
+          "command",
+          "description",
+          "output",
+          "tags",
+          "isFavorite"
+        ]
+      },
+      "PaginationTerminalCommandResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateTerminalCommandDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateTerminalCommandDto": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "command field"
+          },
+          "description": {
+            "type": "string",
+            "description": "description field"
+          },
+          "output": {
+            "type": "string",
+            "description": "output field"
+          },
+          "tags": {
+            "description": "tags field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isFavorite": {
+            "type": "boolean",
+            "description": "isFavorite field"
+          }
+        }
+      },
+      "CreateCommandHistoryDto": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "command field"
+          },
+          "executedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "executedAt field"
+          },
+          "status": {
+            "type": "string",
+            "description": "status field"
+          },
+          "exitCode": {
+            "type": "number",
+            "description": "exitCode field"
+          },
+          "output": {
+            "type": "string",
+            "description": "output field"
+          },
+          "errorOutput": {
+            "type": "string",
+            "description": "errorOutput field"
+          },
+          "workingDirectory": {
+            "type": "string",
+            "description": "workingDirectory field"
+          },
+          "durationMs": {
+            "type": "number",
+            "description": "durationMs field"
+          },
+          "shellType": {
+            "type": "string",
+            "description": "shellType field"
+          },
+          "terminalSessionId": {
+            "type": "string",
+            "description": "terminalSessionId field"
+          }
+        },
+        "required": [
+          "command",
+          "executedAt",
+          "status",
+          "exitCode",
+          "output",
+          "errorOutput",
+          "workingDirectory",
+          "durationMs",
+          "shellType",
+          "terminalSessionId"
+        ]
+      },
+      "PaginationCommandHistoryResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateCommandHistoryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateCommandHistoryDto": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "command field"
+          },
+          "executedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "executedAt field"
+          },
+          "status": {
+            "type": "string",
+            "description": "status field"
+          },
+          "exitCode": {
+            "type": "number",
+            "description": "exitCode field"
+          },
+          "output": {
+            "type": "string",
+            "description": "output field"
+          },
+          "errorOutput": {
+            "type": "string",
+            "description": "errorOutput field"
+          },
+          "workingDirectory": {
+            "type": "string",
+            "description": "workingDirectory field"
+          },
+          "durationMs": {
+            "type": "number",
+            "description": "durationMs field"
+          },
+          "shellType": {
+            "type": "string",
+            "description": "shellType field"
+          },
+          "terminalSessionId": {
+            "type": "string",
+            "description": "terminalSessionId field"
+          }
+        }
       }
     }
   }
