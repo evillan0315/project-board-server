@@ -17,6 +17,7 @@ import { Client as SSHClient, ConnectConfig } from 'ssh2';
 import { ExecDto } from './dto/exec.dto';
 import { TerminalService } from './terminal.service';
 import { AuthService } from '../auth/auth.service';
+import { CreateCommandHistoryDto } from './dto/create-command-history.dto';
 
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/auth.guard';
@@ -26,9 +27,7 @@ import { JwtAuthGuard } from '../auth/auth.guard';
   cors: { origin: '*', credentials: true },
   namespace: 'terminal',
 })
-export class TerminalGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly BASE_DIR = `${process.env.BASE_DIR}`;
   private readonly logger = new Logger(TerminalGateway.name);
 
@@ -61,18 +60,31 @@ export class TerminalGateway
 
       if (!token) {
         throw new UnauthorizedException('Missing or malformed token');
-
-        client.emit('outputMessage', 'Authentication required');
       }
+      // Validate token and get user (using authService)
+      const user = await this.authService.validateToken(token);
+      if (!user) {
+        throw new UnauthorizedException('Invalid token');
+      }
+
       const clientId = client.id;
-      this.logger.log(`Client connected: ${clientId}`);
+      this.logger.log(`Client connected: ${clientId} (User: ${user.id})`);
+
+      // Store user ID on the client socket for later use
+      (client as any).userId = user.id;
 
       // Initialize CWD for the client
       const initialCwd = this.BASE_DIR || os.homedir();
       this.cwdMap.set(client.id, initialCwd);
 
-      // Initialize the persistent PTY session for this client
-      this.terminalService.initializePtySession(clientId, client, initialCwd);
+      // Initialize the persistent PTY session for this client and get the database session ID
+      const dbSessionId = await this.terminalService.initializePtySession(
+        clientId,
+        client,
+        initialCwd,
+        user.id,
+      );
+      (client as any).dbSessionId = dbSessionId; // Store db session ID on client
 
       client.emit('outputMessage', 'Welcome to the terminal!\n');
       client.emit('outputPath', this.cwdMap.get(clientId));
@@ -98,18 +110,26 @@ export class TerminalGateway
 
   handleDisconnect(client: Socket) {
     const clientId = client.id;
-    this.terminalService.dispose(clientId);
+    const dbSessionId = (client as any).dbSessionId;
+    if (dbSessionId) {
+      this.terminalService.dispose(clientId); // This will update DB session status
+    }
     this.cwdMap.delete(clientId);
     this.disposeSsh(clientId);
     this.logger.log(`Client disconnected: ${clientId}`);
   }
   @SubscribeMessage('exec_terminal')
-  async handleCommandTerminal(
-    @MessageBody() payload: ExecDto,
-    @ConnectedSocket() client: Socket,
-  ) {
+  async handleCommandTerminal(@MessageBody() payload: ExecDto, @ConnectedSocket() client: Socket) {
     const clientId = client.id;
+    const userId = (client as any).userId;
+    const dbSessionId = (client as any).dbSessionId;
     let currentCwd = this.cwdMap.get(clientId) || process.cwd();
+
+    if (!userId || !dbSessionId) {
+      this.logger.warn(`Missing userId or dbSessionId for client ${clientId}`);
+      client.emit('error', 'Terminal session not properly initialized.');
+      return;
+    }
 
     if (payload.newCwd !== undefined) {
       const targetCwd = payload.newCwd.trim();
@@ -119,9 +139,7 @@ export class TerminalGateway
         this.logger.debug(`Client ${clientId} CWD changed to: ${targetCwd}`);
       } else {
         client.emit('error', `Invalid directory requested: ${targetCwd}\n`);
-        this.logger.warn(
-          `Client ${clientId} requested invalid CWD: ${targetCwd}`,
-        );
+        this.logger.warn(`Client ${clientId} requested invalid CWD: ${targetCwd}`);
       }
       if (payload.command === undefined) {
         client.emit('prompt', { cwd: currentCwd, command: '' });
@@ -134,6 +152,15 @@ export class TerminalGateway
     }
 
     const command = payload.command.trim();
+
+    // Save command history entry to the database
+    const commandHistoryEntry: CreateCommandHistoryDto = {
+      command: command.split('\n')[0], // Take only the first line if multi-line input
+      workingDirectory: currentCwd,
+      shellType: os.platform() === 'win32' ? 'powershell.exe' : 'bash',
+      status: 'EXECUTED',
+    };
+    this.terminalService.saveCommandHistoryEntry(dbSessionId, userId, commandHistoryEntry);
 
     if (this.sshStreamMap.has(clientId)) {
       const stream = this.sshStreamMap.get(clientId);
@@ -187,10 +214,7 @@ export class TerminalGateway
       client.emit('prompt', { cwd: currentCwd, command }); // Emit prompt *before* writing command to PTY
       this.terminalService.write(clientId, `${command}\n`); // Write command to PTY
     } catch (err) {
-      this.logger.error(
-        `Command failed for client ${clientId}: ${err.message}`,
-        err.stack,
-      );
+      this.logger.error(`Command failed for client ${clientId}: ${err.message}`, err.stack);
       this.terminalService.write(clientId, `Command error: ${err.message}\n`); // Emit error via PTY output
       client.emit('prompt', { cwd: currentCwd, command: '' });
     }
@@ -199,13 +223,37 @@ export class TerminalGateway
   // This 'exec' handler seems to be an older one; 'exec_terminal' is preferred.
   // Keeping it for now but noting its potential redundancy.
   @SubscribeMessage('exec')
-  handleCommand(
-    @MessageBody() command: string,
-    @ConnectedSocket() client: Socket,
-  ) {
+  handleCommand(@MessageBody() command: string, @ConnectedSocket() client: Socket) {
     const clientId = client.id;
+    const userId = (client as any).userId;
+    const dbSessionId = (client as any).dbSessionId;
     const cwd = this.cwdMap.get(clientId) || process.cwd();
     const trimmed = command.trim();
+
+    if (!userId || !dbSessionId) {
+      this.logger.warn(`Missing userId or dbSessionId for client ${clientId}`);
+      client.emit('error', 'Terminal session not properly initialized.');
+      return;
+    }
+
+    if (!trimmed) {
+      // Don't log empty commands/newlines
+      if (this.sshStreamMap.has(clientId)) {
+        this.sshStreamMap.get(clientId).write(`${command}\n`);
+        return;
+      }
+      this.terminalService.write(clientId, `${command}\n`);
+      return;
+    }
+
+    // Save command history entry to the database
+    const commandHistoryEntry: CreateCommandHistoryDto = {
+      command: trimmed.split('\n')[0],
+      workingDirectory: cwd,
+      shellType: os.platform() === 'win32' ? 'powershell.exe' : 'bash',
+      status: 'EXECUTED',
+    };
+    this.terminalService.saveCommandHistoryEntry(dbSessionId, userId, commandHistoryEntry);
 
     if (this.sshStreamMap.has(clientId)) {
       const stream = this.sshStreamMap.get(clientId);
@@ -294,9 +342,7 @@ export class TerminalGateway
             return;
           }
           this.sshStreamMap.set(clientId, stream);
-          stream.on('data', (data: Buffer) =>
-            client.emit('output', data.toString()),
-          );
+          stream.on('data', (data: Buffer) => client.emit('output', data.toString()));
           stream.on('close', () => {
             client.emit('output', 'SSH session closed\n');
             this.disposeSsh(clientId);
@@ -321,11 +367,39 @@ export class TerminalGateway
   }
 
   @SubscribeMessage('input')
-  handleInput(
-    @MessageBody() data: { input: string },
-    @ConnectedSocket() client: Socket,
-  ) {
+  handleInput(@MessageBody() data: { input: string }, @ConnectedSocket() client: Socket) {
     const clientId = client.id;
+    const userId = (client as any).userId;
+    const dbSessionId = (client as any).dbSessionId;
+    const currentCwd = this.cwdMap.get(clientId) || process.cwd();
+
+    if (!userId || !dbSessionId) {
+      this.logger.warn(`Missing userId or dbSessionId for client ${clientId}`);
+      client.emit('error', 'Terminal session not properly initialized.');
+      return;
+    }
+
+    const command = data.input.trim();
+    if (!command) {
+      // Don't log empty commands/newlines
+      if (this.sshStreamMap.has(clientId)) {
+        this.sshStreamMap.get(clientId).write(data.input);
+        return;
+      }
+      this.terminalService.write(clientId, data.input);
+      return;
+    }
+
+    // Prepare command history entry (output/error/exitCode are not captured live via PTY)
+    const commandHistoryEntry: CreateCommandHistoryDto = {
+      command: command.split('\n')[0], // Take only the first line if multi-line input
+      workingDirectory: currentCwd,
+      shellType: os.platform() === 'win32' ? 'powershell.exe' : 'bash', // Assuming default shell
+      status: 'EXECUTED', // Initial status
+    };
+
+    // Save command history entry to the database
+    this.terminalService.saveCommandHistoryEntry(dbSessionId, userId, commandHistoryEntry);
 
     if (this.sshStreamMap.has(clientId)) {
       this.sshStreamMap.get(clientId).write(data.input);

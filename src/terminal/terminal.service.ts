@@ -5,20 +5,30 @@ import * as os from 'os';
 import { Client, ConnectConfig } from 'ssh2';
 import { readFileSync } from 'fs';
 import { Socket } from 'socket.io'; // Import Socket type
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateTerminalSessionDto } from './dto/create-terminal-session.dto';
+import { CreateCommandHistoryDto } from './dto/create-command-history.dto';
 
 interface TerminalSession {
   ptyProcess: pty.IPty;
   clientSocket: Socket; // Store client socket to emit data back
+  dbSessionId: string; // Store the database session ID
 }
 
 @Injectable()
 export class TerminalService {
-  private readonly defaultShell =
-    os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+  private readonly defaultShell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
   private sessions = new Map<string, TerminalSession>();
 
+  constructor(private readonly prisma: PrismaService) {}
+
   // Renamed from runCommand to signify its role in initializing the PTY
-  initializePtySession(sessionId: string, client: Socket, cwd: string) {
+  async initializePtySession(
+    sessionId: string,
+    client: Socket,
+    cwd: string,
+    userId: string,
+  ): Promise<string> {
     // If a session already exists, dispose of it first (e.g., on reconnect/re-init)
     if (this.sessions.has(sessionId)) {
       this.dispose(sessionId);
@@ -32,7 +42,26 @@ export class TerminalService {
       env: process.env,
     });
 
-    this.sessions.set(sessionId, { ptyProcess: shell, clientSocket: client });
+    // Create a new TerminalSession record in the database
+    const dbSession = await this.prisma.terminalSession.create({
+      data: {
+        createdById: userId,
+        ipAddress: client.handshake.address,
+        userAgent: client.handshake.headers['user-agent'],
+        clientInfo: {
+          connectionId: client.id,
+          cwd: cwd,
+        },
+        status: 'ACTIVE',
+        name: `Session for User ${userId} (${sessionId})`,
+      },
+    });
+
+    this.sessions.set(sessionId, {
+      ptyProcess: shell,
+      clientSocket: client,
+      dbSessionId: dbSession.id,
+    });
 
     shell.onData((data: string) => {
       // Emit raw output to the client
@@ -40,15 +69,13 @@ export class TerminalService {
     });
 
     shell.onExit(({ exitCode, signal }) => {
-      client.emit(
-        'close',
-        `Process exited with code ${exitCode}, signal ${signal ?? 'none'}`,
-      );
-      this.sessions.delete(sessionId);
+      client.emit('close', `Process exited with code ${exitCode}, signal ${signal ?? 'none'}!`);
+      this.dispose(sessionId); // Call dispose to update DB status
     });
 
     // Initial resize to default values
     shell.resize(80, 30);
+    return dbSession.id; // Return the database session ID
   }
 
   // This method writes input/commands to the existing PTY session
@@ -70,11 +97,48 @@ export class TerminalService {
     }
   }
 
-  dispose(sessionId: string) {
+  async dispose(sessionId: string) {
     const session = this.sessions.get(sessionId);
     if (session) {
       session.ptyProcess.kill();
+      // Update database session status
+      try {
+        await this.prisma.terminalSession.update({
+          where: { id: session.dbSessionId },
+          data: {
+            endedAt: new Date(),
+            status: 'ENDED',
+          },
+        });
+      } catch (error) {
+        console.error('Failed to update terminal session status in DB:', error);
+      }
       this.sessions.delete(sessionId);
+    }
+  }
+
+  async saveCommandHistoryEntry(
+    dbSessionId: string,
+    userId: string,
+    commandData: CreateCommandHistoryDto,
+  ) {
+    try {
+      await this.prisma.commandHistory.create({
+        data: {
+          terminalSessionId: dbSessionId,
+          createdById: userId,
+          command: commandData.command,
+          workingDirectory: commandData.workingDirectory,
+          status: commandData.status,
+          exitCode: commandData.exitCode,
+          output: commandData.output,
+          errorOutput: commandData.errorOutput,
+          durationMs: commandData.durationMs,
+          shellType: commandData.shellType,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to save command history entry:', error);
     }
   }
 
@@ -122,14 +186,7 @@ export class TerminalService {
     privateKeyPath?: string;
     command: string;
   }): Promise<string> {
-    const {
-      host,
-      port = 22,
-      username,
-      password,
-      privateKeyPath,
-      command,
-    } = options;
+    const { host, port = 22, username, password, privateKeyPath, command } = options;
 
     const config: ConnectConfig = {
       host,

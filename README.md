@@ -66,14 +66,16 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 - ✅ **Code Highlighting:** Syntax highlighting for various programming languages.
 - ✅ **ESLint Integration:** Lint code strings and retrieve detailed diagnostics (errors, warnings, fixes).
 - ✅ **Code Transpilation:** Transpile JavaScript/TypeScript, React JSX, SolidJS JSX using ESBuild, supporting single files, multiple files, and ZIP archives.
-- ✅ **Interactive Terminal & Remote Shell:** Execute local terminal commands and establish persistent SSH sessions to remote servers with real-time input/output (via WebSockets).
+- ✅ **Interactive Terminal & Remote Shell:** Execute local terminal commands and establish persistent SSH sessions to remote servers with real-time input/output (via WebSockets), **including command history persistence and session logging.**
 
 ### 📹 Screen Recording & Screenshots
 
-- ✅ Capture desktop screenshots.
-- ✅ Start and stop screen recordings (cross-platform support).
-- ✅ List and manage saved recordings.
-- ✅ Retrieve recording metadata (size, modified time).
+| Method | Endpoint                      | Description                     |
+| ------ | ----------------------------- | ------------------------------- |
+| `POST` | `/api/recording/capture`      | Take a screenshot of the screen |
+| `POST` | `/api/recording/record-start` | Start screen recording          |
+| `POST` | `/api/recording/record-stop`  | Stop screen recording           |
+| `GET`  | `/api/recording/list`         | List all saved recordings       |
 
 ---
 
