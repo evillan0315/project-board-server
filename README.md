@@ -1,4 +1,4 @@
-# NestJS Full-Stack Developer Toolkit & Utilities Server
+# Full-Stack Developer Toolkit & Utilities Server
 
 A comprehensive backend application built with **NestJS**, providing robust authentication, extensive file and folder management (local and remote), powerful AI-powered code and content generation (Google Gemini), a suite of developer utilities, and screen recording capabilities. Designed for rapid development and enhanced productivity.
 

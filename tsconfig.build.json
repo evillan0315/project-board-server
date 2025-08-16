@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "frontend", "generated", "libs", "downloads", "docs"]
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "frontend", "generated", "libs", "downloads", "docs", "code-editor", "ai-editor"]
 }
