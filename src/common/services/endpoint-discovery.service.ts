@@ -201,9 +201,13 @@ export class EndpointDiscoveryService {
    * @param controllerName The name of the controller (e.g., "FileController").
    * @returns A promise that resolves to an array of EndpointInfo objects.
    */
-  async getEndpointsByControllerName(controllerName: string): Promise<EndpointInfo[]> {
+  async getEndpointsByControllerName(
+    controllerName: string,
+  ): Promise<EndpointInfo[]> {
     const allEndpoints = await this.getAllEndpoints();
-    return allEndpoints.filter(endpoint => endpoint.controller === controllerName);
+    return allEndpoints.filter(
+      (endpoint) => endpoint.controller === controllerName,
+    );
   }
 
   private normalizePath(controllerPath: string, methodPath: string): string {

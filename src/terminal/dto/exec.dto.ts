@@ -18,4 +18,3 @@ export class ExecDto {
   @IsString()
   newCwd?: string; // The new CWD path, if the frontend wants to change directory
 }
-

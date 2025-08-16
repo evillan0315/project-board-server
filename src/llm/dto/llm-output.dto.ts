@@ -1,6 +1,13 @@
 // src/llm/dto/llm-output.dto.ts
 
-import { IsString, IsArray, ValidateNested, IsEnum, IsOptional, IsDefined } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsOptional,
+  IsDefined,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'; // Import Swagger decorators
 
@@ -32,15 +39,18 @@ export class ProposedFileChangeDto {
   action: FileAction;
 
   @ApiPropertyOptional({
-    description: 'The new content of the file for "add" or "modify" operations. Not applicable for "delete".',
-    example: 'import React from "react";\n\nconst WelcomeMessage = () => <div>Hello, AI User!</div>;\n\nexport default WelcomeMessage;',
+    description:
+      'The new content of the file for "add" or "modify" operations. Not applicable for "delete".',
+    example:
+      'import React from "react";\n\nconst WelcomeMessage = () => <div>Hello, AI User!</div>;\n\nexport default WelcomeMessage;',
   })
   @IsString()
   @IsOptional()
   newContent?: string;
 
   @ApiPropertyOptional({
-    description: 'A brief explanation or justification for this specific file change.',
+    description:
+      'A brief explanation or justification for this specific file change.',
     example: 'New component to display a welcome message.',
   })
   @IsString()
@@ -63,16 +73,20 @@ export class LlmOutputDto {
   changes: ProposedFileChangeDto[];
 
   @ApiProperty({
-    description: 'A concise summary provided by the LLM, describing the overall changes or solution.',
-    example: 'Implemented a new React component `WelcomeMessage.tsx` to display a greeting message.',
+    description:
+      'A concise summary provided by the LLM, describing the overall changes or solution.',
+    example:
+      'Implemented a new React component `WelcomeMessage.tsx` to display a greeting message.',
   })
   @IsString()
   @IsDefined()
   summary: string;
 
   @ApiPropertyOptional({
-    description: 'The LLM\'s detailed thought process or reasoning behind the proposed changes.',
-    example: 'The user requested a React component, so I created a functional component in TypeScript. I decided to place it in `src/components` for better organization and provided a simple "Hello" message as a starting point, anticipating future customization.',
+    description:
+      "The LLM's detailed thought process or reasoning behind the proposed changes.",
+    example:
+      'The user requested a React component, so I created a functional component in TypeScript. I decided to place it in `src/components` for better organization and provided a simple "Hello" message as a starting point, anticipating future customization.',
   })
   @IsString()
   @IsOptional()

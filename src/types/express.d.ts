@@ -6,4 +6,3 @@ declare namespace Express {
     user?: User;
   }
 }
-

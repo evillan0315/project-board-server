@@ -1,4 +1,4 @@
- // src/common/interfaces/github.interface.ts (or similar)
+// src/common/interfaces/github.interface.ts (or similar)
 
 export interface RepoContent {
   name: string;

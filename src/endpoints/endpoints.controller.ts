@@ -29,17 +29,20 @@ export class EndpointsController {
   @Get(':controllerName')
   @ApiOperation({
     summary: 'List endpoints for a specific controller',
-    description: 'Retrieves all registered API endpoints associated with a given controller name (e.g., "FileController").',
+    description:
+      'Retrieves all registered API endpoints associated with a given controller name (e.g., "FileController").',
   })
   @ApiParam({
     name: 'controllerName',
-    description: 'The exact name of the controller (e.g., "FileController", "RecordingController"). Case-sensitive.',
+    description:
+      'The exact name of the controller (e.g., "FileController", "RecordingController"). Case-sensitive.',
     type: String,
     example: 'FileController',
   })
   @ApiResponse({
     status: 200,
-    description: 'Successfully retrieved endpoints for the specified controller.',
+    description:
+      'Successfully retrieved endpoints for the specified controller.',
     type: [Object],
   })
   @ApiResponse({
@@ -49,9 +52,14 @@ export class EndpointsController {
   async getEndpointsByController(
     @Param('controllerName') controllerName: string,
   ): Promise<EndpointInfo[]> {
-    const endpoints = await this.endpointDiscoveryService.getEndpointsByControllerName(controllerName);
+    const endpoints =
+      await this.endpointDiscoveryService.getEndpointsByControllerName(
+        controllerName,
+      );
     if (endpoints.length === 0) {
-      throw new NotFoundException(`No endpoints found for controller: "${controllerName}"`);
+      throw new NotFoundException(
+        `No endpoints found for controller: "${controllerName}"`,
+      );
     }
     return endpoints;
   }

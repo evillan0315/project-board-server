@@ -12,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventEmitter } from 'events'; // Standard Node.js EventEmitter
 import axios from 'axios';
-import { promises as fs, Dirent } from 'fs'; 
+import { promises as fs, Dirent } from 'fs';
 //import * as fs from 'fs/promises';
 import * as fsExtra from 'fs-extra'; // Provides pathExists, remove, move, createReadStream
 import * as path from 'path';
@@ -30,7 +30,6 @@ import { CreateJwtUserDto } from '../auth/dto/auth.dto';
 import { ScannedFileDto } from './dto/scan-file.dto';
 import { FileTreeNode } from './file.interface';
 
-
 import { REQUEST } from '@nestjs/core';
 import { Request, Response } from 'express';
 
@@ -46,36 +45,87 @@ export class FileService implements OnModuleInit {
 
   // --- START: New properties for the `scan` method's file/dir filtering ---
   private static readonly RELEVANT_FILE_EXTENSIONS = new Set([
-    '.ts', '.tsx', '.js', '.jsx', '.json', '.md', '.yml', '.html', '.css', '.scss', '.less',
-    '.cjs', '.mjs', '.toml', '.xml', // config and module types
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.json',
+    '.md',
+    '.yml',
+    '.html',
+    '.css',
+    '.scss',
+    '.less',
+    '.cjs',
+    '.mjs',
+    '.toml',
+    '.xml', // config and module types
     '.jsonc', // JSON with comments
-    '.vue', '.svelte', // Frontend frameworks
-    '.graphql', '.gql', // GraphQL schema/queries
+    '.vue',
+    '.svelte', // Frontend frameworks
+    '.graphql',
+    '.gql', // GraphQL schema/queries
     '.sql', // Database schemas
-    '.py', '.rb', '.go', '.java', '.c', '.cpp', '.cs', '.php', // Backend/other languages
-    '.sh', '.bash', '.zsh', // Shell scripts
+    '.py',
+    '.rb',
+    '.go',
+    '.java',
+    '.c',
+    '.cpp',
+    '.cs',
+    '.php', // Backend/other languages
+    '.sh',
+    '.bash',
+    '.zsh', // Shell scripts
     '.env', // Environment files
     '.txt', // Plain text
   ]);
 
   private static readonly EXCLUDE_DIR_NAMES_FOR_SCAN = new Set([
-    'node_modules', '.git', '.vscode', '.idea', 'dist', 'build', 'out', 'coverage',
-    '__pycache__', 'venv', 'target', 'vendor', '.ai-editor-logs'
+    'node_modules',
+    '.git',
+    '.vscode',
+    '.idea',
+    'dist',
+    'build',
+    'out',
+    'coverage',
+    '__pycache__',
+    'venv',
+    'target',
+    'vendor',
+    '.ai-editor-logs',
   ]);
 
   private static readonly EXCLUDE_FILE_NAMES_FOR_SCAN = new Set([
-    'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', '.DS_Store',
+    'package-lock.json',
+    'yarn.lock',
+    'pnpm-lock.yaml',
+    '.DS_Store',
   ]);
 
   private static readonly RELEVANT_CONFIG_FILENAMES_FOR_SCAN = new Set([
-    'package.json', 'tsconfig.json', 'vite.config.ts', 'webpack.config.js',
-    'rollup.config.js', 'tailwind.config.ts', '.gitignore', '.eslintrc.js',
-    '.prettierrc.js', 'Dockerfile', 'Makefile', 'LICENSE', 'README.md', 'README.txt',
-    'biome.json', 'jest.config.ts',
-    '.env.local', '.env.development', '.env.production',
+    'package.json',
+    'tsconfig.json',
+    'vite.config.ts',
+    'webpack.config.js',
+    'rollup.config.js',
+    'tailwind.config.ts',
+    '.gitignore',
+    '.eslintrc.js',
+    '.prettierrc.js',
+    'Dockerfile',
+    'Makefile',
+    'LICENSE',
+    'README.md',
+    'README.txt',
+    'biome.json',
+    'jest.config.ts',
+    '.env.local',
+    '.env.development',
+    '.env.production',
   ]);
   // --- END: New properties for the `scan` method's file/dir filtering ---
-
 
   constructor(
     private readonly moduleControlService: ModuleControlService,
@@ -352,7 +402,10 @@ export class FileService implements OnModuleInit {
       });
 
       stream.on('error', (err) => {
-        this.logger.error(`File stream error for ${filePath}: ${err.message}`, err.stack);
+        this.logger.error(
+          `File stream error for ${filePath}: ${err.message}`,
+          err.stack,
+        );
         emitter.emit('fileError', { clientId, error: err.message });
       });
 
@@ -432,7 +485,8 @@ export class FileService implements OnModuleInit {
             children: [],
           };
 
-          if (!isDir) { // If it's a file, get full stats
+          if (!isDir) {
+            // If it's a file, get full stats
             const fullStat = await fs.stat(fullPath);
             fileItem.size = fullStat.size;
             fileItem.createdAt = fullStat.birthtime;
@@ -476,7 +530,10 @@ export class FileService implements OnModuleInit {
 
   private isRelevantFileForScan(fileName: string): boolean {
     const ext = path.extname(fileName).toLowerCase();
-    return FileService.RELEVANT_FILE_EXTENSIONS.has(ext) || FileService.RELEVANT_CONFIG_FILENAMES_FOR_SCAN.has(fileName);
+    return (
+      FileService.RELEVANT_FILE_EXTENSIONS.has(ext) ||
+      FileService.RELEVANT_CONFIG_FILENAMES_FOR_SCAN.has(fileName)
+    );
   }
 
   /**
@@ -493,25 +550,29 @@ export class FileService implements OnModuleInit {
   public async scan(
     scanPaths: string[],
     projectRoot: string,
-    verbose: boolean = false
+    verbose: boolean = false,
   ): Promise<ScannedFileDto[]> {
     this.ensureFileModuleEnabled(); // Ensure module is enabled for this operation
 
     const allScannedFiles: ScannedFileDto[] = [];
     const processedAbsolutePaths = new Set<string>(); // To deduplicate files if multiple scan paths overlap
 
-    this.logger.log(`Starting comprehensive file scan from project root: ${projectRoot}`);
+    this.logger.log(
+      `Starting comprehensive file scan from project root: ${projectRoot}`,
+    );
     if (verbose) {
       this.logger.debug(`Scan paths received: ${scanPaths.join(', ')}`);
     }
 
     for (const currentPath of scanPaths) {
-      console.log(currentPath, 'currentPath')
+      console.log(currentPath, 'currentPath');
       const absolutePath = path.resolve(projectRoot, currentPath);
 
       if (processedAbsolutePaths.has(absolutePath)) {
         if (verbose) {
-          this.logger.debug(`  Skipping '${absolutePath}' (already processed).`);
+          this.logger.debug(
+            `  Skipping '${absolutePath}' (already processed).`,
+          );
         }
         continue;
       }
@@ -520,14 +581,19 @@ export class FileService implements OnModuleInit {
       try {
         stats = await fsExtra.stat(absolutePath);
       } catch (error) {
-        this.logger.error(`Error accessing path '${absolutePath}': ${(error as Error).message}. Skipping.`);
+        this.logger.error(
+          `Error accessing path '${absolutePath}': ${(error as Error).message}. Skipping.`,
+        );
         continue;
       }
 
       if (stats.isFile()) {
         try {
           const content = await fs.readFile(absolutePath, 'utf-8');
-          const relativeToProjectRoot = path.relative(projectRoot, absolutePath);
+          const relativeToProjectRoot = path.relative(
+            projectRoot,
+            absolutePath,
+          );
           allScannedFiles.push({
             filePath: absolutePath,
             relativePath: relativeToProjectRoot,
@@ -535,14 +601,20 @@ export class FileService implements OnModuleInit {
           });
           processedAbsolutePaths.add(absolutePath);
           if (verbose) {
-            this.logger.debug(`  Included explicit file: ${relativeToProjectRoot}`);
+            this.logger.debug(
+              `  Included explicit file: ${relativeToProjectRoot}`,
+            );
           }
         } catch (readError) {
-          this.logger.warn(`Could not read explicit file '${absolutePath}': ${(readError as Error).message}`);
+          this.logger.warn(
+            `Could not read explicit file '${absolutePath}': ${(readError as Error).message}`,
+          );
         }
       } else if (stats.isDirectory()) {
         if (verbose) {
-          this.logger.log(`  Initiating recursive scan for directory: ${absolutePath}`);
+          this.logger.log(
+            `  Initiating recursive scan for directory: ${absolutePath}`,
+          );
         }
         const queue: string[] = [absolutePath];
 
@@ -552,24 +624,33 @@ export class FileService implements OnModuleInit {
           try {
             entries = await fs.readdir(currentDir, { withFileTypes: true });
           } catch (error) {
-            this.logger.error(`Error reading directory '${currentDir}': ${(error as Error).message}. Skipping.`);
+            this.logger.error(
+              `Error reading directory '${currentDir}': ${(error as Error).message}. Skipping.`,
+            );
             continue;
           }
 
           for (const entry of entries) {
             const entryFullPath = path.join(currentDir, entry.name);
-            const relativeToProjectRoot = path.relative(projectRoot, entryFullPath);
+            const relativeToProjectRoot = path.relative(
+              projectRoot,
+              entryFullPath,
+            );
 
             if (entry.isDirectory() && this.isExcludedDirForScan(entry.name)) {
               if (verbose) {
-                this.logger.debug(`    Excluding directory for scan: ${relativeToProjectRoot}`);
+                this.logger.debug(
+                  `    Excluding directory for scan: ${relativeToProjectRoot}`,
+                );
               }
               continue;
             }
 
             if (entry.isFile() && this.isExcludedFileForScan(entry.name)) {
               if (verbose) {
-                this.logger.debug(`    Excluding file for scan: ${relativeToProjectRoot}`);
+                this.logger.debug(
+                  `    Excluding file for scan: ${relativeToProjectRoot}`,
+                );
               }
               continue;
             }
@@ -590,32 +671,43 @@ export class FileService implements OnModuleInit {
                     });
                     processedAbsolutePaths.add(entryFullPath);
                     if (verbose) {
-                      this.logger.debug(`    Included for scan: ${relativeToProjectRoot}`);
+                      this.logger.debug(
+                        `    Included for scan: ${relativeToProjectRoot}`,
+                      );
                     }
                   } catch (readError) {
-                    this.logger.warn(`Could not read file '${entryFullPath}' for scan: ${(readError as Error).message}`);
+                    this.logger.warn(
+                      `Could not read file '${entryFullPath}' for scan: ${(readError as Error).message}`,
+                    );
                   }
                 } else if (verbose) {
-                  this.logger.debug(`    Skipping for scan (already processed): ${relativeToProjectRoot}`);
+                  this.logger.debug(
+                    `    Skipping for scan (already processed): ${relativeToProjectRoot}`,
+                  );
                 }
               } else {
                 if (verbose) {
-                  this.logger.debug(`    Skipping file for scan: ${relativeToProjectRoot} (unsupported type)`);
+                  this.logger.debug(
+                    `    Skipping file for scan: ${relativeToProjectRoot} (unsupported type)`,
+                  );
                 }
               }
             }
           }
         }
       } else {
-        this.logger.warn(`'${absolutePath}' is neither a file nor a directory. Skipping for scan.`);
+        this.logger.warn(
+          `'${absolutePath}' is neither a file nor a directory. Skipping for scan.`,
+        );
       }
     }
 
-    this.logger.log(`Comprehensive file scan completed. Found ${allScannedFiles.length} relevant files.`);
+    this.logger.log(
+      `Comprehensive file scan completed. Found ${allScannedFiles.length} relevant files.`,
+    );
     return allScannedFiles;
   }
   // --- END: New `scan` method and its specific helper methods ---
-
 
   /**
    * Reads a file buffer and returns its content along with metadata.
@@ -882,7 +974,9 @@ export class FileService implements OnModuleInit {
       for (const entry of entries) {
         // Here, assuming this.EXCLUDED_FOLDERS are basenames for generic file browsing
         if (this.EXCLUDED_FOLDERS.includes(entry.name)) {
-          this.logger.debug(`Skipping user-excluded folder during search: ${entry.name}`);
+          this.logger.debug(
+            `Skipping user-excluded folder during search: ${entry.name}`,
+          );
           continue;
         }
 

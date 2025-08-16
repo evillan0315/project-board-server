@@ -122,7 +122,7 @@ export class UserService {
         role: true,
         phone_number: true,
         createdAt: true,
-      }
+      },
     });
   }
 

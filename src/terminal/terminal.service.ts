@@ -13,7 +13,8 @@ interface TerminalSession {
 
 @Injectable()
 export class TerminalService {
-  private readonly defaultShell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+  private readonly defaultShell =
+    os.platform() === 'win32' ? 'powershell.exe' : 'bash';
   private sessions = new Map<string, TerminalSession>();
 
   // Renamed from runCommand to signify its role in initializing the PTY
@@ -39,7 +40,10 @@ export class TerminalService {
     });
 
     shell.onExit(({ exitCode, signal }) => {
-      client.emit('close', `Process exited with code ${exitCode}, signal ${signal ?? 'none'}`);
+      client.emit(
+        'close',
+        `Process exited with code ${exitCode}, signal ${signal ?? 'none'}`,
+      );
       this.sessions.delete(sessionId);
     });
 
@@ -118,7 +122,14 @@ export class TerminalService {
     privateKeyPath?: string;
     command: string;
   }): Promise<string> {
-    const { host, port = 22, username, password, privateKeyPath, command } = options;
+    const {
+      host,
+      port = 22,
+      username,
+      password,
+      privateKeyPath,
+      command,
+    } = options;
 
     const config: ConnectConfig = {
       host,

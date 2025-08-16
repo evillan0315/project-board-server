@@ -50,35 +50,43 @@ export class LlmController {
   @ApiOperation({ summary: 'Generate code and file changes using the LLM' })
   @ApiBody({
     type: LlmInputDto,
-    description: 'LLM input details including prompt, project context, and scan paths',
+    description:
+      'LLM input details including prompt, project context, and scan paths',
     examples: {
       aValidRequest: {
         summary: 'Example of a valid request to generate content',
         value: {
-          userPrompt: 'Generate a simple React component that displays "Hello World".',
-          projectStructure: 'This is a typical React project created with Vite.',
+          userPrompt:
+            'Generate a simple React component that displays "Hello World".',
+          projectStructure:
+            'This is a typical React project created with Vite.',
           scanPaths: ['src/App.tsx', 'public/index.html'],
-          additionalInstructions: 'Ensure the component is a functional component named HelloWorld.tsx.',
-          expectedOutputFormat: '```json\n{"changes": [{"filePath": "...", "action": "add", "newContent": "..."}], "summary": "...", "thoughtProcess": "..."}\n```',
+          additionalInstructions:
+            'Ensure the component is a functional component named HelloWorld.tsx.',
+          expectedOutputFormat:
+            '```json\n{"changes": [{"filePath": "...", "action": "add", "newContent": "..."}], "summary": "...", "thoughtProcess": "..."}\n```',
         },
       },
     },
   })
   @ApiQuery({
     name: 'projectRoot',
-    description: 'The absolute path to the project root directory. Files will be scanned and proposed changes will be relative to this root.',
+    description:
+      'The absolute path to the project root directory. Files will be scanned and proposed changes will be relative to this root.',
     type: String,
     required: true,
     example: '/home/user/my-react-app',
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Successfully generated LLM content and proposed file changes.',
+    description:
+      'Successfully generated LLM content and proposed file changes.',
     type: LlmOutputDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input provided (e.g., missing prompt, invalid file path format).',
+    description:
+      'Invalid input provided (e.g., missing prompt, invalid file path format).',
   })
   @ApiResponse({
     status: HttpStatus.FORBIDDEN,
@@ -86,7 +94,8 @@ export class LlmController {
   })
   @ApiResponse({
     status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: 'An unexpected error occurred during LLM processing or file scanning/parsing.',
+    description:
+      'An unexpected error occurred during LLM processing or file scanning/parsing.',
   })
   async generateContent(
     @Body() llmInput: LlmInputDto,

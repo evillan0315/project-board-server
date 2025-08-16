@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,26 @@ import {
 } from './dto/create-system-instruction.dto';
 import { UpdateSystemInstructionDto } from './dto/update-system-instruction.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'SystemInstruction'
-)
+@ApiTags('SystemInstruction')
 @Controller('api/system-instruction')
 export class SystemInstructionController {
-  constructor(private readonly systemInstructionService: SystemInstructionService) {}
-  
-  
-  
+  constructor(
+    private readonly systemInstructionService: SystemInstructionService,
+  ) {}
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new SystemInstruction' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateSystemInstructionDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateSystemInstructionDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +78,12 @@ export class SystemInstructionController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all SystemInstruction records' })
-  @ApiOkResponse({ description: 'List of SystemInstruction records.', type: [CreateSystemInstructionDto] })
+  @ApiOkResponse({
+    description: 'List of SystemInstruction records.',
+    type: [CreateSystemInstructionDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,30 +95,28 @@ export class SystemInstructionController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated SystemInstruction records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationSystemInstructionResultDto,
-})
-findAllPaginated(@Query() query: PaginationSystemInstructionQueryDto) {
-  return this.systemInstructionService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated SystemInstruction records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationSystemInstructionResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationSystemInstructionQueryDto) {
+    return this.systemInstructionService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find SystemInstruction by ID' })
-  @ApiOkResponse({ description: 'Record found.', type: CreateSystemInstructionDto })
+  @ApiOkResponse({
+    description: 'Record found.',
+    type: CreateSystemInstructionDto,
+  })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -135,11 +129,12 @@ findAllPaginated(@Query() query: PaginationSystemInstructionQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update SystemInstruction by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateSystemInstructionDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateSystemInstructionDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +148,7 @@ findAllPaginated(@Query() query: PaginationSystemInstructionQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete SystemInstruction by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +158,3 @@ findAllPaginated(@Query() query: PaginationSystemInstructionQueryDto) {
     return this.systemInstructionService.remove(id);
   }
 }
-

@@ -84,9 +84,12 @@ export class OAuthService {
   ) {
     const { id: providerAccountId, email, name, image, login } = profile;
     console.log(profile, 'profile handleOAuthLogin');
-    let user = await this.prisma.user.findUnique({ where: { email }, include: {
-       // Account: true,
-      } });
+    let user = await this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        // Account: true,
+      },
+    });
 
     if (!user) {
       user = await this.prisma.user.create({
@@ -109,7 +112,7 @@ export class OAuthService {
         data: { username: login },
       });
     }
-    
+
     await this.prisma.account.upsert({
       where: {
         provider_providerAccountId: {
@@ -138,8 +141,8 @@ export class OAuthService {
         createdBy: { connect: { id: user.id } },
       },
     });
-   // const u = user as CreateJwtUserDto;
-    
+    // const u = user as CreateJwtUserDto;
+
     return user;
   }
 }

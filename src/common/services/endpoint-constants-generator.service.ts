@@ -26,7 +26,8 @@ export class EndpointConstantsGeneratorService implements OnModuleInit {
   //                 ├── user.endpoints.ts
   //                 └── index.ts (re-exports all)
   private readonly FRONTEND_DIR = path.resolve(process.cwd(), 'frontend');
-  private readonly OUTPUT_DIR_PATH = path.join( // Changed from OUTPUT_FILE_PATH
+  private readonly OUTPUT_DIR_PATH = path.join(
+    // Changed from OUTPUT_FILE_PATH
     this.FRONTEND_DIR,
     'src',
     'constants',
@@ -125,7 +126,8 @@ export class EndpointConstantsGeneratorService implements OnModuleInit {
    * Each file will contain an exported const named after the controller (e.g., `FILE_ENDPOINTS`).
    * It also generates an `index.ts` file that re-exports all controller endpoints.
    */
-  public async generateEndpointConstantsFiles(): Promise<void> { // Renamed method for clarity
+  public async generateEndpointConstantsFiles(): Promise<void> {
+    // Renamed method for clarity
     const endpoints = await this.endpointDiscoveryService.getAllEndpoints();
 
     // Group endpoints by controller for a hierarchical structure in the output file.
@@ -243,26 +245,28 @@ ${controllerTagsComment}export const ${constantExportName} = {
 `;
 
     for (const controllerKey of sortedControllerKeys) {
-        const constantExportName = `${controllerKey}_ENDPOINTS`;
-        const outputFileName = `${controllerKey.toLowerCase()}.endpoints`; // without .ts extension for import
-        indexFileContent += `export { ${constantExportName} } from './${outputFileName}';\n`;
+      const constantExportName = `${controllerKey}_ENDPOINTS`;
+      const outputFileName = `${controllerKey.toLowerCase()}.endpoints`; // without .ts extension for import
+      indexFileContent += `export { ${constantExportName} } from './${outputFileName}';\n`;
     }
 
     // Optionally, export a single object combining all of them for backward compatibility or convenience
     if (exportedConstantNames.length > 0) {
-        indexFileContent += `
+      indexFileContent += `
 /**
  * A comprehensive object containing all API endpoints, grouped by controller.
  * Useful for inspecting all endpoints in a single place.
  */
 export const ALL_API_ENDPOINTS = {
-${exportedConstantNames.map(name => `  ...${name},`).join('\n')}
+${exportedConstantNames.map((name) => `  ...${name},`).join('\n')}
 };
 `;
     }
 
     const indexFilePath = path.join(this.OUTPUT_DIR_PATH, 'index.ts');
     fs.writeFileSync(indexFilePath, indexFileContent, 'utf8');
-    console.log(`  Generated: index.ts (re-exporting all controller endpoints)`);
+    console.log(
+      `  Generated: index.ts (re-exporting all controller endpoints)`,
+    );
   }
 }

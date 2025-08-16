@@ -26,7 +26,9 @@ import { JwtAuthGuard } from '../auth/auth.guard';
   cors: { origin: '*', credentials: true },
   namespace: 'terminal',
 })
-export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class TerminalGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   private readonly BASE_DIR = `${process.env.BASE_DIR}`;
   private readonly logger = new Logger(TerminalGateway.name);
 
@@ -102,7 +104,10 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.logger.log(`Client disconnected: ${clientId}`);
   }
   @SubscribeMessage('exec_terminal')
-  async handleCommandTerminal(@MessageBody() payload: ExecDto, @ConnectedSocket() client: Socket) {
+  async handleCommandTerminal(
+    @MessageBody() payload: ExecDto,
+    @ConnectedSocket() client: Socket,
+  ) {
     const clientId = client.id;
     let currentCwd = this.cwdMap.get(clientId) || process.cwd();
 
@@ -114,7 +119,9 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
         this.logger.debug(`Client ${clientId} CWD changed to: ${targetCwd}`);
       } else {
         client.emit('error', `Invalid directory requested: ${targetCwd}\n`);
-        this.logger.warn(`Client ${clientId} requested invalid CWD: ${targetCwd}`);
+        this.logger.warn(
+          `Client ${clientId} requested invalid CWD: ${targetCwd}`,
+        );
       }
       if (payload.command === undefined) {
         client.emit('prompt', { cwd: currentCwd, command: '' });
@@ -180,7 +187,10 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
       client.emit('prompt', { cwd: currentCwd, command }); // Emit prompt *before* writing command to PTY
       this.terminalService.write(clientId, `${command}\n`); // Write command to PTY
     } catch (err) {
-      this.logger.error(`Command failed for client ${clientId}: ${err.message}`, err.stack);
+      this.logger.error(
+        `Command failed for client ${clientId}: ${err.message}`,
+        err.stack,
+      );
       this.terminalService.write(clientId, `Command error: ${err.message}\n`); // Emit error via PTY output
       client.emit('prompt', { cwd: currentCwd, command: '' });
     }
@@ -189,7 +199,10 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   // This 'exec' handler seems to be an older one; 'exec_terminal' is preferred.
   // Keeping it for now but noting its potential redundancy.
   @SubscribeMessage('exec')
-  handleCommand(@MessageBody() command: string, @ConnectedSocket() client: Socket) {
+  handleCommand(
+    @MessageBody() command: string,
+    @ConnectedSocket() client: Socket,
+  ) {
     const clientId = client.id;
     const cwd = this.cwdMap.get(clientId) || process.cwd();
     const trimmed = command.trim();
@@ -281,7 +294,9 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
             return;
           }
           this.sshStreamMap.set(clientId, stream);
-          stream.on('data', (data: Buffer) => client.emit('output', data.toString()));
+          stream.on('data', (data: Buffer) =>
+            client.emit('output', data.toString()),
+          );
           stream.on('close', () => {
             client.emit('output', 'SSH session closed\n');
             this.disposeSsh(clientId);
@@ -306,7 +321,10 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   @SubscribeMessage('input')
-  handleInput(@MessageBody() data: { input: string }, @ConnectedSocket() client: Socket) {
+  handleInput(
+    @MessageBody() data: { input: string },
+    @ConnectedSocket() client: Socket,
+  ) {
     const clientId = client.id;
 
     if (this.sshStreamMap.has(clientId)) {

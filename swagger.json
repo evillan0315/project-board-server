@@ -11405,7 +11405,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-15T14:48:37.765Z",
+            "example": "2025-08-16T06:35:41.208Z",
             "format": "date-time"
           }
         },

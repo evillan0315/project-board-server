@@ -148,7 +148,8 @@ export class GoogleGeminiFileService {
       if (conversationHistory && conversationHistory.length > 0) {
         // Create a unique set of history items, excluding `createdAt` for comparison
         const seen = new Set<string>();
-        const uniqueHistory: Omit<ConversationHistoryItemDto, 'createdAt'>[] = [];
+        const uniqueHistory: Omit<ConversationHistoryItemDto, 'createdAt'>[] =
+          [];
 
         for (const item of conversationHistory) {
           // Use a consistent stringification for comparison.
@@ -274,21 +275,32 @@ export class GoogleGeminiFileService {
    * @param options.parseResult A function to parse the Gemini response if it's not just plain text.
    * @returns The result of the Gemini operation, potentially parsed.
    */
-  private async _performGeminiOperation<T extends { prompt: string; systemInstruction?: string; conversationId?: string }>(
-    options: {
-      dto: T;
-      requestType: RequestType;
-      getContents: (dto: T) => { role: string; parts: any[] }[];
-      saveOptions?: {
-        imageData?: string;
-        fileMimeType?: string;
-        fileData?: string;
-      };
-      defaultSystemInstruction?: string;
-      parseResult?: (generatedText: string) => any; // Generic parser for complex results
+  private async _performGeminiOperation<
+    T extends {
+      prompt: string;
+      systemInstruction?: string;
+      conversationId?: string;
     },
-  ): Promise<string | OptimizationResultDto> {
-    const { dto, requestType, getContents, saveOptions, defaultSystemInstruction, parseResult } = options;
+  >(options: {
+    dto: T;
+    requestType: RequestType;
+    getContents: (dto: T) => { role: string; parts: any[] }[];
+    saveOptions?: {
+      imageData?: string;
+      fileMimeType?: string;
+      fileData?: string;
+    };
+    defaultSystemInstruction?: string;
+    parseResult?: (generatedText: string) => any; // Generic parser for complex results
+  }): Promise<string | OptimizationResultDto> {
+    const {
+      dto,
+      requestType,
+      getContents,
+      saveOptions,
+      defaultSystemInstruction,
+      parseResult,
+    } = options;
     const { prompt, systemInstruction, conversationId } = dto;
     const currentUserId = this.userId;
     const modelName = this.GOOGLE_GEMINI_MODEL || 'gemini-2.0-flash';
@@ -299,7 +311,8 @@ export class GoogleGeminiFileService {
     }
 
     let conversationHistory: ConversationHistoryItemDto[] | undefined;
-    if (conversationId) { // Only attempt to fetch history if a conversationId was provided initially
+    if (conversationId) {
+      // Only attempt to fetch history if a conversationId was provided initially
       const paginatedResult = await this.getConversationHistory(conversationId);
       conversationHistory = paginatedResult.data;
       if (!conversationHistory || conversationHistory.length === 0) {
@@ -309,7 +322,8 @@ export class GoogleGeminiFileService {
       }
     }
 
-    const effectiveSystemInstruction = systemInstruction || defaultSystemInstruction;
+    const effectiveSystemInstruction =
+      systemInstruction || defaultSystemInstruction;
 
     const payload: {
       contents: { role: string; parts: any[] }[];
@@ -362,7 +376,10 @@ export class GoogleGeminiFileService {
     }
   }
 
-  async generateText(generateTextDto: GenerateTextDto, requestType?: RequestType): Promise<string> {
+  async generateText(
+    generateTextDto: GenerateTextDto,
+    requestType?: RequestType,
+  ): Promise<string> {
     return this._performGeminiOperation({
       dto: generateTextDto,
       requestType: requestType || RequestType.TEXT_ONLY,
@@ -406,12 +423,15 @@ export class GoogleGeminiFileService {
     if (!file) {
       throw new BadRequestException('No file provided for analysis.');
     }
-    this.logger.debug(`generateTextWithFile called with conversationId: ${conversationId}, filename: ${file.originalname}`);
+    this.logger.debug(
+      `generateTextWithFile called with conversationId: ${conversationId}, filename: ${file.originalname}`,
+    );
 
     const base64Data = file.buffer.toString('base64');
     const fileName = file.originalname;
     // More robust MIME type lookup
-    const fileMimeType = file.mimetype || mimeLookup(fileName) || 'application/octet-stream';
+    const fileMimeType =
+      file.mimetype || mimeLookup(fileName) || 'application/octet-stream';
 
     const dto: GenerateFileInternalDto = {
       prompt,
@@ -539,7 +559,9 @@ September 2010 – May 2014
    * @param optimizeResumeDto DTO containing resume content and job description.
    * @returns An object with optimization score, summary, and detailed suggestions.
    */
-  async optimizeResume(optimizeResumeDto: OptimizeResumeDto): Promise<OptimizationResultDto> {
+  async optimizeResume(
+    optimizeResumeDto: OptimizeResumeDto,
+  ): Promise<OptimizationResultDto> {
     const defaultSystemInstruction = `You are an AI resume optimization expert. Your task is to analyze a given resume against a job description and provide actionable, specific suggestions to improve its alignment. Focus on:
 - Keyword matching (hard skills, soft skills, industry terms)
 - Quantifiable achievements and impact
@@ -578,9 +600,15 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
           const jsonString = jsonMatch ? jsonMatch[1] : generatedText;
           return JSON.parse(jsonString);
         } catch (jsonError) {
-          this.logger.error(`Failed to parse Gemini JSON response for resume optimization: ${jsonError.message}`);
-          this.logger.error(`Raw Gemini response (optimization): ${generatedText}`);
-          throw new InternalServerErrorException('Gemini returned an unparseable JSON response for resume optimization.');
+          this.logger.error(
+            `Failed to parse Gemini JSON response for resume optimization: ${jsonError.message}`,
+          );
+          this.logger.error(
+            `Raw Gemini response (optimization): ${generatedText}`,
+          );
+          throw new InternalServerErrorException(
+            'Gemini returned an unparseable JSON response for resume optimization.',
+          );
         }
       },
     }) as Promise<OptimizationResultDto>;
@@ -612,4 +640,3 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
     }) as Promise<string>;
   }
 }
-

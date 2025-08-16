@@ -6,13 +6,8 @@ import { FileModule } from '../file/file.module';
 import { ModuleControlModule } from '../module-control/module-control.module';
 import { UtilsModule } from '../utils/utils.module';
 @Module({
-  imports: [
-    GoogleModule,
-    ModuleControlModule,
-    FileModule,
-    UtilsModule
-  ],
+  imports: [GoogleModule, ModuleControlModule, FileModule, UtilsModule],
   providers: [LlmService],
-  controllers: [LlmController]
+  controllers: [LlmController],
 })
 export class LlmModule {}

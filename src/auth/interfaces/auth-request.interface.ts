@@ -3,6 +3,6 @@ import { User } from '@prisma/client';
 
 export interface AuthRequest extends Request {
   user: Partial<Pick<User, 'id' | 'email' | 'name' | 'role' | 'username'>>;
-  provider?: 'github'|'google';
+  provider?: 'github' | 'google';
   providerToken?: string;
 }

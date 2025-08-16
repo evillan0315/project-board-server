@@ -197,17 +197,19 @@ import fileConfig from './config/file.config';
     SystemInstructionModule,
     EslintModule,
     LlmModule,
-   
-    
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.
    */
-  controllers: [AppController, EndpointsController, ],
+  controllers: [AppController, EndpointsController],
 
   /**
    * Providers defined in this module. Providers offer services or functionality that can be injected into controllers and other providers.
    */
-  providers: [AppService, EndpointDiscoveryService, EndpointConstantsGeneratorService],
+  providers: [
+    AppService,
+    EndpointDiscoveryService,
+    EndpointConstantsGeneratorService,
+  ],
 })
 export class AppModule {}

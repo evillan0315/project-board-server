@@ -1,5 +1,12 @@
- import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, MaxLength, MinLength, IsBoolean } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  MaxLength,
+  MinLength,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateRepoDto {
   @ApiProperty({
@@ -26,7 +33,8 @@ export class CreateRepoDto {
   description?: string;
 
   @ApiProperty({
-    description: 'Whether the repository should be private (true) or public (false)',
+    description:
+      'Whether the repository should be private (true) or public (false)',
     required: false,
     example: false,
     default: false,

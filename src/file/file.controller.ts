@@ -118,7 +118,9 @@ export class FileController {
         throw new NotFoundException(`File not found: ${filePath}`);
       }
       this.logger.error(`Failed to open file: ${err.message}`);
-      throw new InternalServerErrorException(`Failed to open file: ${err.message}`);
+      throw new InternalServerErrorException(
+        `Failed to open file: ${err.message}`,
+      );
     }
   }
 
@@ -165,7 +167,8 @@ export class FileController {
   @ApiQuery({
     name: 'directory',
     required: false,
-    description: 'Path to the directory (defaults to current working directory)',
+    description:
+      'Path to the directory (defaults to current working directory)',
   })
   @ApiQuery({
     name: 'recursive',
@@ -254,10 +257,15 @@ export class FileController {
         fs.createReadStream(absolutePath, { start, end }).pipe(res);
       }
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
-      throw new InternalServerErrorException(`Failed to stream file: ${(error as Error).message}`);
+      throw new InternalServerErrorException(
+        `Failed to stream file: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -324,10 +332,15 @@ export class FileController {
       return new StreamableFile(readStream);
     } catch (error) {
       this.logger.error(`Failed to stream file: ${(error as Error).message}`);
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
-      throw new InternalServerErrorException(`Failed to stream file: ${(error as Error).message}`);
+      throw new InternalServerErrorException(
+        `Failed to stream file: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -351,11 +364,13 @@ export class FileController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'Upload a file (optional if filePath or url is provided)',
+          description:
+            'Upload a file (optional if filePath or url is provided)',
         },
         filePath: {
           type: 'string',
-          description: 'Absolute or relative path to a file on the local file system',
+          description:
+            'Absolute or relative path to a file on the local file system',
         },
         url: {
           type: 'string',
@@ -363,7 +378,8 @@ export class FileController {
         },
         generateBlobUrl: {
           type: 'boolean',
-          description: 'If true, returns content as a base64 blob-style data URL.',
+          description:
+            'If true, returns content as a base64 blob-style data URL.',
         },
       },
       required: [],
@@ -375,7 +391,10 @@ export class FileController {
     @Body() body: ReadFileDto,
     @Res() res: Response,
   ): Promise<void> {
-    const { buffer, filename, filePath } = await this.fileService.resolveFile(file, body);
+    const { buffer, filename, filePath } = await this.fileService.resolveFile(
+      file,
+      body,
+    );
 
     const fileData = await this.fileService.readFile(
       buffer,
@@ -388,8 +407,14 @@ export class FileController {
       if (!fs.existsSync(filePath)) {
         throw new NotFoundException('Requested file not found for streaming.');
       }
-      res.setHeader('Content-Type', fileData.mimeType || 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader(
+        'Content-Type',
+        fileData.mimeType || 'application/octet-stream',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${filename}"`,
+      );
 
       const stream = fs.createReadStream(filePath);
       stream.pipe(res);
@@ -414,7 +439,8 @@ export class FileController {
         },
         generateBlobUrl: {
           type: 'boolean',
-          description: 'If true, returns content as base64 blob-style data URLs.',
+          description:
+            'If true, returns content as base64 blob-style data URLs.',
         },
       },
       required: ['files'],
@@ -487,7 +513,9 @@ export class FileController {
   @ApiResponse({ status: 400, description: 'Invalid input or path.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
-  async create(@Body() dto: CreateFileDto): Promise<{ success: boolean; filePath: string }> {
+  async create(
+    @Body() dto: CreateFileDto,
+  ): Promise<{ success: boolean; filePath: string }> {
     return this.fileService.createLocalFileOrFolder(dto);
   }
 
@@ -509,9 +537,13 @@ export class FileController {
   @ApiResponse({ status: 400, description: 'Invalid input or path.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
-  async createFolder(@Body() dto: CreateFileDto): Promise<{ success: boolean; filePath: string }> {
+  async createFolder(
+    @Body() dto: CreateFileDto,
+  ): Promise<{ success: boolean; filePath: string }> {
     if (!dto.isDirectory) {
-      throw new BadRequestException('For create-folder, isDirectory must be true.');
+      throw new BadRequestException(
+        'For create-folder, isDirectory must be true.',
+      );
     }
     return this.fileService.createLocalFileOrFolder(dto);
   }
@@ -555,7 +587,9 @@ export class FileController {
   ): Promise<{ success: boolean; message: string }> {
     const { filePath, content } = body;
     if (!filePath || typeof content !== 'string') {
-      throw new BadRequestException('Both filePath and content must be provided.');
+      throw new BadRequestException(
+        'Both filePath and content must be provided.',
+      );
     }
     return this.fileService.writeLocalFileContent(filePath, content);
   }
@@ -614,7 +648,9 @@ export class FileController {
     status: 500,
     description: 'Failed to rename file or folder.',
   })
-  async renameFileOrFolder(@Body() body: RenameFileDto): Promise<RenameFileResponseDto> {
+  async renameFileOrFolder(
+    @Body() body: RenameFileDto,
+  ): Promise<RenameFileResponseDto> {
     return this.fileService.renameLocalFileOrFolder(body.oldPath, body.newPath);
   }
 
@@ -634,7 +670,9 @@ export class FileController {
     status: 500,
     description: 'Failed to complete search operation.',
   })
-  async searchFiles(@Body() body: SearchFileDto): Promise<SearchFileResponseDto[]> {
+  async searchFiles(
+    @Body() body: SearchFileDto,
+  ): Promise<SearchFileResponseDto[]> {
     const directory = body.directory ?? '.';
     return this.fileService.searchFilesByName(directory, body.searchTerm);
   }
@@ -655,7 +693,9 @@ export class FileController {
   })
   @ApiResponse({ status: 201, description: 'File uploaded successfully.' })
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File): Promise<ReadFileResponseDto> {
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ReadFileResponseDto> {
     const resolved = await this.fileService.resolveFile(file);
     return this.fileService.readFile(resolved.buffer, resolved.filename);
   }
@@ -682,7 +722,9 @@ export class FileController {
   async uploadMultipleFiles(
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<ReadFileResponseDto[]> {
-    const fileDataPromises = files.map((file) => this.fileService.resolveFile(file));
+    const fileDataPromises = files.map((file) =>
+      this.fileService.resolveFile(file),
+    );
     const resolvedFiles = await Promise.all(fileDataPromises);
     return this.fileService.readMultipleFiles(resolvedFiles);
   }
@@ -699,9 +741,12 @@ export class FileController {
     description: 'List of scanned files returned successfully.',
     type: [ScannedFileDto],
   })
-  @ApiInternalServerErrorResponse({ description: 'Failed to perform project scan.' })
+  @ApiInternalServerErrorResponse({
+    description: 'Failed to perform project scan.',
+  })
   async scanFile(@Body() dto: ScanFileDto): Promise<ScannedFileDto[]> {
-    const scanPaths = dto.scanPaths && dto.scanPaths.length > 0 ? dto.scanPaths : ['.'];
+    const scanPaths =
+      dto.scanPaths && dto.scanPaths.length > 0 ? dto.scanPaths : ['.'];
     const projectRoot = dto.projectRoot || process.cwd();
     const verbose = dto.verbose ?? false;
 
@@ -712,7 +757,9 @@ export class FileController {
         `Failed to scan project: ${(error as Error).message}`,
         (error as Error).stack,
       );
-      throw new InternalServerErrorException(`Failed to scan project: ${(error as Error).message}`);
+      throw new InternalServerErrorException(
+        `Failed to scan project: ${(error as Error).message}`,
+      );
     }
   }
 }

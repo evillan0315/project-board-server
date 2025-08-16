@@ -38,7 +38,10 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
         await fs.rm(this.tempDir, { recursive: true, force: true });
         console.log(`Cleaned up temporary directory: ${this.tempDir}`);
       } catch (error) {
-        console.warn(`Failed to clean up temporary directory ${this.tempDir}:`, error);
+        console.warn(
+          `Failed to clean up temporary directory ${this.tempDir}:`,
+          error,
+        );
       }
     }
   }
@@ -57,7 +60,10 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
         await fs.mkdir(this.tempDir, { recursive: true });
         console.log(`Created temporary directory: ${this.tempDir}`);
       } catch (error) {
-        console.error(`Failed to create temporary directory ${this.tempDir}:`, error);
+        console.error(
+          `Failed to create temporary directory ${this.tempDir}:`,
+          error,
+        );
         // Re-throw to prevent service from starting if temp directory creation fails
         throw error;
       }
@@ -165,13 +171,23 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
   ): Promise<void> {
     // Ensure the temporary directory is initialized before attempting conversions
     if (!this.tempDir) {
-        throw new Error('Temporary directory not initialized. MarkdownUtilService setup might have failed.');
+      throw new Error(
+        'Temporary directory not initialized. MarkdownUtilService setup might have failed.',
+      );
     }
 
     try {
       // Basic Pandoc command: -f <input_format> -t <output_format> -o <output_file> <input_file>
       // More complex options (e.g., --reference-doc for custom styles) can be added here.
-      const args = [`-f`, inputFormat, `-t`, outputFormat, `-o`, outputFilePath, inputFilePath];
+      const args = [
+        `-f`,
+        inputFormat,
+        `-t`,
+        outputFormat,
+        `-o`,
+        outputFilePath,
+        inputFilePath,
+      ];
 
       const { stdout, stderr } = await execFilePromise('pandoc', args);
 
@@ -185,11 +201,13 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
       if ((error as any).code === 'ENOENT') {
         throw new Error(
           'Pandoc is not installed or not found in system PATH. ' +
-          'Please install Pandoc (https://pandoc.org/installing.html) to enable DOCX conversions. ' +
-          `Original system error: ${error.message}`
+            'Please install Pandoc (https://pandoc.org/installing.html) to enable DOCX conversions. ' +
+            `Original system error: ${error.message}`,
         );
       }
-      throw new Error(`Pandoc conversion failed: ${error.message}. Output: ${(error as any).stdout || ''} Error: ${(error as any).stderr || ''}`);
+      throw new Error(
+        `Pandoc conversion failed: ${error.message}. Output: ${(error as any).stdout || ''} Error: ${(error as any).stderr || ''}`,
+      );
     }
   }
 
@@ -207,13 +225,20 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
    * @throws Error if Pandoc is not installed, the temporary directory is not initialized,
    *              or the conversion fails.
    */
-  async markdownToDocx(markdown: string, baseFileName?: string): Promise<Buffer> {
+  async markdownToDocx(
+    markdown: string,
+    baseFileName?: string,
+  ): Promise<Buffer> {
     if (!this.tempDir) {
-        throw new Error('Temporary directory not initialized. MarkdownUtilService setup might have failed.');
+      throw new Error(
+        'Temporary directory not initialized. MarkdownUtilService setup might have failed.',
+      );
     }
 
     // Generate unique file names for input and output within the temporary directory
-    const uniqueId = baseFileName || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const uniqueId =
+      baseFileName ||
+      `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const inputFilePath = path.join(this.tempDir, `${uniqueId}.md`);
     const outputFilePath = path.join(this.tempDir, `${uniqueId}.docx`);
 
@@ -222,15 +247,28 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
       await fs.writeFile(inputFilePath, markdown, 'utf8');
 
       // Execute Pandoc for markdown to docx conversion
-      await this.executePandoc(inputFilePath, outputFilePath, 'markdown', 'docx');
+      await this.executePandoc(
+        inputFilePath,
+        outputFilePath,
+        'markdown',
+        'docx',
+      );
 
       // Read the generated docx file into a Buffer
       const docxBuffer = await fs.readFile(outputFilePath);
       return docxBuffer;
     } finally {
       // Clean up temporary files, ignoring potential errors during cleanup
-      await fs.rm(inputFilePath, { force: true }).catch((err) => console.warn(`Failed to remove temp file ${inputFilePath}:`, err));
-      await fs.rm(outputFilePath, { force: true }).catch((err) => console.warn(`Failed to remove temp file ${outputFilePath}:`, err));
+      await fs
+        .rm(inputFilePath, { force: true })
+        .catch((err) =>
+          console.warn(`Failed to remove temp file ${inputFilePath}:`, err),
+        );
+      await fs
+        .rm(outputFilePath, { force: true })
+        .catch((err) =>
+          console.warn(`Failed to remove temp file ${outputFilePath}:`, err),
+        );
     }
   }
 
@@ -250,11 +288,15 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
    */
   async htmlToDocx(html: string, baseFileName?: string): Promise<Buffer> {
     if (!this.tempDir) {
-        throw new Error('Temporary directory not initialized. MarkdownUtilService setup might have failed.');
+      throw new Error(
+        'Temporary directory not initialized. MarkdownUtilService setup might have failed.',
+      );
     }
 
     // Generate unique file names for input and output within the temporary directory
-    const uniqueId = baseFileName || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const uniqueId =
+      baseFileName ||
+      `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const inputFilePath = path.join(this.tempDir, `${uniqueId}.html`);
     const outputFilePath = path.join(this.tempDir, `${uniqueId}.docx`);
 
@@ -270,9 +312,16 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
       return docxBuffer;
     } finally {
       // Clean up temporary files, ignoring potential errors during cleanup
-      await fs.rm(inputFilePath, { force: true }).catch((err) => console.warn(`Failed to remove temp file ${inputFilePath}:`, err));
-      await fs.rm(outputFilePath, { force: true }).catch((err) => console.warn(`Failed to remove temp file ${outputFilePath}:`, err));
+      await fs
+        .rm(inputFilePath, { force: true })
+        .catch((err) =>
+          console.warn(`Failed to remove temp file ${inputFilePath}:`, err),
+        );
+      await fs
+        .rm(outputFilePath, { force: true })
+        .catch((err) =>
+          console.warn(`Failed to remove temp file ${outputFilePath}:`, err),
+        );
     }
   }
 }
-

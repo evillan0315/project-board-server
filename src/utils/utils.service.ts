@@ -35,9 +35,8 @@ export class UtilsService {
   private globalCssContent: string | null = null;
   private downloadDir = path.resolve(process.cwd(), 'downloads');
   private highlighterPromise: Promise<Highlighter>;
-  
+
   private readonly EXTENSION_LANGUAGE_MAP: Record<string, string> = {
-    
     js: 'javascript',
     jsx: 'javascript',
     ts: 'typescript',
@@ -66,7 +65,6 @@ export class UtilsService {
     svelte: 'svelte',
     sql: 'sql',
 
-    
     mp3: 'audio',
     wav: 'audio',
     ogg: 'audio',
@@ -75,7 +73,6 @@ export class UtilsService {
     flac: 'audio',
     wma: 'audio',
 
-    
     mp4: 'video',
     webm: 'video',
     ogv: 'video',
@@ -89,7 +86,6 @@ export class UtilsService {
   };
 
   private readonly MIME_LANGUAGE_MAP: Record<string, string> = {
-    
     'application/json': 'json',
     'text/html': 'html',
     'text/css': 'css',
@@ -104,7 +100,6 @@ export class UtilsService {
     'application/x-sh': 'shell',
     'application/x-yaml': 'yaml',
 
-    
     'audio/mpeg': 'audio',
     'audio/mp3': 'audio',
     'audio/wav': 'audio',
@@ -117,7 +112,6 @@ export class UtilsService {
     'audio/flac': 'audio',
     'audio/x-ms-wma': 'audio',
 
-    
     'video/mp4': 'video',
     'video/webm': 'video',
     'video/ogg': 'video',
@@ -130,7 +124,6 @@ export class UtilsService {
     'video/x-ms-wmv': 'video',
   };
 
-  
   private readonly parserMap: Record<
     string,
     prettier.BuiltInParserName | string
@@ -138,11 +131,11 @@ export class UtilsService {
     javascript: 'babel',
     jsx: 'babel',
     js: 'babel',
-    
+
     typescript: 'typescript',
     ts: 'typescript',
     tsx: 'typescript',
-    
+
     json: 'json',
     html: 'html',
     ejs: 'html',
@@ -152,7 +145,7 @@ export class UtilsService {
     less: 'less',
     markdown: 'markdown',
     md: 'markdown',
-    
+
     yaml: 'yaml',
     xml: 'xml',
   };
@@ -161,7 +154,6 @@ export class UtilsService {
     this.initializeDirectories();
     this.loadGlobalCss();
 
-    
     const allLangs = Array.from(
       new Set(
         Object.values(this.EXTENSION_LANGUAGE_MAP)
@@ -243,7 +235,7 @@ export class UtilsService {
         `Failed to load global.css from ${cssFilePath}: ${error.message}`,
         error.stack,
       );
-      this.globalCssContent = ''; 
+      this.globalCssContent = '';
     }
   }
 
@@ -252,7 +244,6 @@ export class UtilsService {
     return path.join(this.outputDir, `${fileName}-${Date.now()}-temp.png`);
   }
 
-  
   parseEnvMap(mapString?: string): LanguageMap {
     const map: LanguageMap = {};
     if (!mapString) return map;
@@ -267,9 +258,6 @@ export class UtilsService {
     return map;
   }
 
-  
-
-  
   detectLanguage(filename: string, mimeType?: string): string | undefined {
     if (!filename) {
       return undefined;
@@ -282,10 +270,8 @@ export class UtilsService {
 
     const detectedMime = mimeType || mimeLookup(filename);
     if (detectedMime) {
-      
       const normalizedMime = detectedMime.split(';')[0].toLowerCase();
       if (this.MIME_LANGUAGE_MAP[normalizedMime]) {
-        
         return this.MIME_LANGUAGE_MAP[normalizedMime];
       }
     }
@@ -293,9 +279,6 @@ export class UtilsService {
     return undefined;
   }
 
-  
-
-  
   async formatCode(code: string, language: string): Promise<string> {
     const parser = this.parserMap[language];
     if (!parser) {
@@ -354,42 +337,33 @@ export class UtilsService {
     }
   }
 
-  
-
-  
   async convertToSvg(
-    imagePath: string, 
+    imagePath: string,
     color: string,
-    width?: number, 
-    height?: number, 
+    width?: number,
+    height?: number,
   ): Promise<{ svg: string; filePath: string }> {
     let tempPngPath: string | undefined;
     try {
-      
       if (!fs.existsSync(imagePath)) {
         throw new BadRequestException(
           `Input image file not found: ${imagePath}`,
         );
       }
 
-      tempPngPath = this.getTempPngPath(imagePath); 
+      tempPngPath = this.getTempPngPath(imagePath);
 
-      
       let sharpPipeline = sharp(imagePath);
       if (width && height) {
         sharpPipeline = sharpPipeline.resize(width, height);
       } else if (width) {
-        sharpPipeline = sharpPipeline.resize(width); 
+        sharpPipeline = sharpPipeline.resize(width);
       } else if (height) {
-        sharpPipeline = sharpPipeline.resize(undefined, height); 
+        sharpPipeline = sharpPipeline.resize(undefined, height);
       }
 
-      
-      await sharpPipeline
-        .threshold(128) 
-        .toFile(tempPngPath);
+      await sharpPipeline.threshold(128).toFile(tempPngPath);
 
-      
       const tracer = new potrace.Potrace({
         threshold: 128,
         color: color,
@@ -398,7 +372,6 @@ export class UtilsService {
       });
 
       const svg: string = await new Promise((resolve, reject) => {
-        
         tracer.loadImage(
           tempPngPath,
           function (err: Error) {
@@ -428,7 +401,7 @@ export class UtilsService {
         `Image to SVG conversion failed for file "${imagePath}": ${error.message}`,
         error.stack,
       );
-      
+
       if (error instanceof HttpException) {
         throw error;
       }
@@ -436,7 +409,6 @@ export class UtilsService {
         `Image to SVG conversion failed: ${error.message}`,
       );
     } finally {
-      
       if (tempPngPath && fs.existsSync(tempPngPath)) {
         try {
           await fs.promises.unlink(tempPngPath);
@@ -449,9 +421,6 @@ export class UtilsService {
     }
   }
 
-  
-
-  
   parseSqlToJson(sql: string): {
     type: string;
     table: string;
@@ -462,7 +431,7 @@ export class UtilsService {
     const match = sql.match(selectRegex);
 
     if (!match) {
-      throw new BadRequestException('Invalid SELECT SQL syntax'); 
+      throw new BadRequestException('Invalid SELECT SQL syntax');
     }
 
     const [, columns, table, where] = match;
@@ -474,7 +443,6 @@ export class UtilsService {
     };
   }
 
-  
   parseInsertSqlToJson(sql: string): {
     type: string;
     table: string;
@@ -484,7 +452,7 @@ export class UtilsService {
     const match = sql.match(insertRegex);
 
     if (!match) {
-      throw new BadRequestException('Invalid INSERT SQL syntax'); 
+      throw new BadRequestException('Invalid INSERT SQL syntax');
     }
 
     const [, table, columns, values] = match;
@@ -493,19 +461,17 @@ export class UtilsService {
     const valueList = values
       .split(',')
       .map((v) => v.trim().replace(/^'|'$/g, ''))
-      .map((v) => (v === 'NULL' ? null : v)); 
+      .map((v) => (v === 'NULL' ? null : v));
 
     if (columnList.length !== valueList.length) {
-      throw new BadRequestException( 
+      throw new BadRequestException(
         'Column and value counts do not match in INSERT statement',
       );
     }
 
     const data: Record<string, string> = {};
     columnList.forEach((col, idx) => {
-      
-      
-      data[col] = valueList[idx] !== null ? String(valueList[idx]) : 'NULL'; 
+      data[col] = valueList[idx] !== null ? String(valueList[idx]) : 'NULL';
     });
 
     return {
@@ -515,7 +481,6 @@ export class UtilsService {
     };
   }
 
-  
   jsonToInsertSql(input: {
     table: string;
     data: Record<string, string | number | boolean | null>;
@@ -534,15 +499,11 @@ export class UtilsService {
     return `INSERT INTO ${table} (${columns}) VALUES (${values});`;
   }
 
-  
-
-  
   capitalize(text: string): string {
     if (!text) return '';
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
-  
   toKebabCase(text: string): string {
     return text
       .replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2')
@@ -550,31 +511,24 @@ export class UtilsService {
       .toLowerCase();
   }
 
-  
   reverseString(text: string): string {
     return text.split('').reverse().join('');
   }
 
-  
   truncateText(text: string, maxLength: number): string {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + '...';
   }
 
-  
   extractMarkdownTitle(markdown: string): string | null {
-    const match = markdown.match(/^#{1,2}\s+(.*)/m); 
+    const match = markdown.match(/^#{1,2}\s+(.*)/m);
     return match ? match[1].trim() : null;
   }
 
-  
   uniqueArray<T>(arr: T[]): T[] {
     return [...new Set(arr)];
   }
 
-  
-
-  
   timeAgo(ms: number): string {
     const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
     const now = Date.now();
@@ -604,20 +558,18 @@ export class UtilsService {
     }
   }
 
-  
   toUnixSeconds(date: Date | string): number {
     const d = typeof date === 'string' ? new Date(date) : date;
     if (isNaN(d.getTime())) {
-      throw new BadRequestException('Invalid date provided to toUnixSeconds'); 
+      throw new BadRequestException('Invalid date provided to toUnixSeconds');
     }
     return Math.floor(d.getTime() / 1000);
   }
 
-  
   parseDurationToMs(duration: string): number {
     const match = duration.match(/^(\d+)([dhms])$/);
     if (!match) {
-      throw new BadRequestException( 
+      throw new BadRequestException(
         'Invalid duration format. Expected format: e.g., "1d", "3h", "15m", "30s".',
       );
     }
@@ -641,7 +593,6 @@ export class UtilsService {
     }
   }
 
-  
   formatUnixTimestamp(timestamp: number): string {
     const date = new Date(timestamp * 1000);
     return date.toLocaleString('en-US', {
@@ -655,16 +606,10 @@ export class UtilsService {
     });
   }
 
-  
-
-  
   parseEnvToJsonString(content: string): Record<string, string> {
-    
-    
     return dotenv.parse(content);
   }
 
-  
   async parseEnvFile(
     file?: Express.Multer.File,
     filepath?: string,
@@ -711,26 +656,21 @@ export class UtilsService {
     }
   }
 
-  
-
-  
   async markdownToJson(markdown: string): Promise<Root> {
     const processor = unified().use(remarkParse);
     const tree = processor.parse(markdown);
     return tree;
   }
 
-  
   async jsonToMarkdown(ast: Root): Promise<string> {
     const processor = unified().use(remarkStringify);
     const markdown = processor.stringify(ast);
     return markdown;
   }
 
-  
   async markdownToHtml(markdown: string): Promise<string> {
     if (this.globalCssContent === null) {
-      await this.loadGlobalCss(); 
+      await this.loadGlobalCss();
     }
 
     const file = await unified()
@@ -777,7 +717,6 @@ export class UtilsService {
     return code.replace(/\"/g, `'`);
   }
 
-  
   getDirectory(filePath: string): string {
     return path.dirname(filePath);
   }

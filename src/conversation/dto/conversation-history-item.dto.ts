@@ -58,7 +58,8 @@ export class ConversationHistoryItemDto {
   role: 'user' | 'model';
 
   @ApiProperty({
-    description: 'Array of message parts, each containing either text or inline data',
+    description:
+      'Array of message parts, each containing either text or inline data',
     type: [ConversationPartDto],
   })
   @IsArray()
@@ -82,5 +83,5 @@ export class ConversationSummaryDto {
   lastUpdatedAt: Date;
   requestCount: number;
   firstPrompt: string | null; // Keep this
-  lastPrompt: string | null;   // Add this
+  lastPrompt: string | null; // Add this
 }

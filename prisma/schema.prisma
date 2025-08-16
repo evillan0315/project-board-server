@@ -36,6 +36,10 @@ model User {
   Recording         Recording[]
   SchemaSubmission  SchemaSubmission[]
   SystemInstruction SystemInstruction[]
+  terminalCommands  TerminalCommand[]
+  commandHistory    CommandHistory[]
+
+  terminalSessions TerminalSession[]
 }
 
 model Password {
@@ -158,7 +162,7 @@ model GeminiRequest {
   SystemInstruction SystemInstruction[]
 
   @@index([userId])
-  @@index([conversationId]) // Add index for conversationId for efficient lookups
+  @@index([conversationId])
 }
 
 model GeminiResponse {
@@ -185,16 +189,6 @@ model SystemInstruction {
   createdAt   DateTime      @default(now())
 
   @@index([requestId])
-}
-
-enum RequestType {
-  TEXT_ONLY
-  TEXT_WITH_IMAGE
-  TEXT_WITH_FILE
-  LLM_GENERATION
-  RESUME_GENERATION
-  RESUME_OPTIMIZATION
-  RESUME_ENHANCEMENT
 }
 
 model Organization {
@@ -324,6 +318,65 @@ model Metadata {
   @@index([createdAt])
 }
 
+model TerminalCommand {
+  id          String    @id @default(uuid())
+  command     String    @db.Text
+  description String?
+  output      String?   @db.Text
+  tags        String[]  @default([])
+  isFavorite  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById])
+  @@index([createdAt])
+  @@index([isFavorite])
+}
+
+model TerminalSession {
+  id             String                @id @default(uuid())
+  name           String?
+  startedAt      DateTime              @default(now())
+  endedAt        DateTime?
+  ipAddress      String?
+  userAgent      String?
+  clientInfo     Json?
+  status         TerminalSessionStatus @default(ACTIVE)
+  createdById    String
+  createdBy      User                  @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  commandHistory CommandHistory[]
+
+  @@index([createdById])
+  @@index([startedAt])
+  @@index([status])
+}
+
+model CommandHistory {
+  id               String   @id @default(uuid())
+  command          String   @db.Text
+  executedAt       DateTime @default(now())
+  status           String?
+  exitCode         Int?
+  output           String?  @db.Text
+  errorOutput      String?  @db.Text
+  workingDirectory String?
+  durationMs       Int?
+  shellType        String?
+
+  terminalSessionId String
+  terminalSession   TerminalSession @relation(fields: [terminalSessionId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([createdById])
+  @@index([executedAt])
+  @@index([status])
+  @@index([terminalSessionId])
+}
+
 enum Role {
   ADMIN
   USER
@@ -334,4 +387,21 @@ enum Sender {
   USER
   AI
   BOT
+}
+
+enum RequestType {
+  TEXT_ONLY
+  TEXT_WITH_IMAGE
+  TEXT_WITH_FILE
+  LLM_GENERATION
+  RESUME_GENERATION
+  RESUME_OPTIMIZATION
+  RESUME_ENHANCEMENT
+}
+
+enum TerminalSessionStatus {
+  ACTIVE
+  ENDED
+  DISCONNECTED
+  ERROR
 }

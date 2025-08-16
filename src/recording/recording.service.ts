@@ -133,7 +133,7 @@ export class RecordingService {
   }
 
   async findAllPaginated(
-    where: Prisma.RecordingWhereInput = {createdById:this.userId},
+    where: Prisma.RecordingWhereInput = { createdById: this.userId },
     page = 1,
     pageSize = 10,
     select?: Prisma.RecordingSelect,
@@ -162,7 +162,9 @@ export class RecordingService {
   }
 
   findAll() {
-    return this.prisma.recording.findMany({where: { createdById: this.userId }});
+    return this.prisma.recording.findMany({
+      where: { createdById: this.userId },
+    });
   }
 
   findOne(id: string) {

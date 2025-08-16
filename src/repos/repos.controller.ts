@@ -38,7 +38,6 @@ import {
 import { GetRepoContentsDto } from './dto/get-repo-contents.dto';
 import { RepoContentDto } from './dto/repo-content.dto';
 
-
 @ApiTags('Repositories (Authenticated User)') // Groups endpoints in Swagger UI
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -55,7 +54,9 @@ export class ReposController {
     const fullUser = await this.usersService.findByEmail(user?.email);
 
     if (!fullUser || !fullUser.Account) {
-      throw new UnauthorizedException('GitHub access token not found for user.');
+      throw new UnauthorizedException(
+        'GitHub access token not found for user.',
+      );
     }
 
     const githubAccount = fullUser.Account.find(
@@ -63,7 +64,9 @@ export class ReposController {
     );
 
     if (!githubAccount || !githubAccount.access_token) {
-      throw new UnauthorizedException('GitHub access token not found for user.');
+      throw new UnauthorizedException(
+        'GitHub access token not found for user.',
+      );
     }
 
     return githubAccount.access_token;
@@ -82,31 +85,54 @@ export class ReposController {
     return fullUser.username;
   }
 
-
   @Post()
-  @ApiOperation({ summary: 'Create a new GitHub repository for the authenticated user' })
-  @ApiBody({ type: CreateRepoDto, description: 'Details for the new repository' })
+  @ApiOperation({
+    summary: 'Create a new GitHub repository for the authenticated user',
+  })
+  @ApiBody({
+    type: CreateRepoDto,
+    description: 'Details for the new repository',
+  })
   @ApiResponse({
     status: 201,
     description: 'The repository has been successfully created on GitHub.',
     type: RepoResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.' })
-  @ApiResponse({ status: 403, description: 'Forbidden: PAT lacks required scopes.' })
-  @ApiResponse({ status: 409, description: 'Conflict: Repository with this name already exists.' })
-  @ApiResponse({ status: 500, description: 'Internal server error from GitHub API or application.' })
-  async create(@Req() req: Request, @Body() createRepoDto: CreateRepoDto): Promise<RepoResponseDto> {
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden: PAT lacks required scopes.',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict: Repository with this name already exists.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error from GitHub API or application.',
+  })
+  async create(
+    @Req() req: Request,
+    @Body() createRepoDto: CreateRepoDto,
+  ): Promise<RepoResponseDto> {
     const accessToken = await this.getGithubAccessToken(req);
     return await this.reposService.create(createRepoDto, accessToken);
   }
 
   @Patch(':repoName/commit')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Simulate a commit to a GitHub repository by adding/updating a dummy file' })
+  @ApiOperation({
+    summary:
+      'Simulate a commit to a GitHub repository by adding/updating a dummy file',
+  })
   @ApiParam({
     name: 'repoName',
-    description: 'The name of the repository (must belong to the authenticated user)',
+    description:
+      'The name of the repository (must belong to the authenticated user)',
     type: 'string',
     example: 'oauth-repo-test',
   })
@@ -117,16 +143,36 @@ export class ReposController {
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: 'Commit (file update) successful.' },
-        commitSha: { type: 'string', example: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0' },
-        htmlUrl: { type: 'string', example: 'https://github.com/octocat/my-repo/blob/main/commit-logs/log-1678886400000.md' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Commit (file update) successful.',
+        },
+        commitSha: {
+          type: 'string',
+          example: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0',
+        },
+        htmlUrl: {
+          type: 'string',
+          example:
+            'https://github.com/octocat/my-repo/blob/main/commit-logs/log-1678886400000.md',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 404, description: 'Repository not found.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.' })
-  @ApiResponse({ status: 403, description: 'Forbidden: PAT lacks required scopes or repo is not writable.' })
-  @ApiResponse({ status: 500, description: 'Internal server error from GitHub API or application.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden: PAT lacks required scopes or repo is not writable.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error from GitHub API or application.',
+  })
   async commit(
     @Req() req: Request,
     @Param('repoName') repoName: string,
@@ -137,15 +183,23 @@ export class ReposController {
 
     console.log(accessToken, 'commit controller');
     console.log(commitRepoDto, githubUsername);
-    return await this.reposService.commit(githubUsername, repoName, commitRepoDto, accessToken);
+    return await this.reposService.commit(
+      githubUsername,
+      repoName,
+      commitRepoDto,
+      accessToken,
+    );
   }
 
   @Delete(':repoName')
   @HttpCode(HttpStatus.OK) // Changed to OK as you return a message body
-  @ApiOperation({ summary: 'Delete a GitHub repository for the authenticated user' })
+  @ApiOperation({
+    summary: 'Delete a GitHub repository for the authenticated user',
+  })
   @ApiParam({
     name: 'repoName',
-    description: 'The name of the repository to delete (must belong to the authenticated user)',
+    description:
+      'The name of the repository to delete (must belong to the authenticated user)',
     type: 'string',
     example: 'oauth-repo-test',
   })
@@ -155,15 +209,31 @@ export class ReposController {
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: 'Repository "oauth-repo-test" successfully deleted.' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Repository "oauth-repo-test" successfully deleted.',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 404, description: 'Repository not found.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.' })
-  @ApiResponse({ status: 403, description: 'Forbidden: PAT lacks required scopes or not enough permissions to delete.' })
-  @ApiResponse({ status: 500, description: 'Internal server error from GitHub API or application.' })
-  async remove(@Req() req: Request, @Param('repoName') repoName: string): Promise<{ message: string }> {
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden: PAT lacks required scopes or not enough permissions to delete.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error from GitHub API or application.',
+  })
+  async remove(
+    @Req() req: Request,
+    @Param('repoName') repoName: string,
+  ): Promise<{ message: string }> {
     const accessToken = await this.getGithubAccessToken(req);
     const githubUsername = await this.getGithubUsername(req);
 
@@ -172,24 +242,36 @@ export class ReposController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all repositories for the authenticated user from GitHub' })
+  @ApiOperation({
+    summary: 'Get all repositories for the authenticated user from GitHub',
+  })
   @ApiResponse({
     status: 200,
     description: 'A list of all repositories from GitHub.',
     type: [RepoResponseDto],
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.' })
-  @ApiResponse({ status: 500, description: 'Internal server error from GitHub API or application.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error from GitHub API or application.',
+  })
   async findAll(@Req() req: Request): Promise<RepoResponseDto[]> {
     const accessToken = await this.getGithubAccessToken(req);
     return await this.reposService.findAll(accessToken);
   }
 
   @Get(':repoName')
-  @ApiOperation({ summary: 'Get a single repository by name for the authenticated user from GitHub' })
+  @ApiOperation({
+    summary:
+      'Get a single repository by name for the authenticated user from GitHub',
+  })
   @ApiParam({
     name: 'repoName',
-    description: 'The name of the repository (must belong to the authenticated user)',
+    description:
+      'The name of the repository (must belong to the authenticated user)',
     type: 'string',
     example: 'github-oauth-manager',
   })
@@ -199,31 +281,76 @@ export class ReposController {
     type: RepoResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Repository not found.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.' })
-  @ApiResponse({ status: 500, description: 'Internal server error from GitHub API or application.' })
-  async findOne(@Req() req: Request, @Param('repoName') repoName: string): Promise<RepoResponseDto> {
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error from GitHub API or application.',
+  })
+  async findOne(
+    @Req() req: Request,
+    @Param('repoName') repoName: string,
+  ): Promise<RepoResponseDto> {
     const accessToken = await this.getGithubAccessToken(req);
     const githubUsername = await this.getGithubUsername(req);
 
-    return await this.reposService.findOne(githubUsername, repoName, accessToken);
+    return await this.reposService.findOne(
+      githubUsername,
+      repoName,
+      accessToken,
+    );
   }
 
   // --- NEW ENDPOINT FOR REPO CONTENTS ---
   @Get(':repoName/contents')
-  @ApiOperation({ summary: 'Get repository files and directory contents for the authenticated user' })
+  @ApiOperation({
+    summary:
+      'Get repository files and directory contents for the authenticated user',
+  })
   @ApiParam({
     name: 'repoName',
-    description: 'The name of the repository (must belong to the authenticated user)',
+    description:
+      'The name of the repository (must belong to the authenticated user)',
     type: 'string',
     example: 'your-repository-name',
   })
-  @ApiQuery({ name: 'path', required: false, type: String, description: 'The content path within the repository. E.g., `src/main.ts` or `docs`. If omitted, the root directory contents are returned.' })
-  @ApiQuery({ name: 'ref', required: false, type: String, description: 'The name of the commit, branch, or tag. Default: the repository’s default branch (usually `main` or `master`).' })
-  @ApiResponse({ status: 200, description: 'List of repository contents (files/directories)', type: [RepoContentDto] })
-  @ApiResponse({ status: 401, description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.' })
-  @ApiResponse({ status: 403, description: 'Forbidden: PAT lacks required scopes or repo is private.' })
-  @ApiResponse({ status: 404, description: 'Not Found: Repository or specific path not found.' })
-  @ApiResponse({ status: 500, description: 'Internal server error from GitHub API or application.' })
+  @ApiQuery({
+    name: 'path',
+    required: false,
+    type: String,
+    description:
+      'The content path within the repository. E.g., `src/main.ts` or `docs`. If omitted, the root directory contents are returned.',
+  })
+  @ApiQuery({
+    name: 'ref',
+    required: false,
+    type: String,
+    description:
+      'The name of the commit, branch, or tag. Default: the repository’s default branch (usually `main` or `master`).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of repository contents (files/directories)',
+    type: [RepoContentDto],
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Invalid or missing JWT / GitHub PAT.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden: PAT lacks required scopes or repo is private.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Not Found: Repository or specific path not found.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error from GitHub API or application.',
+  })
   async getRepoContents(
     @Req() req: Request,
     @Param('repoName') repoName: string,
@@ -240,4 +367,3 @@ export class ReposController {
     );
   }
 }
-

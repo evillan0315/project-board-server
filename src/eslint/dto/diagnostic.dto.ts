@@ -1,5 +1,5 @@
- // src/eslint/dto/diagnostic.dto.ts (Matches CodeMirror's Diagnostic interface)
-export type Severity = "info" | "warning" | "error";
+// src/eslint/dto/diagnostic.dto.ts (Matches CodeMirror's Diagnostic interface)
+export type Severity = 'info' | 'warning' | 'error';
 
 export interface DiagnosticAction {
   name: string;
@@ -11,7 +11,7 @@ export interface DiagnosticAction {
 
 export class DiagnosticDto {
   from: number; // Start character offset
-  to: number;   // End character offset
+  to: number; // End character offset
   message: string;
   severity: Severity;
   source?: string; // e.g., "eslint"

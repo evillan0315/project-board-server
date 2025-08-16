@@ -93,14 +93,14 @@ export class FileGateway
   }
 
   handleDisconnect(client: Socket) {
-  this.logger.log(`Client disconnected: ${client.id}`);
-  for (const [filePath, editors] of this.fileEditorsMap.entries()) {
-    editors.delete(client.id);
-    if (editors.size === 0) {
-      this.fileEditorsMap.delete(filePath);
+    this.logger.log(`Client disconnected: ${client.id}`);
+    for (const [filePath, editors] of this.fileEditorsMap.entries()) {
+      editors.delete(client.id);
+      if (editors.size === 0) {
+        this.fileEditorsMap.delete(filePath);
+      }
     }
   }
-}
   private async handleApi(
     endpoint: string,
     method: Method,
@@ -123,7 +123,7 @@ export class FileGateway
     body?: any,
     params?: any,
     responseType?: string,
-    headers?: any
+    headers?: any,
   ): Promise<any> {
     return api.request({
       url: endpoint,
@@ -205,10 +205,14 @@ export class FileGateway
         data.params,
         data.responseType,
       );
-      if(data.event === 'readFile' || data.event === 'writeFile' || data.event === 'closeFile'){
-        this.server.emit( responseEvent, res?.data );
+      if (
+        data.event === 'readFile' ||
+        data.event === 'writeFile' ||
+        data.event === 'closeFile'
+      ) {
+        this.server.emit(responseEvent, res?.data);
       }
-      
+
       return { event: responseEvent, data: res?.data };
     } catch (error) {
       const errorEvent = `${data.event}Error`;
@@ -222,97 +226,98 @@ export class FileGateway
   }
 
   @SubscribeMessage('openFile')
-async handleOpenFile(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: { path: string },
-): Promise<void> {
-  try {
-    if (!data?.path) throw new Error('Path is required');
+  async handleOpenFile(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { path: string },
+  ): Promise<void> {
+    try {
+      if (!data?.path) throw new Error('Path is required');
 
-    const filePath = resolve(data.path);
-    if (!existsSync(filePath)) throw new Error(`File not found: ${data.path}`);
+      const filePath = resolve(data.path);
+      if (!existsSync(filePath))
+        throw new Error(`File not found: ${data.path}`);
 
-    // Register editor
-    const socketId = client.id;
-    if (!this.fileEditorsMap.has(filePath)) {
-      this.fileEditorsMap.set(filePath, new Set());
-    }
-    this.fileEditorsMap.get(filePath)!.add(socketId);
-
-    const content = readFileSync(filePath, 'utf-8');
-    client.emit('openFileResponse', { path: data.path, content });
-    this.logger.log(`File opened: ${data.path}`);
-  } catch (err: any) {
-    this.logger.error(`openFile error: ${err.message}`);
-    client.emit('openFileError', { message: err.message });
-  }
-}
-
- @SubscribeMessage('closeFile')
-async handleCloseFile(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: { path: string },
-): Promise<void> {
-  try {
-    if (!data?.path) throw new Error('Path is required');
-
-    const filePath = resolve(data.path);
-    const socketId = client.id;
-    const editors = this.fileEditorsMap.get(filePath);
-    if (editors) {
-      editors.delete(socketId);
-      if (editors.size === 0) {
-        this.fileEditorsMap.delete(filePath);
+      // Register editor
+      const socketId = client.id;
+      if (!this.fileEditorsMap.has(filePath)) {
+        this.fileEditorsMap.set(filePath, new Set());
       }
-    }
+      this.fileEditorsMap.get(filePath)!.add(socketId);
 
-    client.emit('closeFileResponse', { path: data.path });
-    this.logger.log(`File closed: ${data.path}`);
-  } catch (err: any) {
-    this.logger.error(`closeFile error: ${err.message}`);
-    client.emit('closeFileError', { message: err.message });
+      const content = readFileSync(filePath, 'utf-8');
+      client.emit('openFileResponse', { path: data.path, content });
+      this.logger.log(`File opened: ${data.path}`);
+    } catch (err: any) {
+      this.logger.error(`openFile error: ${err.message}`);
+      client.emit('openFileError', { message: err.message });
+    }
   }
-}
-  @SubscribeMessage('updateFile')
-async handleUpdateFile(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() data: { filePath: string; content: string },
-): Promise<void> {
-  try {
-    if (!data?.filePath || data.content === undefined) {
-      throw new Error('File path and content are required');
-    }
 
-    const fullPath = resolve(data.filePath);
-    const dir = dirname(fullPath);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
+  @SubscribeMessage('closeFile')
+  async handleCloseFile(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { path: string },
+  ): Promise<void> {
+    try {
+      if (!data?.path) throw new Error('Path is required');
 
-    writeFileSync(fullPath, data.content, 'utf-8');
-    this.logger.log(`File written: ${data.filePath}`);
-
-    client.emit('updateFileResponse', { path: data.filePath, success: true });
-
-    // Notify other editors
-    const socketId = client.id;
-    const editors = this.fileEditorsMap.get(fullPath) ?? new Set();
-    for (const editorId of editors) {
-      if (editorId !== socketId) {
-        const targetClient = this.getClientById(editorId);
-        if (targetClient) {
-          targetClient.emit('fileUpdated', {
-            path: data.filePath,
-            message: 'File was modified by another user',
-          });
+      const filePath = resolve(data.path);
+      const socketId = client.id;
+      const editors = this.fileEditorsMap.get(filePath);
+      if (editors) {
+        editors.delete(socketId);
+        if (editors.size === 0) {
+          this.fileEditorsMap.delete(filePath);
         }
       }
+
+      client.emit('closeFileResponse', { path: data.path });
+      this.logger.log(`File closed: ${data.path}`);
+    } catch (err: any) {
+      this.logger.error(`closeFile error: ${err.message}`);
+      client.emit('closeFileError', { message: err.message });
     }
-  } catch (err: any) {
-    this.logger.error(`updateFile error: ${err.message}`);
-    client.emit('updateFileError', { message: err.message });
   }
-}
+  @SubscribeMessage('updateFile')
+  async handleUpdateFile(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { filePath: string; content: string },
+  ): Promise<void> {
+    try {
+      if (!data?.filePath || data.content === undefined) {
+        throw new Error('File path and content are required');
+      }
+
+      const fullPath = resolve(data.filePath);
+      const dir = dirname(fullPath);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+
+      writeFileSync(fullPath, data.content, 'utf-8');
+      this.logger.log(`File written: ${data.filePath}`);
+
+      client.emit('updateFileResponse', { path: data.filePath, success: true });
+
+      // Notify other editors
+      const socketId = client.id;
+      const editors = this.fileEditorsMap.get(fullPath) ?? new Set();
+      for (const editorId of editors) {
+        if (editorId !== socketId) {
+          const targetClient = this.getClientById(editorId);
+          if (targetClient) {
+            targetClient.emit('fileUpdated', {
+              path: data.filePath,
+              message: 'File was modified by another user',
+            });
+          }
+        }
+      }
+    } catch (err: any) {
+      this.logger.error(`updateFile error: ${err.message}`);
+      client.emit('updateFileError', { message: err.message });
+    }
+  }
   @SubscribeMessage('createFile')
   async handleCreateFile(
     @ConnectedSocket() client: Socket,

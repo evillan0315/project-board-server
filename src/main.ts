@@ -51,7 +51,7 @@ async function bootstrap() {
 
   hbs.registerHelper('log', (message) => {});
   registerHandlebarsHelpers();
-  
+
   app.use(cookieParser());
   app.enableCors({
     origin: (origin, callback) => {

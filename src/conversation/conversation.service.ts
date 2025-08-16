@@ -52,7 +52,7 @@ export class ConversationService {
         geminiResponses: true,
       },
       orderBy: {
-        createdAt: 'asc', 
+        createdAt: 'asc',
       },
     });
 
@@ -81,7 +81,9 @@ export class ConversationService {
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
 
-    const paginatedSummaries: ConversationSummaryDto[] = Array.from(conversationsMap.entries())
+    const paginatedSummaries: ConversationSummaryDto[] = Array.from(
+      conversationsMap.entries(),
+    )
       .sort(
         ([, a], [, b]) => b.lastUpdatedAt.getTime() - a.lastUpdatedAt.getTime(),
       )
@@ -110,7 +112,7 @@ export class ConversationService {
           lastUpdatedAt: data.lastUpdatedAt,
           requestCount: data.requests.length,
           firstPrompt, // Include firstPrompt
-          lastPrompt,  // Include lastPrompt
+          lastPrompt, // Include lastPrompt
         };
         // --- CHANGES END HERE ---
       });

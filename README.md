@@ -147,7 +147,7 @@ npx prisma migrate dev --name init
 ### 5. Run the Application
 
 ```bash
-npm run start:dev
+pnpm run start:dev
 ```
 
 ### 6. Access Swagger API Documentation

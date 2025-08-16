@@ -1,4 +1,8 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express'; // Import Request type for better type safety
 import { randomBytes } from 'crypto'; // For generating cryptographically strong tokens
@@ -19,7 +23,6 @@ import { randomBytes } from 'crypto'; // For generating cryptographically strong
  */
 @Injectable()
 export class GoogleAuthGuard extends AuthGuard('google') {
-
   /**
    * Overrides getAuthenticateOptions to dynamically add state.
    * This method is called before redirecting the user to Google for authentication.
@@ -92,7 +95,9 @@ export class GoogleAuthGuard extends AuthGuard('google') {
 
     if (!returnedStateEncoded) {
       console.error('OAuth state parameter missing from callback.');
-      throw new UnauthorizedException('Authentication failed: Missing state parameter.');
+      throw new UnauthorizedException(
+        'Authentication failed: Missing state parameter.',
+      );
     }
 
     let parsedState: { cli_port?: string; csrf_token: string };
@@ -101,7 +106,9 @@ export class GoogleAuthGuard extends AuthGuard('google') {
       parsedState = JSON.parse(decodeURIComponent(returnedStateEncoded));
     } catch (parseError) {
       console.error('Failed to parse OAuth state parameter:', parseError);
-      throw new UnauthorizedException('Authentication failed: Invalid state parameter format.');
+      throw new UnauthorizedException(
+        'Authentication failed: Invalid state parameter format.',
+      );
     }
 
     const receivedCsrfToken = parsedState.csrf_token;
@@ -139,7 +146,7 @@ export class GoogleAuthGuard extends AuthGuard('google') {
     // Optionally, if `cli_port` needs to be immediately accessible after authentication,
     // you can attach it to the request object or the user object.
     // For example, if you need it in a subsequent interceptor or your controller:
-   //(request as any).cliPort = parsedState.cli_port; // Augment request object if needed later
+    //(request as any).cliPort = parsedState.cli_port; // Augment request object if needed later
 
     // Return the authenticated user object. This user object will be injected into
     // the request (e.g., `req.user`) in the controller method that uses this guard.

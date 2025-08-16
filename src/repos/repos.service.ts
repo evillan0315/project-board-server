@@ -8,13 +8,18 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { AxiosError, AxiosResponse, InternalAxiosRequestConfig, AxiosRequestHeaders } from 'axios';
+import {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+  AxiosRequestHeaders,
+} from 'axios';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { CreateRepoDto } from './dto/create-repo.dto';
 import { CommitRepoDto } from './dto/commit-repo.dto';
 import { RepoResponseDto } from './dto/repo-response.dto';
 import { GetRepoContentsDto } from './dto/get-repo-contents.dto'; // Import new DTO
-import { RepoContentDto } from './dto/repo-content.dto';       // Import new DTO
+import { RepoContentDto } from './dto/repo-content.dto'; // Import new DTO
 
 // Define a minimal interface for the GitHub file content response
 interface GitHubFileContent {
@@ -77,7 +82,6 @@ interface GitHubCommitResponse {
     };
   };
 }
-
 
 @Injectable()
 export class ReposService {
@@ -144,7 +148,10 @@ export class ReposService {
    * @param accessToken The user's GitHub access token.
    * @returns The created repository object.
    */
-  async create(createRepoDto: CreateRepoDto, accessToken: string): Promise<RepoResponseDto> {
+  async create(
+    createRepoDto: CreateRepoDto,
+    accessToken: string,
+  ): Promise<RepoResponseDto> {
     const url = `${this.GITHUB_API_URL}/user/repos`;
     console.log(url, accessToken);
     console.log(createRepoDto, 'createRepoDto');
@@ -195,7 +202,9 @@ export class ReposService {
     try {
       const { data: existingFile } = await firstValueFrom(
         this.httpService
-          .get<GitHubFileContent>(getFileUrl, { headers: this.getHeaders(accessToken) })
+          .get<GitHubFileContent>(getFileUrl, {
+            headers: this.getHeaders(accessToken),
+          })
           .pipe(
             catchError((error: AxiosError) => {
               if (error.response?.status === 404) {
@@ -203,7 +212,7 @@ export class ReposService {
                 // InternalAxiosRequestConfig requires `headers`. Other properties like
                 // `url` and `method` are optional.
                 const fallbackConfig: InternalAxiosRequestConfig<any> = {
-                    headers: {} as AxiosRequestHeaders, // Provide an empty object for headers to satisfy the type
+                  headers: {} as AxiosRequestHeaders, // Provide an empty object for headers to satisfy the type
                 };
 
                 const mockResponse: AxiosResponse<null> = {
@@ -262,7 +271,11 @@ export class ReposService {
    * @param repoName The name of the repository to delete.
    * @param accessToken The user's GitHub access token.
    */
-  async delete(githubUsername: string, repoName: string, accessToken: string): Promise<void> {
+  async delete(
+    githubUsername: string,
+    repoName: string,
+    accessToken: string,
+  ): Promise<void> {
     const url = `${this.GITHUB_API_URL}/repos/${githubUsername}/${repoName}`;
 
     try {
@@ -287,7 +300,9 @@ export class ReposService {
     try {
       const { data } = await firstValueFrom(
         this.httpService
-          .get<RepoResponseDto[]>(url, { headers: this.getHeaders(accessToken) })
+          .get<
+            RepoResponseDto[]
+          >(url, { headers: this.getHeaders(accessToken) })
           .pipe(catchError((error: AxiosError) => this.handleError(error))),
       );
       return data;
@@ -303,7 +318,11 @@ export class ReposService {
    * @param accessToken The user's GitHub access token.
    * @returns The repository object.
    */
-  async findOne(githubUsername: string, repoName: string, accessToken: string): Promise<RepoResponseDto> {
+  async findOne(
+    githubUsername: string,
+    repoName: string,
+    accessToken: string,
+  ): Promise<RepoResponseDto> {
     const url = `${this.GITHUB_API_URL}/repos/${githubUsername}/${repoName}`;
     console.log(url, 'url findOne');
     try {
@@ -356,7 +375,9 @@ export class ReposService {
       // We explicitly type the response to handle both.
       const { data } = await firstValueFrom(
         this.httpService
-          .get<RepoContentDto | RepoContentDto[]>(url, { headers: this.getHeaders(accessToken) })
+          .get<
+            RepoContentDto | RepoContentDto[]
+          >(url, { headers: this.getHeaders(accessToken) })
           .pipe(
             catchError((error: AxiosError) => {
               // This catchError specifically re-throws, letting handleError manage exceptions.
@@ -379,4 +400,3 @@ export class ReposService {
     }
   }
 }
-

@@ -36,7 +36,7 @@ import { GoogleProfileDto } from './dto/google-profile.dto';
 import { GoogleTokenDto } from './dto/google-token.dto';
 import { UserRole } from './enums/user-role.enum';
 import { Role, User } from '@prisma/client';
-import { AuthGuard } from '@nestjs/passport'; 
+import { AuthGuard } from '@nestjs/passport';
 
 /**
  * AuthController handles authentication-related endpoints, including user registration,
@@ -70,14 +70,19 @@ export class AuthController {
   private async handleOAuthCallback(
     provider: 'google' | 'github',
     req: AuthRequest,
-  ): Promise<{ accessToken: string; user: User, profile?: GoogleProfileDto | GitHubProfileDto, tokens: GoogleTokenDto | GitHubTokenDto } > {
+  ): Promise<{
+    accessToken: string;
+    user: User;
+    profile?: GoogleProfileDto | GitHubProfileDto;
+    tokens: GoogleTokenDto | GitHubTokenDto;
+  }> {
     const { profile, tokens } = req.user as {
       profile: GoogleProfileDto | GitHubProfileDto;
       tokens: GoogleTokenDto | GitHubTokenDto;
-     // provider: 'google' | 'github';
+      // provider: 'google' | 'github';
     };
 
-    const user  = await this.authService.validateOAuthProfile(
+    const user = await this.authService.validateOAuthProfile(
       provider,
       profile,
       tokens,
@@ -93,12 +98,11 @@ export class AuthController {
       phone_number: user.phone_number ?? '',
       provider,
       username: user.username ?? undefined, // Include username in JWT payload
-     // tokens,
-      
+      // tokens,
     };
 
     const accessToken = await this.authService.generateToken(payload);
-  
+
     return { accessToken, user, profile, tokens };
   }
 
@@ -166,7 +170,10 @@ export class AuthController {
   @UseGuards(GitHubAuthGuard)
   @ApiOperation({ summary: 'Initiate GitHub OAuth2 login' })
   @ApiResponse({ status: 302, description: 'Redirects to GitHub login' })
-  async githubAuth(@Query('state') state?: string, @Query('cli_port') cliPort?: number) {
+  async githubAuth(
+    @Query('state') state?: string,
+    @Query('cli_port') cliPort?: number,
+  ) {
     // The state and cli_port are handled by Passport.js and the callback
     // Passport-github2 will automatically include `state` if configured.
     // cli_port can be passed through to the session or directly to the callback if needed.
@@ -211,7 +218,9 @@ export class AuthController {
         // If cli_port is present, it's likely a CLI request, validate state
         // Note: Passport.js handles its own state verification by default. This is an additional layer
         // if the client passes an explicit 'state' that needs to be matched.
-        console.warn('State mismatch in GitHub CLI callback. Potential CSRF attempt.');
+        console.warn(
+          'State mismatch in GitHub CLI callback. Potential CSRF attempt.',
+        );
         return res.redirect('/login?error=State%20Mismatch');
       }
 
@@ -253,16 +262,14 @@ export class AuthController {
    * @function googleAuth
    */
   @Get('google')
-    @UseGuards(GoogleAuthGuard)
+  @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
   @ApiResponse({ status: 302, description: 'Redirects to Google login' })
   async googleAuth(
     @Req() req: Request,
     @Res() res: Response,
     @Query('cli_port') cliPort?: number,
-  ) {
-    
-  }
+  ) {}
   /*@Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
@@ -315,9 +322,10 @@ export class AuthController {
           parsedCliPort = parsedState.cli_port;
           console.log(parsedCliPort, 'parsedCliPort');
           csrfToken = parsedState.csrf_token;
-
         } catch (parseError) {
-          console.warn('Could not parse state parameter in Google CLI callback.');
+          console.warn(
+            'Could not parse state parameter in Google CLI callback.',
+          );
         }
       }
 
@@ -332,7 +340,8 @@ export class AuthController {
         sameSite: 'lax',
       });
 
-      if (parsedCliPort) { // Use the parsed cli_port here
+      if (parsedCliPort) {
+        // Use the parsed cli_port here
         // Redirect to CLI's local server callback
         const cliCallbackUrl = `http://localhost:${parsedCliPort}/auth/callback?accessToken=${accessToken}&userId=${user.id}&userEmail=${user.email}&userName=${encodeURIComponent(user.name || '')}&userImage=${encodeURIComponent(user.image || '')}&userRole=${user.role}&username=${encodeURIComponent(user.username || '')}&provider=google`;
         return res.redirect(cliCallbackUrl);
@@ -348,7 +357,7 @@ export class AuthController {
     }
   }
 
- /* @Get('google/callback')
+  /* @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({
     summary: 'Handle Google OAuth2 callback and issue JWT token',
@@ -492,21 +501,18 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@Req() req: Request) {
     const meR = req['user'];
-    if(meR.email){
-       const getAccount = this.prisma.user.findUnique({
-      where: { email: meR?.email },
-      include: {
-        Account: true,
-      },
-    });
-    if(getAccount){
-     
-    return getAccount;
-    } else {
-      return meR;
+    if (meR.email) {
+      const getAccount = this.prisma.user.findUnique({
+        where: { email: meR?.email },
+        include: {
+          Account: true,
+        },
+      });
+      if (getAccount) {
+        return getAccount;
+      } else {
+        return meR;
+      }
     }
-    
-    }
-   
   }
 }

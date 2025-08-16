@@ -31,7 +31,6 @@ export class GitHubStrategy extends PassportStrategy(Strategy, 'github') {
       provider,
       email: emails?.[0]?.value,
       avatar_url: photos?.[0]?.value,
-      
     };
 
     const tokenDto: GitHubTokenDto = {

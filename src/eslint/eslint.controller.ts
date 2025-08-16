@@ -14,17 +14,23 @@ export class EslintController {
   @Post('lint')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Lint a given code string using ESLint' })
-  @ApiBody({ type: LintCodeDto, description: 'Code content and optional file context for linting' })
+  @ApiBody({
+    type: LintCodeDto,
+    description: 'Code content and optional file context for linting',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Returns ESLint diagnostics (warnings/errors).',
     type: [DiagnosticDto], // REVERTED: Use array of DiagnosticDto for the response type
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input' })
-  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'ESLint service error' })
-  async lintCode(@Body() lintCodeDto: LintCodeDto): Promise<DiagnosticDto[]> { // REVERTED: Return type
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'ESLint service error',
+  })
+  async lintCode(@Body() lintCodeDto: LintCodeDto): Promise<DiagnosticDto[]> {
+    // REVERTED: Return type
     const { code, filePath, cwd } = lintCodeDto; // REMOVED: fullSwagger from destructuring
     return this.eslintService.lintCode(code, filePath, cwd);
   }
 }
-

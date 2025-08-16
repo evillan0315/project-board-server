@@ -3,4 +3,3 @@ export enum FileAction {
   MODIFY = 'modify',
   DELETE = 'delete',
 }
-

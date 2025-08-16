@@ -589,26 +589,29 @@ function add(a: number, b: number): number {
   @Post('markdown-to-docx')
   @ApiOperation({
     summary: 'Convert Markdown content to a DOCX document',
-    description: 'Converts the provided Markdown string into a Microsoft Word DOCX file. Requires Pandoc to be installed on the server.',
+    description:
+      'Converts the provided Markdown string into a Microsoft Word DOCX file. Requires Pandoc to be installed on the server.',
   })
   @ApiBody({ type: MarkdownDto }) // Reusing MarkdownDto for the content
   @ApiQuery({
     name: 'filename',
     required: false,
     type: String,
-    description: 'Optional: Desired filename for the downloaded DOCX file (e.g., "report"). Default is "document".',
+    description:
+      'Optional: Desired filename for the downloaded DOCX file (e.g., "report"). Default is "document".',
     example: 'my_markdown_document',
   })
   @ApiResponse({
     status: 200,
     description: 'DOCX file generated successfully.',
     content: {
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
-        schema: {
-          type: 'string',
-          format: 'binary',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        {
+          schema: {
+            type: 'string',
+            format: 'binary',
+          },
         },
-      },
     },
   })
   @ApiResponse({
@@ -617,7 +620,8 @@ function add(a: number, b: number): number {
   })
   @ApiResponse({
     status: 412, // Precondition Failed: indicates Pandoc is not installed
-    description: 'Precondition Failed: Pandoc is not installed or not found in system PATH.',
+    description:
+      'Precondition Failed: Pandoc is not installed or not found in system PATH.',
   })
   @ApiResponse({
     status: 500,
@@ -630,15 +634,26 @@ function add(a: number, b: number): number {
   ) {
     try {
       // The service handles its own temporary file naming
-      const docxBuffer = await this.markdownUtilService.markdownToDocx(body.content);
+      const docxBuffer = await this.markdownUtilService.markdownToDocx(
+        body.content,
+      );
       const outputFilename = `${filename || 'document'}.docx`;
 
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-      res.setHeader('Content-Disposition', `attachment; filename="${outputFilename}"`);
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${outputFilename}"`,
+      );
       res.send(docxBuffer);
     } catch (error) {
       // Check if it's the specific Pandoc not found error message
-      if (error instanceof Error && error.message.includes('Pandoc is not installed')) {
+      if (
+        error instanceof Error &&
+        error.message.includes('Pandoc is not installed')
+      ) {
         throw new HttpException(error.message, HttpStatus.PRECONDITION_FAILED); // 412 Precondition Failed
       }
       // Catch any other conversion errors
@@ -652,26 +667,29 @@ function add(a: number, b: number): number {
   @Post('html-to-docx')
   @ApiOperation({
     summary: 'Convert HTML content to a DOCX document',
-    description: 'Converts the provided HTML string into a Microsoft Word DOCX file. Requires Pandoc to be installed on the server.',
+    description:
+      'Converts the provided HTML string into a Microsoft Word DOCX file. Requires Pandoc to be installed on the server.',
   })
   @ApiBody({ type: HtmlDto }) // Using the new HtmlDto for the HTML content
   @ApiQuery({
     name: 'filename',
     required: false,
     type: String,
-    description: 'Optional: Desired filename for the downloaded DOCX file (e.g., "webpage"). Default is "document".',
+    description:
+      'Optional: Desired filename for the downloaded DOCX file (e.g., "webpage"). Default is "document".',
     example: 'my_html_document',
   })
   @ApiResponse({
     status: 200,
     description: 'DOCX file generated successfully.',
     content: {
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
-        schema: {
-          type: 'string',
-          format: 'binary',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        {
+          schema: {
+            type: 'string',
+            format: 'binary',
+          },
         },
-      },
     },
   })
   @ApiResponse({
@@ -680,7 +698,8 @@ function add(a: number, b: number): number {
   })
   @ApiResponse({
     status: 412, // Precondition Failed: indicates Pandoc is not installed
-    description: 'Precondition Failed: Pandoc is not installed or not found in system PATH.',
+    description:
+      'Precondition Failed: Pandoc is not installed or not found in system PATH.',
   })
   @ApiResponse({
     status: 500,
@@ -696,12 +715,21 @@ function add(a: number, b: number): number {
       const docxBuffer = await this.markdownUtilService.htmlToDocx(body.html);
       const outputFilename = `${filename || 'document'}.docx`;
 
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-      res.setHeader('Content-Disposition', `attachment; filename="${outputFilename}"`);
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${outputFilename}"`,
+      );
       res.send(docxBuffer);
     } catch (error) {
       // Check if it's the specific Pandoc not found error message
-      if (error instanceof Error && error.message.includes('Pandoc is not installed')) {
+      if (
+        error instanceof Error &&
+        error.message.includes('Pandoc is not installed')
+      ) {
         throw new HttpException(error.message, HttpStatus.PRECONDITION_FAILED); // 412 Precondition Failed
       }
       // Catch any other conversion errors
@@ -712,4 +740,3 @@ function add(a: number, b: number): number {
     }
   }
 }
-

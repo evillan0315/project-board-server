@@ -6,10 +6,6 @@ import { ModuleControlModule } from '../module-control/module-control.module';
 @Module({
   imports: [PrismaModule, ModuleControlModule],
   controllers: [SystemInstructionController],
-  providers: [
-      SystemInstructionService,
-      
-    ]
+  providers: [SystemInstructionService],
 })
 export class SystemInstructionModule {}
-
