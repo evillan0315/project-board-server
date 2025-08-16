@@ -19,11 +19,12 @@
 
 - **`handleConnection(client: Socket)`:** Called when a new client connects.
   - Authenticates the client using the JWT token from `handshake.auth`.
-  - Initializes a local PTY session for the client via `TerminalService.initializePtySession`.
+  - Initializes a local PTY session for the client via `TerminalService.initializePtySession`, which **also creates a persistent `TerminalSession` record in the database and returns its ID**.
+  - Stores the database session ID (`dbSessionId`) and `userId` on the client socket for subsequent command history logging.
   - Emits initial welcome messages, system info (`osinfo`), and the current working directory.
   - Sets up a listener for `disconnect` events.
 - **`handleDisconnect(client: Socket)`:** Called when a client disconnects.
-  - Disposes of the client's local PTY session (`TerminalService.dispose`).
+  - Disposes of the client's local PTY session (`TerminalService.dispose`), which **updates the database `TerminalSession` status to 'ENDED'**.
   - Disposes of any active SSH session (`disposeSsh`).
   - Cleans up `cwdMap` entries.
 
@@ -38,10 +39,17 @@
   - `newCwd`: `string` (optional) - A new current working directory to switch to.
 - **Behavior:**
   - If `newCwd` is provided, attempts to change the local CWD for the client's session.
+  - **Saves the executed command to the database as a `CommandHistory` entry via `terminalService.saveCommandHistoryEntry`**.
   - If an SSH session is active (`sshStreamMap` has entry), the command is written to the SSH stream.
   - If no SSH session, and the command is `cd` or `osinfo`, it's handled internally.
   - Otherwise, the command is written to the client's local PTY session (`terminalService.write`).
   - Emits `prompt` event with the current CWD and command.
+
+#### `exec` (Deprecated/Internal for compatibility)
+
+- **Event Name:** `exec`
+- **Description:** An older event handler for commands, largely superseded by `exec_terminal` for structured interaction. It still functions similarly, handling `cd`, `osinfo`, and writing to PTY/SSH.
+- **Behavior:** **Also saves the executed command to the database as a `CommandHistory` entry**.
 
 #### `ssh-connect`
 
@@ -61,6 +69,7 @@
 - **Description:** Sends raw input (e.g., keystrokes) to the active terminal session (either local PTY or SSH stream).
 - **Payload:** `{ input: string }` - The raw input string.
 - **Behavior:**
+  - **Saves the input (treated as a command) to the database as a `CommandHistory` entry.**
   - If an SSH stream is active, writes input to the SSH stream.
   - Otherwise, writes input to the local PTY session (`terminalService.write`).
 
@@ -78,5 +87,5 @@
 - **Event Name:** `close`
 - **Description:** Explicitly closes the active terminal sessions for the client.
 - **Behavior:**
-  - Calls `terminalService.dispose` for the local PTY.
+  - Calls `terminalService.dispose` for the local PTY (which updates DB session status).
   - Calls `disposeSsh` to end the SSH client connection.

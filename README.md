@@ -4,71 +4,70 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 
 ---
 
-## 🔐 Key Features
+## \U0001f510 Key Features
 
-### 🔒 Authentication & Authorization
+### \u2705 JWT-based authentication via HTTP-only cookies and optional Bearer header
 
-- ✅ JWT-based authentication via HTTP-only cookies and optional Bearer header
-- ✅ User registration and login with `bcrypt` password hashing
-- ✅ Email verification flow (on registration, resend, and token verification)
-- ✅ OAuth2 login support for Google and GitHub
-- ✅ Role-based access control (RBAC) with `@Roles()` decorator and guard
-- ✅ Swagger API documentation for all endpoints
+\u2705 User registration and login with `bcrypt` password hashing
+\u2705 Email verification flow (on registration, resend, and token verification)
+\u2705 OAuth2 login support for Google and GitHub
+\u2705 Role-based access control (RBAC) with `@Roles()` decorator and guard
+\u2705 Swagger API documentation for all endpoints
 
-### 📁 File & Folder Management
+### \U0001f4c1 File & Folder Management
 
-- ✅ **Local File Operations:** Read, write, create, delete, rename, search, list files and folders.
-- ✅ **Media Streaming:** Stream audio/video files with HTTP range support.
-- ✅ **File Downloads:** Directly download files to the client.
-- ✅ **Content Resolution:** Read file content from uploaded files, local paths, or URLs.
-- ✅ **Multiple File Operations:** Upload and read content from multiple files.
-- ✅ **Project Scanning:** Recursively scan directories for relevant code files, useful for AI context building (with intelligent exclusion lists).
-- ✅ **Real-time Collaboration (WebSockets):** Open, close, update, create, and delete files with real-time notifications for collaborative editing.
-- ✅ **Remote File Management (SSH/SFTP):**
+- \u2705 **Local File Operations:** Read, write, create, delete, rename, search, list files and folders.
+- \u2705 **Media Streaming:** Stream audio/video files with HTTP range support.
+- \u2705 **File Downloads:** Directly download files to the client.
+- \u2705 **Content Resolution:** Read file content from uploaded files, local paths, or URLs.
+- \u2705 **Multiple File Operations:** Upload and read content from multiple files.
+- \u2705 **Project Scanning:** Recursively scan directories for relevant code files, useful for AI context building (with intelligent exclusion lists).
+- \u2705 **Real-time Collaboration (WebSockets):** Open, close, update, create, and delete files with real-time notifications for collaborative editing.
+- \u2705 **Remote File Management (SSH/SFTP):**
   - List files and directories on remote servers.
   - Create, update, and delete remote files.
   - Download files from remote servers.
   - Execute shell commands on remote servers.
-- ✅ **GitHub Repository Management:** Create, commit, delete, list, and view contents of GitHub repositories.
+- \u2705 **GitHub Repository Management:** Create, commit, delete, list, and view contents of GitHub repositories.
 
-### 🧠 Generative AI (Google Gemini)
+### \U0001f9e0 Generative AI (Google Gemini)
 
-- ✅ **Text Generation:** General purpose text generation from prompts.
-- ✅ **Image Captioning:** Generate descriptions for images from URLs or local files.
-- ✅ **Text-to-Speech (TTS):** Convert text to natural-sounding speech audio (single and multi-speaker).
-- ✅ **Code Generation:** Generate code snippets based on natural language instructions.
-- ✅ **Code Documentation:** Generate documentation for code snippets (e.g., JSDoc, Markdown).
-- ✅ **Code Optimization:** Improve code for performance and readability.
-- ✅ **Code Analysis:** Identify issues, improvements, and best practices in code.
-- ✅ **Code Repair:** Fix syntax or logical errors in code.
-- ✅ **File Content Analysis:** Analyze content from uploaded files (e.g., SQL schemas, text documents).
-- ✅ **Resume Tools:**
+- \u2705 **Text Generation:** General purpose text generation from prompts.
+- \u2705 **Image Captioning:** Generate descriptions for images from URLs or local files.
+- \u2705 **Text-to-Speech (TTS):** Convert text to natural-sounding speech audio (single and multi-speaker).
+- \u2705 **Code Generation:** Generate code snippets based on natural language instructions.
+- \u2705 **Code Documentation:** Generate documentation for code snippets (e.g., JSDoc, Markdown).
+- \u2705 **Code Optimization:** Improve code for performance and readability.
+- \u2705 **Code Analysis:** Identify issues, improvements, and best practices in code.
+- \u2705 **Code Repair:** Fix syntax or logical errors in code.
+- \u2705 **File Content Analysis:** Analyze content from uploaded files (e.g., SQL schemas, text documents).
+- \u2705 **Resume Tools:**
   - Generate new resumes based on detailed prompts.
   - Optimize existing resumes against job descriptions.
   - Enhance specific resume sections for impact.
 
-### 🔧 Developer Utilities
+### \U0001f528 Developer Utilities
 
-- ✅ **Image Conversion:** Convert images (PNG, JPG) to SVG (Vector graphics).
-- ✅ **Code Formatting:** Format source code using Prettier (supports various languages).
-- ✅ **JSDoc to Markdown:** Generate Markdown documentation directly from JSDoc comments in TypeScript/TSX files.
-- ✅ **Markdown Conversions:**
+- \u2705 **Image Conversion:** Convert images (PNG, JPG) to SVG (Vector graphics).
+- \u2705 **Code Formatting:** Format source code using Prettier (supports various languages).
+- \u2705 **JSDoc to Markdown:** Generate Markdown documentation directly from JSDoc comments in TypeScript/TSX files.
+- \u2705 **Markdown Conversions:**
   - Convert Markdown to plain text.
   - Convert Markdown to HTML (with global CSS styling).
   - Convert Markdown to JSON AST (Abstract Syntax Tree).
   - Convert Markdown to DOCX (Microsoft Word Document).
-- ✅ **HTML to DOCX:** Convert HTML content to a DOCX document.
-- ✅ **SQL Utilities:** Parse `SELECT` and `INSERT` statements to JSON, and generate `INSERT` SQL from JSON.
-- ✅ **String Utilities:** Capitalize, kebab-case, reverse, truncate text, unique array filter, time ago formatting, Unix timestamp conversion.
-- ✅ **Environment Variable Handling:** Convert `.env` files to JSON and JSON objects to `.env` strings.
-- ✅ **JSON/YAML Conversion:** Bidirectional conversion between JSON objects and YAML strings.
-- ✅ **Encoding/Decoding:** Base64 and URL encoding/decoding.
-- ✅ **Code Highlighting:** Syntax highlighting for various programming languages.
-- ✅ **ESLint Integration:** Lint code strings and retrieve detailed diagnostics (errors, warnings, fixes).
-- ✅ **Code Transpilation:** Transpile JavaScript/TypeScript, React JSX, SolidJS JSX using ESBuild, supporting single files, multiple files, and ZIP archives.
-- ✅ **Interactive Terminal & Remote Shell:** Execute local terminal commands and establish persistent SSH sessions to remote servers with real-time input/output (via WebSockets), **including command history persistence and session logging.**
+- \u2705 **HTML to DOCX:** Convert HTML content to a DOCX document.
+- \u2705 **SQL Utilities:** Parse `SELECT` and `INSERT` statements to JSON, and generate `INSERT` SQL from JSON.
+- \u2705 **String Utilities:** Capitalize, kebab-case, reverse, truncate text, unique array filter, time ago formatting, Unix timestamp conversion.
+- \u2705 **Environment Variable Handling:** Convert `.env` files to JSON and JSON objects to `.env` strings.
+- \u2705 **JSON/YAML Conversion:** Bidirectional conversion between JSON objects and YAML strings.
+- \u2705 **Encoding/Decoding:** Base64 and URL encoding/decoding.
+- \u2705 **Code Highlighting:** Syntax highlighting for various programming languages.
+- \u2705 **ESLint Integration:** Lint code strings and retrieve detailed diagnostics (errors, warnings, fixes).
+- \u2705 **Code Transpilation:** Transpile JavaScript/TypeScript, React JSX, SolidJS JSX using ESBuild, supporting single files, multiple files, and ZIP archives.
+- \u2705 **Interactive Terminal & Remote Shell:** Execute local terminal commands and establish persistent SSH sessions to remote servers with real-time input/output (via WebSockets), **including command history persistence and session logging.**
 
-### 📹 Screen Recording & Screenshots
+### \U0001f39e Screen Recording & Screenshots
 
 | Method | Endpoint                      | Description                     |
 | ------ | ----------------------------- | ------------------------------- |
@@ -79,13 +78,7 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 
 ---
 
-## Demo
-
-<video src='demo.webm' controls width='600'>
-  Your browser does not support the video tag.
-</video>
-
-## 🚀 Getting Started
+## \U0001f680 Getting Started
 
 ### 1. Clone and Install Dependencies
 
@@ -158,9 +151,9 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 
 ---
 
-## 🚀 API Workflows
+## \U0001f680 API Workflows
 
-### 🔒 Authentication & User Management
+### \U0001f510 Authentication & User Management
 
 | Method | Endpoint                           | Description                    |
 | ------ | ---------------------------------- | ------------------------------ |
@@ -172,7 +165,7 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `GET`  | `/api/auth/github`                 | Initiate GitHub OAuth2 login   |
 | `GET`  | `/api/auth/me`                     | Get current authenticated user |
 
-### 📁 File & Folder Management
+### \U0001f4c1 File & Folder Management
 
 | Method   | Endpoint                    | Description                                 |
 | -------- | --------------------------- | ------------------------------------------- |
@@ -191,7 +184,7 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `DELETE` | `/repos/:repoName`          | Delete a GitHub repository                  |
 | `GET`    | `/repos/:repoName/contents` | Get repository files and directory contents |
 
-### 🧠 Generative AI (Google Gemini)
+### \U0001f9e0 Generative AI (Google Gemini)
 
 | Method | Endpoint                               | Description                             |
 | ------ | -------------------------------------- | --------------------------------------- |
@@ -204,7 +197,7 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `POST` | `/api/gemini/file/generate-resume`     | Generate a new resume                   |
 | `POST` | `/api/gemini/file/optimize-resume`     | Optimize resume against job description |
 
-### 💻 Developer Utilities & Shell
+### \U0001f4bb Developer Utilities & Shell
 
 | Method | Endpoint                       | Description                             |
 | ------ | ------------------------------ | --------------------------------------- |
@@ -226,7 +219,7 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `POST` | `/api/utils/json-yaml/to-yaml` | Convert JSON to YAML                    |
 | `POST` | `/api/encoding/base64/encode`  | Encode text to Base64                   |
 
-### 📹 Screen Recording & Screenshots
+### \U0001f39e Screen Recording & Screenshots
 
 | Method | Endpoint                      | Description                     |
 | ------ | ----------------------------- | ------------------------------- |
@@ -237,7 +230,7 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 
 ---
 
-## 📂 Project Structure
+## \U0001f4c2 Project Structure
 
 ```
 src/
@@ -256,15 +249,15 @@ src/
 
 ---
 
-## 📝 CLI Tool for Module Scaffolding
+## \U0001f4dd CLI Tool for Module Scaffolding
 
 This project includes a custom Nest CLI scaffolding tool that streamlines the creation of new modules, complete with services, controllers, and DTOs.
 
-### 🔄 Automatic `createdBy` Injection
+### \U0001f504 Automatic `createdBy` Injection
 
 The resource generator now includes support for auto-injecting the authenticated user as the `createdBy` relation in create operations.
 
-#### 🧠 How It Works
+#### \U0001f9e0 How It Works
 
 If the Prisma model contains either a `createdBy` or `createdById` field, and the model is **not** `User`, the generated service will:
 
@@ -279,7 +272,7 @@ If the Prisma model contains either a `createdBy` or `createdById` field, and th
 
 - Automatically remove `createdById` from the DTO to avoid Prisma conflicts if both are present.
 
-#### ✅ Requirements
+#### \u2705 Requirements
 
 - Your Prisma model must define either:
 
@@ -296,15 +289,15 @@ If the Prisma model contains either a `createdBy` or `createdById` field, and th
 
 - The model must not be `User` itself to avoid circular logic during user creation.
 
-#### 🔒 Protected Models
+#### \U0001f512 Protected Models
 
 This works in conjunction with the `libs/protected-models.ts` configuration, which enables route protection and user context injection.
 
 ---
 
-## 🧑‍💻 Author
+## \U0001f9d1\u200d\U0001f4bb Author
 
 Made with love by [Eddie Villanueva](https://github.com/evillan0315)
-📨 [evillan0315@gmail.com](mailto:evillan0315@gmail.com)
+\U0001f4e8 [evillan0315@gmail.com](mailto:evillan0315@gmail.com)
 
 ---

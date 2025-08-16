@@ -10,13 +10,17 @@ The Terminal module provides powerful capabilities for interacting with both loc
 - **Persistent Remote SSH Sessions:** Establish and interact with remote SSH sessions in real-time via WebSockets.
 - **Real-time Input/Output:** Bidirectional communication for commands and their output, enabling a seamless terminal experience.
 - **Directory Management:** Change current working directories for local and remote sessions.
+- **Command History Persistence:** Automatically logs executed commands to the database for auditing and session recall.
+- **Terminal Session Logging:** Records metadata about each interactive terminal session, including start/end times and client information.
 
 ### Core Components
 
 - [`TerminalController`](./TerminalController.md): Handles HTTP API endpoints for one-off local and remote command executions.
-- [`TerminalService`](./TerminalService.md): Manages the core logic for spawning local PTY processes, running one-off commands, and handling SSH connections.
+- [`TerminalService`](./TerminalService.md): Manages the core logic for spawning local PTY processes, running one-off commands, handling SSH connections, and **persisting terminal session and command history data**.
 - [`TerminalGateway`](./TerminalGateway.md): Facilitates real-time interactive terminal sessions (both local and SSH) using WebSockets.
 - [`DTOs`](./DTOs.md): Data Transfer Objects for defining command payloads and SSH connection details.
+- `TerminalSession` (Prisma Model): Stores metadata about each interactive terminal session.
+- `CommandHistory` (Prisma Model): Records details of commands executed within a session.
 
 ### Dependencies
 
@@ -28,3 +32,4 @@ The module relies on the following key dependencies:
 - `@nestjs/websockets`: For WebSocket communication via Socket.IO.
 - `@nestjs/swagger`: For API documentation.
 - `AuthModule` & `UserModule`: For authentication and authorization.
+- `PrismaService`: For interacting with the `TerminalSession` and `CommandHistory` database models.
