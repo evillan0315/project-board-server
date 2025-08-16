@@ -8,11 +8,11 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 
 ### JWT-based authentication via HTTP-only cookies and optional Bearer header
 
-✅ User registration and login with `bcrypt` password hashing
-✅ Email verification flow (on registration, resend, and token verification)
-✅ OAuth2 login support for Google and GitHub
-✅ Role-based access control (RBAC) with `@Roles()` decorator and guard
-✅ Swagger API documentation for all endpoints
+✅ User registration and login with `bcrypt` password hashing  
+✅ Email verification flow (on registration, resend, and token verification)  
+✅ OAuth2 login support for Google and GitHub  
+✅ Role-based access control (RBAC) with `@Roles()` decorator and guard  
+✅ Swagger API documentation for all endpoints  
 
 ### File & Folder Management
 
