@@ -88,9 +88,9 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 ### 1. Clone and Install Dependencies
 
 ```bash
-git clone https://github.com/evillan0315/auth-module.git
-cd auth-module
-npm install
+git clone https://github.com/evillan0315/project-board-server.git
+cd project-board-server
+pnpm install
 ```
 
 ### 2. Environment Configuration
@@ -98,6 +98,7 @@ npm install
 Create a `.env` file in the project root:
 
 ```env
+PORT=5000
 DATABASE_URL='postgresql://...' # Your PostgreSQL database connection string
 JWT_SECRET='your_jwt_secret' # Secret for JWT token signing
 
@@ -117,6 +118,7 @@ GOOGLE_GEMINI_MODEL='gemini-1.5-flash' # e.g., gemini-pro, gemini-1.5-flash, gem
 
 # Base URL for API (for email verification links, etc.)
 BASE_URL='http://localhost:3000'
+BACKEND_URL='http://localhost:5000'
 FRONTEND_URL='http://localhost:3001' # Your frontend URL for OAuth redirects
 
 # SSH Config for Remote File Operations (Update with your server details)
