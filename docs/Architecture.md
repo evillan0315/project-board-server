@@ -109,3 +109,14 @@ graph TD
 - **Private Key Management:** For remote SSH/SFTP operations, private keys are expected to be securely stored on the server and accessed via configured paths.
 - **CSRF Protection:** Implemented for OAuth callbacks, particularly for CLI integrations, using a `state` parameter with a CSRF token.
 - **CORS:** Configured to allow specified origins for frontend and CLI interactions.
+
+## 8. Developer Tools & Utilities
+
+The application incorporates a suite of developer-centric tools designed to enhance productivity and streamline various development tasks. These utilities often interact directly with the underlying operating system or integrate with external tools.
+
+- **Terminal Module:** Provides interactive local shell access and persistent remote SSH sessions via WebSockets, allowing real-time command execution and output. It also offers HTTP endpoints for one-off local and remote command runs.
+- **Code Linting & Transpilation:** Integrations with ESLint and ESBuild enable on-demand code analysis, formatting, and transpilation of JavaScript/TypeScript, React, and SolidJS code.
+- **File & Data Conversions:** A range of utilities for converting between different data formats (e.g., Markdown to HTML/DOCX, JSON to YAML, .env to JSON, image to SVG) and encoding/decoding operations.
+- **SQL Utilities:** Tools for parsing and generating SQL statements.
+
+These tools are typically exposed through dedicated controllers and services, leveraging Node.js's capabilities for system interaction and integrating third-party libraries for specialized tasks.

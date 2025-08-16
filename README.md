@@ -254,33 +254,6 @@ src/
 
 ---
 
-## 🔨 Tech Stack
-
-- **Backend Framework:** [NestJS](https://nestjs.com)
-- **ORM:** [Prisma ORM](https://www.prisma.io/)
-- **Authentication:** [Passport.js](http://www.passportjs.org/), JWT, OAuth2 (Google, GitHub)
-- **API Documentation:** [Swagger (OpenAPI)](https://swagger.io/)
-- **Database:** PostgreSQL (configurable via `DATABASE_URL`)
-- **Emailing:** `@nestjs-modules/mailer` with `handlebars` templates
-- **Password Hashing:** `bcrypt`
-- **File System Utils:** `fs`, `path`, `fs-extra`
-- **Image Processing:** `sharp` (for resizing), `potrace` (for bitmap to vector tracing)
-- **SSH/SFTP Client:** `ssh2`
-- **AI SDKs:** `@google/generative-ai`
-- **Audio Processing:** `wav` (for writing WAV files)
-- **HTTP Client:** `axios`, `node-fetch`
-- **Markdown Processing:** `unified`, `remark-parse`, `remark-rehype`, `rehype-stringify`, `remark-stringify`, `html-to-text`
-- **Code Formatting:** `prettier`
-- **Syntax Highlighting:** `shiki`
-- **MIME Type Detection:** `mime-types`
-- **Environment Variables:** `dotenv`
-- **YAML Parsing:** `js-yaml`
-- **Event Emitter:** `@nestjs/event-emitter`
-- **Code Transpilation:** `esbuild`
-- **ESLint:** `eslint`
-
----
-
 ## 📝 CLI Tool for Module Scaffolding
 
 This project includes a custom Nest CLI scaffolding tool that streamlines the creation of new modules, complete with services, controllers, and DTOs.
