@@ -17,7 +17,10 @@ export class CreateTerminalSessionDto {
   @IsString()
   userAgent?: string;
 
-  @ApiProperty({ description: 'Additional client-side information', required: false })
+  @ApiProperty({
+    description: 'Additional client-side information',
+    required: false,
+  })
   @IsOptional()
   @IsObject()
   clientInfo?: object;

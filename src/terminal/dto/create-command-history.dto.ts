@@ -14,7 +14,10 @@ export class CreateCommandHistoryDto {
   @IsString()
   workingDirectory?: string;
 
-  @ApiProperty({ description: 'Status of the command execution', required: false })
+  @ApiProperty({
+    description: 'Status of the command execution',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   status?: string;
@@ -42,7 +45,10 @@ export class CreateCommandHistoryDto {
   @IsInt()
   durationMs?: number;
 
-  @ApiProperty({ description: 'Type of shell used (e.g., bash, powershell)', required: false })
+  @ApiProperty({
+    description: 'Type of shell used (e.g., bash, powershell)',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   shellType?: string;

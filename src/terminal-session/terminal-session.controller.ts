@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,26 @@ import {
 } from './dto/create-terminal-session.dto';
 import { UpdateTerminalSessionDto } from './dto/update-terminal-session.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'TerminalSession'
-)
+@ApiTags('TerminalSession')
 @Controller('api/terminal-session')
 export class TerminalSessionController {
-  constructor(private readonly terminalSessionService: TerminalSessionService) {}
-  
-  
-  
+  constructor(
+    private readonly terminalSessionService: TerminalSessionService,
+  ) {}
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new TerminalSession' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateTerminalSessionDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateTerminalSessionDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +78,12 @@ export class TerminalSessionController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all TerminalSession records' })
-  @ApiOkResponse({ description: 'List of TerminalSession records.', type: [CreateTerminalSessionDto] })
+  @ApiOkResponse({
+    description: 'List of TerminalSession records.',
+    type: [CreateTerminalSessionDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,30 +95,28 @@ export class TerminalSessionController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated TerminalSession records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationTerminalSessionResultDto,
-})
-findAllPaginated(@Query() query: PaginationTerminalSessionQueryDto) {
-  return this.terminalSessionService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated TerminalSession records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationTerminalSessionResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationTerminalSessionQueryDto) {
+    return this.terminalSessionService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find TerminalSession by ID' })
-  @ApiOkResponse({ description: 'Record found.', type: CreateTerminalSessionDto })
+  @ApiOkResponse({
+    description: 'Record found.',
+    type: CreateTerminalSessionDto,
+  })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -135,11 +129,12 @@ findAllPaginated(@Query() query: PaginationTerminalSessionQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update TerminalSession by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateTerminalSessionDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateTerminalSessionDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +148,7 @@ findAllPaginated(@Query() query: PaginationTerminalSessionQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete TerminalSession by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +158,3 @@ findAllPaginated(@Query() query: PaginationTerminalSessionQueryDto) {
     return this.terminalSessionService.remove(id);
   }
 }
-

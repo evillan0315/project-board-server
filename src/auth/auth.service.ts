@@ -78,7 +78,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.password.hash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.password.hash,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -126,7 +129,11 @@ export class AuthService {
     const token = this.generateEmailVerificationToken(user.id);
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
 
-    await this.mailService.sendVerificationEmail(user.email, user.name ?? 'User', verifyUrl);
+    await this.mailService.sendVerificationEmail(
+      user.email,
+      user.name ?? 'User',
+      verifyUrl,
+    );
     // TODO: Log registration event (e.g., using Winston or custom logger)
     // TODO: Audit log entry to track new account creation
     // TODO: Add metrics or monitoring hook (e.g., Prometheus counter)
@@ -173,7 +180,11 @@ export class AuthService {
     const token = this.generateEmailVerificationToken(user.id);
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
 
-    await this.mailService.sendVerificationEmail(user.email, user.name ?? 'User', verifyUrl);
+    await this.mailService.sendVerificationEmail(
+      user.email,
+      user.name ?? 'User',
+      verifyUrl,
+    );
 
     return { message: 'Verification email sent.' };
   }
@@ -238,7 +249,10 @@ export class AuthService {
       } else if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException('Invalid token');
       } else {
-        Logger.error(`Unknown error validating token: ${error.message}`, error.stack);
+        Logger.error(
+          `Unknown error validating token: ${error.message}`,
+          error.stack,
+        );
         throw new UnauthorizedException('Token validation failed');
       }
     }

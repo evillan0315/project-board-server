@@ -16,25 +16,22 @@ import { Type } from 'class-transformer';
 
 export class CreateTerminalCommandDto {
   @ApiProperty({ description: 'command field' })
-    @IsString()
-    command: string;
+  @IsString()
+  command: string;
   @ApiProperty({ description: 'description field' })
-    @IsOptional()
-    @IsString()
-    description: string;
+  @IsOptional()
+  @IsString()
+  description: string;
   @ApiProperty({ description: 'output field' })
-    @IsOptional()
-    @IsString()
-    output: string;
+  @IsOptional()
+  @IsString()
+  output: string;
   @ApiProperty({ description: 'tags field' })
-    @IsString()
-    tags: string[];
+  @IsString()
+  tags: string[];
   @ApiProperty({ description: 'isFavorite field' })
-    @IsBoolean()
-    isFavorite: boolean;
-
-
-
+  @IsBoolean()
+  isFavorite: boolean;
 }
 
 export class PaginationTerminalCommandResultDto {
@@ -68,35 +65,22 @@ export class PaginationTerminalCommandQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by command' })
   command?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by description' })
   description?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by output' })
   output?: string;
   @IsOptional()
-  
   @ApiPropertyOptional({ description: 'Filter by tags' })
   tags?: string[];
   @IsOptional()
-  
   @IsBoolean()
-  
   @ApiPropertyOptional({ description: 'Filter by isFavorite' })
   isFavorite?: boolean;
-
-
-
 }
-

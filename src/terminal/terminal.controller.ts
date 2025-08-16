@@ -1,5 +1,18 @@
-import { Controller, Post, Body, HttpException, HttpStatus, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpException,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 import { TerminalCommandDto } from './dto/terminal-command.dto';
 import { SshCommandDto } from './dto/ssh-command.dto';
@@ -53,7 +66,8 @@ export class TerminalController {
     status: 200,
     description: 'Command executed successfully',
     schema: {
-      example: '15:42:35 up 2 days,  3:12,  2 users,  load average: 0.15, 0.09, 0.10\n',
+      example:
+        '15:42:35 up 2 days,  3:12,  2 users,  load average: 0.15, 0.09, 0.10\n',
     },
   })
   @ApiResponse({
@@ -97,7 +111,8 @@ export class TerminalController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Execute a terminal command locally',
-    description: 'Runs a local terminal command and returns stdout/stderr/exit code.',
+    description:
+      'Runs a local terminal command and returns stdout/stderr/exit code.',
   })
   @ApiBody({ type: TerminalCommandDto })
   @ApiResponse({

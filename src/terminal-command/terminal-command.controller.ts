@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,26 @@ import {
 } from './dto/create-terminal-command.dto';
 import { UpdateTerminalCommandDto } from './dto/update-terminal-command.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'TerminalCommand'
-)
+@ApiTags('TerminalCommand')
 @Controller('api/terminal-command')
 export class TerminalCommandController {
-  constructor(private readonly terminalCommandService: TerminalCommandService) {}
-  
-  
-  
+  constructor(
+    private readonly terminalCommandService: TerminalCommandService,
+  ) {}
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new TerminalCommand' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateTerminalCommandDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateTerminalCommandDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +78,12 @@ export class TerminalCommandController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all TerminalCommand records' })
-  @ApiOkResponse({ description: 'List of TerminalCommand records.', type: [CreateTerminalCommandDto] })
+  @ApiOkResponse({
+    description: 'List of TerminalCommand records.',
+    type: [CreateTerminalCommandDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,30 +95,28 @@ export class TerminalCommandController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated TerminalCommand records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationTerminalCommandResultDto,
-})
-findAllPaginated(@Query() query: PaginationTerminalCommandQueryDto) {
-  return this.terminalCommandService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated TerminalCommand records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationTerminalCommandResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationTerminalCommandQueryDto) {
+    return this.terminalCommandService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find TerminalCommand by ID' })
-  @ApiOkResponse({ description: 'Record found.', type: CreateTerminalCommandDto })
+  @ApiOkResponse({
+    description: 'Record found.',
+    type: CreateTerminalCommandDto,
+  })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -135,11 +129,12 @@ findAllPaginated(@Query() query: PaginationTerminalCommandQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update TerminalCommand by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateTerminalCommandDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateTerminalCommandDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +148,7 @@ findAllPaginated(@Query() query: PaginationTerminalCommandQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete TerminalCommand by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +158,3 @@ findAllPaginated(@Query() query: PaginationTerminalCommandQueryDto) {
     return this.terminalCommandService.remove(id);
   }
 }
-
