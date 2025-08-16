@@ -6,6 +6,10 @@ import { ModuleControlModule } from '../module-control/module-control.module';
 @Module({
   imports: [PrismaModule, ModuleControlModule],
   controllers: [TerminalSessionController],
-  providers: [TerminalSessionService],
+  providers: [
+      TerminalSessionService,
+      
+    ]
 })
 export class TerminalSessionModule {}
+

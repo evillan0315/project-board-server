@@ -16,42 +16,45 @@ import { Type } from 'class-transformer';
 
 export class CreateCommandHistoryDto {
   @ApiProperty({ description: 'command field' })
-  @IsString()
-  command: string;
+    @IsString()
+    command: string;
   @ApiProperty({ description: 'executedAt field' })
-  @IsDate()
-  executedAt: Date;
+    @IsDate()
+    executedAt: Date;
   @ApiProperty({ description: 'status field' })
-  @IsOptional()
-  @IsString()
-  status: string;
+    @IsOptional()
+    @IsString()
+    status: string;
   @ApiProperty({ description: 'exitCode field' })
-  @IsOptional()
-  @IsInt()
-  exitCode: number;
+    @IsOptional()
+    @IsInt()
+    exitCode: number;
   @ApiProperty({ description: 'output field' })
-  @IsOptional()
-  @IsString()
-  output: string;
+    @IsOptional()
+    @IsString()
+    output: string;
   @ApiProperty({ description: 'errorOutput field' })
-  @IsOptional()
-  @IsString()
-  errorOutput: string;
+    @IsOptional()
+    @IsString()
+    errorOutput: string;
   @ApiProperty({ description: 'workingDirectory field' })
-  @IsOptional()
-  @IsString()
-  workingDirectory: string;
+    @IsOptional()
+    @IsString()
+    workingDirectory: string;
   @ApiProperty({ description: 'durationMs field' })
-  @IsOptional()
-  @IsInt()
-  durationMs: number;
+    @IsOptional()
+    @IsInt()
+    durationMs: number;
   @ApiProperty({ description: 'shellType field' })
-  @IsOptional()
-  @IsString()
-  shellType: string;
+    @IsOptional()
+    @IsString()
+    shellType: string;
   @ApiProperty({ description: 'terminalSessionId field' })
-  @IsString()
-  terminalSessionId: string;
+    @IsString()
+    terminalSessionId: string;
+
+
+
 }
 
 export class PaginationCommandHistoryResultDto {
@@ -85,46 +88,70 @@ export class PaginationCommandHistoryQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by command' })
   command?: string;
   @IsOptional()
+  
   @Type(() => Date)
   @IsDate()
+  
   @ApiPropertyOptional({ description: 'Filter by executedAt' })
   executedAt?: Date;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by status' })
   status?: string;
   @IsOptional()
+  
   @Type(() => Number)
   @IsNumber()
+  
   @ApiPropertyOptional({ description: 'Filter by exitCode' })
   exitCode?: number;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by output' })
   output?: string;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by errorOutput' })
   errorOutput?: string;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by workingDirectory' })
   workingDirectory?: string;
   @IsOptional()
+  
   @Type(() => Number)
   @IsNumber()
+  
   @ApiPropertyOptional({ description: 'Filter by durationMs' })
   durationMs?: number;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by shellType' })
   shellType?: string;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by terminalSessionId' })
   terminalSessionId?: string;
+
+
+
 }
+

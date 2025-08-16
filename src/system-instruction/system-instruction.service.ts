@@ -30,8 +30,7 @@ export class SystemInstructionService {
   constructor(
     private readonly moduleControlService: ModuleControlService,
     private prisma: PrismaService,
-    @Inject(REQUEST)
-    private readonly request: Request & { user?: CreateJwtUserDto },
+    @Inject(REQUEST) private readonly request: Request & { user?: CreateJwtUserDto },
   ) {}
   // Use OnModuleInit to check the module status after all dependencies are initialized
   onModuleInit() {
@@ -128,7 +127,9 @@ export class SystemInstructionService {
   private buildWhereFromQuery(
     query: PaginationSystemInstructionQueryDto,
   ): Prisma.SystemInstructionWhereInput {
-    const where: Prisma.SystemInstructionWhereInput = {};
+    const where: Prisma.SystemInstructionWhereInput = {
+      createdById: this.userId,
+    };
 
     if (query.requestId !== undefined) {
       where.requestId = query.requestId;

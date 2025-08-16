@@ -6,6 +6,10 @@ import { ModuleControlModule } from '../module-control/module-control.module';
 @Module({
   imports: [PrismaModule, ModuleControlModule],
   controllers: [CommandHistoryController],
-  providers: [CommandHistoryService],
+  providers: [
+      CommandHistoryService,
+      
+    ]
 })
 export class CommandHistoryModule {}
+

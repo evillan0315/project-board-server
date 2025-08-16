@@ -423,7 +423,13 @@ export class <%= className %>Service {
   
   
   private buildWhereFromQuery(query: Pagination<%= className %>QueryDto): Prisma.<%= className %>WhereInput {
-  const where: Prisma.<%= className %>WhereInput = {};
+
+  const where: Prisma.<%= className %>WhereInput = {
+    <% if (hasCreatedBy || isProtected) { %>
+    createdById:this.userId
+    <%  } %>
+  };
+      
 
 <% fields
   .filter(field =>

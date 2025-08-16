@@ -16,28 +16,31 @@ import { Type } from 'class-transformer';
 
 export class CreateTerminalSessionDto {
   @ApiProperty({ description: 'name field' })
-  @IsOptional()
-  @IsString()
-  name: string;
+    @IsOptional()
+    @IsString()
+    name: string;
   @ApiProperty({ description: 'startedAt field' })
-  @IsDate()
-  startedAt: Date;
+    @IsDate()
+    startedAt: Date;
   @ApiProperty({ description: 'endedAt field' })
-  @IsOptional()
-  @IsDate()
-  endedAt: Date;
+    @IsOptional()
+    @IsDate()
+    endedAt: Date;
   @ApiProperty({ description: 'ipAddress field' })
-  @IsOptional()
-  @IsString()
-  ipAddress: string;
+    @IsOptional()
+    @IsString()
+    ipAddress: string;
   @ApiProperty({ description: 'userAgent field' })
-  @IsOptional()
-  @IsString()
-  userAgent: string;
+    @IsOptional()
+    @IsString()
+    userAgent: string;
   @ApiProperty({ description: 'clientInfo field' })
-  @IsOptional()
-  @IsObject()
-  clientInfo: any;
+    @IsOptional()
+    @IsObject()
+    clientInfo: any;
+
+
+
 }
 
 export class PaginationTerminalSessionResultDto {
@@ -71,28 +74,43 @@ export class PaginationTerminalSessionQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by name' })
   name?: string;
   @IsOptional()
+  
   @Type(() => Date)
   @IsDate()
+  
   @ApiPropertyOptional({ description: 'Filter by startedAt' })
   startedAt?: Date;
   @IsOptional()
+  
   @Type(() => Date)
   @IsDate()
+  
   @ApiPropertyOptional({ description: 'Filter by endedAt' })
   endedAt?: Date;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by ipAddress' })
   ipAddress?: string;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by userAgent' })
   userAgent?: string;
   @IsOptional()
+  
   @ApiPropertyOptional({ description: 'Filter by clientInfo' })
   clientInfo?: any;
+
+
+
 }
+

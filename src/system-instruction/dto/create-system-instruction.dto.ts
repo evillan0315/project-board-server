@@ -16,15 +16,18 @@ import { Type } from 'class-transformer';
 
 export class CreateSystemInstructionDto {
   @ApiProperty({ description: 'requestId field' })
-  @IsString()
-  requestId: string;
+    @IsString()
+    requestId: string;
   @ApiProperty({ description: 'instruction field' })
-  @IsString()
-  instruction: string;
+    @IsString()
+    instruction: string;
   @ApiProperty({ description: 'persona field' })
-  @IsOptional()
-  @IsString()
-  persona: string;
+    @IsOptional()
+    @IsString()
+    persona: string;
+
+
+
 }
 
 export class PaginationSystemInstructionResultDto {
@@ -58,15 +61,25 @@ export class PaginationSystemInstructionQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by requestId' })
   requestId?: string;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by instruction' })
   instruction?: string;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by persona' })
   persona?: string;
+
+
+
 }
+
