@@ -1,5 +1,3 @@
-// File: /media/eddie/Data/projects/nestJS/nest-modules/full-stack/src/auth/auth.service.ts
-
 import {
   BadRequestException,
   Injectable,
@@ -11,6 +9,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
+import { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
@@ -79,10 +78,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      dto.password,
-      user.password.hash,
-    );
+    const isPasswordValid = await bcrypt.compare(dto.password, user.password.hash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -130,11 +126,7 @@ export class AuthService {
     const token = this.generateEmailVerificationToken(user.id);
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
 
-    await this.mailService.sendVerificationEmail(
-      user.email,
-      user.name ?? 'User',
-      verifyUrl,
-    );
+    await this.mailService.sendVerificationEmail(user.email, user.name ?? 'User', verifyUrl);
     // TODO: Log registration event (e.g., using Winston or custom logger)
     // TODO: Audit log entry to track new account creation
     // TODO: Add metrics or monitoring hook (e.g., Prometheus counter)
@@ -181,11 +173,7 @@ export class AuthService {
     const token = this.generateEmailVerificationToken(user.id);
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
 
-    await this.mailService.sendVerificationEmail(
-      user.email,
-      user.name ?? 'User',
-      verifyUrl,
-    );
+    await this.mailService.sendVerificationEmail(user.email, user.name ?? 'User', verifyUrl);
 
     return { message: 'Verification email sent.' };
   }
@@ -232,5 +220,27 @@ export class AuthService {
    */
   async generateToken(payload: CreateJwtUserDto): Promise<string> {
     return this.jwtService.signAsync(payload);
+  }
+
+  /**
+   * Validates an access token and returns its decoded payload.
+   * @param token The JWT access token to validate.
+   * @returns The decoded JwtPayload if the token is valid.
+   * @throws UnauthorizedException if the token is invalid or expired.
+   */
+  async validateToken(token: string): Promise<JwtPayload> {
+    try {
+      const payload: JwtPayload = this.jwtService.verify(token);
+      return payload;
+    } catch (error) {
+      if (error instanceof TokenExpiredError) {
+        throw new UnauthorizedException('Token expired');
+      } else if (error instanceof JsonWebTokenError) {
+        throw new UnauthorizedException('Invalid token');
+      } else {
+        Logger.error(`Unknown error validating token: ${error.message}`, error.stack);
+        throw new UnauthorizedException('Token validation failed');
+      }
+    }
   }
 }
