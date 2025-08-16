@@ -80,11 +80,11 @@ The modular API design allows for effortless integration into your existing CI/C
 
 ## **Why Choose This Platform?**
 
-✅ **All-in-One DevOps & Developer Toolchain:** Consolidates numerous essential developer utilities and operational tools into a single, cohesive platform.
-✅ **AI-Driven Productivity Boosters:** Experience unprecedented efficiency with intelligent code generation, analysis, and automated tasks powered by Google Gemini.
-✅ **Robust Enterprise Security & Compliance:** Trust in a secure architecture with advanced authentication, authorization, and data handling.
-✅ **Extensive API Surface for Custom Integrations:** Easily extend and customize functionality to fit your unique business needs and integrate with third-party services.
-✅ **Rich File, Database, and Terminal Utilities:** Gain comprehensive control over your development environment, from local file systems to remote servers and databases, all within one platform.
+✅ **All-in-One DevOps & Developer Toolchain:** Consolidates numerous essential developer utilities and operational tools into a single, cohesive platform.  
+✅ **AI-Driven Productivity Boosters:** Experience unprecedented efficiency with intelligent code generation, analysis, and automated tasks powered by Google Gemini.  
+✅ **Robust Enterprise Security & Compliance:** Trust in a secure architecture with advanced authentication, authorization, and data handling.  
+✅ **Extensive API Surface for Custom Integrations:** Easily extend and customize functionality to fit your unique business needs and integrate with third-party services.  
+✅ **Rich File, Database, and Terminal Utilities:** Gain comprehensive control over your development environment, from local file systems to remote servers and databases, all within one platform.  
 
 ---
 
