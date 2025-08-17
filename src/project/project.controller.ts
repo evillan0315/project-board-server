@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,24 @@ import {
 } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'Project'
-)
+@ApiTags('Project')
 @Controller('api/project')
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
-  
-  
-  
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new Project' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateProjectDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateProjectDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +76,12 @@ export class ProjectController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all Project records' })
-  @ApiOkResponse({ description: 'List of Project records.', type: [CreateProjectDto] })
+  @ApiOkResponse({
+    description: 'List of Project records.',
+    type: [CreateProjectDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,28 +93,23 @@ export class ProjectController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated Project records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationProjectResultDto,
-})
-findAllPaginated(@Query() query: PaginationProjectQueryDto) {
-  return this.projectService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated Project records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationProjectResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationProjectQueryDto) {
+    return this.projectService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find Project by ID' })
   @ApiOkResponse({ description: 'Record found.', type: CreateProjectDto })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -135,11 +124,12 @@ findAllPaginated(@Query() query: PaginationProjectQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update Project by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateProjectDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateProjectDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +143,7 @@ findAllPaginated(@Query() query: PaginationProjectQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete Project by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +153,3 @@ findAllPaginated(@Query() query: PaginationProjectQueryDto) {
     return this.projectService.remove(id);
   }
 }
-

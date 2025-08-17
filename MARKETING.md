@@ -50,7 +50,7 @@ Welcome to **Your Next-Gen Cloud Workspace** — a **secure**, **scalable**, and
 - Markdown, HTML, and JSDoc conversions to various formats (e.g., DOCX, HTML, plain text).
 - SQL parsing and generation, JSON/YAML conversion, and environment variable handling.
 - Image conversion (PNG, JPG to SVG) and base64/URL encoding/decoding.
-- **Screen recording and screenshot capabilities**.
+- **Screen recording and screenshot capabilities**, including listing, metadata, and cleanup of recorded files.
 
 ---
 
@@ -84,13 +84,7 @@ The modular API design allows for effortless integration into your existing CI/C
 ✅ **AI-Driven Productivity Boosters:** Experience unprecedented efficiency with intelligent code generation, analysis, and automated tasks powered by Google Gemini.  
 ✅ **Robust Enterprise Security & Compliance:** Trust in a secure architecture with advanced authentication, authorization, and data handling.  
 ✅ **Extensive API Surface for Custom Integrations:** Easily extend and customize functionality to fit your unique business needs and integrate with third-party services.  
-✅ **Rich File, Database, and Terminal Utilities:** Gain comprehensive control over your development environment, from local file systems to remote servers and databases, all within one platform.  
-
----
-
-## **Get Started**
-
-Ready to transform your development workflow? Contact us for a demo or check out our detailed documentation to integrate this powerful platform into your operations.
+✅ **Rich File, Database, and Terminal Utilities:** Gain comprehensive control over your development environment, from local file systems to remote servers and databases, all within one platform.
 
 ---
 

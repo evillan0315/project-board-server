@@ -12,7 +12,7 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 ✅ Email verification flow (on registration, resend, and token verification)  
 ✅ OAuth2 login support for Google and GitHub  
 ✅ Role-based access control (RBAC) with `@Roles()` decorator and guard  
-✅ Swagger API documentation for all endpoints  
+✅ Swagger API documentation for all endpoints
 
 ### File & Folder Management
 
@@ -69,12 +69,21 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 
 ### Screen Recording & Screenshots
 
-| Method | Endpoint | Description |
-| ------ | ----------------------------- | ------------------------------- |
-| `POST` | `/api/recording/capture` | Take a screenshot of the screen |
-| `POST` | `/api/recording/record-start` | Start screen recording |
-| `POST` | `/api/recording/record-stop` | Stop screen recording |
-| `GET` | `/api/recording/list` | List all saved recordings |
+| Method   | Endpoint                            | Description                               |
+| -------- | ----------------------------------- | ----------------------------------------- |
+| `GET`    | `/api/recording/status`             | Get current recording status              |
+| `GET`    | `/api/recording/metadata`           | Get metadata for a recording file         |
+| `GET`    | `/api/recording/list`               | List all saved recording files            |
+| `DELETE` | `/api/recording/recordings/cleanup` | Delete recordings older than N days       |
+| `POST`   | `/api/recording/capture`            | Take a screenshot of the screen           |
+| `POST`   | `/api/recording/record-start`       | Start screen recording                    |
+| `POST`   | `/api/recording/record-stop`        | Stop screen recording                     |
+| `POST`   | `/api/recording`                    | Create a new recording entry (Admin only) |
+| `GET`    | `/api/recording`                    | Retrieve all recordings (Admin only)      |
+| `GET`    | `/api/recording/paginated`          | Paginated recordings (Admin only)         |
+| `GET`    | `/api/recording/:id`                | Find recording by ID (Admin only)         |
+| `PATCH`  | `/api/recording/:id`                | Update recording by ID (Admin only)       |
+| `DELETE` | `/api/recording/:id`                | Delete recording by ID (Admin only)       |
 
 ---
 
@@ -155,78 +164,97 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 
 ### Authentication & User Management
 
-| Method | Endpoint | Description |
+| Method | Endpoint                           | Description                    |
 | ------ | ---------------------------------- | ------------------------------ |
-| `POST` | `/api/auth/register` | Register a new user |
-| `GET` | `/api/auth/verify-email?token=...` | Verify user email |
-| `POST` | `/api/auth/login` | Log in a user |
-| `POST` | `/api/auth/logout` | Log out user (clear cookie) |
-| `GET` | `/api/auth/google` | Initiate Google OAuth2 login |
-| `GET` | `/api/auth/github` | Initiate GitHub OAuth2 login |
-| `GET` | `/api/auth/me` | Get current authenticated user |
+| `POST` | `/api/auth/register`               | Register a new user            |
+| `GET`  | `/api/auth/verify-email?token=...` | Verify user email              |
+| `POST` | `/api/auth/login`                  | Log in a user                  |
+| `POST` | `/api/auth/logout`                 | Log out user (clear cookie)    |
+| `GET`  | `/api/auth/google`                 | Initiate Google OAuth2 login   |
+| `GET`  | `/api/auth/github`                 | Initiate GitHub OAuth2 login   |
+| `GET`  | `/api/auth/me`                     | Get current authenticated user |
 
 ### File & Folder Management
 
-| Method | Endpoint | Description |
-| -------- | --------------------------- | ------------------------------------------- |
-| `GET` | `/api/file/list` | List contents of a directory |
-| `POST` | `/api/file/read` | Read content of a file (upload, path, URL) |
-| `POST` | `/api/file/create` | Create a new file or folder |
-| `POST` | `/api/file/delete` | Delete a file or folder |
-| `POST` | `/api/file/rename` | Rename a file or folder |
-| `POST` | `/api/file/scan` | Scan project directories for relevant files |
-| `GET` | `/api/file/stream` | Stream media files with range support |
-| `GET` | `/api/remote/list` | List files on a remote server (SSH/SFTP) |
-| `GET` | `/repos` | Get all repositories from GitHub |
-| `GET` | `/repos/:repoName` | Get a single repository by name |
-| `POST` | `/repos` | Create a new GitHub repository |
-| `PATCH` | `/repos/:repoName/commit` | Simulate a commit to a repository |
-| `DELETE` | `/repos/:repoName` | Delete a GitHub repository |
-| `GET` | `/repos/:repoName/contents` | Get repository files and directory contents |
+| Method   | Endpoint                    | Description                                        |
+| -------- | --------------------------- | -------------------------------------------------- |
+| `GET`    | `/api/file/list`            | List contents of a directory                       |
+| `POST`   | `/api/file/read`            | Read content of a file (upload, path, URL)         |
+| `POST`   | `/api/file/create`          | Create a new file or folder                        |
+| `POST`   | `/api/file/delete`          | Delete a file or folder                            |
+| `POST`   | `/api/file/rename`          | Rename a file or folder                            |
+| `POST`   | `/api/file/scan`            | Scan project directories for relevant files        |
+| `GET`    | `/api/file/stream`          | Stream media files with range support              |
+| `GET`    | `/api/file/download`        | Stream a file directly to the client for download  |
+| `GET`    | `/api/file/proxy`           | Proxies an image URL and streams the image content |
+| `POST`   | `/api/file/write`           | Write content to a file                            |
+| `POST`   | `/api/file/upload`          | Upload a single file                               |
+| `POST`   | `/api/file/upload-multiple` | Upload multiple files                              |
+| `GET`    | `/api/remote/list`          | List files on a remote server (SSH/SFTP)           |
+| `POST`   | `/api/remote/file`          | Create a new file on remote server                 |
+| `PUT`    | `/api/remote/file`          | Update an existing file on remote server           |
+| `DELETE` | `/api/remote/file`          | Delete a file on remote server                     |
+| `POST`   | `/api/remote/command`       | Run a shell command on the remote server           |
+| `GET`    | `/api/remote/download`      | Download a remote file                             |
+| `GET`    | `/repos`                    | Get all repositories from GitHub                   |
+| `GET`    | `/repos/:repoName`          | Get a single repository by name                    |
+| `POST`   | `/repos`                    | Create a new GitHub repository                     |
+| `PATCH`  | `/repos/:repoName/commit`   | Simulate a commit to a repository                  |
+| `DELETE` | `/repos/:repoName`          | Delete a GitHub repository                         |
+| `GET`    | `/repos/:repoName/contents` | Get repository files and directory contents        |
 
 ### Generative AI (Google Gemini)
 
-| Method | Endpoint | Description |
+| Method | Endpoint                               | Description                             |
 | ------ | -------------------------------------- | --------------------------------------- |
-| `POST` | `/api/google-gemini/generate-doc` | Generate documentation from code |
-| `POST` | `/api/google-gemini/generate-code` | Generate code snippets |
-| `POST` | `/api/google-gemini-image/caption-url` | Caption image from URL |
-| `POST` | `/api/google-tts/generate` | Generate speech from text (TTS) |
-| `POST` | `/api/gemini/file/generate-text` | General text generation |
-| `POST` | `/api/gemini/file/generate-file` | Analyze uploaded file content |
-| `POST` | `/api/gemini/file/generate-resume` | Generate a new resume |
-| `POST` | `/api/gemini/file/optimize-resume` | Optimize resume against job description |
+| `POST` | `/api/google-gemini/generate-doc`      | Generate documentation from code        |
+| `POST` | `/api/google-gemini/generate-code`     | Generate code snippets                  |
+| `POST` | `/api/google-gemini-image/caption-url` | Caption image from URL                  |
+| `POST` | `/api/google-tts/generate`             | Generate speech from text (TTS)         |
+| `POST` | `/api/gemini/file/generate-text`       | General text generation                 |
+| `POST` | `/api/gemini/file/generate-file`       | Analyze uploaded file content           |
+| `POST` | `/api/gemini/file/generate-resume`     | Generate a new resume                   |
+| `POST` | `/api/gemini/file/optimize-resume`     | Optimize resume against job description |
 
 ### Developer Utilities & Shell
 
-| Method | Endpoint | Description |
+| Method | Endpoint                       | Description                             |
 | ------ | ------------------------------ | --------------------------------------- |
-| `POST` | `/api/terminal/run` | Execute a local terminal command |
-| `POST` | `/api/terminal/ssh/run` | Execute an SSH command on remote server |
-| `POST` | `/eslint/lint` | Lint a given code string using ESLint |
-| `POST` | `/api/transpile` | Transpile raw code string |
-| `POST` | `/api/transpile/file` | Transpile an uploaded file |
-| `POST` | `/api/transpile/files` | Transpile multiple uploaded files |
-| `POST` | `/api/transpile/directory` | Transpile files from a ZIP archive |
-| `POST` | `/api/utils/format-code` | Format source code with Prettier |
-| `POST` | `/api/utils/json-to-env` | Convert JSON to `.env` format |
-| `POST` | `/api/utils/env-to-json` | Convert `.env` to JSON format |
-| `POST` | `/api/utils/markdown-to-html` | Convert Markdown to HTML |
-| `POST` | `/api/utils/markdown-to-docx` | Convert Markdown to DOCX |
-| `POST` | `/api/utils/html-to-docx` | Convert HTML to DOCX |
-| `POST` | `/api/utils/convert-to-svg` | Convert image (PNG/JPG) to SVG |
-| `GET` | `/api/docs/generate` | Generate Markdown from JSDoc |
-| `POST` | `/api/utils/json-yaml/to-yaml` | Convert JSON to YAML |
-| `POST` | `/api/encoding/base64/encode` | Encode text to Base64 |
+| `POST` | `/api/terminal/run`            | Execute a local terminal command        |
+| `POST` | `/api/terminal/ssh/run`        | Execute an SSH command on remote server |
+| `POST` | `/eslint/lint`                 | Lint a given code string using ESLint   |
+| `POST` | `/api/transpile`               | Transpile raw code string               |
+| `POST` | `/api/transpile/file`          | Transpile an uploaded file              |
+| `POST` | `/api/transpile/files`         | Transpile multiple uploaded files       |
+| `POST` | `/api/transpile/directory`     | Transpile files from a ZIP archive      |
+| `POST` | `/api/utils/format-code`       | Format source code with Prettier        |
+| `POST` | `/api/utils/json-to-env`       | Convert JSON to `.env` format           |
+| `POST` | `/api/utils/env-to-json`       | Convert `.env` to JSON format           |
+| `POST` | `/api/utils/markdown-to-html`  | Convert Markdown to HTML                |
+| `POST` | `/api/utils/markdown-to-docx`  | Convert Markdown to DOCX                |
+| `POST` | `/api/utils/html-to-docx`      | Convert HTML to DOCX                    |
+| `POST` | `/api/utils/convert-to-svg`    | Convert image (PNG/JPG) to SVG          |
+| `GET`  | `/api/docs/generate`           | Generate Markdown from JSDoc            |
+| `POST` | `/api/utils/json-yaml/to-yaml` | Convert JSON to YAML                    |
+| `POST` | `/api/encoding/base64/encode`  | Encode text to Base64                   |
 
 ### Screen Recording & Screenshots
 
-| Method | Endpoint | Description |
-| ------ | ----------------------------- | ------------------------------- |
-| `POST` | `/api/recording/capture` | Take a screenshot of the screen |
-| `POST` | `/api/recording/record-start` | Start screen recording |
-| `POST` | `/api/recording/record-stop` | Stop screen recording |
-| `GET` | `/api/recording/list` | List all saved recordings |
+| Method   | Endpoint                            | Description                               |
+| -------- | ----------------------------------- | ----------------------------------------- |
+| `GET`    | `/api/recording/status`             | Get current recording status              |
+| `GET`    | `/api/recording/metadata`           | Get metadata for a recording file         |
+| `GET`    | `/api/recording/list`               | List all saved recordings                 |
+| `DELETE` | `/api/recording/recordings/cleanup` | Delete recordings older than N days       |
+| `POST`   | `/api/recording/capture`            | Take a screenshot of the screen           |
+| `POST`   | `/api/recording/record-start`       | Start screen recording                    |
+| `POST`   | `/api/recording/record-stop`        | Stop screen recording                     |
+| `POST`   | `/api/recording`                    | Create a new recording entry (Admin only) |
+| `GET`    | `/api/recording`                    | Retrieve all recordings (Admin only)      |
+| `GET`    | `/api/recording/paginated`          | Paginated recordings (Admin only)         |
+| `GET`    | `/api/recording/:id`                | Find recording by ID (Admin only)         |
+| `PATCH`  | `/api/recording/:id`                | Update recording by ID (Admin only)       |
+| `DELETE` | `/api/recording/:id`                | Delete recording by ID (Admin only)       |
 
 ---
 
