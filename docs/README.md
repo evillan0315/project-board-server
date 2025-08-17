@@ -35,4 +35,6 @@ Welcome to the project documentation! This section provides detailed insights in
   - [Terminal Service](terminal/TerminalService.md)
   - [Terminal Gateway (WebSockets)](terminal/TerminalGateway.md)
   - [DTOs](terminal/DTOs.md)
+- [Developer Utilities](#developer-utilities)
+  - [CLI Module Scaffolding Tool](developer-tools/cli-scaffolding.md)
 - [API Endpoints Reference](api-endpoints.md)

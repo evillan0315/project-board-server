@@ -60,6 +60,10 @@ Welcome to **Your Next-Gen Cloud Workspace** — a **secure**, **scalable**, and
 
 Empower your engineering teams with cutting-edge AI assistance that automates repetitive coding tasks, generates high-quality documentation, and instantly formats code. This allows your developers to focus on innovation and complex problem-solving, significantly reducing time-to-market.
 
+### **Streamlined Module Scaffolding**
+
+Leverage the custom CLI tool for rapid module creation, automatically generating boilerplate with services, controllers, and DTOs, and intelligently injecting user context for Prisma models. This reduces manual setup and ensures consistent project structure.
+
 ### **Ensure Enterprise-Grade Security & Compliance**
 
 Our platform is built on a foundation of robust JWT authentication, seamless OAuth2 integrations, and granular Role-Based Access Control (RBAC). This multi-layered security approach ensures that your intellectual property and operational data are protected at every level, helping meet compliance requirements.

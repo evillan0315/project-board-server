@@ -114,6 +114,7 @@ graph TD
 
 The application incorporates a suite of developer-centric tools designed to enhance productivity and streamline various development tasks. These utilities often interact directly with the underlying operating system or integrate with external tools.
 
+- **CLI Module Scaffolding Tool:** A custom command-line interface tool that streamlines the creation of new NestJS modules, automatically generating boilerplate code (controllers, services, DTOs) and intelligently injecting user context for database models.
 - **Terminal Module:** Provides interactive local shell access and persistent remote SSH sessions via WebSockets, allowing real-time command execution and output. It also offers HTTP endpoints for one-off local and remote command runs, **with command history persistence and session logging capabilities**.
 - **Code Linting & Transpilation:** Integrations with ESLint and ESBuild enable on-demand code analysis, formatting, and transpilation of JavaScript/TypeScript, React, and SolidJS code.
 - **File & Data Conversions:** A range of utilities for converting between different data formats (e.g., Markdown to HTML/DOCX, JSON to YAML, .env to JSON, image to SVG) and encoding/decoding operations.
