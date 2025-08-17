@@ -494,7 +494,7 @@ export class FileService implements OnModuleInit {
           }
 
           if (isDir && recursive) {
-            fileItem.children = await this.getFilesByDirectory(fullPath, true);
+            fileItem.children = await this.getFilesByDirectory(fullPath, false);
           }
 
           results.push(fileItem);

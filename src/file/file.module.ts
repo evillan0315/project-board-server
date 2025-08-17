@@ -35,8 +35,6 @@ import { RemoteFileController } from './remote-file/remote-file.controller';
         'sys',
         'dev',
         'root',
-        'node_modules',
-        '.git',
       ],
     },
     FileGateway,

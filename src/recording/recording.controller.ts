@@ -57,6 +57,7 @@ export class RecordingController {
   constructor(private readonly recordingService: RecordingService) {}
 
   @Get('status')
+  @ApiQuery({ name: 'id', required: false, description: 'Recording ID to check' })
   @ApiOperation({ summary: 'Get current recording status.' })
   @ApiOkResponse({
     description: 'Current recording status.',
@@ -65,11 +66,18 @@ export class RecordingController {
         recording: true,
         file: '/path/to/file.mp4',
         startedAt: '2025-06-21T06:00:00.000Z',
+        id: 'some-uuid-id-of-recording',
       },
     },
   })
-  async recordingStatus() {
-    return this.recordingService.getRecordingStatus();
+  async recordingStatus(@Query('id') id: string): Promise<{
+    id: string;
+    recording: boolean;
+    file: string | null;
+    startedAt: string | null;
+  }> {
+
+    return this.recordingService.getRecordingStatus(id);
   }
 
   @Get('metadata')
@@ -79,9 +87,7 @@ export class RecordingController {
     required: true,
     description: 'Full path or filename',
   })
-  async getMetadata(
-    @Query('file') file: string,
-  ): Promise<{ size: number; modified: string }> {
+  async getMetadata(@Query('file') file: string): Promise<{ size: number; modified: string }> {
     const filePath = file.includes('/')
       ? file
       : join(process.cwd(), 'downloads', 'recordings', file);
@@ -188,11 +194,7 @@ export class RecordingController {
     type: PaginationRecordingResultDto,
   })
   findAllPaginated(@Query() query: PaginationRecordingQueryDto) {
-    return this.recordingService.findAllPaginated(
-      undefined,
-      query.page,
-      query.pageSize,
-    );
+    return this.recordingService.findAllPaginated(undefined, query.page, query.pageSize);
   }
 
   @Get(':id')

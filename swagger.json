@@ -7352,7 +7352,17 @@
     "/api/recording/status": {
       "get": {
         "operationId": "RecordingController_recordingStatus",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "id",
+            "required": false,
+            "in": "query",
+            "description": "Recording ID to check",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Current recording status.",
@@ -7362,7 +7372,8 @@
                   "example": {
                     "recording": true,
                     "file": "/path/to/file.mp4",
-                    "startedAt": "2025-06-21T06:00:00.000Z"
+                    "startedAt": "2025-06-21T06:00:00.000Z",
+                    "id": "some-uuid-id-of-recording"
                   }
                 }
               }
@@ -12461,7 +12472,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-16T10:57:51.079Z",
+            "example": "2025-08-17T14:46:48.321Z",
             "format": "date-time"
           }
         },

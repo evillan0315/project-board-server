@@ -7,11 +7,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  spawn,
-  ChildProcessWithoutNullStreams,
-  spawnSync,
-} from 'child_process';
+import { spawn, ChildProcessWithoutNullStreams, spawnSync } from 'child_process';
 import * as screenshot from 'screenshot-desktop';
 import { join, dirname } from 'path';
 import { writeFile, stat, unlink, mkdir, readdir } from 'fs/promises';
@@ -52,16 +48,43 @@ export class RecordingService {
   /**
    * Returns the current recording status.
    */
-  async getRecordingStatus(): Promise<{
+  async getRecordingStatus(id?: string): Promise<{
+    id: string;
     recording: boolean;
     file: string | null;
     startedAt: string | null;
   }> {
-    return {
-      recording: !!this.recordingProcess,
-      file: this.recordingFile,
-      startedAt: this.startedAt ? this.startedAt.toISOString() : null,
-    };
+    if (!id) {
+      const recordings = await this.prisma.recording.findFirst({
+        where: { createdById: this.userId, status: 'recording' },
+      });
+      if (!recordings) {
+        return {
+          id: '',
+          recording: false,
+          file: null,
+          startedAt: null,
+        };
+      }
+
+      return {
+        id: recordings?.id,
+        recording: recordings?.status === 'recording' ? true : false,
+        file: recordings?.path,
+        startedAt: this.startedAt ? this.startedAt.toISOString() : null,
+      };
+    } else {
+      const currentRecording = await this.findOne(id);
+      if (!currentRecording) {
+        throw new NotFoundException(`Recording with ID ${id} not found.`);
+      }
+      return {
+        id: currentRecording.id,
+        recording: currentRecording.status === 'recording' ? true : false,
+        file: currentRecording.path,
+        startedAt: this.startedAt ? this.startedAt.toISOString() : null,
+      };
+    }
   }
 
   /**
@@ -83,12 +106,7 @@ export class RecordingService {
    * Lists all recording files.
    */
   async listRecordings(): Promise<string[]> {
-    const dir = join(
-      process.cwd(),
-      'downloads',
-      'recordings',
-      `${this.userId}`,
-    );
+    const dir = join(process.cwd(), 'downloads', 'recordings', `${this.userId}`);
     const files = await readdir(dir);
     return files.map((f) => join(dir, f));
   }
@@ -98,12 +116,7 @@ export class RecordingService {
    * @param days Number of days to use as threshold
    */
   async cleanupOld(days: number = 7): Promise<{ deleted: string[] }> {
-    const dir = join(
-      process.cwd(),
-      'downloads',
-      'recordings',
-      `${this.userId}`,
-    );
+    const dir = join(process.cwd(), 'downloads', 'recordings', `${this.userId}`);
     const files = await readdir(dir);
     const now = Date.now();
     const deleted: string[] = [];
@@ -189,9 +202,7 @@ export class RecordingService {
       await unlink(recording.path);
       this.logger.log(`Deleted file: ${recording.path}`);
     } catch (err) {
-      this.logger.warn(
-        `Failed to delete file: ${recording.path}. Error: ${err.message}`,
-      );
+      this.logger.warn(`Failed to delete file: ${recording.path}. Error: ${err.message}`);
     }
 
     return this.prisma.recording.delete({ where: { id } });
@@ -199,9 +210,7 @@ export class RecordingService {
 
   async captureScreen(): Promise<{ id: string; status: string; path: string }> {
     if (!this.userId) {
-      throw new BadRequestException(
-        'User ID is required to capture a screenshot.',
-      );
+      throw new BadRequestException('User ID is required to capture a screenshot.');
     }
 
     const outputPath = join(
@@ -241,9 +250,7 @@ export class RecordingService {
 
   async startRecording(): Promise<StartRecordingResponseDto> {
     if (!this.userId) {
-      throw new BadRequestException(
-        'User ID is required to start a recording.',
-      );
+      throw new BadRequestException('User ID is required to start a recording.');
     }
 
     const outputFile = join(
@@ -255,9 +262,7 @@ export class RecordingService {
     );
     const ffmpegCheck = spawnSync('ffmpeg', ['-version']);
     if (ffmpegCheck.error) {
-      throw new InternalServerErrorException(
-        'FFmpeg is not installed or not in PATH.',
-      );
+      throw new InternalServerErrorException('FFmpeg is not installed or not in PATH.');
     }
     await mkdir(dirname(outputFile), { recursive: true });
 
@@ -270,9 +275,7 @@ export class RecordingService {
     this.lastRecordingMetadata = { startedAt: new Date().toISOString() };
 
     if (!this.recordingProcess?.pid) {
-      throw new InternalServerErrorException(
-        'Failed to start recording process.',
-      );
+      throw new InternalServerErrorException('Failed to start recording process.');
     }
 
     const pid = this.recordingProcess.pid;
@@ -281,7 +284,7 @@ export class RecordingService {
       data: {
         path: outputFile,
         type: 'screenRecord',
-        status: 'started',
+        status: 'recording',
         pid: String(pid),
         data: {
           startedAt: this.lastRecordingMetadata.startedAt,
@@ -340,17 +343,13 @@ export class RecordingService {
     return { path: outputFile, id: recording.id };
   }
 
-  async stopRecording(
-    id: string,
-  ): Promise<{ id: string; status: string; path: string }> {
+  async stopRecording(id: string): Promise<{ id: string; status: string; path: string }> {
     const getRecording = await this.prisma.recording.findUnique({
       where: { id },
     });
 
     if (!getRecording) {
-      throw new BadRequestException(
-        `No saved recording in the database with this id: ${id}.`,
-      );
+      throw new BadRequestException(`No saved recording in the database with this id: ${id}.`);
     }
 
     const pid = Number(getRecording.pid);
@@ -358,9 +357,7 @@ export class RecordingService {
     const runStopped = await this.terminal.runCommandOnce(`kill ${pid}`, './');
 
     if (!runStopped) {
-      throw new BadRequestException(
-        `Recording did not stop for recording id: ${id}.`,
-      );
+      throw new BadRequestException(`Recording did not stop for recording id: ${id}.`);
     }
 
     await this.prisma.recording.update({
@@ -368,8 +365,7 @@ export class RecordingService {
       data: {
         status: 'finished',
         data: {
-          ...(typeof getRecording.data === 'object' &&
-          getRecording.data !== null
+          ...(typeof getRecording.data === 'object' && getRecording.data !== null
             ? getRecording.data
             : {}),
           stoppedAt: new Date().toISOString(),
