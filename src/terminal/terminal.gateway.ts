@@ -75,7 +75,8 @@ export class TerminalGateway
       // Store user ID on the client socket for later use
       (client as any).userId = user.sub;
 
-      // Initialize CWD for the client
+      // Initialize CWD for the client with the base directory. This is the default.
+      // It can be overridden by the 'set_cwd' message from the client.
       const initialCwd = this.BASE_DIR || os.homedir();
       this.cwdMap.set(client.id, initialCwd);
 
@@ -120,6 +121,48 @@ export class TerminalGateway
     this.disposeSsh(clientId);
     this.logger.log(`Client disconnected: ${clientId}`);
   }
+
+  @SubscribeMessage('set_cwd')
+  async handleSetCwd(
+    @MessageBody() payload: { cwd: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const clientId = client.id;
+    const requestedCwd = payload.cwd;
+
+    if (
+      requestedCwd &&
+      existsSync(requestedCwd) &&
+      statSync(requestedCwd).isDirectory()
+    ) {
+      const currentPtyCwd = this.cwdMap.get(clientId);
+      // Only change if the requested CWD is different from the current one in our map
+      if (currentPtyCwd !== requestedCwd) {
+        this.cwdMap.set(clientId, requestedCwd);
+        // Send a 'cd' command to the PTY to update its actual working directory.
+        // Quoting the path handles spaces/special chars.
+        this.terminalService.write(clientId, `cd '${requestedCwd}'\n`);
+        this.logger.debug(`Client ${clientId} CWD set to: ${requestedCwd}`);
+        client.emit('prompt', { cwd: requestedCwd, command: '' }); // Update client's prompt to reflect new CWD
+      } else {
+        this.logger.debug(
+          `Client ${clientId} requested CWD '${requestedCwd}' is already current.`,
+        );
+        client.emit('prompt', { cwd: requestedCwd, command: '' }); // Just send prompt update
+      }
+    } else {
+      this.logger.warn(
+        `Client ${clientId} requested invalid CWD: ${requestedCwd}`,
+      );
+      client.emit('error', `Invalid directory: ${requestedCwd}\n`);
+      // Re-emit prompt with current valid CWD
+      client.emit('prompt', {
+        cwd: this.cwdMap.get(clientId) || process.cwd(),
+        command: '',
+      });
+    }
+  }
+
   @SubscribeMessage('exec_terminal')
   async handleCommandTerminal(
     @MessageBody() payload: ExecDto,

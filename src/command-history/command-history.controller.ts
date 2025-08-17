@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,24 @@ import {
 } from './dto/create-command-history.dto';
 import { UpdateCommandHistoryDto } from './dto/update-command-history.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'CommandHistory'
-)
+@ApiTags('CommandHistory')
 @Controller('api/command-history')
 export class CommandHistoryController {
   constructor(private readonly commandHistoryService: CommandHistoryService) {}
-  
-  
-  
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new CommandHistory' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateCommandHistoryDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateCommandHistoryDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +76,12 @@ export class CommandHistoryController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all CommandHistory records' })
-  @ApiOkResponse({ description: 'List of CommandHistory records.', type: [CreateCommandHistoryDto] })
+  @ApiOkResponse({
+    description: 'List of CommandHistory records.',
+    type: [CreateCommandHistoryDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,30 +93,28 @@ export class CommandHistoryController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated CommandHistory records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationCommandHistoryResultDto,
-})
-findAllPaginated(@Query() query: PaginationCommandHistoryQueryDto) {
-  return this.commandHistoryService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated CommandHistory records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationCommandHistoryResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationCommandHistoryQueryDto) {
+    return this.commandHistoryService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find CommandHistory by ID' })
-  @ApiOkResponse({ description: 'Record found.', type: CreateCommandHistoryDto })
+  @ApiOkResponse({
+    description: 'Record found.',
+    type: CreateCommandHistoryDto,
+  })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -135,11 +127,12 @@ findAllPaginated(@Query() query: PaginationCommandHistoryQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update CommandHistory by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateCommandHistoryDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateCommandHistoryDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +146,7 @@ findAllPaginated(@Query() query: PaginationCommandHistoryQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete CommandHistory by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +156,3 @@ findAllPaginated(@Query() query: PaginationCommandHistoryQueryDto) {
     return this.commandHistoryService.remove(id);
   }
 }
-

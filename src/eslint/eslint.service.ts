@@ -1,4 +1,8 @@
-import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ESLint } from 'eslint';
 import { DiagnosticDto, Severity } from './dto/diagnostic.dto';
 import * as path from 'path';
@@ -23,7 +27,9 @@ export class EslintService {
 
     let loadedConfig;
     try {
-      this.logger.debug(`Attempting to load ESLint config from: ${configFilePath}`);
+      this.logger.debug(
+        `Attempting to load ESLint config from: ${configFilePath}`,
+      );
       // Dynamically import the flat config file
       // This requires Node.js to be able to import ES modules.
       const configModule = await import(configFilePath);
@@ -32,7 +38,9 @@ export class EslintService {
       if (!Array.isArray(loadedConfig)) {
         throw new Error('ESLint config file must default export an array.');
       }
-      this.logger.log(`Successfully loaded ESLint config from: ${configFilePath}`);
+      this.logger.log(
+        `Successfully loaded ESLint config from: ${configFilePath}`,
+      );
     } catch (error: any) {
       this.logger.error(
         `Failed to load ESLint config from ${configFilePath}: ${error.message}`,
@@ -72,7 +80,9 @@ export class EslintService {
    * @param results ESLint lint results.
    * @returns Array of DiagnosticDto.
    */
-  private processEslintResults(results: ESLint.LintResult[]): Record<string, DiagnosticDto[]> {
+  private processEslintResults(
+    results: ESLint.LintResult[],
+  ): Record<string, DiagnosticDto[]> {
     const allDiagnostics: Record<string, DiagnosticDto[]> = {};
 
     for (const result of results) {
@@ -82,7 +92,9 @@ export class EslintService {
       for (const message of result.messages) {
         // Fallback to 0 if codeContent is not available, though it should be for accurate offsets
         const from =
-          codeContent !== undefined && message.line !== undefined && message.column !== undefined
+          codeContent !== undefined &&
+          message.line !== undefined &&
+          message.column !== undefined
             ? this.getCharOffset(message.line, message.column, codeContent)
             : message.fix?.range[0] || 0;
 
@@ -90,7 +102,11 @@ export class EslintService {
           codeContent !== undefined &&
           message.endLine !== undefined &&
           message.endColumn !== undefined
-            ? this.getCharOffset(message.endLine, message.endColumn, codeContent)
+            ? this.getCharOffset(
+                message.endLine,
+                message.endColumn,
+                codeContent,
+              )
             : message.fix?.range[1] || from + 1;
 
         const severity: Severity = message.severity === 1 ? 'warning' : 'error';
@@ -122,13 +138,20 @@ export class EslintService {
     return allDiagnostics;
   }
 
-  async lintCode(code: string, filePath?: string, cwd?: string): Promise<DiagnosticDto[]> {
+  async lintCode(
+    code: string,
+    filePath?: string,
+    cwd?: string,
+  ): Promise<DiagnosticDto[]> {
     try {
       const eslint = await this.getEslintInstance(cwd);
 
-      const resolvedFilePath = filePath || this.determineFilePathFromContent(code);
+      const resolvedFilePath =
+        filePath || this.determineFilePathFromContent(code);
 
-      this.logger.debug(`Linting code for: ${resolvedFilePath} in CWD: ${cwd || 'default'}`);
+      this.logger.debug(
+        `Linting code for: ${resolvedFilePath} in CWD: ${cwd || 'default'}`,
+      );
 
       const results = await eslint.lintText(code, {
         filePath: resolvedFilePath,
@@ -137,7 +160,10 @@ export class EslintService {
       // lintText returns an array with a single result for the given code
       return this.processEslintResults(results)[resolvedFilePath] || [];
     } catch (error: any) {
-      this.logger.error('Error during ESLint linting:', error.stack || error.message);
+      this.logger.error(
+        'Error during ESLint linting:',
+        error.stack || error.message,
+      );
       if (error instanceof InternalServerErrorException) {
         throw error;
       }
@@ -162,7 +188,9 @@ export class EslintService {
       const allResults: ESLint.LintResult[] = [];
 
       for (const file of files) {
-        this.logger.debug(`Linting file: ${file.filePath} in CWD: ${cwd || 'default'}`);
+        this.logger.debug(
+          `Linting file: ${file.filePath} in CWD: ${cwd || 'default'}`,
+        );
         const results = await eslint.lintText(file.code, {
           filePath: file.filePath,
         });
@@ -191,13 +219,18 @@ export class EslintService {
     try {
       const eslint = await this.getEslintInstance(cwd);
 
-      this.logger.debug(`Linting directory: ${directoryPath} in CWD: ${cwd || 'default'}`);
+      this.logger.debug(
+        `Linting directory: ${directoryPath} in CWD: ${cwd || 'default'}`,
+      );
       // ESLint's lintFiles method takes an array of file/directory patterns
       const results = await eslint.lintFiles([directoryPath]);
 
       return this.processEslintResults(results);
     } catch (error: any) {
-      this.logger.error('Error during ESLint linting directory:', error.stack || error.message);
+      this.logger.error(
+        'Error during ESLint linting directory:',
+        error.stack || error.message,
+      );
       if (error instanceof InternalServerErrorException) {
         throw error;
       }

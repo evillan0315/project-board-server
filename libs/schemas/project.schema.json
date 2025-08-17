@@ -1,0 +1,187 @@
+ {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/schemas/projects_module.json",
+  "title": "Projects Module Data",
+  "description": "Comprehensive JSON schema for managing development projects. This schema defines the structure for a collection of projects as well as optional module-specific configurations.",
+  "type": "object",
+  "properties": {
+    "projects": {
+      "type": "array",
+      "description": "A list of individual development projects managed by the module.",
+      "items": {
+        "$ref": "#/definitions/Project"
+      },
+      "minItems": 0,
+      "examples": [
+        [
+          {
+            "id": "c7a8b9e0-1234-5678-90ab-cdef01234567",
+            "name": "Frontend Dashboard",
+            "description": "A React-based web application for data visualization.",
+            "path": "/home/dev/workspaces/dashboard-app",
+            "createdAt": "2023-03-01T08:00:00Z",
+            "updatedAt": "2023-11-25T16:45:00Z",
+            "status": "active",
+            "technologies": ["React", "TypeScript", "Vite", "TailwindCSS"],
+            "versionControl": "git",
+            "repositoryUrl": "https://github.com/myorg/frontend-dashboard",
+            "lastOpenedAt": "2023-11-30T10:30:00Z",
+            "ownerId": "devuser_abc",
+            "metadata": {
+              "preferredIDE": "VSCode",
+              "dockerized": true
+            }
+          },
+          {
+            "id": "f2a3b4c5-6789-0123-4567-89abcdef0123",
+            "name": "Microservice Gateway",
+            "description": "Node.js microservice handling API routing and authentication.",
+            "path": "C:\\Users\\admin\\dev\\gateway-service",
+            "createdAt": "2022-09-10T14:15:00Z",
+            "updatedAt": "2023-12-01T09:00:00Z",
+            "status": "maintenance",
+            "technologies": ["Node.js", "Express", "JWT", "MongoDB"],
+            "versionControl": "git",
+            "repositoryUrl": "https://gitlab.com/myorg/microservice-gateway",
+            "ownerId": "team_alpha"
+          }
+        ]
+      ]
+    },
+    "lastSyncTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional: Timestamp of the last successful synchronization of project data (e.g., from a remote source or file system scan), in ISO 8601 format.",
+      "examples": ["2023-12-01T10:00:00Z"]
+    },
+    "moduleConfig": {
+      "type": "object",
+      "description": "Optional: Configuration settings specific to how the projects module operates.",
+      "properties": {
+        "maxProjects": {
+          "type": "integer",
+          "description": "Maximum number of projects that can be managed or displayed.",
+          "minimum": 0,
+          "default": 100
+        },
+        "defaultProjectPath": {
+          "type": "string",
+          "description": "The default file system path where new projects are created or looked for.",
+          "examples": ["/home/user/development/projects", "D:\\Work\\MyProjects"]
+        },
+        "autoScanIntervalMinutes": {
+          "type": "integer",
+          "description": "Frequency (in minutes) for automatically scanning for new or updated projects.",
+          "minimum": 0,
+          "default": 60
+        }
+      },
+      "additionalProperties": false,
+      "examples": [{ "maxProjects": 50, "defaultProjectPath": "/var/www/html", "autoScanIntervalMinutes": 120 }]
+    }
+  },
+  "required": ["projects"],
+  "additionalProperties": false,
+  "definitions": {
+    "Project": {
+      "type": "object",
+      "description": "Represents a single development project with its metadata and system details.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the project. Typically a UUID, but can be any unique string ID.",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+          "examples": ["a1b2c3d4-e5f6-7890-1234-567890abcdef"]
+        },
+        "name": {
+          "type": "string",
+          "description": "The human-readable name of the project.",
+          "minLength": 1,
+          "maxLength": 255,
+          "examples": ["My Awesome Web App", "Backend Service API"]
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description outlining the purpose or scope of the project.",
+          "maxLength": 1000,
+          "examples": ["A full-stack application for task management.", "RESTful API for user authentication and authorization."]
+        },
+        "path": {
+          "type": "string",
+          "description": "The file system path to the project's root directory. This can be an absolute path (e.g., /home/user/my-app) or a Windows path (e.g., C:\\Projects\\my-app).",
+          "minLength": 1,
+          "examples": ["/home/user/projects/my-web-app", "C:\\Users\\dev\\Documents\\backend-service"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the project record was created, in ISO 8601 format (e.g., YYYY-MM-DDTHH:mm:ssZ).",
+          "examples": ["2023-01-15T10:00:00Z"]
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the project record was last updated, in ISO 8601 format.",
+          "examples": ["2023-11-20T14:30:00Z"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Current development or lifecycle status of the project.",
+          "enum": ["active", "development", "maintenance", "on-hold", "archived", "deprecated"],
+          "default": "development"
+        },
+        "technologies": {
+          "type": "array",
+          "description": "A list of key technologies, frameworks, or programming languages used in the project.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "examples": [["React", "Node.js", "MongoDB"], ["Python", "Django", "PostgreSQL"]]
+        },
+        "versionControl": {
+          "type": "string",
+          "description": "The version control system used for the project's repository.",
+          "enum": ["git", "svn", "mercurial", "other"],
+          "default": "git"
+        },
+        "repositoryUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL to the project's source code repository (e.g., GitHub, GitLab).",
+          "examples": ["https://github.com/user/my-web-app"]
+        },
+        "lastOpenedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optional: Timestamp when the project was last opened or accessed within the IDE/system, in ISO 8601 format.",
+          "examples": ["2023-12-01T09:15:00Z"]
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Optional: Identifier for the owner of the project (e.g., user ID, organization ID).",
+          "examples": ["user123", "org_456"]
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Optional: A flexible field for additional, unstructured key-value pair metadata specific to the project. Keys are strings, values can be any JSON-compatible type.",
+          "additionalProperties": {
+             "type": ["string", "number", "boolean", "array", "object", "null"]
+          },
+          "examples": [{ "buildTool": "Webpack", "hostingProvider": "AWS", "isActive": true, "environment": "production" }]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "path",
+        "createdAt",
+        "updatedAt",
+        "status",
+        "technologies"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

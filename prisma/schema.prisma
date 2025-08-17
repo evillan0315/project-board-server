@@ -119,13 +119,21 @@ model Folder {
 }
 
 model Project {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
+  id             String        @id @default(uuid())
+  name           String
+  description    String?
+  path           String        @unique // New field: Project root path, must be unique
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  status         ProjectStatus @default(DEVELOPMENT) // New field: Project status
+  technologies   String[] // New field: Array of technologies
+  versionControl String? // New field: VCS
+  repositoryUrl  String? // New field: Repository URL
+  lastOpenedAt   DateTime? // New field: Last opened timestamp
+  ownerId        String? // New field: Optional owner identifier
+  metadata       Json? // New field: Flexible JSON metadata
+  createdById    String
+  createdBy      User          @relation(fields: [createdById], references: [id])
 }
 
 model Recording {
@@ -338,7 +346,7 @@ model TerminalCommand {
 model TerminalSession {
   id             String                @id @default(uuid())
   name           String?
-  createdAt     DateTime              @default(now())
+  createdAt      DateTime              @default(now())
   startedAt      DateTime              @default(now())
   endedAt        DateTime?
   ipAddress      String?
@@ -358,7 +366,7 @@ model CommandHistory {
   id               String   @id @default(uuid())
   command          String   @db.Text
   executedAt       DateTime @default(now())
-  createdAt       DateTime @default(now())
+  createdAt        DateTime @default(now())
   status           String?
   exitCode         Int?
   output           String?  @db.Text
@@ -406,4 +414,14 @@ enum TerminalSessionStatus {
   ENDED
   DISCONNECTED
   ERROR
+}
+
+// New enum for Project Status
+enum ProjectStatus {
+  ACTIVE
+  DEVELOPMENT
+  MAINTENANCE
+  ON_HOLD
+  ARCHIVED
+  DEPRECATED
 }

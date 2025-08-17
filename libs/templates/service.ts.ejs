@@ -429,19 +429,23 @@ export class <%= className %>Service {
     createdById:this.userId
     <%  } %>
   };
-      
-
+     
 <% fields
   .filter(field =>
     !['id', 'createdAt', 'updatedAt', 'createdById', 'deletedAt'].includes(field.name)
   )
   .forEach(field => { -%>
   if (query.<%= field.name %> !== undefined) {
+    <% if (Array.isArray(field) || field.type  === 'string[]') { %>
+    where.<%= field.name %> = {
+      hasSome: query.<%= field.name %>,
+    };
+    <% } else { %>
     where.<%= field.name %> = query.<%= field.name %>;
+    <% } %>
   }
 <% }) %>
 
   return where;
 }
 }
-

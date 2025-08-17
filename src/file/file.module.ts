@@ -29,13 +29,7 @@ import { RemoteFileController } from './remote-file/remote-file.controller';
     FileValidationService,
     {
       provide: 'EXCLUDED_FOLDERS',
-      useValue: [
-        'lost+found',
-        'proc',
-        'sys',
-        'dev',
-        'root',
-      ],
+      useValue: ['lost+found', 'proc', 'sys', 'dev', 'root'],
     },
     FileGateway,
     RemoteFileService,

@@ -1,11 +1,4 @@
-import {
-  Logger,
-  Injectable,
-  Inject,
-  ForbiddenException,
-  BadRequestException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Logger, Injectable, Inject, ForbiddenException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ModuleControlService } from '../module-control/module-control.service';
 
@@ -21,17 +14,20 @@ import { Prisma } from '@prisma/client';
 
 import { CreateJwtUserDto } from '../auth/dto/auth.dto';
 
+
 import { REQUEST } from '@nestjs/core';
 import { Request, Response } from 'express';
+
+
 
 @Injectable()
 export class ProjectService {
   private readonly logger = new Logger(ProjectService.name);
   constructor(
-    private readonly moduleControlService: ModuleControlService,
+    
+    private readonly moduleControlService: ModuleControlService, 
     private prisma: PrismaService,
-    @Inject(REQUEST)
-    private readonly request: Request & { user?: CreateJwtUserDto },
+    @Inject(REQUEST) private readonly request: Request & { user?: CreateJwtUserDto },
   ) {}
   // Use OnModuleInit to check the module status after all dependencies are initialized
   onModuleInit() {
@@ -49,15 +45,19 @@ export class ProjectService {
       );
     }
   }
-
+  
+  
   private get userId(): string | undefined {
-    return this.request.user?.id;
-  }
+  return this.request.user?.id;
+}
+  
 
   create(data: CreateProjectDto) {
     this.ensureFileModuleEnabled();
-    const createData: any = { ...data };
+    let createData: any = { ...data };
 
+    
+    
     const hasCreatedById = data.hasOwnProperty('createdById');
     if (this.userId) {
       createData.createdBy = {
@@ -66,41 +66,46 @@ export class ProjectService {
       if (hasCreatedById) {
         delete createData.createdById;
       }
+      
     }
+    
 
+   
     return this.prisma.project.create({ data: createData });
   }
-
+  
   async findAllPaginated(
-    query: PaginationProjectQueryDto,
-    select?: Prisma.ProjectSelect,
-  ) {
-    const page = query.page ? Number(query.page) : 1;
-    const pageSize = query.pageSize ? Number(query.pageSize) : 10;
-    const skip = (page - 1) * pageSize;
-    const take = pageSize;
+  query: PaginationProjectQueryDto,
+  select?: Prisma.ProjectSelect,
+) {
+  const page = query.page ? Number(query.page) : 1;
+  const pageSize = query.pageSize ? Number(query.pageSize) : 10;
+  const skip = (page - 1) * pageSize;
+  const take = pageSize;
 
-    const where = this.buildWhereFromQuery(query);
+  const where = this.buildWhereFromQuery(query);
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.project.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take,
-        ...(select ? { select } : {}),
-      }),
-      this.prisma.project.count({ where }),
-    ]);
+  const [items, total] = await this.prisma.$transaction([
+    this.prisma.project.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+      ...(select ? { select } : {}),
+    }),
+    this.prisma.project.count({ where }),
+  ]);
 
-    return {
-      items,
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
-    };
-  }
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+}
+
+
 
   findAll() {
     this.ensureFileModuleEnabled();
@@ -110,7 +115,11 @@ export class ProjectService {
   findOne(id: string) {
     this.ensureFileModuleEnabled();
 
-    return this.prisma.project.findUnique({ where: { id } });
+    return this.prisma.project.findUnique(
+    
+    { where: { id } }
+    
+    );
   }
 
   update(id: string, data: UpdateProjectDto) {
@@ -125,18 +134,66 @@ export class ProjectService {
     return this.prisma.project.delete({ where: { id } });
   }
 
-  private buildWhereFromQuery(
-    query: PaginationProjectQueryDto,
-  ): Prisma.ProjectWhereInput {
-    const where: Prisma.ProjectWhereInput = {};
 
-    if (query.name !== undefined) {
-      where.name = query.name;
-    }
-    if (query.description !== undefined) {
-      where.description = query.description;
-    }
+  
+  
+  private buildWhereFromQuery(query: PaginationProjectQueryDto): Prisma.ProjectWhereInput {
 
-    return where;
+  const where: Prisma.ProjectWhereInput = {
+    
+    createdById:this.userId
+    
+  };
+     
+  if (query.name !== undefined) {
+    
+    where.name = query.name;
+    
   }
+  if (query.description !== undefined) {
+    
+    where.description = query.description;
+    
+  }
+  if (query.path !== undefined) {
+    
+    where.path = query.path;
+    
+  }
+  if (query.technologies !== undefined) {
+    
+    where.technologies = {
+      hasSome: query.technologies,
+    };
+    
+  }
+  if (query.versionControl !== undefined) {
+    
+    where.versionControl = query.versionControl;
+    
+  }
+  if (query.repositoryUrl !== undefined) {
+    
+    where.repositoryUrl = query.repositoryUrl;
+    
+  }
+  if (query.lastOpenedAt !== undefined) {
+    
+    where.lastOpenedAt = query.lastOpenedAt;
+    
+  }
+  if (query.ownerId !== undefined) {
+    
+    where.ownerId = query.ownerId;
+    
+  }
+  if (query.metadata !== undefined) {
+    
+    where.metadata = query.metadata;
+    
+  }
+
+
+  return where;
+}
 }

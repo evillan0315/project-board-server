@@ -30,7 +30,8 @@ export class SystemInstructionService {
   constructor(
     private readonly moduleControlService: ModuleControlService,
     private prisma: PrismaService,
-    @Inject(REQUEST) private readonly request: Request & { user?: CreateJwtUserDto },
+    @Inject(REQUEST)
+    private readonly request: Request & { user?: CreateJwtUserDto },
   ) {}
   // Use OnModuleInit to check the module status after all dependencies are initialized
   onModuleInit() {

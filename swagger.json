@@ -8708,6 +8708,73 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Filter by path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "technologies",
+            "required": false,
+            "in": "query",
+            "description": "Filter by technologies",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "versionControl",
+            "required": false,
+            "in": "query",
+            "description": "Filter by versionControl",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "repositoryUrl",
+            "required": false,
+            "in": "query",
+            "description": "Filter by repositoryUrl",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lastOpenedAt",
+            "required": false,
+            "in": "query",
+            "description": "Filter by lastOpenedAt",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "ownerId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by ownerId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "metadata",
+            "required": false,
+            "in": "query",
+            "description": "Filter by metadata",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
           }
         ],
         "responses": {
@@ -10142,7 +10209,7 @@
         ]
       }
     },
-    "/eslint/lint": {
+    "/api/eslint/lint": {
       "post": {
         "operationId": "EslintController_lintCode",
         "parameters": [],
@@ -10179,6 +10246,104 @@
           }
         },
         "summary": "Lint a given code string using ESLint",
+        "tags": [
+          "eslint"
+        ]
+      }
+    },
+    "/api/eslint/lint-files": {
+      "post": {
+        "operationId": "EslintController_lintFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "An array of code contents with their virtual file paths for linting",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LintFilesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns ESLint diagnostics grouped by file path.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/DiagnosticDto"
+                    }
+                  },
+                  "example": {
+                    "/path/to/file1.ts": [],
+                    "/path/to/file2.ts": []
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "500": {
+            "description": "ESLint service error"
+          }
+        },
+        "summary": "Lint multiple given code strings (representing files) using ESLint",
+        "tags": [
+          "eslint"
+        ]
+      }
+    },
+    "/api/eslint/lint-directory": {
+      "post": {
+        "operationId": "EslintController_lintDirectory",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Path to the directory to lint and optional CWD.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LintDirectoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns ESLint diagnostics grouped by file path.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/DiagnosticDto"
+                    }
+                  },
+                  "example": {
+                    "/path/to/file1.ts": [],
+                    "/path/to/file2.ts": []
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "500": {
+            "description": "ESLint service error"
+          }
+        },
+        "summary": "Lint all files within a specified directory using ESLint",
         "tags": [
           "eslint"
         ]
@@ -12472,7 +12637,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-17T14:46:48.321Z",
+            "example": "2025-08-17T19:21:17.569Z",
             "format": "date-time"
           }
         },
@@ -13557,11 +13722,50 @@
           "description": {
             "type": "string",
             "description": "description field"
+          },
+          "path": {
+            "type": "string",
+            "description": "path field"
+          },
+          "technologies": {
+            "description": "technologies field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "versionControl": {
+            "type": "string",
+            "description": "versionControl field"
+          },
+          "repositoryUrl": {
+            "type": "string",
+            "description": "repositoryUrl field"
+          },
+          "lastOpenedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "lastOpenedAt field"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "ownerId field"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "metadata field"
           }
         },
         "required": [
           "name",
-          "description"
+          "description",
+          "path",
+          "technologies",
+          "versionControl",
+          "repositoryUrl",
+          "lastOpenedAt",
+          "ownerId",
+          "metadata"
         ]
       },
       "PaginationProjectResultDto": {
@@ -13604,6 +13808,38 @@
           "description": {
             "type": "string",
             "description": "description field"
+          },
+          "path": {
+            "type": "string",
+            "description": "path field"
+          },
+          "technologies": {
+            "description": "technologies field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "versionControl": {
+            "type": "string",
+            "description": "versionControl field"
+          },
+          "repositoryUrl": {
+            "type": "string",
+            "description": "repositoryUrl field"
+          },
+          "lastOpenedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "lastOpenedAt field"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "ownerId field"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "metadata field"
           }
         }
       },
@@ -14000,6 +14236,63 @@
       "DiagnosticDto": {
         "type": "object",
         "properties": {}
+      },
+      "LintFileDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The code content of the file to lint",
+            "example": "const x = 1;"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "The virtual file path for this code content, used by ESLint to find configs/determine language. Relative to CWD.",
+            "example": "src/components/MyComponent.tsx"
+          }
+        },
+        "required": [
+          "code",
+          "filePath"
+        ]
+      },
+      "LintFilesDto": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "description": "An array of file objects, each containing code content and its virtual file path.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LintFileDto"
+            }
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Optional: The current working directory from which ESLint should resolve configurations and plugins.",
+            "example": "/path/to/project/root"
+          }
+        },
+        "required": [
+          "files"
+        ]
+      },
+      "LintDirectoryDto": {
+        "type": "object",
+        "properties": {
+          "directoryPath": {
+            "type": "string",
+            "description": "The absolute or relative path to the directory to lint.",
+            "example": "./src/components"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Optional: The current working directory from which ESLint should resolve configurations and plugins.",
+            "example": "/path/to/project/root"
+          }
+        },
+        "required": [
+          "directoryPath"
+        ]
       },
       "LlmInputDto": {
         "type": "object",

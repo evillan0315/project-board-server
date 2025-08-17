@@ -16,12 +16,41 @@ import { Type } from 'class-transformer';
 
 export class CreateProjectDto {
   @ApiProperty({ description: 'name field' })
-  @IsString()
-  name: string;
+    @IsString()
+    name: string;
   @ApiProperty({ description: 'description field' })
-  @IsOptional()
-  @IsString()
-  description: string;
+    @IsOptional()
+    @IsString()
+    description: string;
+  @ApiProperty({ description: 'path field' })
+    @IsString()
+    path: string;
+  @ApiProperty({ description: 'technologies field' })
+    @IsString()
+    technologies: string[];
+  @ApiProperty({ description: 'versionControl field' })
+    @IsOptional()
+    @IsString()
+    versionControl: string;
+  @ApiProperty({ description: 'repositoryUrl field' })
+    @IsOptional()
+    @IsString()
+    repositoryUrl: string;
+  @ApiProperty({ description: 'lastOpenedAt field' })
+    @IsOptional()
+    @IsDate()
+    lastOpenedAt: Date;
+  @ApiProperty({ description: 'ownerId field' })
+    @IsOptional()
+    @IsString()
+    ownerId: string;
+  @ApiProperty({ description: 'metadata field' })
+    @IsOptional()
+    @IsObject()
+    metadata: any;
+
+
+
 }
 
 export class PaginationProjectResultDto {
@@ -55,11 +84,58 @@ export class PaginationProjectQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by name' })
   name?: string;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by description' })
   description?: string;
+  @IsOptional()
+  
+  @IsString()
+  
+  @ApiPropertyOptional({ description: 'Filter by path' })
+  path?: string;
+  @IsOptional()
+  
+  @ApiPropertyOptional({ description: 'Filter by technologies' })
+  technologies?: string[];
+  @IsOptional()
+  
+  @IsString()
+  
+  @ApiPropertyOptional({ description: 'Filter by versionControl' })
+  versionControl?: string;
+  @IsOptional()
+  
+  @IsString()
+  
+  @ApiPropertyOptional({ description: 'Filter by repositoryUrl' })
+  repositoryUrl?: string;
+  @IsOptional()
+  
+  @Type(() => Date)
+  @IsDate()
+  
+  @ApiPropertyOptional({ description: 'Filter by lastOpenedAt' })
+  lastOpenedAt?: Date;
+  @IsOptional()
+  
+  @IsString()
+  
+  @ApiPropertyOptional({ description: 'Filter by ownerId' })
+  ownerId?: string;
+  @IsOptional()
+  
+  @ApiPropertyOptional({ description: 'Filter by metadata' })
+  metadata?: any;
+
+
+
 }
+

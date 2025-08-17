@@ -7,7 +7,7 @@ import { LintFilesDto } from './dto/lint-files.dto';
 import { LintDirectoryDto } from './dto/lint-directory.dto';
 
 @ApiTags('eslint')
-@Controller('eslint')
+@Controller('api/eslint')
 export class EslintController {
   constructor(private readonly eslintService: EslintService) {}
 
@@ -36,11 +36,13 @@ export class EslintController {
   @Post('lint-files')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Lint multiple given code strings (representing files) using ESLint',
+    summary:
+      'Lint multiple given code strings (representing files) using ESLint',
   })
   @ApiBody({
     type: LintFilesDto,
-    description: 'An array of code contents with their virtual file paths for linting',
+    description:
+      'An array of code contents with their virtual file paths for linting',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -59,14 +61,18 @@ export class EslintController {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     description: 'ESLint service error',
   })
-  async lintFiles(@Body() lintFilesDto: LintFilesDto): Promise<Record<string, DiagnosticDto[]>> {
+  async lintFiles(
+    @Body() lintFilesDto: LintFilesDto,
+  ): Promise<Record<string, DiagnosticDto[]>> {
     const { files, cwd } = lintFilesDto;
     return this.eslintService.lintFiles(files, cwd);
   }
 
   @Post('lint-directory')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Lint all files within a specified directory using ESLint' })
+  @ApiOperation({
+    summary: 'Lint all files within a specified directory using ESLint',
+  })
   @ApiBody({
     type: LintDirectoryDto,
     description: 'Path to the directory to lint and optional CWD.',
