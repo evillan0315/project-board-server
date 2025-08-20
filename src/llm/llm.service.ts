@@ -82,32 +82,7 @@ export class LlmService implements OnModuleInit {
     return prompt.trim();
   }
 
-  /*private async saveRawLLMResponse(rawText: string, prompt: string): Promise<void> {
-    try {
-      await fs.mkdir(this.LOGS_DIR, { recursive: true });
-
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const fileName = `llm-response-${timestamp}.json`;
-      const filePath = path.join(this.LOGS_DIR, fileName);
-
-      const logContent = {
-        timestamp: new Date().toISOString(),
-        prompt: prompt,
-        rawLLMResponse: (() => {
-          try {
-            return JSON.parse(rawText);
-          } catch {
-            return rawText;
-          }
-        })(),
-      };
-
-      await fs.writeFile(filePath, JSON.stringify(logContent, null, 2), 'utf-8');
-      this.logger.log(`📝 Saved raw LLM response to: ${path.relative(process.cwd(), filePath)}`);
-    } catch (error: unknown) {
-      this.logger.error(`❌ Error saving raw LLM response to file: ${(error as Error).message}`);
-    }
-  }*/
+  
 
   private static repairJsonBadEscapes(jsonString: string): string {
     //return jsonString.replace(/\\"/g, '"');
@@ -123,7 +98,47 @@ export class LlmService implements OnModuleInit {
 
     return text.trim();
   }
+  async generateProjectStructure(
+  rootPath: string,
+  ignorePatterns: string[] = ['node_modules', '.git', 'dist', 'build'],
+): Promise<string> {
+  const walk = async (dir: string, depth = 0): Promise<string> => {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    entries.sort((a, b) => a.name.localeCompare(b.name)); // keep deterministic order
 
+    const lines: string[] = [];
+    for (const entry of entries) {
+      // skip ignored directories
+      if (ignorePatterns.some((pattern) => entry.name.includes(pattern))) {
+        continue;
+      }
+
+      const indent = '  '.repeat(depth);
+      lines.push(`${indent}- ${entry.name}`);
+
+      if (entry.isDirectory()) {
+        const subDir = path.join(dir, entry.name);
+        const subTree = await walk(subDir, depth + 1);
+        if (subTree.trim().length > 0) {
+          lines.push(subTree);
+        }
+      }
+    }
+    return lines.join('\n');
+  };
+
+  try {
+    const structure = await walk(rootPath, 0);
+    return `\nProject Structure (root: ${path.basename(rootPath)})\n${structure}`;
+  } catch (err) {
+    this.logger.error(
+      `Failed to generate project structure for ${rootPath}: ${(err as Error).message}`,
+    );
+    throw new InternalServerErrorException(
+      `Could not generate project structure: ${(err as Error).message}`,
+    );
+  }
+}
   async generateContent(
     llmInput: LlmInputDto,
     projectRoot: string,
@@ -134,10 +149,12 @@ export class LlmService implements OnModuleInit {
       llmInput.scanPaths,
       projectRoot,
     );
+    const projectStructure = await this.generateProjectStructure(projectRoot);
+
     const fullPrompt = await this.buildLLMPrompt(
-      { ...llmInput, relevantFiles },
-      projectRoot,
-    );
+  { ...llmInput, relevantFiles, projectStructure },
+  projectRoot,
+);
     const systemInstructionForLLM = `${llmInput.additionalInstructions}\n\n${llmInput.expectedOutputFormat}`;
 
     this.logger.log('\n--- Prompt sent to LLM ---');
@@ -161,7 +178,7 @@ export class LlmService implements OnModuleInit {
       }
 
       const rawText = response;
-
+      
       this.logger.log(
         '\n--- Raw LLM Response (from Google Gemini via NestJS) ---',
       );
@@ -169,7 +186,7 @@ export class LlmService implements OnModuleInit {
       this.logger.log('--------------------------------------------------\n');
 
       let cleanedJsonString = LlmService.extractJsonFromMarkdown(rawText);
-
+      
       let parsedResult: any;
       try {
         parsedResult = JSON.parse(cleanedJsonString);
@@ -178,8 +195,9 @@ export class LlmService implements OnModuleInit {
           'Warning: Initial JSON parsing failed. Attempting to repair bad escaped characters.',
         );
         try {
-          const repairedJsonString =
+          let repairedJsonString =
             LlmService.repairJsonBadEscapes(cleanedJsonString);
+          repairedJsonString = await this.utilsService.fixJson(repairedJsonString)
           parsedResult = JSON.parse(repairedJsonString);
           this.logger.log('JSON parsing succeeded after repair.');
         } catch (repairError: unknown) {

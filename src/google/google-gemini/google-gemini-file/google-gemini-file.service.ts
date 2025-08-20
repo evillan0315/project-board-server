@@ -16,15 +16,6 @@ import {
   OptimizationResultDto,
 } from './dto'; // Ensure these DTOs are correctly imported
 
-// DTO for file upload, not necessarily tied to Multer directly in the service's API
-export interface GenerateFileInternalDto {
-  prompt: string;
-  systemInstruction?: string;
-  conversationId?: string;
-  base64Data: string;
-  mimeType: string;
-}
-
 import { ModuleControlService } from '../../../module-control/module-control.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ConversationService } from '../../../conversation/conversation.service';
@@ -54,7 +45,14 @@ export enum RequestType {
   RESUME_ENHANCEMENT = 'RESUME_ENHANCEMENT',
 }
 */
-
+// DTO for file upload, not necessarily tied to Multer directly in the service's API
+export interface GenerateFileInternalDto {
+  prompt: string;
+  systemInstruction?: string;
+  conversationId?: string;
+  base64Data: string;
+  mimeType: string;
+}
 @Injectable({ scope: Scope.REQUEST })
 export class GoogleGeminiFileService {
   private readonly logger = new Logger(GoogleGeminiFileService.name);
