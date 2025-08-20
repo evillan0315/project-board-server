@@ -1911,6 +1911,31 @@
         ]
       }
     },
+    "/api/utils/json-fix": {
+      "post": {
+        "operationId": "UtilsController_fixJson",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FixJsonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns the repaired JSON object"
+          }
+        },
+        "summary": "Fix malformed or invalid JSON",
+        "tags": [
+          "Utilities"
+        ]
+      }
+    },
     "/api/utils/get-directory": {
       "get": {
         "description": "Returns the directory part of the provided file path.",
@@ -10357,42 +10382,25 @@
             "name": "projectRoot",
             "required": true,
             "in": "query",
-            "description": "The absolute path to the project root directory. Files will be scanned and proposed changes will be relative to this root.",
+            "description": "Absolute path to the project root directory. Files will be scanned and proposed changes will be relative to this root.",
             "schema": {
-              "example": "/home/user/my-react-app",
               "type": "string"
             }
           }
         ],
         "requestBody": {
           "required": true,
-          "description": "LLM input details including prompt, project context, and scan paths",
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/LlmInputDto"
-              },
-              "examples": {
-                "aValidRequest": {
-                  "summary": "Example of a valid request to generate content",
-                  "value": {
-                    "userPrompt": "Generate a simple React component that displays \"Hello World\".",
-                    "projectStructure": "This is a typical React project created with Vite.",
-                    "scanPaths": [
-                      "src/App.tsx",
-                      "public/index.html"
-                    ],
-                    "additionalInstructions": "Ensure the component is a functional component named HelloWorld.tsx.",
-                    "expectedOutputFormat": "```json\n{\"changes\": [{\"filePath\": \"...\", \"action\": \"add\", \"newContent\": \"...\"}], \"summary\": \"...\", \"thoughtProcess\": \"...\"}\n```"
-                  }
-                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Successfully generated LLM content and proposed file changes.",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -10400,15 +10408,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Invalid input provided (e.g., missing prompt, invalid file path format)."
-          },
-          "403": {
-            "description": "LLM module is disabled or user does not have permission."
-          },
-          "500": {
-            "description": "An unexpected error occurred during LLM processing or file scanning/parsing."
           }
         },
         "security": [
@@ -10417,6 +10416,55 @@
           }
         ],
         "summary": "Generate code and file changes using the LLM",
+        "tags": [
+          "LLM Operations"
+        ]
+      }
+    },
+    "/api/llm/project-structure": {
+      "get": {
+        "operationId": "LlmController_getProjectStructure",
+        "parameters": [
+          {
+            "name": "projectRoot",
+            "required": true,
+            "in": "query",
+            "description": "Absolute path to the project root directory",
+            "schema": {
+              "example": "/home/user/my-react-app",
+              "type": "string"
+            }
+          },
+          {
+            "name": "ignorePatterns",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated list of directories/files to ignore (default: node_modules,.git,dist,build)",
+            "schema": {
+              "example": "node_modules,.git,dist",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project structure successfully generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Project Structure (root: my-app)\n- src\n  - main.ts\n  - app.module.ts\n- package.json\n- tsconfig.json"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate the project structure (directory tree)",
         "tags": [
           "LLM Operations"
         ]
@@ -11983,6 +12031,10 @@
           "stderr"
         ]
       },
+      "FixJsonDto": {
+        "type": "object",
+        "properties": {}
+      },
       "FormatCodeDto": {
         "type": "object",
         "properties": {
@@ -12637,7 +12689,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-17T19:21:17.569Z",
+            "example": "2025-08-20T10:20:21.917Z",
             "format": "date-time"
           }
         },

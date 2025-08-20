@@ -23,13 +23,14 @@ import * as prettier from 'prettier';
 import { ConfigService } from '@nestjs/config';
 import { createHighlighter, bundledLanguages, bundledThemes } from 'shiki';
 import type { Highlighter, BundledLanguage } from 'shiki';
-
+import { JsonFixService } from './json-fix.service';
 const bundledLangKeys = Object.keys(bundledLanguages) as BundledLanguage[];
 type LanguageMap = Record<string, string>;
 
 @Injectable()
 export class UtilsService {
   private readonly logger = new Logger(UtilsService.name);
+  
   private outputDir = path.resolve(process.cwd(), 'svg-outputs');
   private cssDir = path.resolve(process.cwd(), 'styles');
   private globalCssContent: string | null = null;
@@ -150,10 +151,12 @@ export class UtilsService {
     xml: 'xml',
   };
 
-  constructor() {
+  constructor(
+    private readonly jsonFixService: JsonFixService,
+  ) {
     this.initializeDirectories();
     this.loadGlobalCss();
-
+    
     const allLangs = Array.from(
       new Set(
         Object.values(this.EXTENSION_LANGUAGE_MAP)
@@ -714,9 +717,12 @@ export class UtilsService {
    * @returns The string with double quotes replaced by single quotes.
    */
   replaceDoubleQuotesWithSingle(code: string): string {
-    return code.replace(/\"/g, `'`);
+    return code;
   }
-
+  async fixJson(code: string): Promise<string> {
+    return await this.jsonFixService.fixJson(code, true);
+  }
+  
   getDirectory(filePath: string): string {
     return path.dirname(filePath);
   }

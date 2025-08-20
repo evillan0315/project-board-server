@@ -21,7 +21,13 @@ import { CreateCommandHistoryDto } from './dto/create-command-history.dto';
 
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/auth.guard';
-
+// Define a custom interface for the Socket type to include your custom properties
+interface AugmentedSocket extends Socket {
+  userId?: string;
+  dbSessionId?: string;
+  // Note: We are NOT adding `cwd` here, as it's managed via the `cwdMap`
+  // and not stored directly on the socket object.
+}
 @UseGuards(JwtAuthGuard, RolesGuard)
 @WebSocketGateway({
   cors: { origin: '*', credentials: true },
@@ -30,7 +36,7 @@ import { JwtAuthGuard } from '../auth/auth.guard';
 export class TerminalGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
-  private readonly BASE_DIR = `${process.env.BASE_DIR}`;
+  private readonly BASE_DIR = process.env.BASE_DIR || os.homedir(); 
   private readonly logger = new Logger(TerminalGateway.name);
 
   @WebSocketServer()
@@ -56,14 +62,13 @@ export class TerminalGateway
   handleCwdChange(client: Socket, cwd: string) {
     // Add the code here
   }
-  async handleConnection(client: Socket) {
+  async handleConnection(@ConnectedSocket() client: AugmentedSocket) {
     try {
       const token = client.handshake.auth?.token?.replace('Bearer ', '').trim();
 
       if (!token) {
         throw new UnauthorizedException('Missing or malformed token');
       }
-      // Validate token and get user (using authService)
       const user = await this.authService.validateToken(token);
       if (!user) {
         throw new UnauthorizedException('Invalid token');
@@ -71,13 +76,39 @@ export class TerminalGateway
 
       const clientId = client.id;
       this.logger.log(`Client connected: ${clientId} (User: ${user.sub})`);
+      client.userId = user.sub;
 
-      // Store user ID on the client socket for later use
-      (client as any).userId = user.sub;
+      let initialCwd: string;
+      // 1. Attempt to get CWD from client handshake query parameters
+      const requestedCwdFromQuery = client.handshake.query.initialCwd as string | undefined;
 
-      // Initialize CWD for the client with the base directory. This is the default.
-      // It can be overridden by the 'set_cwd' message from the client.
-      const initialCwd = this.BASE_DIR || os.homedir();
+      if (requestedCwdFromQuery && typeof requestedCwdFromQuery === 'string') {
+        // Resolve the path to an absolute path, handling relative inputs
+        const resolvedRequestedCwd = resolve(requestedCwdFromQuery);
+
+        // Validate if the requested path exists and is a directory
+        if (existsSync(resolvedRequestedCwd) && statSync(resolvedRequestedCwd).isDirectory()) {
+          initialCwd = resolvedRequestedCwd;
+          this.logger.debug(`Client ${clientId} connected with requested CWD: ${initialCwd}`);
+        } else {
+          this.logger.warn(`Client ${clientId} requested invalid CWD: "${requestedCwdFromQuery}". Falling back to default.`);
+          // If requested CWD is invalid, log and proceed to server defaults
+          if (existsSync(this.BASE_DIR) && statSync(this.BASE_DIR).isDirectory()) {
+            initialCwd = this.BASE_DIR;
+          } else {
+            initialCwd = os.homedir();
+          }
+        }
+      } else {
+        // 2. If no client-requested CWD, use server defaults
+        if (existsSync(this.BASE_DIR) && statSync(this.BASE_DIR).isDirectory()) {
+          initialCwd = this.BASE_DIR;
+        } else {
+          initialCwd = os.homedir(); // Final fallback
+        }
+        this.logger.debug(`Client ${clientId} connected with default CWD: ${initialCwd}`);
+      }
+
       this.cwdMap.set(client.id, initialCwd);
 
       // Initialize the persistent PTY session for this client and get the database session ID
@@ -87,7 +118,7 @@ export class TerminalGateway
         initialCwd,
         user.sub,
       );
-      (client as any).dbSessionId = dbSessionId; // Store db session ID on client
+      client.dbSessionId = dbSessionId; // Store db session ID on client
 
       client.emit('outputMessage', 'Welcome to the terminal!\n');
       client.emit('outputPath', this.cwdMap.get(clientId));
@@ -111,11 +142,11 @@ export class TerminalGateway
     }
   }
 
-  handleDisconnect(client: Socket) {
+  handleDisconnect(@ConnectedSocket() client: AugmentedSocket) {
     const clientId = client.id;
-    const dbSessionId = (client as any).dbSessionId;
+    const dbSessionId = client.dbSessionId;
     if (dbSessionId) {
-      this.terminalService.dispose(clientId); // This will update DB session status
+      this.terminalService.dispose(clientId);
     }
     this.cwdMap.delete(clientId);
     this.disposeSsh(clientId);
@@ -125,7 +156,7 @@ export class TerminalGateway
   @SubscribeMessage('set_cwd')
   async handleSetCwd(
     @MessageBody() payload: { cwd: string },
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: AugmentedSocket,
   ) {
     const clientId = client.id;
     const requestedCwd = payload.cwd;
@@ -136,26 +167,22 @@ export class TerminalGateway
       statSync(requestedCwd).isDirectory()
     ) {
       const currentPtyCwd = this.cwdMap.get(clientId);
-      // Only change if the requested CWD is different from the current one in our map
       if (currentPtyCwd !== requestedCwd) {
         this.cwdMap.set(clientId, requestedCwd);
-        // Send a 'cd' command to the PTY to update its actual working directory.
-        // Quoting the path handles spaces/special chars.
         this.terminalService.write(clientId, `cd '${requestedCwd}'\n`);
         this.logger.debug(`Client ${clientId} CWD set to: ${requestedCwd}`);
-        client.emit('prompt', { cwd: requestedCwd, command: '' }); // Update client's prompt to reflect new CWD
+        client.emit('prompt', { cwd: requestedCwd, command: '' });
       } else {
         this.logger.debug(
           `Client ${clientId} requested CWD '${requestedCwd}' is already current.`,
         );
-        client.emit('prompt', { cwd: requestedCwd, command: '' }); // Just send prompt update
+        client.emit('prompt', { cwd: requestedCwd, command: '' });
       }
     } else {
       this.logger.warn(
         `Client ${clientId} requested invalid CWD: ${requestedCwd}`,
       );
       client.emit('error', `Invalid directory: ${requestedCwd}\n`);
-      // Re-emit prompt with current valid CWD
       client.emit('prompt', {
         cwd: this.cwdMap.get(clientId) || process.cwd(),
         command: '',

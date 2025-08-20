@@ -315,12 +315,11 @@ export class AuthController {
     try {
       let parsedCliPort: number | undefined;
       let csrfToken: string | undefined;
-
+      console.log(state, 'state');
       if (state) {
         try {
           const parsedState = JSON.parse(state);
           parsedCliPort = parsedState.cli_port;
-          console.log(parsedCliPort, 'parsedCliPort');
           csrfToken = parsedState.csrf_token;
         } catch (parseError) {
           console.warn(

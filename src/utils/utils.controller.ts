@@ -34,18 +34,49 @@ import { JsonBodyDto } from './dto/json-body.dto';
 import { diskStorage } from 'multer';
 import { UtilsService } from './utils.service';
 import { MarkdownUtilService } from './utils-markdown.service';
+import { JsonFixService } from './json-fix.service';
 import { UploadImageDto } from './dto/upload-image.dto';
 import { FormatCodeDto } from './dto/format-code.dto';
 import { HtmlDto } from './dto/html.dto'; // <--- NEW: Import HtmlDto
+
+
+class FixJsonDto {
+  /** The raw JSON string that may be invalid or broken */
+  jsonString: string;
+
+  /** If false, disables Gemini fallback (default: true) */
+  useGeminiFallback?: boolean = true;
+}
 
 @ApiTags('Utilities')
 @Controller('api/utils')
 export class UtilsController {
   constructor(
     private readonly utilsService: UtilsService,
+    private readonly jsonFixService: JsonFixService,
     private readonly markdownUtilService: MarkdownUtilService,
   ) {}
 
+
+  @Post('json-fix')
+  @ApiOperation({ summary: 'Fix malformed or invalid JSON' })
+  @ApiBody({ type: FixJsonDto })
+  @ApiResponse({ status: 200, description: 'Returns the repaired JSON object' })
+  async fixJson(@Body() body: FixJsonDto) {
+    if (!body.jsonString) {
+      throw new BadRequestException('jsonString is required.');
+    }
+
+    const useGeminiFallback =
+      body.useGeminiFallback !== undefined ? body.useGeminiFallback : true;
+
+    const fixed = await this.jsonFixService.fixJson(
+      body.jsonString,
+      useGeminiFallback,
+    );
+
+    return { fixed };
+  }
   @Get('get-directory')
   @ApiOperation({
     summary: 'Get directory from file path',
