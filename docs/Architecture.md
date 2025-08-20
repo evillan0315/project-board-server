@@ -49,12 +49,12 @@ graph TD
     style D fill:#222,stroke:#333,stroke-width:2px
     style E fill:#111,stroke:#333,stroke-width:2px
     style F fill:#111,stroke:#333,stroke-width:2px
-    style G fill:#ffc,stroke:#333,stroke-width:2px
-    style B1 fill:#000,stroke:#333,stroke-width:1px
-    style B2 fill:#000,stroke:#333,stroke-width:1px
-    style B3 fill:#000,stroke:#333,stroke-width:1px
-    style B4 fill:#000,stroke:#333,stroke-width:1px
-    style B5 fill:#000,stroke:#333,stroke-width:1px
+    style G fill:#111,stroke:#333,stroke-width:2px
+    style B1 fill:#111,stroke:#333,stroke-width:1px
+    style B2 fill:#111,stroke:#333,stroke-width:1px
+    style B3 fill:#111,stroke:#333,stroke-width:1px
+    style B4 fill:#111,stroke:#333,stroke-width:1px
+    style B5 fill:#111,stroke:#333,stroke-width:1px
     linkStyle 0 stroke:#000,stroke-width:1px;
     linkStyle 1 stroke:#000,stroke-width:1px;
     linkStyle 2 stroke:#000,stroke-width:1px;
