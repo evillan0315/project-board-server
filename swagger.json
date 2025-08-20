@@ -12779,7 +12779,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-20T17:08:50.314Z",
+            "example": "2025-08-20T18:32:28.031Z",
             "format": "date-time"
           }
         },

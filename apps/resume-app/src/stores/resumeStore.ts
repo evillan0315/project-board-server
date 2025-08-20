@@ -1,4 +1,4 @@
-import { atom } from 'nanostores';
+import { map } from 'nanostores';
 import type { OptimizationResult } from '@/types/resume';
 
 interface ResumeState {
@@ -23,7 +23,7 @@ interface ResumeState {
   };
 }
 
-export const resumeStore = atom<ResumeState>({
+export const resumeStore = map<ResumeState>({
   resumeContent: '',
   jobDescription: '',
   parsedResumeText: '',

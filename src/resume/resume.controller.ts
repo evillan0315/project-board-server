@@ -10,20 +10,21 @@ import {
   Body,
   BadRequestException,
   UseGuards,
-  Req, // Import Req decorator to access the request object
+  Req,
+  UnauthorizedException, // Ensure this is imported
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Request } from 'express'; // Import Request from express to type the @Req() parameter
-import { diskStorage } from 'multer'; // Import diskStorage from multer
-import { join, extname } from 'path'; // Import join and extname from path
-import { User } from '@prisma/client';
+import { Request } from 'express';
+import { diskStorage } from 'multer';
+import { join, extname } from 'path';
+import { User } from '@prisma/client'; // Assuming this User type is from Prisma
 import { ResumeParserService } from './resume-parser.service';
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
 import {
   OptimizeResumeDto,
   OptimizationResultDto,
-  GenerateResumeDto, // <-- ADDED
-  EnhanceResumeDto, // <-- ADDED
+  GenerateResumeDto,
+  EnhanceResumeDto,
 } from '../google/google-gemini/google-gemini-file/dto';
 import {
   ApiConsumes,
@@ -34,17 +35,14 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Express } from 'express';
-
+import { CreateJwtUserDto } from '../auth/dto/auth.dto'; // The DTO for the user populated by JWT
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/enums/user-role.enum';
+import { UserService } from '../user/user.service'; // Assuming path to UserService
 
-// Define a DTO for file upload with additional body fields if needed
-// This DTO is not directly used for the new endpoints, but kept for context.
-class UploadResumeAndJobDescriptionDto {
-  jobDescription: string;
-}
+// No change to UploadResumeAndJobDescriptionDto as it's not directly used for the new logic
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -54,7 +52,66 @@ export class ResumeController {
   constructor(
     private readonly resumeParserService: ResumeParserService,
     private readonly googleGeminiFileService: GoogleGeminiFileService,
+    private readonly usersService: UserService,
   ) {}
+
+  /**
+   * Retrieves the application username and the access token for a specific linked provider.
+   * This method ensures reusability for different social providers (e.g., 'github', 'google').
+   *
+   * @param req The Express Request object, expected to have 'user' populated by JwtAuthGuard.
+   * @param providerName The name of the social provider (e.g., 'github', 'google').
+   * @returns An object containing the application username and the provider's access token.
+   * @throws UnauthorizedException if user info is missing, no accounts are linked,
+   *         the specific provider account is not linked, or its access token is missing.
+   */
+  private async getProviderAccountData(
+    req: Request,
+    providerName: 'github' | 'google', // Explicitly type allowed provider names for safety
+  ): Promise<{
+    appUsername: string; // The username from our application's User model
+    providerAccessToken: string; // The access token for the specified provider
+  }> {
+    const user = req['user'] as CreateJwtUserDto;
+    if (!user?.email) {
+      throw new UnauthorizedException('User information not found.');
+    }
+
+    // Fetch the full user data from the database, including linked accounts
+    // Assumes UserService.findByEmail returns a User type that includes an 'Account' array
+    const fullUser = await this.usersService.findByEmail(user.email);
+
+    if (!fullUser || !fullUser.Account || fullUser.Account.length === 0) {
+      throw new UnauthorizedException('No social accounts linked to this user.');
+    }
+
+    // Find the specific account for the requested provider
+    const providerAccount = fullUser.Account.find(
+      (account) => account.provider === providerName,
+    );
+
+    if (!providerAccount) {
+      throw new UnauthorizedException(
+        `${providerName} account not linked for this user.`,
+      );
+    }
+
+    if (!providerAccount.access_token) {
+      throw new UnauthorizedException(
+        `${providerName} access token not found for this account.`,
+      );
+    }
+
+    if (!fullUser.username) {
+      // This refers to the 'username' property on your application's User model
+      throw new UnauthorizedException('Application username not found for the user.');
+    }
+
+    return {
+      appUsername: fullUser.username,
+      providerAccessToken: providerAccount.access_token,
+    };
+  }
 
   @Post('parse')
   @UseInterceptors(FileInterceptor('file'))
@@ -106,18 +163,16 @@ export class ResumeController {
     FileInterceptor('resumeFile', {
       storage: diskStorage({
         destination: (req: Request, file, cb) => {
-          // req.user is populated by JwtAuthGuard
-          const user = req['user'] as User;
-          if (!user) {
-            // This should ideally not happen if JwtAuthGuard is active and correctly configured
-            // but is a safeguard. Multer's error handling for destination is tricky.
-            // A more robust solution might involve validating userId *before* the interceptor.
+          // req['user'] is populated by JwtAuthGuard
+          const user = req['user'] as CreateJwtUserDto;
+          if (!user?.id) {
+            // This ensures a user ID is available for file storage path.
             return cb(
               new BadRequestException('User ID not available for file upload.'),
               '',
             );
           }
-          const uploadPath = join(process.cwd(), 'resume', 'uploads', user?.id);
+          const uploadPath = join(process.cwd(), 'resume', 'uploads', user.id);
           // Multer's diskStorage automatically creates the directory if it doesn't exist
           cb(null, uploadPath);
         },
@@ -188,6 +243,7 @@ export class ResumeController {
     description: 'Internal server error during processing or Gemini API call.',
   })
   async optimizeResumeFromFile(
+    @Req() req: Request, // Moved to ensure required params are first
     @UploadedFile(
       new ParseFilePipe({
         validators: [new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 })],
@@ -199,19 +255,9 @@ export class ResumeController {
     @Body('resumeContent') resumeContent: string,
     @Body('jobDescription') jobDescription: string,
     @Body('conversationId') conversationId?: string,
-    @Req() req?: { user: User }, // Inject the Request object here
   ): Promise<OptimizationResultDto> {
-    const user = req?.user as User;
-    // IMPORTANT: If `fileIsRequired: false` and no file is uploaded, `resumeFile` will be `undefined`.
-    // Multer's `diskStorage` destination function will only run if a file is actually present in the request.
-    // So, the `req.user?.userId` check in the `destination` function is only relevant when a file is provided.
-    // If you need to enforce a user ID even for text-only requests, you'd add a check here:
-    if (resumeFile && !user) {
-      // This is a redundant check if JwtAuthGuard is strict, but good for clarity.
-      throw new BadRequestException(
-        'Authentication required for file uploads.',
-      );
-    }
+
+    const { appUsername, providerAccessToken } = await this.getProviderAccountData(req, 'google');
 
     if (!jobDescription || jobDescription.trim() === '') {
       throw new BadRequestException(
@@ -306,3 +352,4 @@ export class ResumeController {
     return this.googleGeminiFileService.enhanceResume(enhanceResumeDto);
   }
 }
+

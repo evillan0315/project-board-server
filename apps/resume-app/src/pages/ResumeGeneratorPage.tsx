@@ -64,6 +64,7 @@ const ResumeGeneratorPage: React.FC = () => {
     resumeStore.setKey('error', { ...$resume.error, parse: null, general: null });
     try {
       const text = await parseResumeFile(file);
+      console.log(text, 'handleParse parseResumeFile');
       resumeStore.setKey('parsedResumeText', text);
       resumeStore.setKey('resumeContent', text); // Set as primary content for other ops
       resumeStore.setKey('optimizationResult', null); // Clear previous results
