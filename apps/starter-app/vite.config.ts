@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1000,
     },
     server: {
-      port: 3001,
+      port: 3000,
       proxy: {
         '/api': {
           target: env.VITE_API_URL,
