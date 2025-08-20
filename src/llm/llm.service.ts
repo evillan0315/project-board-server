@@ -57,16 +57,9 @@ export class LlmService implements OnModuleInit {
     llmInput: LlmInputDto,
     projectRoot: string,
   ): Promise<string> {
-    const formattedRelevantFiles = llmInput.relevantFiles
+    const formattedRelevantFiles = await llmInput.relevantFiles
       .map(async (file) => {
-        let content = file.content;
-        const lang = await this.utilsService.detectLanguage(file.relativePath);
-        if(lang === 'typescript' || lang === 'javascript' || lang === 'Typescript' || lang === 'Javascrript'){
-          //content = await this.utilsService.removeComments(content);
-          content = await this.utilsService.formatCode(content, lang);
-        }
-        
-        return `// File: ${file.relativePath}\n${content}`;
+        return await `// File: ${file.relativePath}\n${file.content}`;
       })
       .join('\n\n');
     const prompt = `
