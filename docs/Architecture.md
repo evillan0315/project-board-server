@@ -43,12 +43,12 @@ graph TD
     C -- Persistence --> Data[Data Storage]
     D -- Credentials --> B
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style C fill:#ccf,stroke:#333,stroke-width:2px
-    style D fill:#fcf,stroke:#333,stroke-width:2px
-    style E fill:#cec,stroke:#333,stroke-width:2px
-    style F fill:#cee,stroke:#333,stroke-width:2px
+    style A fill:#222,stroke:#333,stroke-width:2px
+    style B fill:#111,stroke:#333,stroke-width:2px
+    style C fill:#222,stroke:#333,stroke-width:2px
+    style D fill:#222,stroke:#333,stroke-width:2px
+    style E fill:#111,stroke:#333,stroke-width:2px
+    style F fill:#111,stroke:#333,stroke-width:2px
     style G fill:#ffc,stroke:#333,stroke-width:2px
     style B1 fill:#ddf,stroke:#333,stroke-width:1px
     style B2 fill:#ddf,stroke:#333,stroke-width:1px
