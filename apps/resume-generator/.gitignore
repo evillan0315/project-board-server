@@ -1,0 +1,63 @@
+# Logs
+logs
+*.log
+pm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+.report/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.info
+
+# Directory for executable binaries
+bin/
+
+# Temporary files
+*.tmp
+
+# dotenv environment variables file
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# Vite-specific build output
+/dist
+
+# Node.js modules
+/node_modules
+
+# IDE files
+.vscode/
+.idea/
+
+# Local History for some editors
+.history
+
+# macOS files
+.DS_Store
+
+# npm package lock file
+package-lock.json
+
+# yarn lock file
+yarn.lock
+
+# pnpm lock file
+pnpm-lock.yaml
+
+# Temporary files created by TypeScript
+*.tsbuildinfo
+
+# Optional: If you use a specific static assets folder outside of `public`
+# /static
+
+# Any other temporary files or directories that should not be committed
