@@ -193,13 +193,17 @@
         },
         "responses": {
           "200": {
-            "description": "User logged in successfully"
-          },
-          "401": {
-            "description": "Invalid credentials"
+            "description": "Successful login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
           }
         },
-        "summary": "Log in a user and set JWT cookie",
+        "summary": "User login",
         "tags": [
           "Auth"
         ]
@@ -211,7 +215,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Logged out successfully"
+            "description": "Logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Logged out successfully"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Log out user (clear cookie)",
@@ -223,24 +236,7 @@
     "/api/auth/github": {
       "get": {
         "operationId": "AuthController_githubAuth",
-        "parameters": [
-          {
-            "name": "state",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "cli_port",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "302": {
             "description": "Redirects to GitHub login"
@@ -275,10 +271,17 @@
         ],
         "responses": {
           "200": {
-            "description": "GitHub login successful with JWT issued"
+            "description": "GitHub login successful with JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized or failed login attempt"
+            "description": "Unauthorized"
           }
         },
         "summary": "Handle GitHub OAuth2 callback and issue JWT token",
@@ -290,16 +293,7 @@
     "/api/auth/google": {
       "get": {
         "operationId": "AuthController_googleAuth",
-        "parameters": [
-          {
-            "name": "cli_port",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "302": {
             "description": "Redirects to Google login"
@@ -326,10 +320,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Google login successful with JWT issued"
+            "description": "Google login successful with JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized or failed login attempt"
+            "description": "Unauthorized"
           }
         },
         "summary": "Handle Google OAuth2 callback and issue JWT token",
@@ -354,10 +355,14 @@
         },
         "responses": {
           "201": {
-            "description": "User registered successfully"
-          },
-          "400": {
-            "description": "Validation failed or user already exists"
+            "description": "User registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Register a new user",
@@ -413,7 +418,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Email verified successfully"
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Email verified successfully"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid or expired token"
@@ -427,11 +441,18 @@
     },
     "/api/auth/me": {
       "get": {
-        "operationId": "AuthController_getProfile",
+        "operationId": "AuthController_me",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "User profile returned"
+            "description": "User profile returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized"
@@ -464,7 +485,7 @@
         },
         "responses": {
           "201": {
-            "description": "Successfully created.",
+            "description": "User successfully created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -501,7 +522,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "List of User records.",
+            "description": "List of all users.",
             "content": {
               "application/json": {
                 "schema": {
@@ -528,7 +549,7 @@
             "bearer": []
           }
         ],
-        "summary": "Retrieve all User records",
+        "summary": "Retrieve all users",
         "tags": [
           "User"
         ]
@@ -561,7 +582,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated results",
+            "description": "Paginated users.",
             "content": {
               "application/json": {
                 "schema": {
@@ -585,7 +606,7 @@
             "bearer": []
           }
         ],
-        "summary": "Paginated User records",
+        "summary": "Retrieve users with pagination",
         "tags": [
           "User"
         ]
@@ -606,7 +627,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Record found.",
+            "description": "User found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -622,7 +643,7 @@
             "description": "Forbidden - insufficient role"
           },
           "404": {
-            "description": "Record not found."
+            "description": "User not found."
           }
         },
         "security": [
@@ -633,7 +654,7 @@
             "bearer": []
           }
         ],
-        "summary": "Find User by ID",
+        "summary": "Retrieve a user by ID",
         "tags": [
           "User"
         ]
@@ -662,7 +683,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successfully updated.",
+            "description": "User successfully updated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -672,7 +693,7 @@
             }
           },
           "400": {
-            "description": "Invalid data."
+            "description": "Invalid data provided."
           },
           "401": {
             "description": "Unauthorized"
@@ -681,7 +702,7 @@
             "description": "Forbidden - insufficient role"
           },
           "404": {
-            "description": "Record not found."
+            "description": "User not found."
           }
         },
         "security": [
@@ -692,7 +713,7 @@
             "bearer": []
           }
         ],
-        "summary": "Update User by ID",
+        "summary": "Update a user by ID",
         "tags": [
           "User"
         ]
@@ -711,7 +732,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successfully deleted."
+            "description": "User successfully deleted."
           },
           "401": {
             "description": "Unauthorized"
@@ -720,7 +741,7 @@
             "description": "Forbidden - insufficient role"
           },
           "404": {
-            "description": "Record not found."
+            "description": "User not found."
           }
         },
         "security": [
@@ -731,7 +752,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete User by ID",
+        "summary": "Delete a user by ID",
         "tags": [
           "User"
         ]
@@ -9590,7 +9611,6 @@
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Details for the new repository",
           "content": {
             "application/json": {
               "schema": {
@@ -9601,7 +9621,7 @@
         },
         "responses": {
           "201": {
-            "description": "The repository has been successfully created on GitHub.",
+            "description": "Repository successfully created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9609,21 +9629,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Invalid input data."
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "403": {
-            "description": "Forbidden: PAT lacks required scopes."
-          },
-          "409": {
-            "description": "Conflict: Repository with this name already exists."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
           }
         },
         "security": [
@@ -9631,7 +9636,7 @@
             "bearer": []
           }
         ],
-        "summary": "Create a new GitHub repository for the authenticated user",
+        "summary": "Create a new GitHub repository",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9641,7 +9646,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "A list of all repositories from GitHub.",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -9652,12 +9657,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
           }
         },
         "security": [
@@ -9665,7 +9664,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get all repositories for the authenticated user from GitHub",
+        "summary": "Get all repositories for authenticated user",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9679,7 +9678,6 @@
             "name": "repoName",
             "required": true,
             "in": "path",
-            "description": "The name of the repository (must belong to the authenticated user)",
             "schema": {
               "example": "oauth-repo-test",
               "type": "string"
@@ -9688,7 +9686,6 @@
         ],
         "requestBody": {
           "required": true,
-          "description": "The commit message",
           "content": {
             "application/json": {
               "schema": {
@@ -9699,40 +9696,7 @@
         },
         "responses": {
           "200": {
-            "description": "The commit (file update) was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Commit (file update) successful."
-                    },
-                    "commitSha": {
-                      "type": "string",
-                      "example": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
-                    },
-                    "htmlUrl": {
-                      "type": "string",
-                      "example": "https://github.com/octocat/my-repo/blob/main/commit-logs/log-1678886400000.md"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "403": {
-            "description": "Forbidden: PAT lacks required scopes or repo is not writable."
-          },
-          "404": {
-            "description": "Repository not found."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
+            "description": ""
           }
         },
         "security": [
@@ -9740,7 +9704,7 @@
             "bearer": []
           }
         ],
-        "summary": "Simulate a commit to a GitHub repository by adding/updating a dummy file",
+        "summary": "Commit to a GitHub repository (dummy file)",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9754,7 +9718,6 @@
             "name": "repoName",
             "required": true,
             "in": "path",
-            "description": "The name of the repository to delete (must belong to the authenticated user)",
             "schema": {
               "example": "oauth-repo-test",
               "type": "string"
@@ -9763,32 +9726,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The repository has been successfully deleted from GitHub.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Repository \"oauth-repo-test\" successfully deleted."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "403": {
-            "description": "Forbidden: PAT lacks required scopes or not enough permissions to delete."
-          },
-          "404": {
-            "description": "Repository not found."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
+            "description": ""
           }
         },
         "security": [
@@ -9796,7 +9734,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete a GitHub repository for the authenticated user",
+        "summary": "Delete a GitHub repository",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9808,7 +9746,6 @@
             "name": "repoName",
             "required": true,
             "in": "path",
-            "description": "The name of the repository (must belong to the authenticated user)",
             "schema": {
               "example": "github-oauth-manager",
               "type": "string"
@@ -9817,7 +9754,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The found repository from GitHub.",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -9825,15 +9762,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "404": {
-            "description": "Repository not found."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
           }
         },
         "security": [
@@ -9841,7 +9769,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get a single repository by name for the authenticated user from GitHub",
+        "summary": "Get a repository by name",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9855,9 +9783,8 @@
             "name": "repoName",
             "required": true,
             "in": "path",
-            "description": "The name of the repository (must belong to the authenticated user)",
             "schema": {
-              "example": "your-repository-name",
+              "example": "your-repo-name",
               "type": "string"
             }
           },
@@ -9865,7 +9792,7 @@
             "name": "path",
             "required": false,
             "in": "query",
-            "description": "The content path within the repository. E.g., `src/main.ts` or `docs`. If omitted, the root directory contents are returned.",
+            "description": "The content path. For example: `src/main.ts` or `docs`. If omitted, the root directory contents are returned.",
             "schema": {
               "example": "src/config",
               "type": "string"
@@ -9884,7 +9811,7 @@
         ],
         "responses": {
           "200": {
-            "description": "List of repository contents (files/directories)",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -9895,18 +9822,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "403": {
-            "description": "Forbidden: PAT lacks required scopes or repo is private."
-          },
-          "404": {
-            "description": "Not Found: Repository or specific path not found."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
           }
         },
         "security": [
@@ -9914,7 +9829,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get repository files and directory contents for the authenticated user",
+        "summary": "Get repository files & directory contents",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -11561,10 +11476,12 @@
         "properties": {
           "email": {
             "type": "string",
+            "description": "User email used to log in",
             "example": "user@example.com"
           },
           "password": {
             "type": "string",
+            "description": "Password for authentication",
             "example": "StrongPassword123"
           }
         },
@@ -11573,16 +11490,175 @@
           "password"
         ]
       },
+      "CreateJwtUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the user",
+            "example": "21jdh-jsdhd-jasjasd"
+          },
+          "sub": {
+            "type": "string",
+            "description": "Subject claim (typically user ID)",
+            "example": "21jdh-jsdhd-jasjasd"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address associated with the user",
+            "example": "user@example.com"
+          },
+          "name": {
+            "type": "string",
+            "description": "Full name of the user",
+            "example": "John Doe"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Phone number of the user",
+            "example": "+1234567890"
+          },
+          "role": {
+            "type": "string",
+            "description": "User role within the system",
+            "enum": [
+              "ADMIN",
+              "USER",
+              "MANAGER"
+            ],
+            "example": "USER"
+          },
+          "image": {
+            "type": "string",
+            "description": "Profile picture filename or URL",
+            "example": "john.jpg"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Authentication provider used (e.g., Google, GitHub)",
+            "example": "Google"
+          },
+          "tokens": {
+            "type": "object",
+            "description": "Access/refresh tokens returned by the provider",
+            "example": {
+              "access_token": "ya29.a0AfH6S...",
+              "refresh_token": "1//0gL8y...",
+              "expiry_date": 1699440000000
+            }
+          },
+          "username": {
+            "type": "string",
+            "description": "Unique username (if applicable)",
+            "example": "user01"
+          }
+        },
+        "required": [
+          "id",
+          "sub",
+          "email"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT Access Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "JWT Refresh Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6REFRESH..."
+          },
+          "user": {
+            "description": "Authenticated user details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateJwtUserDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "user"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT Access Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+          },
+          "user": {
+            "description": "Authenticated user details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateJwtUserDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "access_token",
+          "user"
+        ]
+      },
       "RegisterDto": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
+            "description": "Unique email address of the user",
             "example": "user@example.com"
           },
           "password": {
             "type": "string",
-            "example": "StrongPassword123"
+            "description": "Secure password with at least 8 characters",
+            "example": "StrongPassword123",
+            "minLength": 8
+          },
+          "name": {
+            "type": "string",
+            "description": "Full name of the user",
+            "example": "John Doe"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Phone number of the user (E.164 format recommended)",
+            "example": "+1234567890"
+          },
+          "role": {
+            "type": "string",
+            "description": "User role within the system",
+            "enum": [
+              "ADMIN",
+              "USER",
+              "MANAGER"
+            ],
+            "example": "USER"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AuthUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "21jdh-jsdhd-jasjasd"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
           },
           "name": {
             "type": "string",
@@ -11594,12 +11670,26 @@
           },
           "role": {
             "type": "string",
+            "enum": [
+              "ADMIN",
+              "USER",
+              "MANAGER"
+            ],
             "example": "USER"
+          },
+          "image": {
+            "type": "string",
+            "example": "john.jpg"
+          },
+          "username": {
+            "type": "string",
+            "example": "user01"
           }
         },
         "required": [
+          "id",
           "email",
-          "password"
+          "role"
         ]
       },
       "CreateUserDto": {
@@ -11880,7 +11970,7 @@
             "description": "An array of paths (relative or absolute) to scan. Each path can be a directory or a file. Defaults to [\".\"].",
             "example": [
               ".",
-              "src/components",
+              "src/auth",
               "package.json"
             ],
             "type": "array",
@@ -11891,7 +11981,7 @@
           "projectRoot": {
             "type": "string",
             "description": "The root directory of the project, used for calculating relative paths. Defaults to process.cwd() if not provided.",
-            "example": "/home/user/my-project"
+            "example": "/media/eddie/Data/projects/nestJS/nest-modules/full-stack"
           },
           "verbose": {
             "type": "boolean",
@@ -12689,7 +12779,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-20T10:20:21.917Z",
+            "example": "2025-08-20T17:08:50.314Z",
             "format": "date-time"
           }
         },

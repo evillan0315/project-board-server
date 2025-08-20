@@ -745,13 +745,28 @@ export class FileController {
     description: 'Failed to perform project scan.',
   })
   async scanFile(@Body() dto: ScanFileDto): Promise<ScannedFileDto[]> {
-    const scanPaths =
-      dto.scanPaths && dto.scanPaths.length > 0 ? dto.scanPaths : ['.'];
+    // Determine the paths to be passed to the fileService.scan method.
+    // If dto.scanPaths is provided and is an array, use it.
+    // Otherwise, pass an empty array, letting FileService.scan default to projectRoot.
+    const scanPathsToUse = Array.isArray(dto.scanPaths) ? dto.scanPaths : [];
     const projectRoot = dto.projectRoot || process.cwd();
     const verbose = dto.verbose ?? false;
 
+    // Log the effective scan paths for clarity
+    if (verbose) {
+      if (scanPathsToUse.length === 0) {
+        this.logger.debug(
+          `Scan request received with no specific paths. FileService will default to scanning project root: ${projectRoot}`,
+        );
+      } else {
+        this.logger.debug(
+          `Scan request received with specific paths: ${scanPathsToUse.join(', ')}`,
+        );
+      }
+    }
+
     try {
-      return await this.fileService.scan(scanPaths, projectRoot, verbose);
+      return await this.fileService.scan(scanPathsToUse, projectRoot, verbose);
     } catch (error) {
       this.logger.error(
         `Failed to scan project: ${(error as Error).message}`,

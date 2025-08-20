@@ -36,7 +36,7 @@ interface AugmentedSocket extends Socket {
 export class TerminalGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
-  private readonly BASE_DIR = process.env.BASE_DIR || os.homedir(); 
+  private readonly BASE_DIR = process.env.BASE_DIR || os.homedir();
   private readonly logger = new Logger(TerminalGateway.name);
 
   @WebSocketServer()
@@ -80,20 +80,32 @@ export class TerminalGateway
 
       let initialCwd: string;
       // 1. Attempt to get CWD from client handshake query parameters
-      const requestedCwdFromQuery = client.handshake.query.initialCwd as string | undefined;
+      const requestedCwdFromQuery = client.handshake.query.initialCwd as
+        | string
+        | undefined;
 
       if (requestedCwdFromQuery && typeof requestedCwdFromQuery === 'string') {
         // Resolve the path to an absolute path, handling relative inputs
         const resolvedRequestedCwd = resolve(requestedCwdFromQuery);
 
         // Validate if the requested path exists and is a directory
-        if (existsSync(resolvedRequestedCwd) && statSync(resolvedRequestedCwd).isDirectory()) {
+        if (
+          existsSync(resolvedRequestedCwd) &&
+          statSync(resolvedRequestedCwd).isDirectory()
+        ) {
           initialCwd = resolvedRequestedCwd;
-          this.logger.debug(`Client ${clientId} connected with requested CWD: ${initialCwd}`);
+          this.logger.debug(
+            `Client ${clientId} connected with requested CWD: ${initialCwd}`,
+          );
         } else {
-          this.logger.warn(`Client ${clientId} requested invalid CWD: "${requestedCwdFromQuery}". Falling back to default.`);
+          this.logger.warn(
+            `Client ${clientId} requested invalid CWD: "${requestedCwdFromQuery}". Falling back to default.`,
+          );
           // If requested CWD is invalid, log and proceed to server defaults
-          if (existsSync(this.BASE_DIR) && statSync(this.BASE_DIR).isDirectory()) {
+          if (
+            existsSync(this.BASE_DIR) &&
+            statSync(this.BASE_DIR).isDirectory()
+          ) {
             initialCwd = this.BASE_DIR;
           } else {
             initialCwd = os.homedir();
@@ -101,12 +113,17 @@ export class TerminalGateway
         }
       } else {
         // 2. If no client-requested CWD, use server defaults
-        if (existsSync(this.BASE_DIR) && statSync(this.BASE_DIR).isDirectory()) {
+        if (
+          existsSync(this.BASE_DIR) &&
+          statSync(this.BASE_DIR).isDirectory()
+        ) {
           initialCwd = this.BASE_DIR;
         } else {
           initialCwd = os.homedir(); // Final fallback
         }
-        this.logger.debug(`Client ${clientId} connected with default CWD: ${initialCwd}`);
+        this.logger.debug(
+          `Client ${clientId} connected with default CWD: ${initialCwd}`,
+        );
       }
 
       this.cwdMap.set(client.id, initialCwd);

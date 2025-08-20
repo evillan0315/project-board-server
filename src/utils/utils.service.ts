@@ -30,7 +30,7 @@ type LanguageMap = Record<string, string>;
 @Injectable()
 export class UtilsService {
   private readonly logger = new Logger(UtilsService.name);
-  
+
   private outputDir = path.resolve(process.cwd(), 'svg-outputs');
   private cssDir = path.resolve(process.cwd(), 'styles');
   private globalCssContent: string | null = null;
@@ -151,12 +151,10 @@ export class UtilsService {
     xml: 'xml',
   };
 
-  constructor(
-    private readonly jsonFixService: JsonFixService,
-  ) {
+  constructor(private readonly jsonFixService: JsonFixService) {
     this.initializeDirectories();
     this.loadGlobalCss();
-    
+
     const allLangs = Array.from(
       new Set(
         Object.values(this.EXTENSION_LANGUAGE_MAP)
@@ -722,7 +720,7 @@ export class UtilsService {
   async fixJson(code: string): Promise<string> {
     return await this.jsonFixService.fixJson(code, true);
   }
-  
+
   getDirectory(filePath: string): string {
     return path.dirname(filePath);
   }

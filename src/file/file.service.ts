@@ -95,6 +95,12 @@ export class FileService implements OnModuleInit {
     'target',
     'vendor',
     '.ai-editor-logs',
+    'code-editor',
+    'apps',
+    'icons',
+    'downloads',
+    'frontend',
+    'ai-editor',
   ]);
 
   private static readonly EXCLUDE_FILE_NAMES_FOR_SCAN = new Set([
@@ -102,6 +108,8 @@ export class FileService implements OnModuleInit {
     'yarn.lock',
     'pnpm-lock.yaml',
     '.DS_Store',
+    '.env',
+    '.env.local',
   ]);
 
   private static readonly RELEVANT_CONFIG_FILENAMES_FOR_SCAN = new Set([
@@ -557,15 +565,29 @@ export class FileService implements OnModuleInit {
     const allScannedFiles: ScannedFileDto[] = [];
     const processedAbsolutePaths = new Set<string>(); // To deduplicate files if multiple scan paths overlap
 
-    this.logger.log(
-      `Starting comprehensive file scan from project root: ${projectRoot}`,
-    );
-    if (verbose) {
-      this.logger.debug(`Scan paths received: ${scanPaths.join(', ')}`);
-    }
+    let pathsToProcess: string[];
 
-    for (const currentPath of scanPaths) {
-      console.log(currentPath, 'currentPath');
+    // --- START: Implemented logic based on the interpretation ---
+    if (scanPaths.length === 0) {
+      // If no specific paths are provided, default to scanning the entire project root.
+      pathsToProcess = [projectRoot];
+      this.logger.log(
+        `Starting comprehensive file scan from project root: ${projectRoot}. No specific scan paths provided, defaulting to scanning the entire project root.`,
+      );
+    } else {
+      // If specific paths are provided, only scan those paths.
+      pathsToProcess = scanPaths;
+      this.logger.log(
+        `Starting comprehensive file scan from project root: ${projectRoot}. Specific scan paths provided.`,
+      );
+      if (verbose) {
+        this.logger.debug(`Scan paths received: ${scanPaths.join(', ')}`);
+      }
+    }
+    // --- END: Implemented logic ---
+
+    for (const currentPath of pathsToProcess) {
+      // Loop over the determined pathsToProcess
       const absolutePath = path.resolve(projectRoot, currentPath);
 
       if (processedAbsolutePaths.has(absolutePath)) {
@@ -588,6 +610,16 @@ export class FileService implements OnModuleInit {
       }
 
       if (stats.isFile()) {
+        // If the explicit path is a file and it's not excluded (important check!)
+        if (this.isExcludedFileForScan(path.basename(absolutePath))) {
+          if (verbose) {
+            this.logger.debug(
+              `  Excluding explicit file by name: ${path.relative(projectRoot, absolutePath)}`,
+            );
+          }
+          continue;
+        }
+
         try {
           const content = await fs.readFile(absolutePath, 'utf-8');
           const relativeToProjectRoot = path.relative(
@@ -611,6 +643,20 @@ export class FileService implements OnModuleInit {
           );
         }
       } else if (stats.isDirectory()) {
+        // Additional check for the top-level directory itself if it was explicitly passed
+        // This is mainly relevant if projectRoot itself is being scanned as a single entry
+        if (
+          currentPath !== projectRoot &&
+          this.isExcludedDirForScan(path.basename(absolutePath))
+        ) {
+          if (verbose) {
+            this.logger.debug(
+              `  Excluding top-level directory for scan: ${path.relative(projectRoot, absolutePath)}`,
+            );
+          }
+          continue;
+        }
+
         if (verbose) {
           this.logger.log(
             `  Initiating recursive scan for directory: ${absolutePath}`,
@@ -637,27 +683,26 @@ export class FileService implements OnModuleInit {
               entryFullPath,
             );
 
-            if (entry.isDirectory() && this.isExcludedDirForScan(entry.name)) {
-              if (verbose) {
-                this.logger.debug(
-                  `    Excluding directory for scan: ${relativeToProjectRoot}`,
-                );
-              }
-              continue;
-            }
-
-            if (entry.isFile() && this.isExcludedFileForScan(entry.name)) {
-              if (verbose) {
-                this.logger.debug(
-                  `    Excluding file for scan: ${relativeToProjectRoot}`,
-                );
-              }
-              continue;
-            }
-
             if (entry.isDirectory()) {
-              queue.push(entryFullPath);
+              if (this.isExcludedDirForScan(entry.name)) {
+                if (verbose) {
+                  this.logger.debug(
+                    `    Excluding directory for scan: ${relativeToProjectRoot}`,
+                  );
+                }
+                continue;
+              }
+              queue.push(entryFullPath); // Add to queue if not excluded
             } else if (entry.isFile()) {
+              if (this.isExcludedFileForScan(entry.name)) {
+                if (verbose) {
+                  this.logger.debug(
+                    `    Excluding file for scan: ${relativeToProjectRoot} (excluded by name)`,
+                  );
+                }
+                continue;
+              }
+
               const isIncluded = this.isRelevantFileForScan(entry.name);
 
               if (isIncluded) {

@@ -39,7 +39,6 @@ import { UploadImageDto } from './dto/upload-image.dto';
 import { FormatCodeDto } from './dto/format-code.dto';
 import { HtmlDto } from './dto/html.dto'; // <--- NEW: Import HtmlDto
 
-
 class FixJsonDto {
   /** The raw JSON string that may be invalid or broken */
   jsonString: string;
@@ -56,7 +55,6 @@ export class UtilsController {
     private readonly jsonFixService: JsonFixService,
     private readonly markdownUtilService: MarkdownUtilService,
   ) {}
-
 
   @Post('json-fix')
   @ApiOperation({ summary: 'Fix malformed or invalid JSON' })

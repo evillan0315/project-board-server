@@ -1,4 +1,4 @@
- // full-stack/src/utils/json-fix/json-fix.service.ts
+// full-stack/src/utils/json-fix/json-fix.service.ts
 import {
   Injectable,
   Logger,
@@ -50,7 +50,9 @@ export class JsonFixService {
     }
 
     if (!useGeminiFallback) {
-      throw new BadRequestException('Invalid JSON and Gemini fallback disabled.');
+      throw new BadRequestException(
+        'Invalid JSON and Gemini fallback disabled.',
+      );
     }
 
     // Step 2: Ask Gemini for repair

@@ -20,7 +20,6 @@ import { JsonYamlController } from './json-yaml/json-yaml.controller';
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
 import { ConversationService } from '../conversation/conversation.service';
 
-
 @Module({
   imports: [
     // 👇 Import the module that provides ModuleControlService
@@ -42,14 +41,14 @@ import { ConversationService } from '../conversation/conversation.service';
     HighlightCodeService,
     JsonFixService,
     GoogleGeminiFileService,
-    ConversationService
+    ConversationService,
   ],
   exports: [
     EncodingService,
     UtilsService,
     JsDocToMarkdownService,
     HighlightCodeService,
-    JsonFixService
+    JsonFixService,
   ],
 })
 export class UtilsModule {}
