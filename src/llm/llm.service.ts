@@ -57,9 +57,9 @@ export class LlmService implements OnModuleInit {
     llmInput: LlmInputDto,
     projectRoot: string,
   ): Promise<string> {
-    const formattedRelevantFiles = llmInput.relevantFiles
-      .map((file) => {
-        return `// File: ${file.relativePath}\n${file.content}`;
+    const formattedRelevantFiles = await llmInput.relevantFiles
+      .map(async (file) => {
+        return await `// File: ${file.relativePath}\n${file.content}`;
       })
       .join('\n\n');
     const prompt = `
