@@ -12180,6 +12180,92 @@
           "CommandHistory"
         ]
       }
+    },
+    "/media/extract": {
+      "post": {
+        "description": "Requires authentication with ADMIN or USER role.",
+        "operationId": "MediaController_extract",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "example": "https://www.youtube.com/watch?v=xyz"
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "mp3",
+                      "webm",
+                      "m4a",
+                      "wav",
+                      "mp4",
+                      "flv"
+                    ],
+                    "default": "mp3"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "example": "youtube",
+                    "description": "Source provider such as youtube, vimeo, udemy, etc."
+                  },
+                  "cookieAccess": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include authentication cookies for private content."
+                  }
+                },
+                "required": [
+                  "url"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns the extracted audio/video file path.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "filePath": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Extract audio/video from a URL",
+        "tags": [
+          "Media"
+        ]
+      }
     }
   },
   "info": {
@@ -13730,7 +13816,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-27T17:44:00.147Z",
+            "example": "2025-08-27T19:10:56.013Z",
             "format": "date-time"
           },
           "requestType": {
