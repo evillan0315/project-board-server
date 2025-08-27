@@ -1,21 +1,5 @@
-// File: src/auth/auth.controller.ts
-import {
-  Controller,
-  Post,
-  Body,
-  Res,
-  UseGuards,
-  Get,
-  Req,
-  Query,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiBody,
-} from '@nestjs/swagger';
+import { Controller, Post, Body, Res, UseGuards, Get, Req, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { AuthService } from './auth.service';
@@ -26,6 +10,8 @@ import {
   LoginResponseDto,
   AuthResponseDto,
   AuthUserDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
 } from './dto/auth.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { AuthRequest } from './interfaces/auth-request.interface';
@@ -61,11 +47,7 @@ export class AuthController {
       tokens: GoogleTokenDto | GitHubTokenDto;
     };
 
-    const user = await this.authService.validateOAuthProfile(
-      provider,
-      profile,
-      tokens,
-    );
+    const user = await this.authService.validateOAuthProfile(provider, profile, tokens);
 
     const payload: CreateJwtUserDto = {
       id: user.id,
@@ -91,8 +73,7 @@ export class AuthController {
     type: LoginResponseDto,
   })
   async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
-    const { access_token, refresh_token, user } =
-      await this.authService.login(dto);
+    const { access_token, refresh_token, user } = await this.authService.login(dto);
     return { access_token, refresh_token, user };
   }
 
@@ -137,10 +118,7 @@ export class AuthController {
     @Query('cli_port') cliPort?: number,
   ) {
     try {
-      const { accessToken, user } = await this.handleOAuthCallback(
-        'github',
-        req,
-      );
+      const { accessToken, user } = await this.handleOAuthCallback('github', req);
 
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
@@ -196,10 +174,7 @@ export class AuthController {
         }
       }
 
-      const { accessToken, user } = await this.handleOAuthCallback(
-        'google',
-        req,
-      );
+      const { accessToken, user } = await this.handleOAuthCallback('google', req);
 
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
@@ -251,6 +226,35 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   async verifyEmail(@Query() query: VerifyEmailDto) {
     return this.authService.verifyEmail(query.token);
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request a password reset link for the given email' })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'If a matching account was found, a password reset email has been sent.',
+    schema: {
+      example: {
+        message: 'If a matching account was found, a password reset email has been sent.',
+      },
+    },
+  })
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
+    return this.authService.requestPasswordReset(dto.email);
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset user password using a provided token' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Password has been successfully reset.',
+    schema: { example: { message: 'Password has been successfully reset.' } },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid or expired password reset token.' })
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<{ message: string }> {
+    return this.authService.resetPassword(dto.token, dto.newPassword);
   }
 
   @UseGuards(JwtAuthGuard)

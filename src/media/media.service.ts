@@ -74,6 +74,9 @@ export class MediaService {
         const cookieFile = path.join(this.cookiesDir, `${provider}_cookies.txt`);
         if (fs.existsSync(cookieFile)) {
           args.push('--cookies', cookieFile);
+        } else {
+          this.logger.warn(`Cookie file not found for provider ${provider} at ${cookieFile}`);
+          // You might want to reject here or handle this more gracefully if cookies are critical.
         }
       }
 
@@ -81,17 +84,24 @@ export class MediaService {
       if (isAudio) {
         args.push('-x', '--audio-format', format);
       } else {
+        // For video, ensure the best available video+audio is combined
+        // '-f bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' for example
         args.push('-f', `bestvideo[ext=${format}]+bestaudio/best`);
       }
       args.push('-o', outputTemplate, url);
 
+      this.logger.debug(`Spawning yt-dlp with arguments: yt-dlp ${args.join(' ')}`);
+
       const ytDlp = spawn('yt-dlp', args);
       let filePath: string | null = null;
       let filePathEmitted = false;
+      let stderrBuffer = ''; // *** ADDED: To accumulate all stderr output ***
 
-      // listen to stderr (yt-dlp writes progress & destination there)
+      // listen to stderr (yt-dlp writes progress & destination there, and errors!)
       ytDlp.stderr.on('data', (chunk: Buffer) => {
         const text = chunk.toString();
+        stderrBuffer += text; // *** ADDED: Accumulate all stderr output ***
+
         for (const line of text.split('\n')) {
           // 1) progress lines: "[download]  12.3% of 4.56MiB at 123.45KiB/s"
           const prog = line.match(
@@ -109,15 +119,19 @@ export class MediaService {
           }
 
           // 2) destination line: "[download] Destination: file.webm" or "[ExtractAudio] Destination: file.mp3"
+          // Ensure that the path from yt-dlp matches our expected absolute path.
+          // yt-dlp usually outputs an absolute path if the -o argument uses an absolute path.
           const dest = line.match(
             isAudio ? /\[ExtractAudio\] Destination:\s+(.+)/ : /\[download\] Destination:\s+(.+)/,
           );
           if (dest && !filePathEmitted) {
             let resolved = dest[1].trim();
-            // Ensure the path is absolute and correctly resolved
+            // This fallback might be problematic if yt-dlp's cwd is not process.cwd().
+            // Ideally, yt-dlp should output the absolute path when -o is absolute.
+            // Consider logging `process.cwd()` vs `targetDirectoryPath` difference if issues persist.
             if (!path.isAbsolute(resolved)) {
-              // This might happen if yt-dlp outputs a relative path despite -o using absolute
-              resolved = path.join(process.cwd(), resolved); // Fallback to cwd
+              this.logger.warn(`yt-dlp reported relative path: ${resolved}. Attempting to resolve against CWD.`);
+              resolved = path.join(process.cwd(), resolved);
             }
             filePath = resolved;
             filePathEmitted = true;
@@ -129,8 +143,9 @@ export class MediaService {
       });
 
       ytDlp.on('error', (err) => {
-        this.logger.error('yt-dlp failed to start', err);
-        reject(err);
+        // This 'error' event is typically for issues spawning the process itself (e.g., 'yt-dlp' not found)
+        this.logger.error('yt-dlp failed to start (process spawn error)', err);
+        reject(new Error(`Failed to start yt-dlp process: ${err.message}`));
       });
 
       ytDlp.on('close', async (code) => {
@@ -146,17 +161,23 @@ export class MediaService {
             );
             resolve(createdFile);
           } catch (prismaError) {
-            this.logger.error(`Failed to save media metadata to Prisma: ${prismaError.message}`);
+            this.logger.error(`Download successful but failed to save media metadata to Prisma: ${prismaError.message}`);
+            // Reject with a more specific error for metadata saving failure
             reject(
               new Error(`Download successful but failed to save metadata: ${prismaError.message}`),
             );
           }
         } else {
-          reject(new Error(`yt-dlp exited with code ${code}`));
+          // *** MODIFIED: Include stderrBuffer in the error message ***
+          const errorMessage = `yt-dlp exited with code ${code}. Stderr: ${stderrBuffer || 'No stderr output captured.'}`;
+          this.logger.error(errorMessage);
+          reject(new Error(errorMessage));
         }
       });
     });
   }
+
+  // ... (rest of your MediaService class remains the same)
 
   private async saveMediaFileToPrisma(
     absoluteFilePath: string,
@@ -266,7 +287,7 @@ export class MediaService {
     select?: Prisma.FileSelect,
   ): Promise<{ items: File[]; total: number; page: number; pageSize: number; totalPages: number }> {
     const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 10;
+    const pageSize = Number(query.pageSize) ?? 10;
     const skip = (page - 1) * pageSize;
     const take = pageSize;
 

@@ -7,7 +7,9 @@ import {
   Req,
   Get,
   Query,
-  NotFoundException
+  NotFoundException,
+  Param,
+  Delete
 } from '@nestjs/common';
 import {
   ApiTags,

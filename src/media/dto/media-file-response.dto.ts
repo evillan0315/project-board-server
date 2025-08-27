@@ -24,10 +24,10 @@ export class MediaFileResponseDto {
   @IsEnum(FileType)
   fileType: FileType;
 
-  @ApiPropertyOptional({ description: 'The MIME type of the file.', example: 'video/mp4' })
+  @ApiPropertyOptional({ description: 'The MIME type of the file.', example: 'video/mp4', nullable: true })
   @IsOptional()
   @IsString()
-  mimeType?: string;
+  mimeType?: string | null; // Changed to allow null
 
   @ApiPropertyOptional({
     description: 'The size of the file in bytes.',
@@ -37,38 +37,40 @@ export class MediaFileResponseDto {
   })
   @IsOptional()
   @IsString()
-  size?: string;
+  size?: string; // This is fine as it's converted to string | undefined
 
   @ApiPropertyOptional({
     description: 'The provider from which the media was extracted (e.g., youtube).',
     example: 'youtube',
+    nullable: true
   })
   @IsOptional()
   @IsString()
-  provider?: string;
+  provider?: string | null; // Changed to allow null
 
-  @ApiPropertyOptional({ description: 'The original URL from which the media was extracted.' })
+  @ApiPropertyOptional({ description: 'The original URL from which the media was extracted.', nullable: true })
   @IsOptional()
   @IsString()
-  url?: string;
+  url?: string | null; // Changed to allow null
 
   @ApiProperty({ description: 'The timestamp when the file entry was created.' })
   @Type(() => Date)
   @IsDate()
   createdAt: Date;
 
-  @ApiProperty({ description: 'The timestamp when the file entry was last updated.' })
+  @ApiProperty({ description: 'The timestamp when the file entry was last updated.', nullable: true })
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  updatedAt: Date;
+  updatedAt: Date | null; // Changed to allow null
 
   @ApiProperty({ description: 'The ID of the user who created this file entry.' })
   @IsUUID()
   createdById: string;
 
-  @ApiPropertyOptional({ description: 'The ID of the folder where the file is stored.' })
+  @ApiPropertyOptional({ description: 'The ID of the folder where the file is stored.', nullable: true })
   @IsOptional()
   @IsUUID()
-  folderId?: string;
+  folderId?: string | null; // Changed to allow null
 }
+
