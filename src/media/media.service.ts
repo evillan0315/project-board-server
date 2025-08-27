@@ -1,4 +1,4 @@
-import { Injectable, Logger, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -6,7 +6,8 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJwtUserDto } from '../auth/dto/auth.dto';
-import { FileType } from '@prisma/client';
+import { File, FileType, Prisma } from '@prisma/client';
+import { PaginationMediaQueryDto } from './dto';
 
 @Injectable()
 export class MediaService {
@@ -46,7 +47,7 @@ export class MediaService {
     onFilePathReady?: (filePath: string) => void,
     provider?: string,
     cookieAccess?: boolean,
-  ): Promise<string> {
+  ): Promise<File> {
     return new Promise(async (resolve, reject) => {
       const isAudio = ['mp3', 'm4a', 'wav'].includes(format);
       const baseTypeDirName = isAudio ? 'audio' : 'videos';
@@ -136,8 +137,14 @@ export class MediaService {
         if (code === 0 && filePath) {
           try {
             // Save file and folder information to Prisma
-            await this.saveMediaFileToPrisma(filePath, url, format, providerName, currentUserId);
-            resolve(filePath);
+            const createdFile = await this.saveMediaFileToPrisma(
+              filePath,
+              url,
+              format,
+              providerName,
+              currentUserId,
+            );
+            resolve(createdFile);
           } catch (prismaError) {
             this.logger.error(`Failed to save media metadata to Prisma: ${prismaError.message}`);
             reject(
@@ -157,7 +164,7 @@ export class MediaService {
     mediaFormat: 'mp3' | 'webm' | 'm4a' | 'wav' | 'mp4' | 'flv',
     provider: string | undefined,
     userId: string,
-  ): Promise<{ fileId: string; folderId?: string }> {
+  ): Promise<File> {
     const isAudio = ['mp3', 'm4a', 'wav'].includes(mediaFormat);
     const baseTypeDirName = isAudio ? 'audio' : 'videos';
 
@@ -196,14 +203,14 @@ export class MediaService {
 
     // Create/find 'downloads' folder if it is considered part of the hierarchy in DB
     // For this specific request, we start creating from 'audio' or 'videos'
-    const downloadsFolder = await this.prisma.folder.findFirst({
+    let downloadsFolder = await this.prisma.folder.findFirst({
       where: { path: this.downloadDir, createdById: userId, parentId: null }, // Assuming 'downloads' is a root folder for user's media
     });
 
     if (downloadsFolder) {
       currentParentFolderId = downloadsFolder.id;
     } else {
-      const createdDownloadsFolder = await this.prisma.folder.create({
+      downloadsFolder = await this.prisma.folder.create({
         data: {
           name: 'downloads',
           path: this.downloadDir,
@@ -211,8 +218,8 @@ export class MediaService {
           parentId: null,
         },
       });
-      this.logger.log(`Created root 'downloads' folder in Prisma: ${createdDownloadsFolder.path}`);
-      currentParentFolderId = createdDownloadsFolder.id;
+      this.logger.log(`Created root 'downloads' folder in Prisma: ${downloadsFolder.path}`);
+      currentParentFolderId = downloadsFolder.id;
     }
 
     for (const segment of pathSegments) {
@@ -251,7 +258,70 @@ export class MediaService {
     });
     this.logger.log(`Created file entry in Prisma: ${file.path}`);
 
-    return { fileId: file.id, folderId: currentParentFolderId || undefined };
+    return file;
+  }
+
+  async findAllPaginated(
+    query: PaginationMediaQueryDto,
+    select?: Prisma.FileSelect,
+  ): Promise<{ items: File[]; total: number; page: number; pageSize: number; totalPages: number }> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+
+    const where = this.buildWhereFromQuery(query);
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.file.findMany({
+        where: { ...where, createdById: this.userId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+        ...(select ? { select } : {}),
+      }),
+      this.prisma.file.count({ where: { ...where, createdById: this.userId } }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  async findOne(id: string): Promise<File | null> {
+    return this.prisma.file.findUnique({
+      where: { id, createdById: this.userId },
+    });
+  }
+
+  async remove(id: string): Promise<File> {
+    const file = await this.prisma.file.findUnique({
+      where: { id, createdById: this.userId },
+    });
+
+    if (!file) {
+      throw new NotFoundException(`Media file with ID ${id} not found or unauthorized.`);
+    }
+
+    // Delete the physical file from disk
+    try {
+      if (fs.existsSync(file.path)) {
+        await fs.promises.unlink(file.path);
+        this.logger.log(`Successfully deleted physical file: ${file.path}`);
+      } else {
+        this.logger.warn(`Physical file not found at ${file.path}, deleting database entry only.`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to delete physical file ${file.path}: ${error.message}`);
+      // Depending on requirements, you might still want to delete the DB entry even if physical deletion fails
+    }
+
+    // Delete the database entry
+    return this.prisma.file.delete({ where: { id } });
   }
 
   private parseSize(sizeStr: string): number {
@@ -264,5 +334,27 @@ export class MediaService {
     const m = sizeStr.match(/([\d.]+)([KMG]?B)/);
     if (!m) return 0;
     return parseFloat(m[1]) * (units[m[2]] || 1);
+  }
+
+  private buildWhereFromQuery(query: PaginationMediaQueryDto): Prisma.FileWhereInput {
+    const where: Prisma.FileWhereInput = {};
+
+    if (query.name !== undefined) {
+      where.name = { contains: query.name, mode: 'insensitive' };
+    }
+    if (query.fileType !== undefined) {
+      where.fileType = query.fileType;
+    }
+    if (query.provider !== undefined) {
+      where.provider = { contains: query.provider, mode: 'insensitive' };
+    }
+    if (query.url !== undefined) {
+      where.url = { contains: query.url, mode: 'insensitive' };
+    }
+    if (query.folderId !== undefined) {
+      where.folderId = query.folderId;
+    }
+
+    return where;
   }
 }
