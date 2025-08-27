@@ -1,4 +1,13 @@
-import { IsOptional, IsString, IsPositive, IsEnum } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsPositive,
+  IsEnum,
+  IsUUID,
+  IsNumber,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { FileType } from '@prisma/client';
@@ -51,7 +60,7 @@ export class PaginationMediaQueryDto {
   url?: string;
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
   @ApiPropertyOptional({
     description: 'Filter by folder ID.',
     example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
@@ -64,17 +73,24 @@ export class PaginationMediaResultDto {
     type: [MediaFileResponseDto],
     description: 'List of media files for the current page.',
   })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MediaFileResponseDto)
   items: MediaFileResponseDto[];
 
   @ApiProperty({ description: 'Total number of media files matching the query.' })
+  @IsNumber()
   total: number;
 
   @ApiProperty({ description: 'Current page number.' })
+  @IsNumber()
   page: number;
 
   @ApiProperty({ description: 'Number of items per page.' })
+  @IsNumber()
   pageSize: number;
 
   @ApiProperty({ description: 'Total number of available pages.' })
+  @IsNumber()
   totalPages: number;
 }
