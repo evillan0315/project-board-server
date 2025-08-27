@@ -29,6 +29,8 @@ import { CreateJwtUserDto } from '../auth/dto/auth.dto';
 
 import { ScannedFileDto } from './dto/scan-file.dto';
 import { FileTreeNode } from './file.interface';
+import { CopyFileResponseDto } from './dto/copy-file.dto';
+import { MoveFileResponseDto } from './dto/move-file.dto';
 
 import { REQUEST } from '@nestjs/core';
 import { Request, Response } from 'express';
@@ -144,12 +146,9 @@ export class FileService implements OnModuleInit {
     private readonly request: Request & { user?: CreateJwtUserDto },
     private readonly eventEmitter: EventEmitter2,
   ) {
-    this.maxFileSize =
-      this.configService.get<number>('file.maxSize') ?? 5 * 1024 * 1024;
-    this.allowedMimeTypes =
-      this.configService.get<string[]>('file.allowedMimeTypes') ?? [];
-    this.allowedExtensions =
-      this.configService.get<string[]>('file.allowedExtensions') ?? [];
+    this.maxFileSize = this.configService.get<number>('file.maxSize') ?? 5 * 1024 * 1024;
+    this.allowedMimeTypes = this.configService.get<string[]>('file.allowedMimeTypes') ?? [];
+    this.allowedExtensions = this.configService.get<string[]>('file.allowedExtensions') ?? [];
 
     this.ensureConfigurationIsValid();
   }
@@ -192,9 +191,7 @@ export class FileService implements OnModuleInit {
     }
     if (
       !Array.isArray(this.allowedExtensions) ||
-      this.allowedExtensions.some(
-        (ext) => typeof ext !== 'string' || !ext.startsWith('.'),
-      )
+      this.allowedExtensions.some((ext) => typeof ext !== 'string' || !ext.startsWith('.'))
     ) {
       this.logger.error(
         'File validation configuration error: file.allowedExtensions must be an array of strings starting with a dot.',
@@ -270,10 +267,7 @@ export class FileService implements OnModuleInit {
 
       const normalizedContentType = contentType?.split(';')[0].toLowerCase();
 
-      if (
-        normalizedContentType &&
-        !this.allowedMimeTypes.includes(normalizedContentType)
-      ) {
+      if (normalizedContentType && !this.allowedMimeTypes.includes(normalizedContentType)) {
         throw new BadRequestException(
           `Unsupported remote file type: "${contentType}". Allowed types are: ${this.allowedMimeTypes.join(', ')}.`,
         );
@@ -363,9 +357,7 @@ export class FileService implements OnModuleInit {
     try {
       const stats = await fs.stat(absolutePath);
       if (!stats.isFile()) {
-        throw new BadRequestException(
-          `Path '${filePath}' is not a file or does not exist.`,
-        );
+        throw new BadRequestException(`Path '${filePath}' is not a file or does not exist.`);
       }
 
       return fsExtra.createReadStream(absolutePath);
@@ -410,10 +402,7 @@ export class FileService implements OnModuleInit {
       });
 
       stream.on('error', (err) => {
-        this.logger.error(
-          `File stream error for ${filePath}: ${err.message}`,
-          err.stack,
-        );
+        this.logger.error(`File stream error for ${filePath}: ${err.message}`, err.stack);
         emitter.emit('fileError', { clientId, error: err.message });
       });
 
@@ -432,10 +421,7 @@ export class FileService implements OnModuleInit {
    * Lists files and folders in a specified directory, optionally recursively.
    * This method uses the injected EXCLUDED_FOLDERS and specific blockedPaths.
    */
-  async getFilesByDirectory(
-    directory = '',
-    recursive = false,
-  ): Promise<FileTreeNode[]> {
+  async getFilesByDirectory(directory = '', recursive = false): Promise<FileTreeNode[]> {
     this.ensureFileModuleEnabled(); // Ensure module is enabled for this operation
 
     const dir = path.resolve(this.BASE_DIR || process.cwd(), directory);
@@ -468,12 +454,8 @@ export class FileService implements OnModuleInit {
           const isDir = stat.isDirectory();
 
           // Detect language and MIME type
-          const mimeType = isDir
-            ? undefined
-            : mimeLookup(entry.name) || 'application/octet-stream';
-          let lang = isDir
-            ? undefined
-            : this.utilsService.detectLanguage(entry.name, mimeType);
+          const mimeType = isDir ? undefined : mimeLookup(entry.name) || 'application/octet-stream';
+          let lang = isDir ? undefined : this.utilsService.detectLanguage(entry.name, mimeType);
 
           if (mimeType?.startsWith('image/')) {
             lang = 'image';
@@ -520,9 +502,7 @@ export class FileService implements OnModuleInit {
         `Failed to list directory contents for "${dir}": ${err.message}`,
         err.stack,
       );
-      throw new InternalServerErrorException(
-        `Failed to list directory contents: ${err.message}`,
-      );
+      throw new InternalServerErrorException(`Failed to list directory contents: ${err.message}`);
     }
   }
 
@@ -592,9 +572,7 @@ export class FileService implements OnModuleInit {
 
       if (processedAbsolutePaths.has(absolutePath)) {
         if (verbose) {
-          this.logger.debug(
-            `  Skipping '${absolutePath}' (already processed).`,
-          );
+          this.logger.debug(`  Skipping '${absolutePath}' (already processed).`);
         }
         continue;
       }
@@ -622,10 +600,7 @@ export class FileService implements OnModuleInit {
 
         try {
           const content = await fs.readFile(absolutePath, 'utf-8');
-          const relativeToProjectRoot = path.relative(
-            projectRoot,
-            absolutePath,
-          );
+          const relativeToProjectRoot = path.relative(projectRoot, absolutePath);
           allScannedFiles.push({
             filePath: absolutePath,
             relativePath: relativeToProjectRoot,
@@ -633,9 +608,7 @@ export class FileService implements OnModuleInit {
           });
           processedAbsolutePaths.add(absolutePath);
           if (verbose) {
-            this.logger.debug(
-              `  Included explicit file: ${relativeToProjectRoot}`,
-            );
+            this.logger.debug(`  Included explicit file: ${relativeToProjectRoot}`);
           }
         } catch (readError) {
           this.logger.warn(
@@ -645,10 +618,7 @@ export class FileService implements OnModuleInit {
       } else if (stats.isDirectory()) {
         // Additional check for the top-level directory itself if it was explicitly passed
         // This is mainly relevant if projectRoot itself is being scanned as a single entry
-        if (
-          currentPath !== projectRoot &&
-          this.isExcludedDirForScan(path.basename(absolutePath))
-        ) {
+        if (currentPath !== projectRoot && this.isExcludedDirForScan(path.basename(absolutePath))) {
           if (verbose) {
             this.logger.debug(
               `  Excluding top-level directory for scan: ${path.relative(projectRoot, absolutePath)}`,
@@ -658,9 +628,7 @@ export class FileService implements OnModuleInit {
         }
 
         if (verbose) {
-          this.logger.log(
-            `  Initiating recursive scan for directory: ${absolutePath}`,
-          );
+          this.logger.log(`  Initiating recursive scan for directory: ${absolutePath}`);
         }
         const queue: string[] = [absolutePath];
 
@@ -678,17 +646,12 @@ export class FileService implements OnModuleInit {
 
           for (const entry of entries) {
             const entryFullPath = path.join(currentDir, entry.name);
-            const relativeToProjectRoot = path.relative(
-              projectRoot,
-              entryFullPath,
-            );
+            const relativeToProjectRoot = path.relative(projectRoot, entryFullPath);
 
             if (entry.isDirectory()) {
               if (this.isExcludedDirForScan(entry.name)) {
                 if (verbose) {
-                  this.logger.debug(
-                    `    Excluding directory for scan: ${relativeToProjectRoot}`,
-                  );
+                  this.logger.debug(`    Excluding directory for scan: ${relativeToProjectRoot}`);
                 }
                 continue;
               }
@@ -716,9 +679,7 @@ export class FileService implements OnModuleInit {
                     });
                     processedAbsolutePaths.add(entryFullPath);
                     if (verbose) {
-                      this.logger.debug(
-                        `    Included for scan: ${relativeToProjectRoot}`,
-                      );
+                      this.logger.debug(`    Included for scan: ${relativeToProjectRoot}`);
                     }
                   } catch (readError) {
                     this.logger.warn(
@@ -741,9 +702,7 @@ export class FileService implements OnModuleInit {
           }
         }
       } else {
-        this.logger.warn(
-          `'${absolutePath}' is neither a file nor a directory. Skipping for scan.`,
-        );
+        this.logger.warn(`'${absolutePath}' is neither a file nor a directory. Skipping for scan.`);
       }
     }
 
@@ -802,9 +761,7 @@ export class FileService implements OnModuleInit {
     try {
       parsedUrl = new URL(url);
       if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        throw new BadRequestException(
-          'Unsupported protocol. Only http and https are allowed.',
-        );
+        throw new BadRequestException('Unsupported protocol. Only http and https are allowed.');
       }
     } catch (error) {
       this.logger.error(
@@ -822,9 +779,7 @@ export class FileService implements OnModuleInit {
           if (contentType) {
             res.setHeader('Content-Type', contentType);
           } else {
-            this.logger.warn(
-              `No Content-Type header for URL: ${url}. Defaulting to image/jpeg.`,
-            );
+            this.logger.warn(`No Content-Type header for URL: ${url}. Defaulting to image/jpeg.`);
             res.setHeader('Content-Type', 'image/jpeg');
           }
           imageRes.pipe(res);
@@ -868,8 +823,7 @@ export class FileService implements OnModuleInit {
         return { success: true, filePath: resolvedPath };
       } else {
         this.validateFileExtension(resolvedPath);
-        const finalContent: string =
-          content?.trim() === '' || content == null ? ' ' : content;
+        const finalContent: string = content?.trim() === '' || content == null ? ' ' : content;
         await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
         await fs.writeFile(resolvedPath, finalContent, 'utf-8');
         return { success: true, filePath: resolvedPath };
@@ -905,18 +859,14 @@ export class FileService implements OnModuleInit {
         `Failed to write file to ${filePath}: ${(error as Error).message}`,
         (error as Error).stack,
       );
-      throw new InternalServerErrorException(
-        `Failed to write file: ${(error as Error).message}`,
-      );
+      throw new InternalServerErrorException(`Failed to write file: ${(error as Error).message}`);
     }
   }
 
   /**
    * Deletes a file or directory at the specified path.
    */
-  async deleteLocalFile(
-    filePath: string,
-  ): Promise<{ success: boolean; message: string }> {
+  async deleteLocalFile(filePath: string): Promise<{ success: boolean; message: string }> {
     this.ensureFileModuleEnabled();
 
     try {
@@ -955,15 +905,11 @@ export class FileService implements OnModuleInit {
 
     try {
       if (!(await fsExtra.pathExists(resolvedOldPath))) {
-        throw new NotFoundException(
-          `Source path does not exist: ${resolvedOldPath}`,
-        );
+        throw new NotFoundException(`Source path does not exist: ${resolvedOldPath}`);
       }
 
       if (await fsExtra.pathExists(resolvedNewPath)) {
-        throw new BadRequestException(
-          `Target path already exists: ${resolvedNewPath}`,
-        );
+        throw new BadRequestException(`Target path already exists: ${resolvedNewPath}`);
       }
 
       await fsExtra.move(resolvedOldPath, resolvedNewPath);
@@ -983,6 +929,106 @@ export class FileService implements OnModuleInit {
       );
       throw new InternalServerErrorException(
         `Failed to rename file or folder: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Copies a file or folder from `sourcePath` to `destinationPath`.
+   * Overwriting existing destination files is not explicitly handled by a flag here; `fs-extra.copy` by default
+   * will error if destination exists and `overwrite: false` (which is implicit if not set to true).
+   * For simplicity, this implementation assumes a new destination or explicit overwrite handling is done by the caller.
+   */
+  async copyLocalFileOrFolder(
+    sourcePath: string,
+    destinationPath: string,
+  ): Promise<CopyFileResponseDto> {
+    this.ensureFileModuleEnabled();
+
+    const resolvedSourcePath = path.resolve(sourcePath);
+    const resolvedDestinationPath = path.resolve(destinationPath);
+
+    try {
+      if (!(await fsExtra.pathExists(resolvedSourcePath))) {
+        throw new NotFoundException(`Source path does not exist: ${resolvedSourcePath}`);
+      }
+
+      // Check if destination exists. If it does, we consider it a BadRequest unless an overwrite flag is used (not implemented here).
+      if (await fsExtra.pathExists(resolvedDestinationPath)) {
+        throw new BadRequestException(
+          `Destination path already exists: ${resolvedDestinationPath}. Please choose a different destination or delete the existing one.`,
+        );
+      }
+
+      await fsExtra.copy(resolvedSourcePath, resolvedDestinationPath);
+      this.logger.log(`Copied "${resolvedSourcePath}" to "${resolvedDestinationPath}"`);
+
+      return {
+        success: true,
+        message: `Successfully copied "${resolvedSourcePath}" to "${resolvedDestinationPath}"`,
+        sourcePath: resolvedSourcePath,
+        destinationPath: resolvedDestinationPath,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to copy "${resolvedSourcePath}" to "${resolvedDestinationPath}": ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `Failed to copy file or folder: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Moves a file or folder from `sourcePath` to `destinationPath`.
+   */
+  async moveLocalFileOrFolder(
+    sourcePath: string,
+    destinationPath: string,
+  ): Promise<MoveFileResponseDto> {
+    this.ensureFileModuleEnabled();
+
+    const resolvedSourcePath = path.resolve(sourcePath);
+    const resolvedDestinationPath = path.resolve(destinationPath);
+
+    try {
+      if (!(await fsExtra.pathExists(resolvedSourcePath))) {
+        throw new NotFoundException(`Source path does not exist: ${resolvedSourcePath}`);
+      }
+
+      // Check if destination exists. For 'move', if destination is an existing empty directory, move might place source *inside* it.
+      // If it's an existing file or non-empty directory, it typically errors. We'll mirror fs-extra's default behavior,
+      // which is to error if destination exists unless `overwrite: true` is specified.
+      // For clarity, we'll explicitly check and throw a BadRequest if destination exists.
+      if (await fsExtra.pathExists(resolvedDestinationPath)) {
+        throw new BadRequestException(
+          `Destination path already exists: ${resolvedDestinationPath}. Cannot move to an existing location.`,
+        );
+      }
+
+      await fsExtra.move(resolvedSourcePath, resolvedDestinationPath);
+      this.logger.log(`Moved "${resolvedSourcePath}" to "${resolvedDestinationPath}"`);
+
+      return {
+        success: true,
+        message: `Successfully moved "${resolvedSourcePath}" to "${resolvedDestinationPath}"`,
+        sourcePath: resolvedSourcePath,
+        destinationPath: resolvedDestinationPath,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to move "${resolvedSourcePath}" to "${resolvedDestinationPath}": ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `Failed to move file or folder: ${(error as Error).message}`,
       );
     }
   }
@@ -1019,9 +1065,7 @@ export class FileService implements OnModuleInit {
       for (const entry of entries) {
         // Here, assuming this.EXCLUDED_FOLDERS are basenames for generic file browsing
         if (this.EXCLUDED_FOLDERS.includes(entry.name)) {
-          this.logger.debug(
-            `Skipping user-excluded folder during search: ${entry.name}`,
-          );
+          this.logger.debug(`Skipping user-excluded folder during search: ${entry.name}`);
           continue;
         }
 

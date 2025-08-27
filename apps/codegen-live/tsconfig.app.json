@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tsconfig.app.tsbuildinfo",
+    "types": ["node"]
+  },
+  "include": ["src", "vite-env.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

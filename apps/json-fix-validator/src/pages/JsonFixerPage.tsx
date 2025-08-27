@@ -44,7 +44,11 @@ const JsonFixerPage: React.FC = () => {
       const repairResult = await repairJson(jsonInput);
       setResult(repairResult);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'An unexpected error occurred during repair.');
+      setError(
+        e instanceof Error
+          ? e.message
+          : 'An unexpected error occurred during repair.',
+      );
     } finally {
       setLoading(false);
     }
@@ -65,22 +69,17 @@ const JsonFixerPage: React.FC = () => {
   };
 
   return (
-    <Paper
-      elevation={2}
-      sx={{
-        p: { xs: 3, sm: 4 },
-        mt: 3,
-        bgcolor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <Typography variant="h5" color="text.primary" sx={{ mb: 4, fontWeight: 'bold' }}>
+    <Box className="mx-auto max-w-5xl" sx={{ p: 4 }}>
+      <Typography
+        variant="h5"
+        color="text.primary"
+        sx={{ mb: 4, fontWeight: 'bold' }}
+      >
         JSON Validator and Repair Tool
       </Typography>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <Grid container item xs={6} md={12} spacing={3}>
+        <Grid item xs={6} md={12}>
           <TextField
             label="JSON Input"
             multiline
@@ -111,7 +110,11 @@ const JsonFixerPage: React.FC = () => {
           onClick={handleValidate}
           disabled={loading || !jsonInput}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : 'Validate JSON'}
+          {loading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            'Validate JSON'
+          )}
         </Button>
         <Button
           variant="outlined"
@@ -119,12 +122,23 @@ const JsonFixerPage: React.FC = () => {
           onClick={handleRepair}
           disabled={loading || !jsonInput}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : 'Repair JSON'}
+          {loading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            'Repair JSON'
+          )}
         </Button>
       </Box>
 
       {loading && (
-        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Box
+          sx={{
+            mt: 4,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
           <CircularProgress />
           <Typography sx={{ ml: 2 }} color="text.secondary">
             Processing...
@@ -140,11 +154,14 @@ const JsonFixerPage: React.FC = () => {
 
       {result && (
         <Box sx={{ mt: 4 }}>
-          <Typography variant="h6" color="text.primary" sx={{ mb: 2, fontWeight: 'bold' }}>
+          <Typography
+            variant="h6"
+            color="text.primary"
+            sx={{ mb: 2, fontWeight: 'bold' }}
+          >
             Result:
           </Typography>
           <Paper
-            elevation={1}
             sx={{
               p: 2,
               bgcolor: result.valid ? 'success.light' : 'error.light',
@@ -154,17 +171,29 @@ const JsonFixerPage: React.FC = () => {
             }}
             className="flex flex-col gap-2"
           >
-            <Typography variant="body1" color="text.primary" sx={{ fontWeight: 'medium' }}>
+            <Typography
+              variant="body1"
+              color="text.primary"
+              sx={{ fontWeight: 'medium' }}
+            >
               Status: {result.valid ? 'Valid' : 'Invalid'}
             </Typography>
             {result.errors && result.errors.length > 0 && (
               <Box>
-                <Typography variant="subtitle1" color="text.primary" sx={{ fontWeight: 'medium' }}>
+                <Typography
+                  variant="subtitle1"
+                  color="text.primary"
+                  sx={{ fontWeight: 'medium' }}
+                >
                   Errors:
                 </Typography>
                 <ul className="list-disc list-inside ml-4">
                   {result.errors.map((err, index) => (
-                    <li key={index} className="text-sm" style={{ color: 'inherit' }}>
+                    <li
+                      key={index}
+                      className="text-sm"
+                      style={{ color: 'inherit' }}
+                    >
                       {typeof err === 'string' ? err : JSON.stringify(err)}
                     </li>
                   ))}
@@ -173,7 +202,11 @@ const JsonFixerPage: React.FC = () => {
             )}
             {result.repairedJson && (
               <Box sx={{ position: 'relative' }}>
-                <Typography variant="subtitle1" color="text.primary" sx={{ fontWeight: 'medium' }}>
+                <Typography
+                  variant="subtitle1"
+                  color="text.primary"
+                  sx={{ fontWeight: 'medium' }}
+                >
                   Repaired JSON:
                 </Typography>
                 <pre
@@ -212,7 +245,7 @@ const JsonFixerPage: React.FC = () => {
           </Paper>
         </Box>
       )}
-    </Paper>
+    </Box>
   );
 };
 

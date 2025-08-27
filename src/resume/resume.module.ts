@@ -6,9 +6,9 @@ import { UserModule } from '../user/user.module';
 import { GoogleModule } from '../google/google.module';
 
 @Module({
-  imports: [GoogleModule, UserModule], 
+  imports: [GoogleModule, UserModule],
   providers: [ResumeParserService],
   controllers: [ResumeController],
-  exports: [ResumeParserService], 
+  exports: [ResumeParserService],
 })
 export class ResumeModule {}

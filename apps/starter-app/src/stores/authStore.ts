@@ -7,11 +7,14 @@ export const authStore = map<AuthState>({
   loading: true, // Set to true initially to indicate loading auth status on app start
   error: null,
 });
-
-export const loginSuccess = (user: UserProfile) => {
+export const getToken = () => {
+  const localToken = localStorage.getItem('token');
+  return localToken;
+}
+export const loginSuccess = (user: UserProfile, token) => {
   // Update localStorage
-  if (user.accessToken) {
-    localStorage.setItem('token', user.accessToken);
+  if(token){
+    localStorage.setItem('token', token)
   }
   authStore.set({
     isLoggedIn: true,

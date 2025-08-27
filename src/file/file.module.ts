@@ -28,6 +28,7 @@ import { RemoteFileController } from './remote-file/remote-file.controller';
     FileLanguageService,
     FileValidationService,
     {
+      // These are generally system-level folders. Dev-related folders (node_modules, .git) are handled in FileGateway itself.
       provide: 'EXCLUDED_FOLDERS',
       useValue: ['lost+found', 'proc', 'sys', 'dev', 'root'],
     },

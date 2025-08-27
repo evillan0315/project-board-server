@@ -1,21 +1,39 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+// src/utils/json-fix/dto/json-input.dto.ts
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+  getSchemaPath,
+} from '@nestjs/swagger';
+import { IsString, IsOptional, ValidateIf } from 'class-validator';
 
 export class JsonInputDto {
   @ApiProperty({
-    example: '{ "foo": "bar" }', // Valid JSON example
-    description: 'Raw JSON input (can be malformed for repair, or valid for validation)',
+    description: 'The JSON string to validate or repair.',
+    example: '{"foo": "bar"}',
+    type: String,
   })
   @IsString()
   json: string;
 
-  @ApiProperty({
-    example:
-      '{ "type": "object", "properties": { "foo": { "type": "string" }, "count": { "type": "number" }}}',
-    description: 'Optional JSON Schema for validation',
-    required: false,
+  @ApiPropertyOptional({
+    description:
+      'Optional JSON Schema for validation (can be an object or a JSON string).',
+    oneOf: [
+      {
+        type: 'object',
+        example: {
+          type: 'object',
+          properties: { foo: { type: 'string' } },
+          required: ['foo'],
+        },
+      },
+      {
+        type: 'string',
+        example:
+          '{"type":"object","properties":{"foo":{"type":"string"}},"required":["foo"]}',
+      },
+    ],
   })
   @IsOptional()
-  @IsString()
-  schema?: string;
+  schema?: Record<string, any> | string;
 }

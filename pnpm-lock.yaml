@@ -383,6 +383,9 @@ importers:
       wav:
         specifier: ^1.0.2
         version: 1.0.2
+      wavefile:
+        specifier: ^11.0.0
+        version: 11.0.0
       yargs:
         specifier: ^18.0.0
         version: 18.0.0
@@ -8116,6 +8119,11 @@ packages:
 
   wav@1.0.2:
     resolution: {integrity: sha512-viHtz3cDd/Tcr/HbNqzQCofKdF6kWUymH9LGDdskfWFoIy/HJ+RTihgjEcHfnsy1PO4e9B+y4HwgTwMrByquhg==}
+
+  wavefile@11.0.0:
+    resolution: {integrity: sha512-/OBiAALgWU24IG7sC84cDO/KfFuvajWc5Uec0oV2zrpOOZZDgGdOwHwgEzOrwh8jkubBk7PtZfQBIcI1OaE5Ng==}
+    engines: {node: '>=8'}
+    hasBin: true
 
   wcwidth@1.0.1:
     resolution: {integrity: sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==}
@@ -17961,6 +17969,8 @@ snapshots:
       stream-parser: 0.3.1
     transitivePeerDependencies:
       - supports-color
+
+  wavefile@11.0.0: {}
 
   wcwidth@1.0.1:
     dependencies:

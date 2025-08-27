@@ -11,7 +11,10 @@ const getInitialThemeMode = (): 'light' | 'dark' => {
       return storedMode;
     }
     // Check prefers-color-scheme if no stored mode
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    if (
+      window.matchMedia &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches
+    ) {
       return 'dark';
     }
   }

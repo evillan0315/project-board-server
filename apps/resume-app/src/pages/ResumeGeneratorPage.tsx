@@ -180,7 +180,7 @@ const ResumeGeneratorPage: React.FC = () => {
         </Alert>
       </Snackbar>
 
-      <Paper elevation={2} className="p-6">
+      <Paper elevation={2} className="p-6 transition-colors duration-300">
         <Box sx={{ width: '100%' }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs
@@ -188,19 +188,19 @@ const ResumeGeneratorPage: React.FC = () => {
               onChange={handleTabChange}
               aria-label="resume actions tabs"
               centered
-              className="[&_.MuiTabs-indicator]:!bg-blue-600"
+              className="[&_.MuiTabs-indicator]:!bg-blue-600 dark:[&_.MuiTabs-indicator]:!bg-blue-400"
               textColor="inherit"
               indicatorColor="primary"
             >
               <Tab
                 label="Upload / Input Resume"
                 {...a11yProps(0)}
-                className="!text-gray-700 !font-semibold data-[selected=true]:!text-blue-600"
+                className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
               />
               <Tab
                 label="Generate / Enhance Resume"
                 {...a11yProps(1)}
-                className="!text-gray-700 !font-semibold data-[selected=true]:!text-blue-600"
+                className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
               />
             </Tabs>
           </Box>

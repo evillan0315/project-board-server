@@ -11,6 +11,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import CircularProgress from '@mui/material/CircularProgress';
+import ThemeSwitcher from './ui/ThemeSwitcher';
 
 const Navbar: React.FC = () => {
   const { isLoggedIn, user, loading } = useStore(authStore);
@@ -18,12 +19,11 @@ const Navbar: React.FC = () => {
 
   const onLogout = async () => {
     await handleLogout();
-    // Optionally navigate to login or home page after logout
     navigate('/login');
   };
 
   return (
-    <AppBar position="static" color="primary" sx={{ bgcolor: 'var(--tw-colors-blue-600)' }}>
+    <AppBar position="static" color="primary">
       <Toolbar className="flex justify-between items-center max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8">
         <Typography
           variant="h6"
@@ -34,14 +34,15 @@ const Navbar: React.FC = () => {
           Resume AI
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <ThemeSwitcher />
           {loading ? (
             <CircularProgress size={24} sx={{ color: 'white' }} />
           ) : isLoggedIn ? (
             <>
-              <AccountCircle sx={{ color: 'white' }} />
+              <AccountCircle sx={{ color: 'inherit' }} />
               <Typography
                 variant="body1"
-                sx={{ color: 'white', display: { xs: 'none', sm: 'block' } }}
+                sx={{ color: 'inherit', display: { xs: 'none', sm: 'block' } }}
               >
                 {user?.name || user?.email || 'User'}
               </Typography>

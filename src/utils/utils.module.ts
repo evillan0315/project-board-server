@@ -21,7 +21,6 @@ import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-f
 import { ConversationService } from '../conversation/conversation.service';
 import { JsonFixModule } from './json-fix/json-fix.module';
 
-
 @Module({
   imports: [
     // 👇 Import the module that provides ModuleControlService

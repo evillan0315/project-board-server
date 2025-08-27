@@ -62,9 +62,7 @@ export class AuthService {
     );
   }
 
-  async login(
-    dto: LoginDto,
-  ): Promise<{
+  async login(dto: LoginDto): Promise<{
     access_token: string;
     refresh_token: string;
     user: CreateJwtUserDto;

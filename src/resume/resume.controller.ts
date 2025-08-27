@@ -82,7 +82,9 @@ export class ResumeController {
     const fullUser = await this.usersService.findByEmail(user.email);
 
     if (!fullUser || !fullUser.Account || fullUser.Account.length === 0) {
-      throw new UnauthorizedException('No social accounts linked to this user.');
+      throw new UnauthorizedException(
+        'No social accounts linked to this user.',
+      );
     }
 
     // Find the specific account for the requested provider
@@ -104,7 +106,9 @@ export class ResumeController {
 
     if (!fullUser.username) {
       // This refers to the 'username' property on your application's User model
-      throw new UnauthorizedException('Application username not found for the user.');
+      throw new UnauthorizedException(
+        'Application username not found for the user.',
+      );
     }
 
     return {
@@ -256,8 +260,8 @@ export class ResumeController {
     @Body('jobDescription') jobDescription: string,
     @Body('conversationId') conversationId?: string,
   ): Promise<OptimizationResultDto> {
-
-    const { appUsername, providerAccessToken } = await this.getProviderAccountData(req, 'google');
+    const { appUsername, providerAccessToken } =
+      await this.getProviderAccountData(req, 'google');
 
     if (!jobDescription || jobDescription.trim() === '') {
       throw new BadRequestException(
@@ -352,4 +356,3 @@ export class ResumeController {
     return this.googleGeminiFileService.enhanceResume(enhanceResumeDto);
   }
 }
-

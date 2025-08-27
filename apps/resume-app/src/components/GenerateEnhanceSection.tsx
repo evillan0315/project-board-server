@@ -46,10 +46,10 @@ const GenerateEnhanceSection: React.FC<GenerateEnhanceSectionProps> = ({
 
   return (
     <Box className="flex flex-col gap-6">
-      <Box className="p-4 border border-gray-200 rounded-lg shadow-sm">
+      <Box className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-colors duration-300">
         <Typography
           variant="h6"
-          className="!font-semibold !text-gray-800 flex items-center gap-2 mb-4"
+          className="!font-semibold !text-gray-800 dark:!text-gray-200 flex items-center gap-2 mb-4 transition-colors duration-300"
         >
           <GenerateIcon /> Generate New Resume
         </Typography>
@@ -74,10 +74,10 @@ const GenerateEnhanceSection: React.FC<GenerateEnhanceSectionProps> = ({
         </Button>
       </Box>
 
-      <Box className="p-4 border border-gray-200 rounded-lg shadow-sm mt-4">
+      <Box className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm mt-4 transition-colors duration-300">
         <Typography
           variant="h6"
-          className="!font-semibold !text-gray-800 flex items-center gap-2 mb-4"
+          className="!font-semibold !text-gray-800 dark:!text-gray-200 flex items-center gap-2 mb-4 transition-colors duration-300"
         >
           <EnhanceIcon /> Enhance Existing Resume
         </Typography>

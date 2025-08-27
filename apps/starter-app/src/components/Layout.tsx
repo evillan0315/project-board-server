@@ -26,11 +26,11 @@ const Layout: React.FC = () => {
         <h1 className="text-4xl font-extrabold text-gray-900 text-center">Starter App</h1>
         <p className="mt-2 text-center text-gray-600">A template with secure authentication.</p>
       </header>
-      <main className="flex-grow w-full max-w-4xl bg-white shadow-xl rounded-lg p-6 sm:p-8 mb-8">
+      <main className="flex-grow w-full  p-6 sm:p-8 mb-8">
         <Outlet />
       </main>
       <footer className="w-full max-w-4xl mt-auto text-center text-gray-500 text-sm py-4">
-        © 2024 Starter App. All rights reserved.
+        © 2025 Starter App. All rights reserved.
       </footer>
     </div>
   );

@@ -1,6 +1,6 @@
 # Resume AI Assistant - Frontend
 
-![Resume AI Assistant Banner](https://via.placeholder.com/1200x400/0F52BA/FFFFFF?text=Resume+AI+Assistant)
+![Resume AI Assistant Banner](https://via.placeholder.com/1200x400/0F52BA/FFFFFF?text=Resume+AI+Assistant+-+Tailor+Your+Career+with+AI)
 
 Welcome to the **Resume AI Assistant**, a powerful web application designed to help you create, optimize, and enhance your resume using artificial intelligence. Whether you're a job seeker looking to tailor your resume for specific roles or a developer interested in contributing to an AI-driven project, this tool provides a comprehensive solution.
 
@@ -44,7 +44,7 @@ This project is built using modern web technologies to provide a fast, responsiv
 - **nanostores**: A tiny, efficient state management library for React and other frameworks.
 - **react-router-dom**: For declarative routing within the single-page application.
 
-**Backend**: (Separate project - usually a NestJS application)
+**Backend**: (Separate project - typically a Node.js application like NestJS)
 
 - **NestJS**: A progressive Node.js framework for building efficient, reliable, and scalable server-side applications.
 - **OpenAI API / Gemini API**: For AI capabilities (natural language processing, text generation, summarization).
@@ -112,7 +112,7 @@ Before you begin, ensure you have the following installed:
 
 ### Backend Setup
 
-This frontend application requires a running backend service to provide AI capabilities and authentication. Please refer to the [backend repository](https://github.com/evillan0315/project-board-server) for setup instructions. Ensure your backend is configured to run on the `VITE_API_URL` specified in your `.env` file (e.g., `http://localhost:3000`).
+This frontend application requires a running backend service to provide AI capabilities and authentication. Please refer to your **separate backend repository's** documentation for setup instructions. Ensure your backend is configured to run on the `VITE_API_URL` specified in your `.env` file (e.g., `http://localhost:3000`).
 
 ## Usage
 
@@ -145,7 +145,7 @@ This project is licensed under the MIT License.
 
 **MIT License**
 
-Copyright (c) 2025 Eddie Villanueva
+Copyright (c) 2024 Eddie Villanueva
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

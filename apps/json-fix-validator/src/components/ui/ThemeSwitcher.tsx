@@ -11,7 +11,12 @@ const ThemeSwitcher: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <IconButton sx={{ ml: 1 }} onClick={toggleThemeMode} color="inherit" title="Toggle theme">
+      <IconButton
+        sx={{ ml: 1 }}
+        onClick={toggleThemeMode}
+        color="inherit"
+        title="Toggle theme"
+      >
         {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
       </IconButton>
     </Box>

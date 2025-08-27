@@ -22,6 +22,8 @@ import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-f
 import { ModuleControlService } from '../module-control/module-control.service';
 import { FileService } from '../file/file.service';
 import { UtilsService } from '../utils/utils.service';
+import { JsonFixService } from '../utils/json-fix/json-fix.service';
+import { RequestType } from '@prisma/client';
 
 @Injectable()
 export class LlmService implements OnModuleInit {
@@ -34,6 +36,7 @@ export class LlmService implements OnModuleInit {
     private readonly fileService: FileService,
     private readonly moduleControlService: ModuleControlService,
     private readonly utilsService: UtilsService,
+    private readonly jsonFixService: JsonFixService,
   ) {
     this.LOGS_DIR = path.join(process.cwd(), '.ai-editor-logs');
   }
@@ -65,7 +68,9 @@ export class LlmService implements OnModuleInit {
     });
 
     // Wait for all promises to resolve, then join the resulting array of strings
-    const formattedRelevantFiles = (await Promise.all(fileContentPromises)).join('\n\n');
+    const formattedRelevantFiles = (
+      await Promise.all(fileContentPromises)
+    ).join('\n\n');
 
     const prompt = `
       # AI Code Generation Request
@@ -171,7 +176,10 @@ export class LlmService implements OnModuleInit {
         systemInstruction: systemInstructionForLLM,
       };
 
-      const response = await this.googleGeminiFileService.generateText(payload);
+      const response = await this.googleGeminiFileService.generateText(
+        payload,
+        RequestType.LLM_GENERATION,
+      );
 
       if (!response) {
         this.logger.error(`Google Gemini API Error (via NestJS)`);
@@ -199,11 +207,11 @@ export class LlmService implements OnModuleInit {
         );
         try {
           let repairedJsonString =
-            LlmService.repairJsonBadEscapes(cleanedJsonString);
-          repairedJsonString =
-            await this.utilsService.fixJson(repairedJsonString);
-          parsedResult = JSON.parse(repairedJsonString);
-          this.logger.log('JSON parsing succeeded after repair.');
+            await this.jsonFixService.repair(cleanedJsonString);
+          if (repairedJsonString.valid && repairedJsonString.repairedJson) {
+            parsedResult = JSON.parse(repairedJsonString.repairedJson);
+            this.logger.log('JSON parsing succeeded after repair.');
+          }
         } catch (repairError: unknown) {
           this.logger.error(
             'Error parsing LLM response as JSON even after repair attempt.',

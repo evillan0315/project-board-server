@@ -4,6 +4,7 @@ import { JsonFixController } from './json-fix.controller';
 
 @Module({
   providers: [JsonFixService],
-  controllers: [JsonFixController]
+  controllers: [JsonFixController],
+  exports: [JsonFixService],
 })
 export class JsonFixModule {}

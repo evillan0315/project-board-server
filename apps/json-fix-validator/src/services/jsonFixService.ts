@@ -11,13 +11,21 @@ interface ErrorResponse {
 /**
  * Helper to handle API responses and throw detailed errors.
  */
-const handleApiResponse = async (response: Response): Promise<JsonOutputDto> => {
+const handleApiResponse = async (
+  response: Response,
+): Promise<JsonOutputDto> => {
   if (!response.ok) {
     const errorData: JsonOutputDto | ErrorResponse = await response.json();
-    if (typeof errorData === 'object' && 'valid' in errorData && errorData.valid === false) {
+    if (
+      typeof errorData === 'object' &&
+      'valid' in errorData &&
+      errorData.valid === false
+    ) {
       // Backend error format for validation/repair failures
       throw new Error(
-        errorData.errors ? errorData.errors.join('\n') : 'Unknown validation/repair error.',
+        errorData.errors
+          ? errorData.errors.join('\n')
+          : 'Unknown validation/repair error.',
       );
     } else if (typeof errorData === 'object' && 'message' in errorData) {
       // Standard NestJS error format

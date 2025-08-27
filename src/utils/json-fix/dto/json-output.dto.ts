@@ -1,34 +1,24 @@
-import { ApiProperty } from '@nestjs/swagger';
+// src/utils/json-fix/dto/json-output.dto.ts
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class JsonOutputDto {
   @ApiProperty({
+    description: 'Indicates if the JSON is valid (or successfully repaired).',
     example: true,
-    description: 'Indicates if the JSON is valid or if the repair was successful.',
   })
   valid: boolean;
 
-  @ApiProperty({
-    required: false,
-    // Using 'any'[] because Ajv errors are objects and general parsing errors are strings.
-    example: [
-      'Unexpected token } in JSON at position 14',
-      {
-        instancePath: '/age',
-        schemaPath: '#/properties/age/type',
-        keyword: 'type',
-        params: { type: 'number' },
-        message: 'must be number',
-      },
-    ],
-    description: 'Array of error messages or error objects if validation or repair failed.',
+  @ApiPropertyOptional({
+    description: 'Array of validation or repair errors (if any).',
+    type: [Object],
+    example: ['Unexpected token at position 5'],
   })
-  errors?: any[]; // Changed to any[] to accommodate both string and AJV error objects
+  errors?: (string | Record<string, any>)[];
 
-  @ApiProperty({
-    required: false,
-    example: '{\n  "foo": "bar"\n}', // Example showing pretty-printed JSON
+  @ApiPropertyOptional({
     description:
-      'The repaired JSON string, present only if repair was successful and input was repairable.',
+      'The repaired JSON string (only returned by the repair endpoint if successful).',
+    example: '{"foo": "bar"}',
   })
-  repaired?: string;
+  repairedJson?: string;
 }

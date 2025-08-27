@@ -1,18 +1,23 @@
-import { Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
-import JsonFixerPage from './pages/JsonFixerPage';
-import LoginPage from './pages/LoginPage'; // Import LoginPage
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+
+import { ThemeProvider } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
+import { getTheme } from './themes';
+import { useStore } from '@nanostores/react';
+import { themeStore } from './stores/themeStore';
+
+import AppRoutes from './routes';
 
 function App() {
+  const { mode } = useStore(themeStore);
+  const theme = React.useMemo(() => getTheme(mode), [mode]);
+
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<JsonFixerPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/auth/callback" element={<LoginPage />} />
-        {/* Add more routes here as needed */}
-      </Route>
-    </Routes>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AppRoutes />
+    </ThemeProvider>
   );
 }
 

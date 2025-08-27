@@ -23,7 +23,7 @@ const Navbar: React.FC = () => {
 
   return (
     <AppBar position="static" color="primary" sx={{ bgcolor: 'var(--tw-colors-blue-600)' }}>
-      <Toolbar className="flex justify-between items-center max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+      <Toolbar className="flex justify-between items-center mx-auto w-full px-4 sm:px-6 lg:px-8 text-gray-800 bg-gray-100">
         <Typography
           variant="h6"
           component={Link}
@@ -37,10 +37,10 @@ const Navbar: React.FC = () => {
             <CircularProgress size={24} sx={{ color: 'white' }} />
           ) : isLoggedIn ? (
             <>
-              <AccountCircle sx={{ color: 'white' }} />
+              <AccountCircle sx={{  }} />
               <Typography
                 variant="body1"
-                sx={{ color: 'white', display: { xs: 'none', sm: 'block' } }}
+                sx={{ display: { xs: 'none', sm: 'block' } }}
               >
                 {user?.name || user?.email || 'User'}
               </Typography>

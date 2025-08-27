@@ -1,12 +1,18 @@
-import { Controller, Post, Body, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
   ApiBody,
   ApiOkResponse,
   ApiBadRequestResponse,
+  ApiExtraModels,
 } from '@nestjs/swagger';
 import { JsonFixService } from './json-fix.service';
 import { JsonInputDto } from './dto/json-input.dto';
@@ -19,57 +25,25 @@ import { UserRole } from '../../auth/enums/user-role.enum';
 
 @ApiTags('Utilities')
 @ApiBearerAuth()
+@ApiExtraModels(JsonOutputDto)
 @Controller('api/utils/json')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class JsonFixController {
   constructor(private readonly service: JsonFixService) {}
 
   @Post('validate')
+  @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({ summary: 'Validate JSON (with optional schema)' })
-  @ApiBody({
-    type: JsonInputDto,
-    examples: {
-      validJsonNoSchema: {
-        summary: 'Example: Valid JSON without schema',
-        value: {
-          json: '{ "name": "Alice", "age": 30 }',
-        } as JsonInputDto,
-      },
-      validJsonWithSchema: {
-        summary: 'Example: Valid JSON with schema',
-        value: {
-          json: '{ "name": "Bob", "age": 25 }',
-          schema:
-            '{ "type": "object", "properties": { "name": { "type": "string" }, "age": { "type": "number" } }, "required": ["name", "age"] }',
-        } as JsonInputDto,
-      },
-      invalidJsonAgainstSchema: {
-        summary: 'Example: Invalid JSON against schema',
-        value: {
-          json: '{ "name": "Charlie", "age": "twenty" }', // Age is string, but schema expects number
-          schema:
-            '{ "type": "object", "properties": { "name": { "type": "string" }, "age": { "type": "number" } }, "required": ["name", "age"] }',
-        } as JsonInputDto,
-      },
-      malformedJsonInput: {
-        summary: 'Example: Malformed JSON for validation (will cause parsing error)',
-        value: {
-          json: '{ "name": "David", "age": 40, }', // Trailing comma
-        } as JsonInputDto,
-      },
-    },
-  })
+  @ApiBody({ type: JsonInputDto })
   @ApiOkResponse({
     description: 'JSON is valid (with or without schema).',
     type: JsonOutputDto,
     examples: {
-      validWithoutSchema: {
-        summary: 'Response: JSON is valid (no schema provided)',
-        value: { valid: true } as JsonOutputDto,
-      },
-      validWithSchema: {
-        summary: 'Response: JSON is valid against the provided schema',
-        value: { valid: true } as JsonOutputDto,
+      valid: {
+        summary: 'Valid JSON',
+        value: {
+          valid: true,
+        } as JsonOutputDto,
       },
     },
   })
@@ -77,26 +51,11 @@ export class JsonFixController {
     description: 'JSON is malformed or invalid according to schema.',
     type: JsonOutputDto,
     examples: {
-      malformedJson: {
-        summary: 'Response: Malformed JSON input causing parsing error',
+      invalid: {
+        summary: 'Malformed JSON',
         value: {
           valid: false,
-          errors: ['Unexpected token } in JSON at position 28'],
-        } as JsonOutputDto,
-      },
-      schemaValidationErrors: {
-        summary: 'Response: JSON fails schema validation',
-        value: {
-          valid: false,
-          errors: [
-            {
-              instancePath: '/age',
-              schemaPath: '#/properties/age/type',
-              keyword: 'type',
-              params: { type: 'number' },
-              message: 'must be number',
-            },
-          ],
+          errors: ['Unexpected token at position 10'],
         } as JsonOutputDto,
       },
     },
@@ -104,74 +63,57 @@ export class JsonFixController {
   validate(@Body() dto: JsonInputDto): JsonOutputDto {
     const result = this.service.validate(dto.json, dto.schema);
     if (!result.valid) {
-      throw new BadRequestException(result.errors);
+      throw new BadRequestException({
+        valid: false,
+        errors: result.errors,
+      } as JsonOutputDto);
     }
     return result;
   }
 
   @Post('repair')
-  @ApiOperation({ summary: 'Repair malformed JSON' })
+  @Roles(UserRole.ADMIN, UserRole.USER)
+  @ApiOperation({ summary: 'Attempt to repair invalid JSON' })
   @ApiBody({
-    type: JsonInputDto,
-    examples: {
-      malformedJsonExample: {
-        summary: 'Example: Malformed JSON with trailing comma and unquoted keys',
-        value: {
-          json: "{ 'name': 'Alice', 'age': 30, }",
-        } as JsonInputDto,
+    description: 'JSON string to repair',
+    schema: {
+      type: 'object',
+      properties: {
+        json: {
+          type: 'string',
+          example: '{ foo: "bar", }',
+        },
       },
-      hjsonLikeInputExample: {
-        summary: 'Example: Hjson-like input',
-        value: {
-          json: '{ key: value # This is a comment\n anotherKey: [1, 2, 3] }',
-        } as JsonInputDto,
-      },
-      unrepairableJsonExample: {
-        summary: 'Example: Unrepairable JSON input',
-        value: {
-          json: 'this is not json and cannot be repaired',
-        } as JsonInputDto,
-      },
+      required: ['json'],
     },
   })
   @ApiOkResponse({
-    description: 'JSON successfully repaired.',
+    description: 'JSON was successfully repaired.',
     type: JsonOutputDto,
     examples: {
-      successfulRepairFromMalformed: {
-        summary: 'Response: Successfully repaired from malformed JSON',
+      repaired: {
+        summary: 'Successfully repaired JSON',
         value: {
           valid: true,
-          repaired: '{\n  "name": "Alice",\n  "age": 30\n}',
-        } as JsonOutputDto,
-      },
-      successfulRepairFromHjson: {
-        summary: 'Response: Successfully repaired from Hjson-like input',
-        value: {
-          valid: true,
-          repaired: '{\n  "key": "value",\n  "anotherKey": [\n    1,\n    2,\n    3\n  ]\n}',
+          repairedJson: '{"foo":"bar"}',
         } as JsonOutputDto,
       },
     },
   })
   @ApiBadRequestResponse({
-    description: 'Failed to repair JSON (input is not JSON-like or repair is not possible).',
+    description: 'Repair attempt failed (unrecoverable JSON).',
     type: JsonOutputDto,
     examples: {
-      repairFailure: {
-        summary: 'Response: Failed to repair JSON',
+      unrecoverable: {
+        summary: 'Unrepairable JSON',
         value: {
           valid: false,
-          errors: ['Hjson.parse: invalid character (L1:C1)'],
+          errors: ['Unexpected end of JSON input'],
         } as JsonOutputDto,
       },
     },
   })
-  repair(@Body() dto: JsonInputDto): JsonOutputDto {
-    const result = this.service.repair(dto.json);
-    if (!result.valid) {
-      throw new BadRequestException(result.errors);
-    }
-    return result;
+  async repair(@Body('json') json: string): Promise<JsonOutputDto> {
+    return this.service.repair(json);
   }
 }

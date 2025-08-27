@@ -4,6 +4,8 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 
 ---
 
+![Full-Stack Developer Toolkit Demo](/media/eddie/Data/projects/nestJS/nest-modules/full-stack/downloads/recordings/550acedf-2d16-4d84-9abf-2171840930ac/recorded-1755262332872_1756208611532.gif)
+
 ## Key Features
 
 ### JWT-based authentication via HTTP-only cookies and optional Bearer header

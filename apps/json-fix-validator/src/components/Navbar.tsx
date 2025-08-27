@@ -23,7 +23,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <AppBar position="static" color="primary" enableColorOnDark>
+    <AppBar position="static"  enableColorOnDark>
       <Toolbar
         sx={{
           justifyContent: 'space-between',
@@ -40,7 +40,7 @@ const Navbar: React.FC = () => {
           to="/"
           sx={{ textDecoration: 'none', color: 'inherit', fontWeight: 'bold' }}
         >
-          JSON Fixer & Validator
+          Utility apps
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ThemeSwitcher />
@@ -56,12 +56,21 @@ const Navbar: React.FC = () => {
               >
                 {user?.name || user?.email || 'User'}
               </Typography>
-              <Button color="inherit" onClick={onLogout} sx={{ fontWeight: 'bold' }}>
+              <Button
+                color="inherit"
+                onClick={onLogout}
+                sx={{ fontWeight: 'bold' }}
+              >
                 Logout
               </Button>
             </>
           ) : (
-            <Button color="inherit" component={Link} to="/login" sx={{ fontWeight: 'bold' }}>
+            <Button
+              color="inherit"
+              component={Link}
+              to="/login"
+              sx={{ fontWeight: 'bold' }}
+            >
               Login
             </Button>
           )}

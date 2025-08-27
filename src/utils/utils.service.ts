@@ -165,10 +165,10 @@ export class UtilsService {
       ),
     );
 
-    this.highlighterPromise = createHighlighter({
+    /* this.highlighterPromise = createHighlighter({
       langs: allLangs,
       themes: ['nord'],
-    });
+    });*/
   }
 
   async highlightToHtml(
@@ -282,6 +282,7 @@ export class UtilsService {
 
   async formatCode(code: string, language: string): Promise<string> {
     const parser = this.parserMap[language];
+    this.logger.warn(`format code language: ${language}`);
     if (!parser) {
       this.logger.warn(
         `No Prettier parser configured for language: ${language}`,
@@ -298,7 +299,7 @@ export class UtilsService {
         semi: true,
         printWidth: 100,
       });
-      return this.replaceDoubleQuotesWithSingle(prettierCode);
+      return prettierCode;
     } catch (error) {
       this.logger.error(
         `Failed to format code for language "${language}" using parser "${parser}": ${error.message}`,

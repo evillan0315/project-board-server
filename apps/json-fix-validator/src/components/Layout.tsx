@@ -1,5 +1,6 @@
+// src/components/Layout.tsx
 import React, { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom'; // Import Outlet
 import Navbar from './Navbar';
 import { checkAuthStatus } from '@/services/authService';
 import { useStore } from '@nanostores/react';
@@ -9,10 +10,14 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 
-const Layout: React.FC = () => {
+
+// Remove the children prop as React Router's Outlet will render nested routes
+export default function Layout() {
+
   const { loading: authLoading } = useStore(authStore);
 
   useEffect(() => {
+    // Check authentication status on layout mount
     checkAuthStatus();
   }, []);
 
@@ -32,14 +37,7 @@ const Layout: React.FC = () => {
           <LinearProgress />
         </Box>
       )}
-      <header className="w-full max-w-4xl mb-8 mt-8">
-        <Typography variant="h1" color="text.primary" align="center">
-          JSON Validator & Fixer
-        </Typography>
-        <Typography variant="body1" color="text.secondary" align="center" sx={{ mt: 1 }}>
-          Validate and repair your JSON with ease.
-        </Typography>
-      </header>
+
       <Paper
         component="main"
         elevation={3}
@@ -47,13 +45,9 @@ const Layout: React.FC = () => {
           flexGrow: 1,
           width: '100%',
           maxWidth: '4xl',
-          bgcolor: 'background.paper',
-          borderRadius: 2,
-          p: { xs: 3, sm: 4 },
-          mb: 4,
         }}
       >
-        <Outlet />
+        <Outlet /> {/* This is where the content of nested routes will be rendered */}
       </Paper>
       <Box
         component="footer"
@@ -66,11 +60,9 @@ const Layout: React.FC = () => {
         }}
       >
         <Typography variant="caption" color="text.secondary">
-          © 2024 JSON Fixer & Validator. All rights reserved.
+          © 2025 JSON Fixer & Validator. All rights reserved.
         </Typography>
       </Box>
     </Box>
   );
-};
-
-export default Layout;
+}

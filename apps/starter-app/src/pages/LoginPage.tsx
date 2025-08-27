@@ -52,7 +52,7 @@ const LoginPage: React.FC = () => {
         provider: (provider as UserProfile['provider']) || undefined,
         accessToken,
       };
-      loginSuccess(user);
+      loginSuccess(user, accessToken);
       navigate('/', { replace: true }); // Redirect to home page upon successful login
     } else if (err) {
       setError(decodeURIComponent(err)); // Display error message from backend

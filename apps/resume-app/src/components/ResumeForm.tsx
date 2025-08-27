@@ -87,14 +87,17 @@ const ResumeForm: React.FC<ResumeFormProps> = ({
 
   return (
     <Box className="flex flex-col gap-4">
-      <Typography variant="h6" className="!font-semibold !text-gray-800">
+      <Typography
+        variant="h6"
+        className="!font-semibold !text-gray-800 dark:!text-gray-200 transition-colors duration-300"
+      >
         1. Upload or Input Your Resume
       </Typography>
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 flex flex-col gap-2 p-4 border border-gray-200 rounded-lg shadow-sm">
+        <div className="flex-1 flex flex-col gap-2 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-colors duration-300">
           <Typography
             variant="subtitle1"
-            className="!font-medium !text-gray-700 flex items-center gap-2"
+            className="!font-medium !text-gray-700 dark:!text-gray-300 flex items-center gap-2 transition-colors duration-300"
           >
             <CloudUploadIcon /> Upload Resume File (PDF, DOCX)
           </Typography>
@@ -125,10 +128,10 @@ const ResumeForm: React.FC<ResumeFormProps> = ({
             {loading.parse ? 'Parsing...' : 'Parse File to Text'}
           </Button>
         </div>
-        <div className="flex-1 flex flex-col gap-2 p-4 border border-gray-200 rounded-lg shadow-sm">
+        <div className="flex-1 flex flex-col gap-2 p-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-colors duration-300">
           <Typography
             variant="subtitle1"
-            className="!font-medium !text-gray-700 flex items-center gap-2"
+            className="!font-medium !text-gray-700 dark:!text-gray-300 flex items-center gap-2 transition-colors duration-300"
           >
             <ArticleIcon /> Or Enter Resume Text Manually
           </Typography>
@@ -144,7 +147,10 @@ const ResumeForm: React.FC<ResumeFormProps> = ({
         </div>
       </div>
 
-      <Typography variant="h6" className="!font-semibold !text-gray-800">
+      <Typography
+        variant="h6"
+        className="!font-semibold !text-gray-800 dark:!text-gray-200 transition-colors duration-300"
+      >
         2. Provide Job Description
       </Typography>
       <TextField
