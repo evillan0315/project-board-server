@@ -94,9 +94,14 @@ model Documentation {
 model File {
   id          String    @id @default(uuid())
   name        String
-  content     String
+  content     String?
   path        String    @unique
   folderId    String?
+  fileType    FileType  @default(OTHER)
+  mimeType    String?
+  size        BigInt?
+  provider    String?
+  url         String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime? @updatedAt
   createdById String
@@ -122,16 +127,16 @@ model Project {
   id             String        @id @default(uuid())
   name           String
   description    String?
-  path           String        @unique // New field: Project root path, must be unique
+  path           String        @unique 
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  status         ProjectStatus @default(DEVELOPMENT) // New field: Project status
-  technologies   String[] // New field: Array of technologies
-  versionControl String? // New field: VCS
-  repositoryUrl  String? // New field: Repository URL
-  lastOpenedAt   DateTime? // New field: Last opened timestamp
-  ownerId        String? // New field: Optional owner identifier
-  metadata       Json? // New field: Flexible JSON metadata
+  status         ProjectStatus @default(DEVELOPMENT) 
+  technologies   String[] 
+  versionControl String? 
+  repositoryUrl  String? 
+  lastOpenedAt   DateTime? 
+  ownerId        String? 
+  metadata       Json? 
   createdById    String
   createdBy      User          @relation(fields: [createdById], references: [id])
 }
@@ -419,7 +424,7 @@ enum TerminalSessionStatus {
   ERROR
 }
 
-// New enum for Project Status
+
 enum ProjectStatus {
   ACTIVE
   DEVELOPMENT
@@ -427,4 +432,13 @@ enum ProjectStatus {
   ON_HOLD
   ARCHIVED
   DEPRECATED
+}
+
+enum FileType {
+  AUDIO
+  VIDEO
+  IMAGE
+  DOCUMENT
+  CODE
+  OTHER
 }
