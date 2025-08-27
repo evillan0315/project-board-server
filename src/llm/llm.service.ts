@@ -1,3 +1,4 @@
+// src/llm/llm.service.ts
 import {
   Injectable,
   Logger,
@@ -21,6 +22,8 @@ import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-f
 import { ModuleControlService } from '../module-control/module-control.service';
 import { FileService } from '../file/file.service';
 import { UtilsService } from '../utils/utils.service';
+import { JsonFixService } from '../utils/json-fix/json-fix.service';
+import { RequestType } from '@prisma/client';
 
 @Injectable()
 export class LlmService implements OnModuleInit {
@@ -33,6 +36,7 @@ export class LlmService implements OnModuleInit {
     private readonly fileService: FileService,
     private readonly moduleControlService: ModuleControlService,
     private readonly utilsService: UtilsService,
+    private readonly jsonFixService: JsonFixService,
   ) {
     this.LOGS_DIR = path.join(process.cwd(), '.ai-editor-logs');
   }
@@ -57,11 +61,17 @@ export class LlmService implements OnModuleInit {
     llmInput: LlmInputDto,
     projectRoot: string,
   ): Promise<string> {
-    const formattedRelevantFiles = await llmInput.relevantFiles
-      .map(async (file) => {
-        return await `// File: ${file.relativePath}\n${file.content}`;
-      })
-      .join('\n\n');
+    // Map each file to a promise that resolves to its formatted string content
+    const fileContentPromises = llmInput.relevantFiles.map(async (file) => {
+      // No need for 'await' here, as the string interpolation is synchronous
+      return `// File: ${file.relativePath}\n${file.content}`;
+    });
+
+    // Wait for all promises to resolve, then join the resulting array of strings
+    const formattedRelevantFiles = (
+      await Promise.all(fileContentPromises)
+    ).join('\n\n');
+
     const prompt = `
       # AI Code Generation Request
       
@@ -82,8 +92,6 @@ export class LlmService implements OnModuleInit {
     return prompt.trim();
   }
 
-  
-
   private static repairJsonBadEscapes(jsonString: string): string {
     //return jsonString.replace(/\\"/g, '"');
     return jsonString;
@@ -99,46 +107,46 @@ export class LlmService implements OnModuleInit {
     return text.trim();
   }
   async generateProjectStructure(
-  rootPath: string,
-  ignorePatterns: string[] = ['node_modules', '.git', 'dist', 'build'],
-): Promise<string> {
-  const walk = async (dir: string, depth = 0): Promise<string> => {
-    const entries = await fs.readdir(dir, { withFileTypes: true });
-    entries.sort((a, b) => a.name.localeCompare(b.name)); // keep deterministic order
+    rootPath: string,
+    ignorePatterns: string[] = ['node_modules', '.git', 'dist', 'build'],
+  ): Promise<string> {
+    const walk = async (dir: string, depth = 0): Promise<string> => {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      entries.sort((a, b) => a.name.localeCompare(b.name)); // keep deterministic order
 
-    const lines: string[] = [];
-    for (const entry of entries) {
-      // skip ignored directories
-      if (ignorePatterns.some((pattern) => entry.name.includes(pattern))) {
-        continue;
-      }
+      const lines: string[] = [];
+      for (const entry of entries) {
+        // skip ignored directories
+        if (ignorePatterns.some((pattern) => entry.name.includes(pattern))) {
+          continue;
+        }
 
-      const indent = '  '.repeat(depth);
-      lines.push(`${indent}- ${entry.name}`);
+        const indent = '  '.repeat(depth);
+        lines.push(`${indent}- ${entry.name}`);
 
-      if (entry.isDirectory()) {
-        const subDir = path.join(dir, entry.name);
-        const subTree = await walk(subDir, depth + 1);
-        if (subTree.trim().length > 0) {
-          lines.push(subTree);
+        if (entry.isDirectory()) {
+          const subDir = path.join(dir, entry.name);
+          const subTree = await walk(subDir, depth + 1);
+          if (subTree.trim().length > 0) {
+            lines.push(subTree);
+          }
         }
       }
-    }
-    return lines.join('\n');
-  };
+      return lines.join('\n');
+    };
 
-  try {
-    const structure = await walk(rootPath, 0);
-    return `\nProject Structure (root: ${path.basename(rootPath)})\n${structure}`;
-  } catch (err) {
-    this.logger.error(
-      `Failed to generate project structure for ${rootPath}: ${(err as Error).message}`,
-    );
-    throw new InternalServerErrorException(
-      `Could not generate project structure: ${(err as Error).message}`,
-    );
+    try {
+      const structure = await walk(rootPath, 0);
+      return `\nProject Structure (root: ${path.basename(rootPath)})\n${structure}`;
+    } catch (err) {
+      this.logger.error(
+        `Failed to generate project structure for ${rootPath}: ${(err as Error).message}`,
+      );
+      throw new InternalServerErrorException(
+        `Could not generate project structure: ${(err as Error).message}`,
+      );
+    }
   }
-}
   async generateContent(
     llmInput: LlmInputDto,
     projectRoot: string,
@@ -152,9 +160,9 @@ export class LlmService implements OnModuleInit {
     const projectStructure = await this.generateProjectStructure(projectRoot);
 
     const fullPrompt = await this.buildLLMPrompt(
-  { ...llmInput, relevantFiles, projectStructure },
-  projectRoot,
-);
+      { ...llmInput, relevantFiles, projectStructure },
+      projectRoot,
+    );
     const systemInstructionForLLM = `${llmInput.additionalInstructions}\n\n${llmInput.expectedOutputFormat}`;
 
     this.logger.log('\n--- Prompt sent to LLM ---');
@@ -168,7 +176,10 @@ export class LlmService implements OnModuleInit {
         systemInstruction: systemInstructionForLLM,
       };
 
-      const response = await this.googleGeminiFileService.generateText(payload);
+      const response = await this.googleGeminiFileService.generateText(
+        payload,
+        RequestType.LLM_GENERATION,
+      );
 
       if (!response) {
         this.logger.error(`Google Gemini API Error (via NestJS)`);
@@ -178,7 +189,7 @@ export class LlmService implements OnModuleInit {
       }
 
       const rawText = response;
-      
+
       this.logger.log(
         '\n--- Raw LLM Response (from Google Gemini via NestJS) ---',
       );
@@ -186,7 +197,7 @@ export class LlmService implements OnModuleInit {
       this.logger.log('--------------------------------------------------\n');
 
       let cleanedJsonString = LlmService.extractJsonFromMarkdown(rawText);
-      
+
       let parsedResult: any;
       try {
         parsedResult = JSON.parse(cleanedJsonString);
@@ -196,10 +207,11 @@ export class LlmService implements OnModuleInit {
         );
         try {
           let repairedJsonString =
-            LlmService.repairJsonBadEscapes(cleanedJsonString);
-          repairedJsonString = await this.utilsService.fixJson(repairedJsonString)
-          parsedResult = JSON.parse(repairedJsonString);
-          this.logger.log('JSON parsing succeeded after repair.');
+            await this.jsonFixService.repair(cleanedJsonString);
+          if (repairedJsonString.valid && repairedJsonString.repairedJson) {
+            parsedResult = JSON.parse(repairedJsonString.repairedJson);
+            this.logger.log('JSON parsing succeeded after repair.');
+          }
         } catch (repairError: unknown) {
           this.logger.error(
             'Error parsing LLM response as JSON even after repair attempt.',

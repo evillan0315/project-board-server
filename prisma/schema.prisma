@@ -157,7 +157,7 @@ model GeminiRequest {
   user              User                @relation(fields: [userId], references: [id])
   conversationId    String?
   modelUsed         String
-  prompt            String
+  prompt            String?
   systemInstruction String?
   requestType       RequestType
   imageUrl          String?
@@ -404,9 +404,12 @@ enum RequestType {
   TEXT_WITH_IMAGE
   TEXT_WITH_FILE
   LLM_GENERATION
+  LIVE_API
   RESUME_GENERATION
   RESUME_OPTIMIZATION
   RESUME_ENHANCEMENT
+  VIDEO_GENERATION
+  IMAGE_GENERATION
 }
 
 enum TerminalSessionStatus {

@@ -1,4 +1,4 @@
- // full-stack/src/utils/json-fix/json-fix.service.ts
+// full-stack/src/utils/json-fix/json-fix.service.ts
 import {
   Injectable,
   Logger,
@@ -13,7 +13,15 @@ export class JsonFixService {
   private readonly logger = new Logger(JsonFixService.name);
 
   constructor(private readonly geminiService: GoogleGeminiFileService) {}
+  private extractJsonFromMarkdown(text: string): string {
+    const jsonBlockRegex = /```json\n([\s\S]*?)\n```/;
+    const match = text.match(jsonBlockRegex);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
 
+    return text.trim();
+  }
   /**
    * Attempts to fix invalid JSON using lightweight regex-based repairs.
    * This is a best-effort approach and may not cover all cases.
@@ -50,7 +58,9 @@ export class JsonFixService {
     }
 
     if (!useGeminiFallback) {
-      throw new BadRequestException('Invalid JSON and Gemini fallback disabled.');
+      throw new BadRequestException(
+        'Invalid JSON and Gemini fallback disabled.',
+      );
     }
 
     // Step 2: Ask Gemini for repair
@@ -68,9 +78,9 @@ ${jsonString}
       );
 
       // Try parsing Gemini's output
-      const jsonMatch = result.match(/```json\n([\s\S]*?)\n```/);
+      const jsonMatch = this.extractJsonFromMarkdown(result);
       const jsonStringClean = jsonMatch ? jsonMatch[1] : result;
-
+      this.logger.log(`JSON repair:`, jsonStringClean);
       return JSON.parse(jsonStringClean);
     } catch (err) {
       this.logger.error(`Gemini JSON repair failed: ${err.message}`);

@@ -193,13 +193,17 @@
         },
         "responses": {
           "200": {
-            "description": "User logged in successfully"
-          },
-          "401": {
-            "description": "Invalid credentials"
+            "description": "Successful login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
           }
         },
-        "summary": "Log in a user and set JWT cookie",
+        "summary": "User login",
         "tags": [
           "Auth"
         ]
@@ -211,7 +215,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Logged out successfully"
+            "description": "Logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Logged out successfully"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Log out user (clear cookie)",
@@ -223,24 +236,7 @@
     "/api/auth/github": {
       "get": {
         "operationId": "AuthController_githubAuth",
-        "parameters": [
-          {
-            "name": "state",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "cli_port",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "302": {
             "description": "Redirects to GitHub login"
@@ -275,10 +271,17 @@
         ],
         "responses": {
           "200": {
-            "description": "GitHub login successful with JWT issued"
+            "description": "GitHub login successful with JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized or failed login attempt"
+            "description": "Unauthorized"
           }
         },
         "summary": "Handle GitHub OAuth2 callback and issue JWT token",
@@ -290,16 +293,7 @@
     "/api/auth/google": {
       "get": {
         "operationId": "AuthController_googleAuth",
-        "parameters": [
-          {
-            "name": "cli_port",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "302": {
             "description": "Redirects to Google login"
@@ -326,10 +320,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Google login successful with JWT issued"
+            "description": "Google login successful with JWT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Unauthorized or failed login attempt"
+            "description": "Unauthorized"
           }
         },
         "summary": "Handle Google OAuth2 callback and issue JWT token",
@@ -354,10 +355,14 @@
         },
         "responses": {
           "201": {
-            "description": "User registered successfully"
-          },
-          "400": {
-            "description": "Validation failed or user already exists"
+            "description": "User registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Register a new user",
@@ -413,7 +418,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Email verified successfully"
+            "description": "Email verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Email verified successfully"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid or expired token"
@@ -427,11 +441,18 @@
     },
     "/api/auth/me": {
       "get": {
-        "operationId": "AuthController_getProfile",
+        "operationId": "AuthController_me",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "User profile returned"
+            "description": "User profile returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized"
@@ -464,7 +485,7 @@
         },
         "responses": {
           "201": {
-            "description": "Successfully created.",
+            "description": "User successfully created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -501,7 +522,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "List of User records.",
+            "description": "List of all users.",
             "content": {
               "application/json": {
                 "schema": {
@@ -528,7 +549,7 @@
             "bearer": []
           }
         ],
-        "summary": "Retrieve all User records",
+        "summary": "Retrieve all users",
         "tags": [
           "User"
         ]
@@ -561,7 +582,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Paginated results",
+            "description": "Paginated users.",
             "content": {
               "application/json": {
                 "schema": {
@@ -585,7 +606,7 @@
             "bearer": []
           }
         ],
-        "summary": "Paginated User records",
+        "summary": "Retrieve users with pagination",
         "tags": [
           "User"
         ]
@@ -606,7 +627,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Record found.",
+            "description": "User found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -622,7 +643,7 @@
             "description": "Forbidden - insufficient role"
           },
           "404": {
-            "description": "Record not found."
+            "description": "User not found."
           }
         },
         "security": [
@@ -633,7 +654,7 @@
             "bearer": []
           }
         ],
-        "summary": "Find User by ID",
+        "summary": "Retrieve a user by ID",
         "tags": [
           "User"
         ]
@@ -662,7 +683,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successfully updated.",
+            "description": "User successfully updated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -672,7 +693,7 @@
             }
           },
           "400": {
-            "description": "Invalid data."
+            "description": "Invalid data provided."
           },
           "401": {
             "description": "Unauthorized"
@@ -681,7 +702,7 @@
             "description": "Forbidden - insufficient role"
           },
           "404": {
-            "description": "Record not found."
+            "description": "User not found."
           }
         },
         "security": [
@@ -692,7 +713,7 @@
             "bearer": []
           }
         ],
-        "summary": "Update User by ID",
+        "summary": "Update a user by ID",
         "tags": [
           "User"
         ]
@@ -711,7 +732,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successfully deleted."
+            "description": "User successfully deleted."
           },
           "401": {
             "description": "Unauthorized"
@@ -720,7 +741,7 @@
             "description": "Forbidden - insufficient role"
           },
           "404": {
-            "description": "Record not found."
+            "description": "User not found."
           }
         },
         "security": [
@@ -731,7 +752,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete User by ID",
+        "summary": "Delete a user by ID",
         "tags": [
           "User"
         ]
@@ -1500,6 +1521,116 @@
         ]
       }
     },
+    "/api/file/copy": {
+      "post": {
+        "operationId": "FileController_copyFileOrFolder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File or folder copied successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyFileResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or destination already exists."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Source path does not exist."
+          },
+          "500": {
+            "description": "Failed to copy file or folder."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Copy a file or folder",
+        "tags": [
+          "File & Folder"
+        ]
+      }
+    },
+    "/api/file/move": {
+      "post": {
+        "operationId": "FileController_moveFileOrFolder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File or folder moved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveFileResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or destination already exists."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Source path does not exist."
+          },
+          "500": {
+            "description": "Failed to move file or folder."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move a file or folder",
+        "tags": [
+          "File & Folder"
+        ]
+      }
+    },
     "/api/file/search": {
       "post": {
         "operationId": "FileController_searchFiles",
@@ -2009,6 +2140,60 @@
           }
         },
         "summary": "Parse ENV-style map string",
+        "tags": [
+          "Utilities"
+        ]
+      }
+    },
+    "/api/utils/detect-language": {
+      "get": {
+        "description": "Attempts to detect the programming language or general file type (e.g., \"javascript\", \"audio\", \"image\") based on the provided `filename` and/or `mimeType`. At least one parameter is required.",
+        "operationId": "UtilsController_detectLanguage",
+        "parameters": [
+          {
+            "name": "filename",
+            "required": false,
+            "in": "query",
+            "description": "The filename, including extension (e.g., \"main.ts\", \"image.jpg\").",
+            "schema": {
+              "example": "app.component.ts",
+              "type": "string"
+            }
+          },
+          {
+            "name": "mimeType",
+            "required": false,
+            "in": "query",
+            "description": "The MIME type (e.g., \"text/typescript\", \"image/jpeg\").",
+            "schema": {
+              "example": "application/json",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detected language or file type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "language": {
+                      "type": "string",
+                      "example": "typescript",
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request: Missing filename or mimeType."
+          }
+        },
+        "summary": "Detect programming language or file type from filename or MIME type.",
         "tags": [
           "Utilities"
         ]
@@ -3212,6 +3397,167 @@
         ]
       }
     },
+    "/api/utils/json/validate": {
+      "post": {
+        "operationId": "JsonFixController_validate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON is valid (with or without schema).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonOutputDto"
+                },
+                "examples": {
+                  "valid": {
+                    "summary": "Valid JSON",
+                    "value": {
+                      "valid": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON is malformed or invalid according to schema.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonOutputDto"
+                },
+                "examples": {
+                  "invalid": {
+                    "summary": "Malformed JSON",
+                    "value": {
+                      "valid": false,
+                      "errors": [
+                        "Unexpected token at position 10"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Validate JSON (with optional schema)",
+        "tags": [
+          "Utilities"
+        ]
+      }
+    },
+    "/api/utils/json/repair": {
+      "post": {
+        "operationId": "JsonFixController_repair",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "JSON string to repair",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "json": {
+                    "type": "string",
+                    "example": "{ foo: \"bar\", }"
+                  }
+                },
+                "required": [
+                  "json"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON was successfully repaired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonOutputDto"
+                },
+                "examples": {
+                  "repaired": {
+                    "summary": "Successfully repaired JSON",
+                    "value": {
+                      "valid": true,
+                      "repairedJson": "{\"foo\":\"bar\"}"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Repair attempt failed (unrecoverable JSON).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonOutputDto"
+                },
+                "examples": {
+                  "unrecoverable": {
+                    "summary": "Unrepairable JSON",
+                    "value": {
+                      "valid": false,
+                      "errors": [
+                        "Unexpected end of JSON input"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Attempt to repair invalid JSON",
+        "tags": [
+          "Utilities"
+        ]
+      }
+    },
     "/api/terminal/ssh/run": {
       "post": {
         "description": "Runs a single SSH command on a remote Linux server using either a password or private key authentication. Returns stdout or error output.",
@@ -4085,7 +4431,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "The file to attach (e.g., .sql, .txt, .csv)."
+                    "description": "The file to attach (e.g., .sql, .txt, .pdf, .csv, .jpg, .png)."
                   }
                 },
                 "required": [
@@ -4125,7 +4471,59 @@
             "bearer": []
           }
         ],
-        "summary": "Generate text from a prompt with an uploaded file (e.g., .sql, .txt).",
+        "summary": "Generate text from a prompt with an uploaded file (e.g., .sql, .txt, .pdf, .docx, image files).",
+        "tags": [
+          "Gemini AI"
+        ]
+      }
+    },
+    "/api/gemini/file/generate-video": {
+      "post": {
+        "operationId": "GoogleGeminiFileController_generateVideo",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateVideoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Video generation successfully completed. Returns the URI of the generated video.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoGenerationResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid video generation prompt."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Internal Server Error during video generation or polling."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate a video using the Veo 3.0 model from a text prompt. This is a long-running operation.",
         "tags": [
           "Gemini AI"
         ]
@@ -4134,10 +4532,72 @@
     "/api/conversations": {
       "get": {
         "operationId": "ConversationController_getConversations",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (default: 1)",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page (default: 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search query to filter conversations by their first prompt.",
+            "schema": {
+              "example": "hello world",
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestType",
+            "required": false,
+            "in": "query",
+            "description": "Filter conversations by the type of their first request.",
+            "schema": {
+              "enum": [
+                "TEXT_ONLY",
+                "TEXT_WITH_IMAGE",
+                "TEXT_WITH_FILE",
+                "LLM_GENERATION",
+                "LIVE_API",
+                "RESUME_GENERATION",
+                "RESUME_OPTIMIZATION",
+                "RESUME_ENHANCEMENT",
+                "VIDEO_GENERATION",
+                "IMAGE_GENERATION"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Successfully retrieved paginated list of conversation summaries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4145,7 +4605,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get conversations",
+        "summary": "Get conversations with optional search and filter",
         "tags": [
           "Conversations"
         ]
@@ -4163,6 +4623,61 @@
             "schema": {
               "example": "5c0f6e6c-d3d3-4b23-8c1c-d72c2e2851aa",
               "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (default: 1)",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page (default: 10)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search query to filter conversations by their first prompt.",
+            "schema": {
+              "example": "hello world",
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestType",
+            "required": false,
+            "in": "query",
+            "description": "Filter conversations by the type of their first request.",
+            "schema": {
+              "example": "TEXT_ONLY",
+              "type": "string",
+              "enum": [
+                "TEXT_ONLY",
+                "TEXT_WITH_IMAGE",
+                "TEXT_WITH_FILE",
+                "LLM_GENERATION",
+                "LIVE_API",
+                "RESUME_GENERATION",
+                "RESUME_OPTIMIZATION",
+                "RESUME_ENHANCEMENT",
+                "VIDEO_GENERATION",
+                "IMAGE_GENERATION"
+              ]
             }
           }
         ],
@@ -4192,6 +4707,191 @@
         "summary": "Get conversation history by conversation ID",
         "tags": [
           "Conversations"
+        ]
+      }
+    },
+    "/gemini/live/connect": {
+      "post": {
+        "operationId": "GoogleGeminiLiveController_connect",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveConnectOptionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A new session ID is created for subsequent interactions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveSessionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or configuration."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Connect to Gemini Live (REST simulation)",
+        "tags": [
+          "Gemini Live"
+        ]
+      }
+    },
+    "/gemini/live/send-text": {
+      "post": {
+        "description": "Sends text to the session, which is buffered for the current turn. Call `/process-turn` to trigger the AI's response.",
+        "operationId": "GoogleGeminiLiveController_sendText",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveTextInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Text buffered successfully."
+          },
+          "400": {
+            "description": "Invalid session ID or text input."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buffer text input for Gemini Live session",
+        "tags": [
+          "Gemini Live"
+        ]
+      }
+    },
+    "/gemini/live/send-audio": {
+      "post": {
+        "description": "Sends a base64-encoded audio chunk to the session, which is buffered for the current turn. Multiple chunks can be sent. Call `/process-turn` to trigger the AI's response.",
+        "operationId": "GoogleGeminiLiveController_sendAudio",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveAudioInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Audio chunk buffered successfully."
+          },
+          "400": {
+            "description": "Invalid session ID, audio data, or MIME type."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Buffer audio chunk input for Gemini Live session",
+        "tags": [
+          "Gemini Live"
+        ]
+      }
+    },
+    "/gemini/live/process-turn": {
+      "post": {
+        "description": "Triggers the AI to process all buffered text and audio inputs for the session and returns its response. This should be called after all inputs for a turn are sent.",
+        "operationId": "GoogleGeminiLiveController_processTurn",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcessTurnDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Turn results from Gemini Live session, including AI response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveTurnResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No input provided for the turn, or invalid session ID."
+          },
+          "500": {
+            "description": "Internal server error during Gemini API call."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Process current turn and get Gemini Live response",
+        "tags": [
+          "Gemini Live"
+        ]
+      }
+    },
+    "/gemini/live/close": {
+      "post": {
+        "operationId": "GoogleGeminiLiveController_close",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiveEndSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session closed successfully."
+          },
+          "400": {
+            "description": "Invalid session ID."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close Gemini Live session",
+        "tags": [
+          "Gemini Live"
         ]
       }
     },
@@ -6674,6 +7374,58 @@
         ]
       }
     },
+    "/api/ffmpeg/transcode-gif": {
+      "post": {
+        "operationId": "FfmpegController_transcodeToGif",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscodeToGifDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "GIF transcoding initiated successfully. The generated GIF filename is returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscodeGifResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input filename or parameters."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "GIF transcoding failed due to server error."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Transcode an existing recorded video to an optimized GIF.",
+        "tags": [
+          "FFmpeg Transcoding"
+        ]
+      }
+    },
     "/api/gemini-request": {
       "post": {
         "operationId": "GeminiRequestController_create",
@@ -6861,6 +7613,15 @@
             "description": "Filter by fileData",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "files",
+            "required": false,
+            "in": "query",
+            "description": "Filter by files",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
             }
           }
         ],
@@ -9590,7 +10351,6 @@
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Details for the new repository",
           "content": {
             "application/json": {
               "schema": {
@@ -9601,7 +10361,7 @@
         },
         "responses": {
           "201": {
-            "description": "The repository has been successfully created on GitHub.",
+            "description": "Repository successfully created.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9609,21 +10369,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Invalid input data."
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "403": {
-            "description": "Forbidden: PAT lacks required scopes."
-          },
-          "409": {
-            "description": "Conflict: Repository with this name already exists."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
           }
         },
         "security": [
@@ -9631,7 +10376,7 @@
             "bearer": []
           }
         ],
-        "summary": "Create a new GitHub repository for the authenticated user",
+        "summary": "Create a new GitHub repository",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9641,7 +10386,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "A list of all repositories from GitHub.",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -9652,12 +10397,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
           }
         },
         "security": [
@@ -9665,7 +10404,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get all repositories for the authenticated user from GitHub",
+        "summary": "Get all repositories for authenticated user",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9679,7 +10418,6 @@
             "name": "repoName",
             "required": true,
             "in": "path",
-            "description": "The name of the repository (must belong to the authenticated user)",
             "schema": {
               "example": "oauth-repo-test",
               "type": "string"
@@ -9688,7 +10426,6 @@
         ],
         "requestBody": {
           "required": true,
-          "description": "The commit message",
           "content": {
             "application/json": {
               "schema": {
@@ -9699,40 +10436,7 @@
         },
         "responses": {
           "200": {
-            "description": "The commit (file update) was successful.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Commit (file update) successful."
-                    },
-                    "commitSha": {
-                      "type": "string",
-                      "example": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0"
-                    },
-                    "htmlUrl": {
-                      "type": "string",
-                      "example": "https://github.com/octocat/my-repo/blob/main/commit-logs/log-1678886400000.md"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "403": {
-            "description": "Forbidden: PAT lacks required scopes or repo is not writable."
-          },
-          "404": {
-            "description": "Repository not found."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
+            "description": ""
           }
         },
         "security": [
@@ -9740,7 +10444,7 @@
             "bearer": []
           }
         ],
-        "summary": "Simulate a commit to a GitHub repository by adding/updating a dummy file",
+        "summary": "Commit to a GitHub repository (dummy file)",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9754,7 +10458,6 @@
             "name": "repoName",
             "required": true,
             "in": "path",
-            "description": "The name of the repository to delete (must belong to the authenticated user)",
             "schema": {
               "example": "oauth-repo-test",
               "type": "string"
@@ -9763,32 +10466,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The repository has been successfully deleted from GitHub.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Repository \"oauth-repo-test\" successfully deleted."
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "403": {
-            "description": "Forbidden: PAT lacks required scopes or not enough permissions to delete."
-          },
-          "404": {
-            "description": "Repository not found."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
+            "description": ""
           }
         },
         "security": [
@@ -9796,7 +10474,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete a GitHub repository for the authenticated user",
+        "summary": "Delete a GitHub repository",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9808,7 +10486,6 @@
             "name": "repoName",
             "required": true,
             "in": "path",
-            "description": "The name of the repository (must belong to the authenticated user)",
             "schema": {
               "example": "github-oauth-manager",
               "type": "string"
@@ -9817,7 +10494,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The found repository from GitHub.",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -9825,15 +10502,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "404": {
-            "description": "Repository not found."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
           }
         },
         "security": [
@@ -9841,7 +10509,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get a single repository by name for the authenticated user from GitHub",
+        "summary": "Get a repository by name",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -9855,9 +10523,8 @@
             "name": "repoName",
             "required": true,
             "in": "path",
-            "description": "The name of the repository (must belong to the authenticated user)",
             "schema": {
-              "example": "your-repository-name",
+              "example": "your-repo-name",
               "type": "string"
             }
           },
@@ -9865,7 +10532,7 @@
             "name": "path",
             "required": false,
             "in": "query",
-            "description": "The content path within the repository. E.g., `src/main.ts` or `docs`. If omitted, the root directory contents are returned.",
+            "description": "The content path. For example: `src/main.ts` or `docs`. If omitted, the root directory contents are returned.",
             "schema": {
               "example": "src/config",
               "type": "string"
@@ -9884,7 +10551,7 @@
         ],
         "responses": {
           "200": {
-            "description": "List of repository contents (files/directories)",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -9895,18 +10562,6 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Unauthorized: Invalid or missing JWT / GitHub PAT."
-          },
-          "403": {
-            "description": "Forbidden: PAT lacks required scopes or repo is private."
-          },
-          "404": {
-            "description": "Not Found: Repository or specific path not found."
-          },
-          "500": {
-            "description": "Internal server error from GitHub API or application."
           }
         },
         "security": [
@@ -9914,7 +10569,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get repository files and directory contents for the authenticated user",
+        "summary": "Get repository files & directory contents",
         "tags": [
           "Repositories (Authenticated User)"
         ]
@@ -11561,10 +12216,12 @@
         "properties": {
           "email": {
             "type": "string",
+            "description": "User email used to log in",
             "example": "user@example.com"
           },
           "password": {
             "type": "string",
+            "description": "Password for authentication",
             "example": "StrongPassword123"
           }
         },
@@ -11573,16 +12230,175 @@
           "password"
         ]
       },
+      "CreateJwtUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the user",
+            "example": "21jdh-jsdhd-jasjasd"
+          },
+          "sub": {
+            "type": "string",
+            "description": "Subject claim (typically user ID)",
+            "example": "21jdh-jsdhd-jasjasd"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address associated with the user",
+            "example": "user@example.com"
+          },
+          "name": {
+            "type": "string",
+            "description": "Full name of the user",
+            "example": "John Doe"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Phone number of the user",
+            "example": "+1234567890"
+          },
+          "role": {
+            "type": "string",
+            "description": "User role within the system",
+            "enum": [
+              "ADMIN",
+              "USER",
+              "MANAGER"
+            ],
+            "example": "USER"
+          },
+          "image": {
+            "type": "string",
+            "description": "Profile picture filename or URL",
+            "example": "john.jpg"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Authentication provider used (e.g., Google, GitHub)",
+            "example": "Google"
+          },
+          "tokens": {
+            "type": "object",
+            "description": "Access/refresh tokens returned by the provider",
+            "example": {
+              "access_token": "ya29.a0AfH6S...",
+              "refresh_token": "1//0gL8y...",
+              "expiry_date": 1699440000000
+            }
+          },
+          "username": {
+            "type": "string",
+            "description": "Unique username (if applicable)",
+            "example": "user01"
+          }
+        },
+        "required": [
+          "id",
+          "sub",
+          "email"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT Access Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "JWT Refresh Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6REFRESH..."
+          },
+          "user": {
+            "description": "Authenticated user details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateJwtUserDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "user"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT Access Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+          },
+          "user": {
+            "description": "Authenticated user details",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreateJwtUserDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "access_token",
+          "user"
+        ]
+      },
       "RegisterDto": {
         "type": "object",
         "properties": {
           "email": {
             "type": "string",
+            "description": "Unique email address of the user",
             "example": "user@example.com"
           },
           "password": {
             "type": "string",
-            "example": "StrongPassword123"
+            "description": "Secure password with at least 8 characters",
+            "example": "StrongPassword123",
+            "minLength": 8
+          },
+          "name": {
+            "type": "string",
+            "description": "Full name of the user",
+            "example": "John Doe"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Phone number of the user (E.164 format recommended)",
+            "example": "+1234567890"
+          },
+          "role": {
+            "type": "string",
+            "description": "User role within the system",
+            "enum": [
+              "ADMIN",
+              "USER",
+              "MANAGER"
+            ],
+            "example": "USER"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "AuthUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "21jdh-jsdhd-jasjasd"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
           },
           "name": {
             "type": "string",
@@ -11594,12 +12410,26 @@
           },
           "role": {
             "type": "string",
+            "enum": [
+              "ADMIN",
+              "USER",
+              "MANAGER"
+            ],
             "example": "USER"
+          },
+          "image": {
+            "type": "string",
+            "example": "john.jpg"
+          },
+          "username": {
+            "type": "string",
+            "example": "user01"
           }
         },
         "required": [
+          "id",
           "email",
-          "password"
+          "role"
         ]
       },
       "CreateUserDto": {
@@ -11820,6 +12650,106 @@
           "newPath"
         ]
       },
+      "CopyFileDto": {
+        "type": "object",
+        "properties": {
+          "sourcePath": {
+            "type": "string",
+            "description": "The path of the file or folder to copy",
+            "example": "/path/to/source/file.txt"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "The destination path where the file or folder will be copied (including the new name if different)",
+            "example": "/path/to/destination/new-file.txt"
+          }
+        },
+        "required": [
+          "sourcePath",
+          "destinationPath"
+        ]
+      },
+      "CopyFileResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the copy operation was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "A message describing the result of the operation",
+            "example": "Successfully copied \"/path/to/source/file.txt\" to \"/path/to/destination/new-file.txt\""
+          },
+          "sourcePath": {
+            "type": "string",
+            "description": "The original source path of the file or folder",
+            "example": "/path/to/source/file.txt"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "The destination path of the copied file or folder",
+            "example": "/path/to/destination/new-file.txt"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "sourcePath",
+          "destinationPath"
+        ]
+      },
+      "MoveFileDto": {
+        "type": "object",
+        "properties": {
+          "sourcePath": {
+            "type": "string",
+            "description": "The current path of the file or folder to move",
+            "example": "/path/to/old/file.txt"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "The destination path where the file or folder will be moved (including the new name if different)",
+            "example": "/path/to/new/location/file.txt"
+          }
+        },
+        "required": [
+          "sourcePath",
+          "destinationPath"
+        ]
+      },
+      "MoveFileResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the move operation was successful",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "A message describing the result of the operation",
+            "example": "Successfully moved \"/path/to/old/file.txt\" to \"/path/to/new/location/file.txt\""
+          },
+          "sourcePath": {
+            "type": "string",
+            "description": "The original source path of the file or folder",
+            "example": "/path/to/old/file.txt"
+          },
+          "destinationPath": {
+            "type": "string",
+            "description": "The destination path of the moved file or folder",
+            "example": "/path/to/new/location/file.txt"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "sourcePath",
+          "destinationPath"
+        ]
+      },
       "SearchFileDto": {
         "type": "object",
         "properties": {
@@ -11880,7 +12810,7 @@
             "description": "An array of paths (relative or absolute) to scan. Each path can be a directory or a file. Defaults to [\".\"].",
             "example": [
               ".",
-              "src/components",
+              "src/auth",
               "package.json"
             ],
             "type": "array",
@@ -11891,7 +12821,7 @@
           "projectRoot": {
             "type": "string",
             "description": "The root directory of the project, used for calculating relative paths. Defaults to process.cwd() if not provided.",
-            "example": "/home/user/my-project"
+            "example": "/media/eddie/Data/projects/nestJS/nest-modules/full-stack"
           },
           "verbose": {
             "type": "boolean",
@@ -12181,6 +13111,70 @@
             "type": "string",
             "description": "Path to the saved JSON file (if saved)",
             "example": "output/output.json"
+          }
+        },
+        "required": [
+          "json"
+        ]
+      },
+      "JsonOutputDto": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "Indicates if the JSON is valid (or successfully repaired).",
+            "example": true
+          },
+          "errors": {
+            "description": "Array of validation or repair errors (if any).",
+            "example": [
+              "Unexpected token at position 5"
+            ],
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "repairedJson": {
+            "type": "string",
+            "description": "The repaired JSON string (only returned by the repair endpoint if successful).",
+            "example": "{\"foo\": \"bar\"}"
+          }
+        },
+        "required": [
+          "valid"
+        ]
+      },
+      "JsonInputDto": {
+        "type": "object",
+        "properties": {
+          "json": {
+            "type": "string",
+            "description": "The JSON string to validate or repair.",
+            "example": "{\"foo\": \"bar\"}"
+          },
+          "schema": {
+            "description": "Optional JSON Schema for validation (can be an object or a JSON string).",
+            "oneOf": [
+              {
+                "type": "object",
+                "example": {
+                  "type": "object",
+                  "properties": {
+                    "foo": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "foo"
+                  ]
+                }
+              },
+              {
+                "type": "string",
+                "example": "{\"type\":\"object\",\"properties\":{\"foo\":{\"type\":\"string\"}},\"required\":[\"foo\"]}"
+              }
+            ]
           }
         },
         "required": [
@@ -12630,6 +13624,42 @@
           "mimeType"
         ]
       },
+      "GenerateVideoDto": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "The prompt text to generate the video from.",
+            "example": "A close up of two people staring at a cryptic drawing on a wall, torchlight flickering.",
+            "maxLength": 1000
+          },
+          "conversationId": {
+            "type": "string",
+            "description": "Optional ID of an ongoing conversation to link this video generation to.",
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        },
+        "required": [
+          "prompt"
+        ]
+      },
+      "VideoGenerationResultDto": {
+        "type": "object",
+        "properties": {
+          "videoUri": {
+            "type": "string",
+            "description": "The publicly accessible URI (URL) of the generated video.",
+            "example": "https://storage.googleapis.com/veo-generated-videos/abc-xyz-video.mp4"
+          }
+        },
+        "required": [
+          "videoUri"
+        ]
+      },
+      "PaginatedResponseDto": {
+        "type": "object",
+        "properties": {}
+      },
       "InlineDataDto": {
         "type": "object",
         "properties": {
@@ -12681,6 +13711,17 @@
           },
           "parts": {
             "description": "Array of message parts, each containing either text or inline data",
+            "example": [
+              {
+                "text": "Can you generate a summary of the latest AI trends?"
+              },
+              {
+                "inlineData": {
+                  "mime_type": "image/png",
+                  "data": "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
+                }
+              }
+            ],
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ConversationPartDto"
@@ -12689,14 +13730,205 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-20T10:20:21.917Z",
+            "example": "2025-08-27T17:44:00.147Z",
             "format": "date-time"
+          },
+          "requestType": {
+            "type": "string",
+            "description": "The type of request made by the user, if applicable.",
+            "enum": [
+              "TEXT_ONLY",
+              "TEXT_WITH_IMAGE",
+              "TEXT_WITH_FILE",
+              "LLM_GENERATION",
+              "LIVE_API",
+              "RESUME_GENERATION",
+              "RESUME_OPTIMIZATION",
+              "RESUME_ENHANCEMENT",
+              "VIDEO_GENERATION",
+              "IMAGE_GENERATION"
+            ],
+            "example": "TEXT_WITH_IMAGE"
+          },
+          "tokenCount": {
+            "type": "number",
+            "description": "The number of tokens used for this message.",
+            "example": 150
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the history item.",
+            "format": "uuid",
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
           }
         },
         "required": [
           "role",
           "parts",
           "createdAt"
+        ]
+      },
+      "LiveConfigDto": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "The Gemini model to use (e.g., gemini-1.5-flash-latest)."
+          }
+        }
+      },
+      "LiveConnectOptionsDto": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "description": "Configuration options for the session.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LiveConfigDto"
+              }
+            ]
+          },
+          "initialText": {
+            "type": "string",
+            "description": "Initial text to send when connecting the session."
+          }
+        }
+      },
+      "LiveSessionResponseDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Unique ID for the established live session."
+          }
+        },
+        "required": [
+          "sessionId"
+        ]
+      },
+      "LiveServerContentDto": {
+        "type": "object",
+        "properties": {
+          "turnComplete": {
+            "type": "boolean",
+            "description": "Indicates if the AI turn is complete."
+          }
+        }
+      },
+      "LiveMessageDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "object",
+            "description": "Text content of the message."
+          },
+          "data": {
+            "type": "object",
+            "description": "Optional audio or inline data chunk."
+          },
+          "serverContent": {
+            "description": "Server-side content, e.g., turn completion status.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LiveServerContentDto"
+              }
+            ]
+          }
+        }
+      },
+      "LiveTurnResultDto": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "description": "Array of messages received in this turn.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LiveMessageDto"
+            }
+          },
+          "texts": {
+            "description": "Array of text contents extracted from the messages.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "datas": {
+            "description": "Array of raw data contents (may contain audio or inline data).",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "messages",
+          "texts",
+          "datas"
+        ]
+      },
+      "LiveTextInputDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Unique ID of the live session."
+          },
+          "text": {
+            "type": "string",
+            "description": "Text message from the user."
+          }
+        },
+        "required": [
+          "sessionId",
+          "text"
+        ]
+      },
+      "LiveAudioInputDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Unique ID of the live session."
+          },
+          "audioChunk": {
+            "type": "string",
+            "description": "Base64 encoded audio chunk. Each request should ideally contain one chunk.",
+            "format": "byte"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type of the audio (e.g., audio/webm, audio/wav, audio/mpeg)."
+          }
+        },
+        "required": [
+          "sessionId",
+          "audioChunk",
+          "mimeType"
+        ]
+      },
+      "ProcessTurnDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Unique ID of the live session."
+          }
+        },
+        "required": [
+          "sessionId"
+        ]
+      },
+      "LiveEndSessionDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Unique ID of the live session to close."
+          }
+        },
+        "required": [
+          "sessionId"
         ]
       },
       "CreateSchemaDto": {
@@ -13215,6 +14447,61 @@
           "code"
         ]
       },
+      "TranscodeToGifDto": {
+        "type": "object",
+        "properties": {
+          "inputFilename": {
+            "type": "string",
+            "description": "The filename (e.g., \"my_recording.mp4\") of an existing video recording in the \"downloads/recordings\" directory to convert to GIF.",
+            "example": "screen-record-1701234567890.mp4"
+          },
+          "fps": {
+            "type": "number",
+            "description": "Frames per second for the GIF. Lower for smaller files, but can make animation less smooth. Default: 15.",
+            "default": 15,
+            "minimum": 1,
+            "maximum": 60
+          },
+          "width": {
+            "type": "number",
+            "description": "Width of the GIF in pixels. The height will be automatically calculated to maintain aspect ratio. Lower for smaller files. Default: 480.",
+            "default": 480,
+            "minimum": 100,
+            "maximum": 1920
+          },
+          "loop": {
+            "type": "number",
+            "description": "How many times the GIF should loop. 0 for infinite loop (default), -1 for no loop, or a positive integer for N loops.",
+            "default": 0,
+            "minimum": -1
+          }
+        },
+        "required": [
+          "inputFilename"
+        ]
+      },
+      "TranscodeGifResponseDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "A confirmation message about the GIF transcoding operation."
+          },
+          "outputFilename": {
+            "type": "string",
+            "description": "The filename of the newly generated GIF file."
+          },
+          "fullPath": {
+            "type": "string",
+            "description": "The full path to the newly generated GIF file on the server."
+          }
+        },
+        "required": [
+          "message",
+          "outputFilename",
+          "fullPath"
+        ]
+      },
       "CreateGeminiRequestDto": {
         "type": "object",
         "properties": {
@@ -13253,6 +14540,10 @@
           "fileData": {
             "type": "string",
             "description": "fileData field"
+          },
+          "files": {
+            "type": "object",
+            "description": "files field"
           }
         },
         "required": [
@@ -13264,7 +14555,8 @@
           "imageUrl",
           "imageData",
           "fileMimeType",
-          "fileData"
+          "fileData",
+          "files"
         ]
       },
       "PaginationGeminiRequestResultDto": {
@@ -13335,6 +14627,10 @@
           "fileData": {
             "type": "string",
             "description": "fileData field"
+          },
+          "files": {
+            "type": "object",
+            "description": "files field"
           }
         }
       },

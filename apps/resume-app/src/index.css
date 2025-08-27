@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* Optional: Basic global styles or font settings */
+body {
+  font-family: 'Inter', sans-serif; /* Example font */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}

@@ -95,4 +95,3 @@ export class LlmController {
     return this.llmService.generateProjectStructure(projectRoot, ignoreList);
   }
 }
-

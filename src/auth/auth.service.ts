@@ -62,13 +62,11 @@ export class AuthService {
     );
   }
 
-  /**
-   * Logs in a user with the provided credentials.
-   * @param dto - The LoginDto containing the user's email and password.
-   * @returns A promise that resolves to an object containing the access token and user data.
-   * @throws UnauthorizedException if the credentials are invalid.
-   */
-  async login(dto: LoginDto): Promise<{ accessToken: string; user: any }> {
+  async login(dto: LoginDto): Promise<{
+    access_token: string;
+    refresh_token: string;
+    user: CreateJwtUserDto;
+  }> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: { password: true },
@@ -85,6 +83,7 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
     const payload: CreateJwtUserDto = {
       id: user.id,
       sub: user.id,
@@ -95,17 +94,19 @@ export class AuthService {
       phone_number: user.phone_number ?? '',
     };
 
-    const accessToken = await this.generateToken(payload);
-    return { accessToken, user: payload };
+    // Generate tokens
+    const access_token = await this.generateToken(payload);
+    const refresh_token = await this.jwtService.signAsync(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    });
+
+    return { access_token, refresh_token, user: payload };
   }
 
-  /**
-   * Registers a new user.
-   * @param dto - The RegisterDto containing the user's registration information.
-   * @returns A promise that resolves to an object containing a success message.
-   * @throws InternalServerErrorException if user creation fails.
-   */
-  async register(dto: RegisterDto) {
+  async register(
+    dto: RegisterDto,
+  ): Promise<{ access_token: string; user: CreateJwtUserDto }> {
     const hash = await bcrypt.hash(dto.password, 10);
     const createUser = {
       email: dto.email,
@@ -113,12 +114,11 @@ export class AuthService {
       phone_number: dto.phone_number || undefined,
       role: Role.USER,
     };
+
     const user = await this.prisma.user.create({
       data: {
         ...createUser,
-        password: {
-          create: { hash },
-        },
+        password: { create: { hash } },
       },
     });
 
@@ -126,6 +126,7 @@ export class AuthService {
       Logger.error('User creation failed: No user returned from database');
       throw new InternalServerErrorException('User could not be created');
     }
+
     const token = this.generateEmailVerificationToken(user.id);
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
 
@@ -134,12 +135,22 @@ export class AuthService {
       user.name ?? 'User',
       verifyUrl,
     );
-    // TODO: Log registration event (e.g., using Winston or custom logger)
-    // TODO: Audit log entry to track new account creation
-    // TODO: Add metrics or monitoring hook (e.g., Prometheus counter)
-    // TODO: Optionally trigger admin notification on new registration
-    // TODO: Send account verification email if emailVerified is required
-    return { message: 'Verification email sent.' };
+
+    // Construct JWT user payload
+    const payload: CreateJwtUserDto = {
+      id: user.id,
+      sub: user.id,
+      email: user.email,
+      role: user.role ?? Role.USER,
+      image: user.image ?? undefined,
+      name: user.name ?? '',
+      phone_number: user.phone_number ?? '',
+    };
+
+    // Generate access token
+    const access_token = await this.generateToken(payload);
+
+    return { access_token, user: payload };
   }
 
   /**

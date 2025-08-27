@@ -1,5 +1,4 @@
 // src/utils/utils.controller.ts
-
 import {
   Controller,
   Post,
@@ -22,14 +21,14 @@ import {
   ApiTags,
   ApiQuery,
 } from '@nestjs/swagger';
-import * as dotenv from 'dotenv'; // Keep if used for parsing env files
-import * as fs from 'fs'; // For file system operations like unlinkSync
-import * as path from 'path'; // For path manipulation
-import { Root } from 'mdast'; // For Markdown AST
-import { Response } from 'express'; // For @Res()
+import * as dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
+import { Root } from 'mdast';
+import { Response } from 'express';
 import { MarkdownDto } from './dto/markdown.dto';
 import { UploadEnvDto } from './dto/upload-env.dto';
-import { UploadJsonDto } from './dto/upload-json.dto'; // Consider if this is still needed, or use JsonBodyDto
+import { UploadJsonDto } from './dto/upload-json.dto';
 import { JsonBodyDto } from './dto/json-body.dto';
 import { diskStorage } from 'multer';
 import { UtilsService } from './utils.service';
@@ -37,8 +36,8 @@ import { MarkdownUtilService } from './utils-markdown.service';
 import { JsonFixService } from './json-fix.service';
 import { UploadImageDto } from './dto/upload-image.dto';
 import { FormatCodeDto } from './dto/format-code.dto';
-import { HtmlDto } from './dto/html.dto'; // <--- NEW: Import HtmlDto
-
+import { HtmlDto } from './dto/html.dto';
+import { DetectLanguageDto } from './dto/detect-language.dto'; // <-- NEW: Import DetectLanguageDto
 
 class FixJsonDto {
   /** The raw JSON string that may be invalid or broken */
@@ -56,7 +55,6 @@ export class UtilsController {
     private readonly jsonFixService: JsonFixService,
     private readonly markdownUtilService: MarkdownUtilService,
   ) {}
-
 
   @Post('json-fix')
   @ApiOperation({ summary: 'Fix malformed or invalid JSON' })
@@ -77,6 +75,7 @@ export class UtilsController {
 
     return { fixed };
   }
+
   @Get('get-directory')
   @ApiOperation({
     summary: 'Get directory from file path',
@@ -99,17 +98,11 @@ export class UtilsController {
   })
   getDirectory(@Query('filePath') filePath: string): string {
     if (!filePath) {
-      throw new Error('filePath query parameter is required');
+      throw new BadRequestException('filePath query parameter is required'); // Changed to BadRequestException
     }
     return this.utilsService.getDirectory(filePath);
   }
-  /**
-   * Parses a semicolon-delimited key=value string from query param `mapString`
-   * and returns a parsed object.
-   *
-   * Example:
-   * GET /utils/parse-env-map?mapString=ts=typescript;js=javascript
-   */
+
   @Get('parse-env-map')
   @ApiOperation({
     summary: 'Parse ENV-style map string',
@@ -138,6 +131,52 @@ export class UtilsController {
   parseEnvMap(@Query('mapString') mapString?: string): Record<string, string> {
     return this.utilsService.parseEnvMap(mapString);
   }
+
+  @Get('detect-language') // <-- NEW ENDPOINT
+  @ApiOperation({
+    summary: 'Detect programming language or file type from filename or MIME type.',
+    description: 'Attempts to detect the programming language or general file type (e.g., "javascript", "audio", "image") ' +
+                 'based on the provided `filename` and/or `mimeType`. At least one parameter is required.',
+  })
+  @ApiQuery({
+    name: 'filename',
+    type: String,
+    required: false,
+    description: 'The filename, including extension (e.g., "main.ts", "image.jpg").',
+    example: 'app.component.ts',
+  })
+  @ApiQuery({
+    name: 'mimeType',
+    type: String,
+    required: false,
+    description: 'The MIME type (e.g., "text/typescript", "image/jpeg").',
+    example: 'application/json',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Detected language or file type.',
+    schema: {
+      type: 'object',
+      properties: {
+        language: { type: 'string', example: 'typescript', nullable: true },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request: Missing filename or mimeType.',
+  })
+  async detectLanguage(
+    @Query('filename') filename?: string,
+    @Query('mimeType') mimeType?: string,
+  ): Promise<{ language: string | undefined }> {
+    if (!filename && !mimeType) {
+      throw new BadRequestException('Either filename or mimeType must be provided for language detection.');
+    }
+    const detected = this.utilsService.detectLanguage(filename!, mimeType); // Use non-null assertion as checked above
+    return { language: detected };
+  }
+
   @Post('format-code')
   @ApiOperation({ summary: 'Format source code using Prettier' })
   @ApiResponse({
@@ -163,27 +202,26 @@ export class UtilsController {
           description: 'Fill color of the SVG output',
         },
         width: {
-          type: 'number', // Changed to number for API spec clarity
+          type: 'number',
           example: 512,
           description: 'Resize width (pixels)',
         },
         height: {
-          type: 'number', // Changed to number for API spec clarity
+          type: 'number',
           example: 512,
           description: 'Resize height (pixels)',
         },
       },
-      required: ['file'], // Mark file as required
+      required: ['file'],
     },
   })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads', // Ensure this directory exists and is writable
+        destination: './uploads',
         filename: (_req, file, cb) => {
           const ext = path.extname(file.originalname);
           const name = path.basename(file.originalname, ext);
-          // Append timestamp to prevent filename collisions
           cb(null, `${name}-${Date.now()}${ext}`);
         },
       }),
@@ -199,16 +237,14 @@ export class UtilsController {
       );
     }
 
-    const tempPath = file.path; // Multer's diskStorage provides `file.path`
+    const tempPath = file.path;
 
     const { color = '#000000' } = body;
-    // Parse width and height to numbers, or use undefined if not provided/invalid
     const width = body.width ? parseInt(body.width.toString(), 10) : undefined;
     const height = body.height
       ? parseInt(body.height.toString(), 10)
       : undefined;
 
-    // Check if parsing resulted in NaN (e.g., if input was "abc")
     if (width !== undefined && isNaN(width)) {
       throw new BadRequestException('Width must be a valid number.');
     }
@@ -218,8 +254,6 @@ export class UtilsController {
 
     let result;
     try {
-      // Corrected method name: `convertToSvg` (assuming you've renamed it in UtilsService)
-      // Pass numbers for width/height if your service expects them
       result = await this.utilsService.convertToSvg(
         tempPath,
         color,
@@ -227,13 +261,11 @@ export class UtilsController {
         height,
       );
     } catch (error) {
-      // More specific error handling for conversion
       throw new HttpException(
         `SVG conversion failed: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     } finally {
-      // Ensure the temporary file is deleted even if conversion fails
       if (tempPath && fs.existsSync(tempPath)) {
         try {
           fs.unlinkSync(tempPath);
@@ -242,7 +274,6 @@ export class UtilsController {
             `Failed to delete temporary file ${tempPath}:`,
             unlinkError,
           );
-          // Consider logging this or handling it gracefully without throwing to the client
         }
       }
     }
@@ -253,7 +284,7 @@ export class UtilsController {
       width,
       height,
       svg: result.svg,
-      savedPath: result.filePath, // `filePath` is the path where the SVG was saved
+      savedPath: result.filePath,
     };
   }
 
@@ -291,7 +322,6 @@ export class UtilsController {
             'If true, the .env file will be downloaded; otherwise, the content is returned as plain text.',
         },
       },
-      // At least one of file or json must be provided
       oneOf: [{ required: ['file'] }, { required: ['json'] }],
     },
   })
@@ -318,7 +348,7 @@ export class UtilsController {
   @UseInterceptors(FileInterceptor('file'))
   async jsonToEnv(
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: JsonBodyDto, // Use JsonBodyDto for parsing JSON in body
+    @Body() body: JsonBodyDto,
     @Res() res: Response,
   ) {
     let json: Record<string, string>;
@@ -361,7 +391,7 @@ export class UtilsController {
   })
   @ApiBody({
     description: 'Upload a .env file or provide a filepath (only one)',
-    type: UploadEnvDto, // This DTO should contain 'file' (for upload) and 'filepath' (for local path)
+    type: UploadEnvDto,
   })
   @ApiConsumes('multipart/form-data')
   @ApiResponse({
@@ -381,12 +411,11 @@ export class UtilsController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file')) // FileInterceptor should process 'file' from multipart
+  @UseInterceptors(FileInterceptor('file'))
   async envToJson(
     @UploadedFile() file: Express.Multer.File,
     @Body() body: UploadEnvDto,
   ) {
-    // UtilsService.parseEnvFile should handle the logic of whether to use file.buffer or body.filepath
     return this.utilsService.parseEnvFile(file, body.filepath);
   }
 
@@ -405,13 +434,11 @@ export class UtilsController {
   })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   extractTitle(@Body() body: MarkdownDto) {
-    // This logic can also be moved to UtilsService if you want to centralize Markdown utilities
     const match = body.content.match(/^#{1,2}\s+(.*)/m);
     const title = match ? match[1].trim() : null;
-    return { title }; // Return as an object for consistent API response
+    return { title };
   }
 
-  // Utili for handling SQL
   @Post('parse-select')
   @ApiOperation({
     summary: 'Convert SELECT SQL to JSON',
@@ -433,7 +460,7 @@ export class UtilsController {
     try {
       return this.utilsService.parseSqlToJson(sql);
     } catch (e) {
-      throw new BadRequestException(e.message); // Use BadRequestException for client errors
+      throw new BadRequestException(e.message);
     }
   }
 
@@ -510,7 +537,6 @@ export class UtilsController {
       type: 'object',
       properties: {
         ast: {
-          // Ensure `Root` type is correctly represented in Swagger if possible
           type: 'object',
           example: {
             type: 'root',
@@ -615,15 +641,13 @@ function add(a: number, b: number): number {
     return { text };
   }
 
-  // --- NEW ENDPOINTS FOR DOCX CONVERSION ---
-
   @Post('markdown-to-docx')
   @ApiOperation({
     summary: 'Convert Markdown content to a DOCX document',
     description:
       'Converts the provided Markdown string into a Microsoft Word DOCX file. Requires Pandoc to be installed on the server.',
   })
-  @ApiBody({ type: MarkdownDto }) // Reusing MarkdownDto for the content
+  @ApiBody({ type: MarkdownDto })
   @ApiQuery({
     name: 'filename',
     required: false,
@@ -650,7 +674,7 @@ function add(a: number, b: number): number {
     description: 'Bad Request: Invalid Markdown content or missing parameters.',
   })
   @ApiResponse({
-    status: 412, // Precondition Failed: indicates Pandoc is not installed
+    status: 412,
     description:
       'Precondition Failed: Pandoc is not installed or not found in system PATH.',
   })
@@ -664,7 +688,6 @@ function add(a: number, b: number): number {
     @Query('filename') filename?: string,
   ) {
     try {
-      // The service handles its own temporary file naming
       const docxBuffer = await this.markdownUtilService.markdownToDocx(
         body.content,
       );
@@ -680,14 +703,12 @@ function add(a: number, b: number): number {
       );
       res.send(docxBuffer);
     } catch (error) {
-      // Check if it's the specific Pandoc not found error message
       if (
         error instanceof Error &&
         error.message.includes('Pandoc is not installed')
       ) {
-        throw new HttpException(error.message, HttpStatus.PRECONDITION_FAILED); // 412 Precondition Failed
+        throw new HttpException(error.message, HttpStatus.PRECONDITION_FAILED);
       }
-      // Catch any other conversion errors
       throw new HttpException(
         `Failed to convert Markdown to DOCX: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -701,7 +722,7 @@ function add(a: number, b: number): number {
     description:
       'Converts the provided HTML string into a Microsoft Word DOCX file. Requires Pandoc to be installed on the server.',
   })
-  @ApiBody({ type: HtmlDto }) // Using the new HtmlDto for the HTML content
+  @ApiBody({ type: HtmlDto })
   @ApiQuery({
     name: 'filename',
     required: false,
@@ -728,7 +749,7 @@ function add(a: number, b: number): number {
     description: 'Bad Request: Invalid HTML content or missing parameters.',
   })
   @ApiResponse({
-    status: 412, // Precondition Failed: indicates Pandoc is not installed
+    status: 412,
     description:
       'Precondition Failed: Pandoc is not installed or not found in system PATH.',
   })
@@ -737,12 +758,11 @@ function add(a: number, b: number): number {
     description: 'Internal Server Error: Failed to convert to DOCX.',
   })
   async htmlToDocx(
-    @Body() body: HtmlDto, // Use the new HtmlDto
+    @Body() body: HtmlDto,
     @Res() res: Response,
     @Query('filename') filename?: string,
   ) {
     try {
-      // The service handles its own temporary file naming
       const docxBuffer = await this.markdownUtilService.htmlToDocx(body.html);
       const outputFilename = `${filename || 'document'}.docx`;
 
@@ -756,14 +776,12 @@ function add(a: number, b: number): number {
       );
       res.send(docxBuffer);
     } catch (error) {
-      // Check if it's the specific Pandoc not found error message
       if (
         error instanceof Error &&
         error.message.includes('Pandoc is not installed')
       ) {
-        throw new HttpException(error.message, HttpStatus.PRECONDITION_FAILED); // 412 Precondition Failed
+        throw new HttpException(error.message, HttpStatus.PRECONDITION_FAILED);
       }
-      // Catch any other conversion errors
       throw new HttpException(
         `Failed to convert HTML to DOCX: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -771,3 +789,4 @@ function add(a: number, b: number): number {
     }
   }
 }
+

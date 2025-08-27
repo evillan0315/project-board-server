@@ -5,7 +5,7 @@ import { FileLanguageService } from './file-language.service';
 import { FileController } from './file.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UtilsModule } from '../utils/utils.module';
-
+import { AuthModule } from '../auth/auth.module';
 import { FileValidationService } from '../common/services/file-validation.service';
 import { ModuleControlModule } from '../module-control/module-control.module';
 import { FileGateway } from './file.gateway';
@@ -20,6 +20,7 @@ import { RemoteFileController } from './remote-file/remote-file.controller';
     PrismaModule,
     UtilsModule,
     ConfigModule,
+    AuthModule,
     ModuleControlModule,
   ],
   controllers: [FileController, RemoteFileController],
@@ -28,6 +29,7 @@ import { RemoteFileController } from './remote-file/remote-file.controller';
     FileLanguageService,
     FileValidationService,
     {
+      // These are generally system-level folders. Dev-related folders (node_modules, .git) are handled in FileGateway itself.
       provide: 'EXCLUDED_FOLDERS',
       useValue: ['lost+found', 'proc', 'sys', 'dev', 'root'],
     },

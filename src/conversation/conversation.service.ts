@@ -11,10 +11,12 @@ import { Request } from 'express';
 import {
   ConversationHistoryItemDto,
   ConversationPartDto,
-  ConversationSummaryDto, // Make sure this DTO is updated as shown above
+  ConversationSummaryDto,
 } from './dto/conversation-history-item.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
+import { RequestType } from '@prisma/client'; // Import RequestType enum
+import { GeminiRequest as PrismaGeminiRequest } from '@prisma/client'; // Import Prisma's GeminiRequest type
 
 @Injectable()
 export class ConversationService {
@@ -36,62 +38,64 @@ export class ConversationService {
    * Retrieves a list of all conversations for the current user,
    * providing a summary for each (ID, first message preview, last message preview, and last update time).
    * Conversations are ordered by their most recent activity (lastUpdatedAt) in descending order.
+   * Supports filtering by search query on first prompt and by first request type.
    * @returns A promise that resolves to an array of ConversationSummaryDto.
    */
   async getConversations(
     paginationDto: PaginationDto,
   ): Promise<PaginatedResponseDto<ConversationSummaryDto>> {
     const userId = this.userId;
-    const { page = 1, limit = 100 } = paginationDto;
+    const { page = 1, limit = 100, search, requestType } = paginationDto; // Extract search and requestType
 
+    // Fetch all requests for the user. We will filter in-memory for simplicity
+    // given the complex aggregation required for conversation summaries.
     const allRequests = await this.prisma.geminiRequest.findMany({
       where: {
         userId,
+        conversationId: { not: null }, // Only consider requests that are part of a conversation
       },
       include: {
         geminiResponses: true,
       },
       orderBy: {
-        createdAt: 'asc',
+        createdAt: 'asc', // Important for identifying first/last requests
       },
     });
 
+    // Group requests by conversationId to form conversation summaries
     const conversationsMap = new Map<
-      string,
-      { requests: any[]; lastUpdatedAt: Date }
+      string, // This is the key type, which is 'string'
+      { requests: PrismaGeminiRequest[]; lastUpdatedAt: Date }
     >();
 
     for (const request of allRequests) {
       const { conversationId } = request;
-      if (conversationId) {
-        const existing = conversationsMap.get(conversationId) || {
-          requests: [],
-          lastUpdatedAt: request.createdAt,
-        };
-        existing.requests.push(request);
-        existing.lastUpdatedAt =
-          request.createdAt > existing.lastUpdatedAt
-            ? request.createdAt
-            : existing.lastUpdatedAt;
-        conversationsMap.set(conversationId, existing);
-      }
+      // Because `where: { conversationId: { not: null } }` is used in the query,
+      // `conversationId` is guaranteed to be a string here.
+      // We use a non-null assertion `!` to tell TypeScript this.
+      const currentConversationId: string = conversationId!;
+
+      // Use currentConversationId, which TypeScript now knows is a string
+      const existing = conversationsMap.get(currentConversationId) || {
+        requests: [],
+        lastUpdatedAt: request.createdAt,
+      };
+      existing.requests.push(request);
+      existing.lastUpdatedAt =
+        request.createdAt > existing.lastUpdatedAt
+          ? request.createdAt
+          : existing.lastUpdatedAt;
+      conversationsMap.set(currentConversationId, existing);
     }
 
-    const totalConversations = conversationsMap.size;
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-
-    const paginatedSummaries: ConversationSummaryDto[] = Array.from(
+    // Convert map to array, sort by lastUpdatedAt, and generate summaries
+    let allConversationSummaries: ConversationSummaryDto[] = Array.from(
       conversationsMap.entries(),
     )
       .sort(
         ([, a], [, b]) => b.lastUpdatedAt.getTime() - a.lastUpdatedAt.getTime(),
       )
-      .slice(startIndex, endIndex)
       .map(([conversationId, data]) => {
-        // --- CHANGES START HERE ---
-
-        // Get the first request (already at index 0 due to 'asc' orderBy)
         const firstRequest = data.requests[0];
         const firstPromptRaw = firstRequest?.prompt ?? null;
         const firstPrompt =
@@ -99,7 +103,6 @@ export class ConversationService {
             ? firstPromptRaw.slice(0, 100)
             : null;
 
-        // Get the last request (most recent due to 'asc' orderBy)
         const lastRequest = data.requests[data.requests.length - 1];
         const lastPromptRaw = lastRequest?.prompt ?? null;
         const lastPrompt =
@@ -107,27 +110,54 @@ export class ConversationService {
             ? lastPromptRaw.slice(0, 100)
             : null;
 
+        const firstRequestType = firstRequest?.requestType ?? null;
+
         return {
           conversationId,
           lastUpdatedAt: data.lastUpdatedAt,
           requestCount: data.requests.length,
-          firstPrompt, // Include firstPrompt
-          lastPrompt, // Include lastPrompt
+          firstPrompt,
+          lastPrompt,
+          firstRequestType,
         };
-        // --- CHANGES END HERE ---
       });
+
+    // Apply search and requestType filters in-memory
+    if (search) {
+      const lowerCaseSearch = search.toLowerCase();
+      allConversationSummaries = allConversationSummaries.filter((summary) =>
+        (summary.firstPrompt || '')
+          .toLowerCase()
+          .includes(lowerCaseSearch),
+      );
+    }
+
+    if (requestType) {
+      allConversationSummaries = allConversationSummaries.filter(
+        (summary) => summary.firstRequestType === requestType,
+      );
+    }
+
+    // Now, apply pagination to the filtered and sorted list
+    const totalFilteredConversations = allConversationSummaries.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    const paginatedSummaries: ConversationSummaryDto[] =
+      allConversationSummaries.slice(startIndex, endIndex);
 
     return {
       data: paginatedSummaries,
-      total: totalConversations,
+      total: totalFilteredConversations,
       page,
       limit,
-      totalPages: Math.ceil(totalConversations / limit),
+      totalPages: Math.ceil(totalFilteredConversations / limit),
     };
   }
   /**
    * Retrieves a conversation's full request/response history with timestamps and inlineData format for files/images.
    * @param conversationId The ID of the conversation to fetch.
+   * @param paginationDto Pagination parameters.
    */
   async getConversationHistory(
     conversationId: string,
@@ -147,12 +177,6 @@ export class ConversationService {
         createdAt: 'asc',
       },
     });
-
-    /*if (!requests.length) {
-      throw new NotFoundException(
-        `No conversation found for ID: ${conversationId}`,
-      );
-    }*/
 
     const history: ConversationHistoryItemDto[] = [];
 
@@ -175,7 +199,7 @@ export class ConversationService {
       if (request.imageData && request.imageUrl) {
         parts.push({
           inlineData: {
-            mime_type: request.fileMimeType ?? 'image/png',
+            mime_type: request.fileMimeType ?? 'image/png', // Fallback for mime type
             data: request.imageData,
           },
         });
@@ -185,6 +209,7 @@ export class ConversationService {
         role: 'user',
         parts,
         createdAt: request.createdAt,
+        requestType: request.requestType, // Added requestType for user turn
       });
 
       for (const response of request.geminiResponses) {
@@ -193,6 +218,8 @@ export class ConversationService {
             role: 'model',
             parts: [{ text: response.responseText }],
             createdAt: response.createdAt,
+            tokenCount: response?.tokenCount ?? undefined,
+            id: response?.id,
           });
         }
       }
@@ -212,3 +239,4 @@ export class ConversationService {
     };
   }
 }
+

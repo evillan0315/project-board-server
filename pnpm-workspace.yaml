@@ -6,6 +6,7 @@ onlyBuiltDependencies:
   - '@scarf/scarf'
   - '@swc/core'
   - '@tailwindcss/oxide'
+  - aws-sdk
   - bcrypt
   - cpu-features
   - esbuild
