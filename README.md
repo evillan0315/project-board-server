@@ -8,6 +8,7 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 
 ## Key Features
 
+
 ### JWT-based authentication via HTTP-only cookies and optional Bearer header
 
 ✅ User registration and login with `bcrypt` password hashing  

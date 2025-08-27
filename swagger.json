@@ -13730,7 +13730,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-27T02:45:28.093Z",
+            "example": "2025-08-27T17:44:00.147Z",
             "format": "date-time"
           },
           "requestType": {

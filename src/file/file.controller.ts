@@ -35,7 +35,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { cwd } from 'process';
 import { Response } from 'express';
-
 import { lookup as mimeLookup } from 'mime-types';
 import { ReadFileDto } from './dto/read-file.dto';
 import { ReadFileResponseDto } from './dto/read-file-response.dto';
