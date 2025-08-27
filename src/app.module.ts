@@ -57,6 +57,7 @@ import { LlmModule } from './llm/llm.module';
 import { TerminalSessionModule } from './terminal-session/terminal-session.module';
 import { TerminalCommandModule } from './terminal-command/terminal-command.module';
 import { CommandHistoryModule } from './command-history/command-history.module';
+import { MediaModule } from './media/media.module';
 
 import fileConfig from './config/file.config';
 
@@ -203,6 +204,7 @@ import fileConfig from './config/file.config';
     TerminalSessionModule,
     TerminalCommandModule,
     CommandHistoryModule,
+    MediaModule,
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.

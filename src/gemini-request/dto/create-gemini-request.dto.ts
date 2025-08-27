@@ -26,6 +26,7 @@ export class CreateGeminiRequestDto {
   @IsString()
   modelUsed: string;
   @ApiProperty({ description: 'prompt field' })
+  @IsOptional()
   @IsString()
   prompt: string;
   @ApiProperty({ description: 'systemInstruction field' })
@@ -48,6 +49,10 @@ export class CreateGeminiRequestDto {
   @IsOptional()
   @IsString()
   fileData: string;
+  @ApiProperty({ description: 'files field' })
+  @IsOptional()
+  @IsObject()
+  files: any;
 }
 
 export class PaginationGeminiRequestResultDto {
@@ -116,4 +121,7 @@ export class PaginationGeminiRequestQueryDto {
   @IsString()
   @ApiPropertyOptional({ description: 'Filter by fileData' })
   fileData?: string;
+  @IsOptional()
+  @ApiPropertyOptional({ description: 'Filter by files' })
+  files?: any;
 }

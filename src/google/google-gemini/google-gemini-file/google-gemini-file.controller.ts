@@ -16,7 +16,9 @@ import { GoogleGeminiFileService } from './google-gemini-file.service';
 import {
   GenerateTextDto,
   GenerateImageBase64Dto,
-  GenerateFileDto,
+  // GenerateFileDto, // This DTO seems unused in your current controller, as you're using @Body('prompt') and @UploadedFile
+  GenerateVideoDto,          // <-- NEW: Import for video generation input
+  VideoGenerationResultDto,  // <-- NEW: Import for video generation output
 } from './dto';
 
 import {
@@ -37,7 +39,7 @@ import { UserRole } from '../../../auth/enums/user-role.enum';
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('Gemini AI')
-@Controller('api/gemini/file')
+@Controller('api/gemini/file') // Your base path for all Gemini file-related operations
 export class GoogleGeminiFileController {
   constructor(
     private readonly googleGeminiFileService: GoogleGeminiFileService,
@@ -57,7 +59,7 @@ export class GoogleGeminiFileController {
   async generateText(
     @Body() generateTextDto: GenerateTextDto,
   ): Promise<string> {
-    console.log(generateTextDto, 'generateTextDto');
+    console.log(generateTextDto, 'generateTextDto'); // Keep for debugging if needed
     return this.googleGeminiFileService.generateText(generateTextDto);
   }
 
@@ -67,7 +69,7 @@ export class GoogleGeminiFileController {
   @ApiOperation({
     summary: 'Generate text from a prompt with an embedded Base64 image.',
   })
-  @ApiCreatedResponse({
+  @ApiCreatedResponse({ // ApiCreatedResponse is usually for 201, but 200 is also okay if returning direct result
     description: 'Generated text content based on the image and text prompt.',
     type: String,
     example:
@@ -87,7 +89,7 @@ export class GoogleGeminiFileController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      'Generate text from a prompt with an uploaded file (e.g., .sql, .txt).',
+      'Generate text from a prompt with an uploaded file (e.g., .sql, .txt, .pdf, .docx, image files).',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -105,24 +107,23 @@ export class GoogleGeminiFileController {
           type: 'string',
           description: 'Optional system instruction for the model.',
           example: 'Act as a code reviewer.',
-        }, // Removed required: false (it's implicit)
+        },
         conversationId: {
           type: 'string',
           format: 'uuid',
           description: 'Optional ID of an ongoing conversation.',
           example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-        }, // Removed required: false
+        },
         file: {
           type: 'string',
           format: 'binary',
-          description: 'The file to attach (e.g., .sql, .txt, .csv).',
+          description: 'The file to attach (e.g., .sql, .txt, .pdf, .csv, .jpg, .png).',
         },
       },
-      // Explicitly list required fields at the schema level
-      required: ['prompt', 'file'],
+      required: ['prompt', 'file'], // Explicitly list required fields
     },
   })
-  @ApiCreatedResponse({
+  @ApiCreatedResponse({ // ApiCreatedResponse is usually for 201, but 200 is also okay
     description: 'Generated text content based on the file and text prompt.',
     type: String,
     example:
@@ -131,7 +132,7 @@ export class GoogleGeminiFileController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseInterceptors(FileInterceptor('file'))
   async generateTextWithFile(
-    @UploadedFile() file: Express.Multer.File, // Move required parameter first
+    @UploadedFile() file: Express.Multer.File,
     @Body('prompt') prompt: string,
     @Body('systemInstruction') systemInstruction?: string,
     @Body('conversationId') conversationId?: string,
@@ -140,6 +141,9 @@ export class GoogleGeminiFileController {
       throw new BadRequestException('No file provided for analysis.');
     }
     if (!prompt) {
+      // While @Body('prompt') usually handles this with validation DTOs,
+      // direct extraction might bypass it if not explicitly validated.
+      // A DTO for multipart form-data could be used here for stronger validation.
       throw new BadRequestException('Prompt is required.');
     }
     return this.googleGeminiFileService.generateTextWithFile(
@@ -149,4 +153,25 @@ export class GoogleGeminiFileController {
       conversationId,
     );
   }
+
+  @Post('generate-video') // <-- NEW ENDPOINT FOR VEO 3.0
+  @Roles(UserRole.USER, UserRole.ADMIN, UserRole.MANAGER)
+  @HttpCode(HttpStatus.OK) // Or HttpStatus.ACCEPTED (202) if you want to signal it's a long-running process that will complete later.
+                          // Since the service already waits for completion and returns the final URI, OK (200) is fine.
+  @ApiOperation({
+    summary: 'Generate a video using the Veo 3.0 model from a text prompt. This is a long-running operation.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Video generation successfully completed. Returns the URI of the generated video.',
+    type: VideoGenerationResultDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid video generation prompt.' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error during video generation or polling.' })
+  async generateVideo(
+    @Body() generateVideoDto: GenerateVideoDto,
+  ): Promise<VideoGenerationResultDto> {
+    return this.googleGeminiFileService.generateVideo(generateVideoDto);
+  }
 }
+

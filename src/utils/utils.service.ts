@@ -30,7 +30,7 @@ type LanguageMap = Record<string, string>;
 @Injectable()
 export class UtilsService {
   private readonly logger = new Logger(UtilsService.name);
-  
+
   private outputDir = path.resolve(process.cwd(), 'svg-outputs');
   private cssDir = path.resolve(process.cwd(), 'styles');
   private globalCssContent: string | null = null;
@@ -151,12 +151,10 @@ export class UtilsService {
     xml: 'xml',
   };
 
-  constructor(
-    private readonly jsonFixService: JsonFixService,
-  ) {
+  constructor(private readonly jsonFixService: JsonFixService) {
     this.initializeDirectories();
     this.loadGlobalCss();
-    
+
     const allLangs = Array.from(
       new Set(
         Object.values(this.EXTENSION_LANGUAGE_MAP)
@@ -167,10 +165,10 @@ export class UtilsService {
       ),
     );
 
-    this.highlighterPromise = createHighlighter({
+    /* this.highlighterPromise = createHighlighter({
       langs: allLangs,
       themes: ['nord'],
-    });
+    });*/
   }
 
   async highlightToHtml(
@@ -284,6 +282,7 @@ export class UtilsService {
 
   async formatCode(code: string, language: string): Promise<string> {
     const parser = this.parserMap[language];
+    this.logger.warn(`format code language: ${language}`);
     if (!parser) {
       this.logger.warn(
         `No Prettier parser configured for language: ${language}`,
@@ -300,7 +299,7 @@ export class UtilsService {
         semi: true,
         printWidth: 100,
       });
-      return this.replaceDoubleQuotesWithSingle(prettierCode);
+      return prettierCode;
     } catch (error) {
       this.logger.error(
         `Failed to format code for language "${language}" using parser "${parser}": ${error.message}`,
@@ -722,7 +721,7 @@ export class UtilsService {
   async fixJson(code: string): Promise<string> {
     return await this.jsonFixService.fixJson(code, true);
   }
-  
+
   getDirectory(filePath: string): string {
     return path.dirname(filePath);
   }

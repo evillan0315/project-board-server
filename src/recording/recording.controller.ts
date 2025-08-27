@@ -39,7 +39,7 @@ import {
 import { UpdateRecordingDto } from './dto/update-recording.dto';
 import { StartRecordingDto } from './dto/start-recording.dto';
 import { StartRecordingResponseDto } from './dto/start-recording-response.dto';
-
+import { FfmpegService } from '../ffmpeg/ffmpeg.service';
 import { join } from 'path';
 import { stat, readdir, unlink } from 'fs/promises';
 
@@ -54,7 +54,7 @@ class StopRecordingResponse {
 @ApiTags('Recording')
 @Controller('api/recording')
 export class RecordingController {
-  constructor(private readonly recordingService: RecordingService) {}
+  constructor(private readonly recordingService: RecordingService,private readonly ffmpegService: FfmpegService) {}
 
   @Get('status')
   @ApiQuery({

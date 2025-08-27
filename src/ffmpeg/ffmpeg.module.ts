@@ -3,6 +3,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { FfmpegService } from './ffmpeg.service';
 import { FfmpegGateway } from './ffmpeg.gateway';
+import { FfmpegController } from './ffmpeg.controller';
 import { SubtitleService } from '../subtitle/subtitle.service';
 import * as fs from 'fs';
 
@@ -18,8 +19,11 @@ import * as fs from 'fs';
       },
     }),
   ],
-  providers: [FfmpegService, FfmpegGateway, SubtitleService],
+  providers: [FfmpegService, SubtitleService],
   exports: [FfmpegService, SubtitleService],
+  controllers: [
+    FfmpegController,
+  ],
 })
 export class FfmpegModule {
   constructor() {

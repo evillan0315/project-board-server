@@ -11,10 +11,11 @@ import { GoogleGeminiFileService } from './google-gemini/google-gemini-file/goog
 import { GoogleGeminiFileController } from './google-gemini/google-gemini-file/google-gemini-file.controller';
 import { ModuleControlModule } from '../module-control/module-control.module';
 import { PrismaModule } from '../prisma/prisma.module';
-import { GeminiGateway } from './gemini/gemini.gateway';
+
 import { UtilsModule } from '../utils/utils.module';
 
 import { ConversationModule } from '../conversation/conversation.module';
+import { GoogleGeminiLiveModule } from './google-gemini-live/google-gemini-live.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ConversationModule } from '../conversation/conversation.module';
     PrismaModule,
     UtilsModule,
     ConversationModule,
+    GoogleGeminiLiveModule,
   ],
   controllers: [
     GoogleGeminiController,
@@ -36,7 +38,6 @@ import { ConversationModule } from '../conversation/conversation.module';
     GoogleGeminiImageService,
     GoogleGeminiTtsService,
     GoogleGeminiFileService,
-    GeminiGateway,
   ],
   exports: [GoogleGeminiService, GoogleGeminiFileService],
 })

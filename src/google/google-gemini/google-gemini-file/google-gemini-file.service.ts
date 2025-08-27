@@ -14,38 +14,23 @@ import {
   OptimizeResumeDto,
   EnhanceResumeDto,
   OptimizationResultDto,
-} from './dto'; // Ensure these DTOs are correctly imported
+  GenerateVideoDto,
+  VideoGenerationResultDto,
+} from './dto';
 
 import { ModuleControlService } from '../../../module-control/module-control.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ConversationService } from '../../../conversation/conversation.service';
-// import { HighlightCodeService } from '../../../utils/highlight.service'; // Removed, as it's not used
-import { RequestType, Prisma } from '@prisma/client'; // Assuming RequestType is extended
+import { RequestType, Prisma } from '@prisma/client';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { CreateJwtUserDto } from '../../../auth/dto/auth.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { lookup as mimeLookup } from 'mime-types';
 import { ConversationHistoryItemDto } from '../../../conversation/dto/conversation-history-item.dto';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 import { PaginatedResponseDto } from '../../../common/dto/paginated-response.dto';
-//import { RequestType } from './enum/google-gemini-file.enum';
-// Extend RequestType enum (if not already done in Prisma schema or a separate file)
-// This is for demonstration; adapt based on your actual enum definition.
-// For Prisma, you might update your schema.prisma file and then run `npx prisma generate`
-// For a local enum, define it like so:
-/*
-export enum RequestType {
-  TEXT_ONLY = 'TEXT_ONLY',
-  TEXT_WITH_IMAGE = 'TEXT_WITH_IMAGE',
-  TEXT_WITH_FILE = 'TEXT_WITH_FILE',
-  RESUME_GENERATION = 'RESUME_GENERATION',
-  RESUME_OPTIMIZATION = 'RESUME_OPTIMIZATION',
-  RESUME_ENHANCEMENT = 'RESUME_ENHANCEMENT',
-}
-*/
-// DTO for file upload, not necessarily tied to Multer directly in the service's API
+
 export interface GenerateFileInternalDto {
   prompt: string;
   systemInstruction?: string;
@@ -53,23 +38,25 @@ export interface GenerateFileInternalDto {
   base64Data: string;
   mimeType: string;
 }
+
 @Injectable({ scope: Scope.REQUEST })
 export class GoogleGeminiFileService {
   private readonly logger = new Logger(GoogleGeminiFileService.name);
-  // Consider using NestJS ConfigModule for managing environment variables
-  // https://docs.nestjs.com/techniques/configuration
   private readonly GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY;
   private readonly GOOGLE_GEMINI_MODEL = process.env.GOOGLE_GEMINI_MODEL;
   private readonly GEMINI_API_URL =
     'https://generativelanguage.googleapis.com/v1beta/models';
+
+  private readonly VEO_MODEL_NAME = 'veo-2.0-generate-001';
+  private readonly VEO_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
+  private readonly POLLING_INTERVAL_MS = 10000;
+  private readonly POLLING_TIMEOUT_MS = 900000;
 
   constructor(
     private readonly moduleControlService: ModuleControlService,
     private readonly prisma: PrismaService,
     @Inject(REQUEST)
     private readonly request: Request & { user?: CreateJwtUserDto },
-    // private readonly highlightCodeService: HighlightCodeService, // Removed as it's not used
-    private readonly eventEmitter: EventEmitter2,
     private readonly conversationService: ConversationService,
   ) {
     if (!this.moduleControlService.isModuleEnabled('GoogleModule')) {
@@ -77,9 +64,11 @@ export class GoogleGeminiFileService {
         'Gemini module is disabled according to ModuleControlService. API calls will be blocked.',
       );
     }
-    if (!this.GEMINI_API_KEY || !this.GOOGLE_GEMINI_MODEL) {
+    // Removed the GEMINI_API_KEY check here, as we'll place more specific checks
+    // directly in the methods that use it, especially for Veo calls.
+    if (!this.GOOGLE_GEMINI_MODEL) {
       this.logger.error(
-        'Missing GOOGLE_GEMINI_API_KEY or GOOGLE_GEMINI_MODEL environment variables. Gemini functionality will be impaired.',
+        'Missing GOOGLE_GEMINI_MODEL environment variable. Gemini functionality will be impaired.',
       );
     }
   }
@@ -93,12 +82,6 @@ export class GoogleGeminiFileService {
     return this.request.user.id;
   }
 
-  /**
-   * Fetches conversation history for a given conversation ID.
-   * @param conversationId The ID of the conversation.
-   * @param paginationDto Pagination details (page, limit).
-   * @returns Paginated conversation history.
-   */
   private async getConversationHistory(
     conversationId: string,
     paginationDto: PaginationDto = { page: 1, limit: 20 },
@@ -109,14 +92,6 @@ export class GoogleGeminiFileService {
     );
   }
 
-  /**
-   * Makes a call to the Google Gemini API.
-   * Handles module control check, history de-duplication, and error logging.
-   * @param modelName The Gemini model to use.
-   * @param payload The request payload for the Gemini API.
-   * @param conversationHistory Optional array of previous conversation turns.
-   * @returns The raw response from the Gemini API.
-   */
   private async callGeminiApi(
     modelName: string,
     payload: any,
@@ -142,20 +117,17 @@ export class GoogleGeminiFileService {
 
       const apiUrl = `${this.GEMINI_API_URL}/${modelName}:generateContent?key=${this.GEMINI_API_KEY}`;
 
-      // Prepend unique history to the current contents
       if (conversationHistory && conversationHistory.length > 0) {
-        // Create a unique set of history items, excluding `createdAt` for comparison
         const seen = new Set<string>();
         const uniqueHistory: Omit<ConversationHistoryItemDto, 'createdAt'>[] =
           [];
 
         for (const item of conversationHistory) {
-          // Use a consistent stringification for comparison.
-          // Note: If `parts` can have varying key orders for objects, this needs a deeper sort/stringify.
           const key = JSON.stringify({ role: item.role, parts: item.parts });
           if (!seen.has(key)) {
             seen.add(key);
-            const { createdAt, ...rest } = item; // Exclude createdAt for Gemini API payload
+            const { createdAt, requestType, tokenCount, id,  ...rest } = item;
+
             uniqueHistory.push(rest);
           }
         }
@@ -163,7 +135,6 @@ export class GoogleGeminiFileService {
       }
 
       this.logger.debug(`Gemini API URL: ${apiUrl}`);
-      // this.logger.debug(`Gemini API Payload: ${JSON.stringify(payload, null, 2)}`); // Be cautious with logging full payloads in production
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -207,10 +178,6 @@ export class GoogleGeminiFileService {
     }
   }
 
-  /**
-   * Helper to store Gemini API request and response in the database.
-   * @returns The generated text from Gemini.
-   */
   private async saveGeminiInteraction(
     currentUserId: string,
     prompt: string,
@@ -250,29 +217,41 @@ export class GoogleGeminiFileService {
       },
     });
 
-    this.eventEmitter.emit('gemini.new_data', {
-      requestId: geminiRequest.id,
-      conversationId: geminiRequest.conversationId,
-      prompt: geminiRequest.prompt,
-      systemInstruction: geminiRequest.systemInstruction,
-      modelUsed: geminiRequest.modelUsed,
-      responseText: generatedText,
-      createdAt: new Date(),
-    });
-
     return generatedText;
   }
 
-  /**
-   * Generic helper to handle common Gemini API call logic for various requests.
-   * @param options.dto The DTO containing prompt, systemInstruction, conversationId.
-   * @param options.requestType The type of request (e.g., TEXT_ONLY, TEXT_WITH_IMAGE).
-   * @param options.getContents A function that returns the specific `contents` array for the Gemini payload.
-   * @param options.saveOptions Additional options for saving the interaction (image data, file data, mime type).
-   * @param options.defaultSystemInstruction A default system instruction if none provided in DTO.
-   * @param options.parseResult A function to parse the Gemini response if it's not just plain text.
-   * @returns The result of the Gemini operation, potentially parsed.
-   */
+  private async _saveVideoGenerationInteraction(
+    currentUserId: string,
+    prompt: string,
+    modelName: string,
+    requestType: RequestType,
+    operationName: string,
+    videoUri: string | null,
+    conversationId?: string,
+  ): Promise<void> {
+    const geminiRequest = await this.prisma.geminiRequest.create({
+      data: {
+        userId: currentUserId,
+        conversationId: conversationId,
+        prompt: `Veo Video Generation: "${prompt}" (Operation: ${operationName})`,
+        modelUsed: modelName,
+        requestType: requestType,
+      },
+    });
+
+    await this.prisma.geminiResponse.create({
+      data: {
+        requestId: geminiRequest.id,
+        responseText: videoUri || `Video generation operation ${operationName} status pending or failed.`,
+        finishReason: videoUri ? 'SUCCESS' : 'PENDING_OR_FAILED',
+        tokenCount: null,
+        safetyRatings: Prisma.JsonNull,
+      },
+    });
+
+    this.logger.debug(`Video generation interaction saved for operation ${operationName}.`);
+  }
+
   private async _performGeminiOperation<
     T extends {
       prompt: string;
@@ -289,7 +268,7 @@ export class GoogleGeminiFileService {
       fileData?: string;
     };
     defaultSystemInstruction?: string;
-    parseResult?: (generatedText: string) => any; // Generic parser for complex results
+    parseResult?: (generatedText: string) => any;
   }): Promise<string | OptimizationResultDto> {
     const {
       dto,
@@ -310,7 +289,6 @@ export class GoogleGeminiFileService {
 
     let conversationHistory: ConversationHistoryItemDto[] | undefined;
     if (conversationId) {
-      // Only attempt to fetch history if a conversationId was provided initially
       const paginatedResult = await this.getConversationHistory(conversationId);
       conversationHistory = paginatedResult.data;
       if (!conversationHistory || conversationHistory.length === 0) {
@@ -344,8 +322,9 @@ export class GoogleGeminiFileService {
       );
 
       const generatedText = geminiApiResult.candidates[0].content.parts[0].text;
-
-      // Save the interaction BEFORE parsing the result (original text is saved)
+      this.logger.debug(
+        `Gemini API generatedText ${requestType}: ${JSON.stringify(generatedText, null, 2)}`,
+      );
       await this.saveGeminiInteraction(
         currentUserId,
         prompt,
@@ -359,7 +338,6 @@ export class GoogleGeminiFileService {
         saveOptions?.fileData,
       );
 
-      // Parse the result if a parser function is provided
       if (parseResult) {
         return parseResult(generatedText);
       }
@@ -410,8 +388,6 @@ export class GoogleGeminiFileService {
     }) as Promise<string>;
   }
 
-  // Adjusted this method to process Multer.File internally before calling the common helper.
-  // This keeps the external API (`prompt: string, file: Express.Multer.File`) consistent.
   async generateTextWithFile(
     prompt: string,
     file: Express.Multer.File,
@@ -427,7 +403,6 @@ export class GoogleGeminiFileService {
 
     const base64Data = file.buffer.toString('base64');
     const fileName = file.originalname;
-    // More robust MIME type lookup
     const fileMimeType =
       file.mimetype || mimeLookup(fileName) || 'application/octet-stream';
 
@@ -460,11 +435,6 @@ export class GoogleGeminiFileService {
     }) as Promise<string>;
   }
 
-  /**
-   * Generates a resume based on a detailed prompt.
-   * @param generateResumeDto DTO containing prompt for resume generation.
-   * @returns The generated resume text.
-   */
   async generateResume(generateResumeDto: GenerateResumeDto): Promise<string> {
     const defaultSystemInstruction = `You are an expert resume writer. Generate a professional and comprehensive resume in Markdown format based on the user's requirements. Ensure proper headings, bullet points for experience/achievements, and appropriate sections (e.g., Summary, Experience, Education, Skills, Projects). Focus on clarity, conciseness, and impact. Do not include any introductory or concluding remarks outside the resume itself.
 
@@ -546,17 +516,12 @@ September 2010 – May 2014
 
     return this._performGeminiOperation({
       dto: generateResumeDto,
-      requestType: RequestType.RESUME_GENERATION, // Specific enum for this task
+      requestType: RequestType.RESUME_GENERATION,
       getContents: (dto) => [{ role: 'user', parts: [{ text: dto.prompt }] }],
       defaultSystemInstruction: defaultSystemInstruction,
     }) as Promise<string>;
   }
 
-  /**
-   * Optimizes a resume based on a job description, returning structured suggestions.
-   * @param optimizeResumeDto DTO containing resume content and job description.
-   * @returns An object with optimization score, summary, and detailed suggestions.
-   */
   async optimizeResume(
     optimizeResumeDto: OptimizeResumeDto,
   ): Promise<OptimizationResultDto> {
@@ -587,13 +552,12 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
     const prompt = `Here is the resume:\n\n${optimizeResumeDto.resumeContent}\n\nHere is the job description:\n\n${optimizeResumeDto.jobDescription}\n\nBased on these, generate the optimization result in the specified JSON format.`;
 
     return this._performGeminiOperation({
-      dto: { ...optimizeResumeDto, prompt: prompt }, // Override prompt for internal use
-      requestType: RequestType.RESUME_OPTIMIZATION, // Specific enum for this task
+      dto: { ...optimizeResumeDto, prompt: prompt },
+      requestType: RequestType.RESUME_OPTIMIZATION,
       getContents: (dto) => [{ role: 'user', parts: [{ text: dto.prompt }] }],
       defaultSystemInstruction: defaultSystemInstruction,
       parseResult: (generatedText: string): OptimizationResultDto => {
         try {
-          // Gemini might wrap JSON in markdown code block, try to extract it
           const jsonMatch = generatedText.match(/```json\n([\s\S]*?)\n```/);
           const jsonString = jsonMatch ? jsonMatch[1] : generatedText;
           return JSON.parse(jsonString);
@@ -612,11 +576,6 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
     }) as Promise<OptimizationResultDto>;
   }
 
-  /**
-   * Enhances a given resume content or a specific section based on a goal.
-   * @param enhanceResumeDto DTO containing resume content, optional section, and enhancement goal.
-   * @returns The enhanced resume text or section.
-   */
   async enhanceResume(enhanceResumeDto: EnhanceResumeDto): Promise<string> {
     let defaultSystemInstruction = `You are an expert resume enhancer. Your goal is to rewrite or improve the provided resume content to be more impactful, concise, and professional. Focus on strong action verbs, quantifiable achievements, and clear communication. Do not add or remove factual information unless explicitly instructed. Provide only the enhanced text, with no additional commentary.`;
     if (enhanceResumeDto.sectionToEnhance) {
@@ -631,10 +590,139 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
       : `Enhance the following resume content:\n\n${enhanceResumeDto.resumeContent}`;
 
     return this._performGeminiOperation({
-      dto: { ...enhanceResumeDto, prompt: prompt }, // Override prompt for internal use
-      requestType: RequestType.RESUME_ENHANCEMENT, // Specific enum for this task
+      dto: { ...enhanceResumeDto, prompt: prompt },
+      requestType: RequestType.RESUME_ENHANCEMENT,
       getContents: (dto) => [{ role: 'user', parts: [{ text: dto.prompt }] }],
       defaultSystemInstruction: defaultSystemInstruction,
     }) as Promise<string>;
   }
+
+
+  private async _pollVideoOperation(operationName: string): Promise<any> {
+    // Ensure API key is present before making the request
+    if (!this.GEMINI_API_KEY) {
+      throw new InternalServerErrorException('Gemini API key is not configured for video generation polling.');
+    }
+
+    const startTime = Date.now();
+    while (Date.now() - startTime < this.POLLING_TIMEOUT_MS) {
+      try {
+        const statusResponse = await fetch(`${this.VEO_API_BASE_URL}/${operationName}`, {
+          method: 'GET',
+          // FIX: Use non-null assertion as GEMINI_API_KEY is checked above
+          headers: { 'x-goog-api-key': this.GEMINI_API_KEY! },
+        });
+
+        if (!statusResponse.ok) {
+          const errorData = await statusResponse.json();
+          this.logger.error(`Veo operation status error (${statusResponse.status}): ${JSON.stringify(errorData)}`);
+          throw new InternalServerErrorException(`Veo operation status error: ${errorData.error?.message || 'Unknown API error'}`);
+        }
+
+        const statusResult = await statusResponse.json();
+        this.logger.debug(`Polling operation ${operationName}: done=${statusResult.done}, progress=${JSON.stringify(statusResult.metadata)}`);
+
+        if (statusResult.done === true) {
+          if (statusResult.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri) {
+            return statusResult;
+          } else if (statusResult.error) {
+            this.logger.error(`Veo operation ${operationName} failed: ${JSON.stringify(statusResult.error)}`);
+            throw new InternalServerErrorException(`Video generation operation failed: ${statusResult.error.message || 'Unknown error'}`);
+          } else {
+            this.logger.error(`Veo operation ${operationName} finished but video URI not found: ${JSON.stringify(statusResult)}`);
+            throw new InternalServerErrorException('Video generation completed but failed to retrieve video URI.');
+          }
+        }
+      } catch (error) {
+        if (error instanceof InternalServerErrorException) {
+          throw error;
+        }
+        this.logger.error(`Unexpected error polling Veo operation ${operationName}: ${error.message}`, error.stack);
+        throw new InternalServerErrorException(`Unexpected error polling video operation: ${error.message}`);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, this.POLLING_INTERVAL_MS));
+    }
+    throw new InternalServerErrorException(`Video generation operation timed out after ${this.POLLING_TIMEOUT_MS / 1000} seconds.`);
+  }
+
+  async generateVideo(generateVideoDto: GenerateVideoDto): Promise<VideoGenerationResultDto> {
+    if (!this.moduleControlService.isModuleEnabled('GoogleModule')) {
+      this.logger.warn('Gemini API calls are disabled by ModuleControlService. Aborting API call.');
+      throw new InternalServerErrorException('Gemini API functionality is currently disabled.');
+    }
+    if (!this.GEMINI_API_KEY) {
+      throw new InternalServerErrorException('Gemini API key is not configured for video generation.');
+    }
+
+    const { prompt, conversationId } = generateVideoDto;
+    const currentUserId = this.userId;
+    const requestType = RequestType.VIDEO_GENERATION;
+    let effectiveConversationId = conversationId || uuidv4();
+
+    this.logger.log(`Initiating video generation for user ${currentUserId}, conversation ${effectiveConversationId} with prompt: "${prompt}"`);
+
+    let operationName: string | undefined;
+    let videoUri: string | null = null;
+
+    try {
+      const generateVideoPayload = {
+        instances: [{ prompt: prompt }],
+      };
+
+      const initialResponse = await fetch(`${this.VEO_API_BASE_URL}/models/${this.VEO_MODEL_NAME}:predictLongRunning`, {
+        method: 'POST',
+        headers: {
+          // FIX: Use non-null assertion as GEMINI_API_KEY is checked above
+          'x-goog-api-key': this.GEMINI_API_KEY!,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(generateVideoPayload),
+      });
+
+      if (!initialResponse.ok) {
+        const errorData = await initialResponse.json();
+        this.logger.error(`Failed to initiate Veo video generation (${initialResponse.status}): ${JSON.stringify(errorData)}`);
+        throw new InternalServerErrorException(`Failed to initiate video generation: ${errorData.error?.message || 'Unknown API error'}`);
+      }
+
+      const initialResult: { name: string } = await initialResponse.json();
+      operationName = initialResult.name;
+      this.logger.debug(`Video generation operation started: ${operationName}`);
+
+      const finalResult = await this._pollVideoOperation(operationName);
+      videoUri = finalResult.response.generateVideoResponse.generatedSamples[0].video.uri;
+
+      this.logger.log(`Video generation complete for operation ${operationName}. URI: ${videoUri}`);
+
+      await this._saveVideoGenerationInteraction(
+        currentUserId,
+        prompt,
+        this.VEO_MODEL_NAME,
+        requestType,
+        operationName,
+        videoUri,
+        effectiveConversationId
+      );
+
+      // FIX: Use non-null assertion for videoUri here
+      return { videoUri: videoUri! };
+    } catch (error) {
+      this.logger.error(`Error in video generation process for prompt "${prompt}": ${error.message}`, error.stack);
+      if (operationName) {
+        this.logger.warn(`Operation ${operationName} failed to complete or retrieve URI.`);
+        await this._saveVideoGenerationInteraction(
+          currentUserId,
+          prompt,
+          this.VEO_MODEL_NAME,
+          requestType,
+          operationName,
+          null,
+          effectiveConversationId
+        ).catch(saveError => this.logger.error(`Failed to save failed video generation interaction: ${saveError.message}`));
+      }
+      throw error;
+    }
+  }
 }
+

@@ -6,7 +6,7 @@ export class ScanFileDto {
   @ApiProperty({
     description:
       'An array of paths (relative or absolute) to scan. Each path can be a directory or a file. Defaults to ["."].',
-    example: ['.', 'src/components', 'package.json'],
+    example: ['.', 'src/auth', 'package.json'],
     type: [String],
     required: true,
   })
@@ -18,7 +18,7 @@ export class ScanFileDto {
   @ApiProperty({
     description:
       'The root directory of the project, used for calculating relative paths. Defaults to process.cwd() if not provided.',
-    example: '/home/user/my-project',
+    example: '/media/eddie/Data/projects/nestJS/nest-modules/full-stack',
     type: String,
     required: false,
   })

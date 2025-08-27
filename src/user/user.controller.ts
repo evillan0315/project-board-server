@@ -9,9 +9,6 @@ import {
   UseGuards,
   HttpStatus,
   Query,
-  UseInterceptors,
-  UploadedFile,
-  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,10 +22,8 @@ import {
   ApiForbiddenResponse,
   ApiQuery,
   ApiResponse,
-  ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
-import axios from 'axios';
 
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -57,14 +52,12 @@ export class UserController {
   @Post()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new User' })
-  @ApiBody({ type: CreateUserDto }) // ← added
+  @ApiBody({ type: CreateUserDto })
   @ApiCreatedResponse({
-    description: 'Successfully created.',
+    description: 'User successfully created.',
     type: CreateUserDto,
   })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
   create(@Body() dto: CreateUserDto) {
     return this.userService.create(dto);
   }
@@ -75,13 +68,11 @@ export class UserController {
 
   @Get()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Retrieve all User records' })
+  @ApiOperation({ summary: 'Retrieve all users' })
   @ApiOkResponse({
-    description: 'List of User records.',
+    description: 'List of all users.',
     type: [CreateUserDto],
   })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
     return this.userService.findAll();
   }
@@ -92,12 +83,12 @@ export class UserController {
 
   @Get('paginated')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Paginated User records' })
+  @ApiOperation({ summary: 'Retrieve users with pagination' })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'pageSize', required: false, type: Number, example: 10 })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Paginated results',
+    description: 'Paginated users.',
     type: PaginationUserResultDto,
   })
   findAllPaginated(@Query() query: PaginationUserQueryDto) {
@@ -111,11 +102,9 @@ export class UserController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Find User by ID' })
-  @ApiOkResponse({ description: 'Record found.', type: CreateUserDto })
-  @ApiNotFoundResponse({ description: 'Record not found.' })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
+  @ApiOperation({ summary: 'Retrieve a user by ID' })
+  @ApiOkResponse({ description: 'User found.', type: CreateUserDto })
+  @ApiNotFoundResponse({ description: 'User not found.' })
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
@@ -126,12 +115,13 @@ export class UserController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update User by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateUserDto })
-  @ApiBadRequestResponse({ description: 'Invalid data.' })
-  @ApiNotFoundResponse({ description: 'Record not found.' })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
+  @ApiOperation({ summary: 'Update a user by ID' })
+  @ApiOkResponse({
+    description: 'User successfully updated.',
+    type: UpdateUserDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid data provided.' })
+  @ApiNotFoundResponse({ description: 'User not found.' })
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.userService.update(id, dto);
   }
@@ -142,11 +132,9 @@ export class UserController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Delete User by ID' })
-  @ApiOkResponse({ description: 'Successfully deleted.' })
-  @ApiNotFoundResponse({ description: 'Record not found.' })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
-  @ApiForbiddenResponse({ description: 'Forbidden.' })
+  @ApiOperation({ summary: 'Delete a user by ID' })
+  @ApiOkResponse({ description: 'User successfully deleted.' })
+  @ApiNotFoundResponse({ description: 'User not found.' })
   remove(@Param('id') id: string) {
     return this.userService.remove(id);
   }

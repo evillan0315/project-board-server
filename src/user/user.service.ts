@@ -127,11 +127,35 @@ export class UserService {
   }
 
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
         Account: true,
+        password: true, // needed for login validation
       },
     });
+
+    if (!user) return null;
+
+    // Normalize Prisma nullables into DTO-friendly values
+    const jwtUser: CreateJwtUserDto = {
+      id: user.id,
+      sub: user.id,
+      email: user.email,
+      name: user.name ?? undefined, // null → undefined
+      phone_number: user.phone_number ?? undefined,
+      role: user.role ?? Role.USER, // null → fallback default
+      image: user.image ?? undefined,
+      provider: user.Account?.[0]?.provider ?? undefined,
+      tokens: user.Account?.[0]?.refresh_token
+        ? { refresh_token: user.Account[0].refresh_token }
+        : undefined,
+      username: user.username ?? undefined,
+    };
+
+    return {
+      ...user, // keep full user with password for internal use
+      jwtUser, // normalized payload for JWT signing
+    };
   }
 }

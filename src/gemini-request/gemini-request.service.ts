@@ -56,7 +56,7 @@ export class GeminiRequestService {
 
   create(data: CreateGeminiRequestDto) {
     this.ensureFileModuleEnabled();
-    const createData: any = { ...data };
+    let createData: any = { ...data };
 
     return this.prisma.geminiRequest.create({ data: createData });
   }
@@ -78,7 +78,6 @@ export class GeminiRequestService {
         orderBy: { createdAt: 'desc' },
         skip,
         take,
-        include: { geminiResponses: true },
         ...(select ? { select } : {}),
       }),
       this.prisma.geminiRequest.count({ where }),
@@ -119,12 +118,12 @@ export class GeminiRequestService {
   private buildWhereFromQuery(
     query: PaginationGeminiRequestQueryDto,
   ): Prisma.GeminiRequestWhereInput {
-    const where: Prisma.GeminiRequestWhereInput = {};
+    const where: Prisma.GeminiRequestWhereInput = {
+      userId: this.userId,
+    };
 
     if (query.userId !== undefined) {
       where.userId = query.userId;
-    } else {
-      where.userId = this.userId;
     }
     if (query.conversationId !== undefined) {
       where.conversationId = query.conversationId;
@@ -149,6 +148,9 @@ export class GeminiRequestService {
     }
     if (query.fileData !== undefined) {
       where.fileData = query.fileData;
+    }
+    if (query.files !== undefined) {
+      where.files = query.files;
     }
 
     return where;
