@@ -3739,7 +3739,7 @@
         ],
         "summary": "Create a new Folder",
         "tags": [
-          "Folder"
+          "File & Folder"
         ]
       },
       "get": {
@@ -3776,7 +3776,7 @@
         ],
         "summary": "Retrieve all Folder records",
         "tags": [
-          "Folder"
+          "File & Folder"
         ]
       }
     },
@@ -3858,7 +3858,7 @@
         ],
         "summary": "Paginated Folder records",
         "tags": [
-          "Folder"
+          "File & Folder"
         ]
       }
     },
@@ -3906,7 +3906,7 @@
         ],
         "summary": "Find Folder by ID",
         "tags": [
-          "Folder"
+          "File & Folder"
         ]
       },
       "patch": {
@@ -3965,7 +3965,7 @@
         ],
         "summary": "Update Folder by ID",
         "tags": [
-          "Folder"
+          "File & Folder"
         ]
       },
       "delete": {
@@ -4004,7 +4004,7 @@
         ],
         "summary": "Delete Folder by ID",
         "tags": [
-          "Folder"
+          "File & Folder"
         ]
       }
     },
@@ -12181,7 +12181,7 @@
         ]
       }
     },
-    "/media/extract": {
+    "/api/media/extract": {
       "post": {
         "description": "Requires authentication with ADMIN or USER role.",
         "operationId": "MediaController_extract",
@@ -12191,54 +12191,139 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "url": {
-                    "type": "string",
-                    "example": "https://www.youtube.com/watch?v=xyz"
-                  },
-                  "format": {
-                    "type": "string",
-                    "enum": [
-                      "mp3",
-                      "webm",
-                      "m4a",
-                      "wav",
-                      "mp4",
-                      "flv"
-                    ],
-                    "default": "mp3"
-                  },
-                  "provider": {
-                    "type": "string",
-                    "example": "youtube",
-                    "description": "Source provider such as youtube, vimeo, udemy, etc."
-                  },
-                  "cookieAccess": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Whether to include authentication cookies for private content."
-                  }
-                },
-                "required": [
-                  "url"
-                ]
+                "$ref": "#/components/schemas/CreateMediaDto"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Returns the extracted audio/video file path.",
+            "description": "Returns the extracted audio/video file details.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "filePath": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MediaFileResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid URL or format."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Extract audio/video from a URL",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/api/media": {
+      "get": {
+        "operationId": "MediaController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media file name (partial match).",
+            "schema": {
+              "example": "my_video",
+              "type": "string"
+            }
+          },
+          {
+            "name": "fileType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media file type.",
+            "schema": {
+              "example": "VIDEO",
+              "type": "string",
+              "enum": [
+                "AUDIO",
+                "VIDEO",
+                "IMAGE",
+                "DOCUMENT",
+                "CODE",
+                "OTHER"
+              ]
+            }
+          },
+          {
+            "name": "provider",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media provider (e.g., youtube).",
+            "schema": {
+              "example": "youtube",
+              "type": "string"
+            }
+          },
+          {
+            "name": "url",
+            "required": false,
+            "in": "query",
+            "description": "Filter by original URL (partial match).",
+            "schema": {
+              "example": "youtube.com",
+              "type": "string"
+            }
+          },
+          {
+            "name": "folderId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by folder ID.",
+            "schema": {
+              "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of media files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationMediaResultDto"
                 }
               }
             }
@@ -12261,7 +12346,100 @@
             "bearer": []
           }
         ],
-        "summary": "Extract audio/video from a URL",
+        "summary": "Retrieve all media files uploaded by the user, with optional pagination and filters.",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/api/media/{id}": {
+      "get": {
+        "operationId": "MediaController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media file found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaFileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Media file not found."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find a media file by ID.",
+        "tags": [
+          "Media"
+        ]
+      },
+      "delete": {
+        "operationId": "MediaController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted the media file."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Media file not found."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a media file by ID.",
         "tags": [
           "Media"
         ]
@@ -13816,7 +13994,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-27T19:39:12.816Z",
+            "example": "2025-08-27T21:07:42.795Z",
             "format": "date-time"
           },
           "requestType": {
@@ -16182,6 +16360,160 @@
             "description": "terminalSessionId field"
           }
         }
+      },
+      "CreateMediaDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL of the audio/video to extract.",
+            "example": "https://www.youtube.com/watch?v=xyz"
+          },
+          "format": {
+            "type": "string",
+            "description": "The desired format for the extracted media. Defaults to 'webm'.",
+            "enum": [
+              "mp3",
+              "webm",
+              "m4a",
+              "wav",
+              "mp4",
+              "flv"
+            ],
+            "example": "mp4",
+            "default": "webm"
+          },
+          "provider": {
+            "type": "string",
+            "description": "The source provider (e.g., youtube, vimeo, udemy).",
+            "example": "youtube"
+          },
+          "cookieAccess": {
+            "type": "boolean",
+            "description": "Whether to include authentication cookies for private content. Defaults to false.",
+            "default": false,
+            "example": false
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "MediaFileResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier of the media file."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the media file."
+          },
+          "path": {
+            "type": "string",
+            "description": "The absolute path to the stored media file."
+          },
+          "fileType": {
+            "type": "string",
+            "description": "The type of the file (e.g., AUDIO, VIDEO, IMAGE, DOCUMENT, CODE, OTHER).",
+            "enum": [
+              "AUDIO",
+              "VIDEO",
+              "IMAGE",
+              "DOCUMENT",
+              "CODE",
+              "OTHER"
+            ],
+            "example": "VIDEO"
+          },
+          "mimeType": {
+            "type": "object",
+            "description": "The MIME type of the file.",
+            "example": "video/mp4",
+            "nullable": true
+          },
+          "size": {
+            "type": "string",
+            "description": "The size of the file in bytes.",
+            "format": "int64",
+            "example": "1024000"
+          },
+          "provider": {
+            "type": "object",
+            "description": "The provider from which the media was extracted (e.g., youtube).",
+            "example": "youtube",
+            "nullable": true
+          },
+          "url": {
+            "type": "object",
+            "description": "The original URL from which the media was extracted.",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "The timestamp when the file entry was created."
+          },
+          "updatedAt": {
+            "type": "object",
+            "description": "The timestamp when the file entry was last updated.",
+            "nullable": true
+          },
+          "createdById": {
+            "type": "string",
+            "description": "The ID of the user who created this file entry."
+          },
+          "folderId": {
+            "type": "object",
+            "description": "The ID of the folder where the file is stored.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "path",
+          "fileType",
+          "createdAt",
+          "updatedAt",
+          "createdById"
+        ]
+      },
+      "PaginationMediaResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "List of media files for the current page.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaFileResponseDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of media files matching the query."
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number."
+          },
+          "pageSize": {
+            "type": "number",
+            "description": "Number of items per page."
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of available pages."
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
       }
     }
   }

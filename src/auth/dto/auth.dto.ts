@@ -1,14 +1,7 @@
 // src/auth/dto/auth.dto.ts
 import { Role } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEmail,
-  IsNotEmpty,
-  MinLength,
-  IsOptional,
-  IsString,
-  IsEnum,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, MinLength, IsOptional, IsString, IsEnum } from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty({
@@ -155,6 +148,31 @@ export class LoginDto {
   password: string;
 }
 
+export class ForgotPasswordDto {
+  @ApiProperty({
+    description: 'Email address of the user requesting password reset',
+    example: 'user@example.com',
+  })
+  @IsEmail()
+  email: string;
+}
+
+export class ResetPasswordDto {
+  @ApiProperty({ description: 'Password reset token received via email' })
+  @IsNotEmpty()
+  @IsString()
+  token: string;
+
+  @ApiProperty({
+    description: 'New secure password for the user',
+    example: 'NewStrongPassword123',
+    minLength: 8,
+  })
+  @IsNotEmpty()
+  @MinLength(8)
+  newPassword: string;
+}
+
 /**
  * Response DTOs
  */
@@ -205,6 +223,7 @@ export class AuthResponseDto {
   @ApiProperty({
     description: 'JWT Access Token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6...',
+    n,
   })
   access_token: string;
 

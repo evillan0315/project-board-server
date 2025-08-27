@@ -8,36 +8,38 @@ datasource db {
 }
 
 model User {
-  id                String              @id @default(uuid())
-  email             String              @unique
-  username          String?
-  emailVerified     DateTime?
-  image             String?
-  name              String?
-  phone_number      String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime?           @updatedAt
-  deletedAt         DateTime?
-  role              Role?
-  Account           Account[]
-  Database          Database[]
-  Documentation     Documentation[]
-  File              File[]
-  Folder            Folder[]
-  Form              Form[]
-  Module            Module[]
-  Organization      Organization[]
-  password          Password?
-  Project           Project[]
-  Schema            Schema[]
-  Session           Session[]
-  Submission        Submission[]
-  geminiRequests    GeminiRequest[]
-  Recording         Recording[]
-  SchemaSubmission  SchemaSubmission[]
-  SystemInstruction SystemInstruction[]
-  terminalCommands  TerminalCommand[]
-  commandHistory    CommandHistory[]
+  id                      String              @id @default(uuid())
+  email                   String              @unique
+  username                String?
+  emailVerified           DateTime?
+  image                   String?
+  name                    String?
+  phone_number            String?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime?           @updatedAt
+  deletedAt               DateTime?
+  role                    Role?
+  passwordResetToken      String? // Stores the hashed password reset token
+  passwordResetExpiresAt  DateTime? // Stores the expiration time for the reset token
+  Account                 Account[]
+  Database                Database[]
+  Documentation           Documentation[]
+  File                    File[]
+  Folder                  Folder[]
+  Form                    Form[]
+  Module                  Module[]
+  Organization            Organization[]
+  password                Password?
+  Project                 Project[]
+  Schema                  Schema[]
+  Session                 Session[]
+  Submission              Submission[]
+  geminiRequests          GeminiRequest[]
+  Recording               Recording[]
+  SchemaSubmission        SchemaSubmission[]
+  SystemInstruction       SystemInstruction[]
+  terminalCommands        TerminalCommand[]
+  commandHistory          CommandHistory[]
 
   terminalSessions TerminalSession[]
 }
@@ -374,8 +376,8 @@ model CommandHistory {
   createdAt        DateTime @default(now())
   status           String?
   exitCode         Int?
-  output           String?  @db.Text
-  errorOutput      String?  @db.Text
+  output           String?
+  errorOutput      String?
   workingDirectory String?
   durationMs       Int?
   shellType        String?

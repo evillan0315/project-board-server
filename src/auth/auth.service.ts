@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import { TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
+import * as crypto from 'crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
@@ -76,10 +77,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      dto.password,
-      user.password.hash,
-    );
+    const isPasswordValid = await bcrypt.compare(dto.password, user.password.hash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -104,9 +102,7 @@ export class AuthService {
     return { access_token, refresh_token, user: payload };
   }
 
-  async register(
-    dto: RegisterDto,
-  ): Promise<{ access_token: string; user: CreateJwtUserDto }> {
+  async register(dto: RegisterDto): Promise<{ access_token: string; user: CreateJwtUserDto }> {
     const hash = await bcrypt.hash(dto.password, 10);
     const createUser = {
       email: dto.email,
@@ -130,11 +126,7 @@ export class AuthService {
     const token = this.generateEmailVerificationToken(user.id);
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
 
-    await this.mailService.sendVerificationEmail(
-      user.email,
-      user.name ?? 'User',
-      verifyUrl,
-    );
+    await this.mailService.sendVerificationEmail(user.email, user.name ?? 'User', verifyUrl);
 
     // Construct JWT user payload
     const payload: CreateJwtUserDto = {
@@ -191,13 +183,94 @@ export class AuthService {
     const token = this.generateEmailVerificationToken(user.id);
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
 
-    await this.mailService.sendVerificationEmail(
-      user.email,
-      user.name ?? 'User',
-      verifyUrl,
-    );
+    await this.mailService.sendVerificationEmail(user.email, user.name ?? 'User', verifyUrl);
 
     return { message: 'Verification email sent.' };
+  }
+
+  /**
+   * Initiates the password reset process by generating a token and sending a reset email.
+   * @param email - The email address of the user requesting password reset.
+   * @returns A promise that resolves with a success message (generic for security).
+   */
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // For security, always return a generic success message
+      // to avoid exposing whether an email is registered or not.
+      return { message: 'If a matching account was found, a password reset email has been sent.' };
+    }
+
+    // Generate a secure, short-lived token (plaintext to be sent in email)
+    const plainTextToken = crypto.randomBytes(32).toString('hex');
+    // Hash the token for secure storage in the database
+    const dbTokenHash = crypto.createHash('sha256').update(plainTextToken).digest('hex');
+    // Token expires in 1 hour
+    const expiresAt = new Date(Date.now() + 3600 * 1000);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: dbTokenHash,
+        passwordResetExpiresAt: expiresAt,
+      },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${plainTextToken}`;
+    await this.mailService.sendPasswordResetEmail(user.email, user.name ?? 'User', resetUrl);
+
+    return { message: 'If a matching account was found, a password reset email has been sent.' };
+  }
+
+  /**
+   * Resets the user's password using a provided reset token.
+   * @param token - The plaintext password reset token received via email.
+   * @param newPassword - The new password for the user.
+   * @returns A promise that resolves with a success message.
+   * @throws BadRequestException if the token is invalid, expired, or password criteria not met.
+   */
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    if (!newPassword || newPassword.length < 8) {
+      throw new BadRequestException('Password must be at least 8 characters long.');
+    }
+
+    // Hash the incoming plaintext token to compare with the stored hash
+    const dbTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: dbTokenHash,
+        passwordResetExpiresAt: {
+          gt: new Date(), // token must not be expired
+        },
+      },
+      include: { password: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired password reset token.');
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: null, // Clear the token after use
+        passwordResetExpiresAt: null, // Clear expiration
+        password: {
+          upsert: {
+            create: { hash: newPasswordHash }, // Create if user had no password (e.g., OAuth user setting one)
+            update: { hash: newPasswordHash }, // Update existing password
+          },
+        },
+      },
+    });
+
+    return { message: 'Password has been successfully reset.' };
   }
 
   /**
@@ -260,10 +333,7 @@ export class AuthService {
       } else if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException('Invalid token');
       } else {
-        Logger.error(
-          `Unknown error validating token: ${error.message}`,
-          error.stack,
-        );
+        Logger.error(`Unknown error validating token: ${error.message}`, error.stack);
         throw new UnauthorizedException('Token validation failed');
       }
     }
