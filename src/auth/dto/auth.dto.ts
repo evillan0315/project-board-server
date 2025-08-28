@@ -223,7 +223,6 @@ export class AuthResponseDto {
   @ApiProperty({
     description: 'JWT Access Token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6...',
-    n,
   })
   access_token: string;
 

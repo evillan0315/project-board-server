@@ -57,6 +57,8 @@ import { JwtAuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/enums/user-role.enum';
+import { ProposedFileChangeDto } from 'src/llm/dto'; // Import ProposedFileChangeDto
+import { ApplyChangesDto } from './dto/file-operations'; // Import ApplyChangesDto
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -632,8 +634,7 @@ export class FileController {
     status: 400,
     description: 'Invalid input or destination already exists.',
   })
-  @ApiResponse({
-    status: 404,
+  @ApiResponse({    status: 404,
     description: 'Source path does not exist.',
   })
   @ApiResponse({
@@ -783,5 +784,70 @@ export class FileController {
       );
       throw new InternalServerErrorException(`Failed to scan project: ${(error as Error).message}`);
     }
+  }
+
+  @Post('apply-changes')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Apply proposed AI-generated file changes' })
+  @ApiBody({ type: ApplyChangesDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully applied selected file changes.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        messages: { type: 'array', items: { type: 'string' } },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input for proposed changes.' })
+  @ApiResponse({ status: 500, description: 'Failed to apply file changes.' })
+  async applyChanges(@Body() body: ApplyChangesDto) {
+    const { changes, projectRoot } = body;
+    if (!changes || !Array.isArray(changes) || changes.length === 0) {
+      throw new BadRequestException('No proposed changes provided to apply.');
+    }
+    if (!projectRoot) {
+      throw new BadRequestException('Project root is required to apply changes.');
+    }
+    return this.fileService.applyFileChanges(changes, projectRoot);
+  }
+
+  @Post('git-diff')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Get git diff for a specific file' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        filePath: { type: 'string', example: '/path/to/project/src/file.ts' },
+        projectRoot: { type: 'string', example: '/path/to/project' },
+      },
+      required: ['filePath', 'projectRoot'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Git diff successfully generated.',
+    schema: {
+      type: 'object',
+      properties: {
+        diff: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input or not a Git repository.' })
+  @ApiResponse({ status: 404, description: 'File not found in the repository.' })
+  @ApiResponse({ status: 500, description: 'Failed to generate git diff.' })
+  async getDiff(
+    @Body('filePath') filePath: string,
+    @Body('projectRoot') projectRoot: string,
+  ): Promise<{ diff: string }> {
+    if (!filePath || !projectRoot) {
+      throw new BadRequestException('Both filePath and projectRoot are required to get a diff.');
+    }
+    const diff = await this.fileService.getGitDiff(filePath, projectRoot);
+    return { diff };
   }
 }

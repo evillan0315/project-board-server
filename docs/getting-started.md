@@ -21,8 +21,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-repo/full-stack.git # Replace with actual repo URL
-cd full-stack
+git clone https://github.com/evillan0315/project-board-server.git # Replace with actual repo URL
+cd project-board-server
 ```
 
 ### 2. Install Dependencies

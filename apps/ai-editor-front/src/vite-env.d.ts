@@ -2,9 +2,10 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
-  readonly PROJECT_ROOT: string; // Declared the new PROJECT_ROOT variable
+  readonly VITE_FRONTEND_URL: string;
   readonly GITHUB_CALLBACK_URL: string;
   readonly GOOGLE_CALLBACK_URL: string;
+  readonly VITE_BASE_DIR: string;
 }
 
 interface ImportMeta {

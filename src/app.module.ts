@@ -58,6 +58,7 @@ import { TerminalSessionModule } from './terminal-session/terminal-session.modul
 import { TerminalCommandModule } from './terminal-command/terminal-command.module';
 import { CommandHistoryModule } from './command-history/command-history.module';
 import { MediaModule } from './media/media.module';
+import { BulkDataModule } from './bulk-data/bulk-data.module';
 
 import fileConfig from './config/file.config';
 
@@ -134,7 +135,7 @@ import fileConfig from './config/file.config';
     /**
      * Module for database-related operations.
      */
-    //DatabaseModule,
+    DatabaseModule,
 
     /**
      * Module for interacting with the terminal.
@@ -205,6 +206,7 @@ import fileConfig from './config/file.config';
     TerminalCommandModule,
     CommandHistoryModule,
     MediaModule,
+    BulkDataModule,
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.

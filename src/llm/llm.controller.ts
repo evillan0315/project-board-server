@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Query,
-  HttpStatus,
-  UseGuards,
-  Get,
-} from '@nestjs/common';
+import { Controller, Post, Body, Query, HttpStatus, UseGuards, Get } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -36,22 +28,14 @@ export class LlmController {
   @Post('generate-llm')
   @ApiOperation({ summary: 'Generate code and file changes using the LLM' })
   @ApiBody({ type: LlmInputDto })
-  @ApiQuery({
-    name: 'projectRoot',
-    description:
-      'Absolute path to the project root directory. Files will be scanned and proposed changes will be relative to this root.',
-    type: String,
-    required: true,
-  })
+  // projectRoot is now part of LlmInputDto, so it's not a query param anymore.
   @ApiResponse({
     status: HttpStatus.OK,
     type: LlmOutputDto,
   })
-  async generateContent(
-    @Body() llmInput: LlmInputDto,
-    @Query('projectRoot') projectRoot: string,
-  ): Promise<LlmOutputDto> {
-    return this.llmService.generateContent(llmInput, projectRoot);
+  async generateContent(@Body() llmInput: LlmInputDto): Promise<LlmOutputDto> {
+    // The projectRoot is now expected within the LlmInputDto body
+    return this.llmService.generateContent(llmInput);
   }
 
   /**
@@ -88,9 +72,7 @@ export class LlmController {
     @Query('projectRoot') projectRoot: string,
     @Query('ignorePatterns') ignorePatterns?: string,
   ): Promise<string> {
-    const ignoreList = ignorePatterns
-      ? ignorePatterns.split(',').map((s) => s.trim())
-      : undefined;
+    const ignoreList = ignorePatterns ? ignorePatterns.split(',').map((s) => s.trim()) : undefined;
 
     return this.llmService.generateProjectStructure(projectRoot, ignoreList);
   }

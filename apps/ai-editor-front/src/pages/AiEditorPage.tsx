@@ -1,621 +1,514 @@
-import { useState, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "../components/Button";
-import { INSTRUCTION, ADDIONAL_INSTRUCTION_EXPECTED_OUTPUT } from "../constants"; // Import constants
-import { joinPaths, getRelativePath } from "../utils"; // Import utility functions including joinPaths and getRelativePath
-import { callLLM } from "../api/llm"; // NEW: Import LLM API service
+import React, { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
 import {
-  createFile,
-  writeFile,
-  deleteFile,
-  openDirectoryPicker,
-} from "../api/file"; // NEW: Import File API services and openDirectoryPicker
-import type {
-  FrontendProposedFileChange,
-  LLMOutput,
-  LLMInput, // NEW: Import LLMInput
-} from "../types/index";
+  aiEditorStore,
+  setLoading,
+  setError,
+  setInstruction,
+  setScanPathsInput,
+  clearState,
+  setLastLlmResponse,
+  toggleSelectedChange,
+  selectAllChanges,
+  deselectAllChanges,
+  setCurrentDiff,
+  clearDiff,
+  setApplyingChanges,
+  setAppliedMessages,
+} from '@/stores/aiEditorStore';
+import { authStore } from '@/stores/authStore';
+import {
+  Button,
+  TextField,
+  Box,
+  Typography,
+  CircularProgress,
+  Alert,
+  Paper,
+  Container,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Checkbox,
+  FormControlLabel,
+  useTheme,
+  Chip,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { generateCode, applyProposedChanges, getGitDiff } from '@/api/llm';
+import { LlmGeneratePayload, LlmResponse, ProposedFileChange, FileAction } from '@/types/llm';
+import { INSTRUCTION, ADDITIONAL_INSTRUCTION_EXPECTED_OUTPUT } from '@/constants';
 
-// Define a type for the AI response that can be either structured LLMOutput or raw text
-type AiResponseContent = LLMOutput | string | null;
-
-// Component for displaying a single proposed file change
-interface FileChangeDisplayProps {
-  change: FrontendProposedFileChange;
-  onStatusChange: (
-    filePath: string,
-    status: "pending" | "accepted" | "rejected",
-  ) => void;
-}
-
-function FileChangeDisplay({ change, onStatusChange }: FileChangeDisplayProps) {
-  const {
-    filePath,
-    action,
-    newContent,
-    reason,
-    status,
-  } = change;
-
-  const statusClasses = {
-    pending: "border-blue-400 text-blue-200",
-    accepted: "border-green-400 text-green-200",
-    rejected: "border-red-400 text-red-200",
-  };
+// Basic Diff Viewer Component (can be replaced with a more advanced library)
+const DiffViewer: React.FC<{ diffContent: string; filePath: string }> = ({
+  diffContent,
+  filePath,
+}) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   return (
-    <div
-      className={`p-4 mb-4 rounded-lg border ${statusClasses[status]} shadow-lg bg-gray-800`}
+    <Box
+      sx={{
+        mt: 2,
+        p: 2,
+        bgcolor: isDarkMode ? '#2d2d2d' : '#f0f0f0',
+        borderRadius: 1,
+        overflowX: 'auto',
+        border: '1px solid ' + (isDarkMode ? '#444' : '#ccc'),
+      }}
     >
-      <div className="flex justify-between items-center mb-2 flex-wrap">
-        <h3 className="text-xl font-semibold flex-grow min-w-0">
-          <span className="font-mono text-indigo-300 break-all">
-            {filePath}
-          </span>
-          <span
-            className={`ml-3 px-2 py-1 rounded-full text-xs font-bold ${
-              action === "add"
-                ? "bg-green-600"
-                : action === "modify"
-                  ? "bg-yellow-600"
-                  : "bg-red-600"
-            }`}
-          >
-            {action.toUpperCase()}
-          </span>
-        </h3>
-        <div className="flex space-x-2 mt-2 md:mt-0 flex-shrink-0">
-          <Button
-            className={`text-sm px-3 py-1 ${status === "accepted" ? "bg-green-700" : "bg-gray-700 hover:bg-green-600"}`}
-            onClick={() => onStatusChange(filePath, "accepted")}
-            disabled={status === "accepted"}
-          >
-            Accept
-          </Button>
-          <Button
-            className={`text-sm px-3 py-1 ${status === "rejected" ? "bg-red-700" : "bg-gray-700 hover:bg-red-600"}`}
-            onClick={() => onStatusChange(filePath, "rejected")}
-            disabled={status === "rejected"}
-          >
-            Reject
-          </Button>
-          <Button
-            className={`text-sm px-3 py-1 ${status === "pending" ? "bg-blue-700" : "bg-gray-700 hover:bg-blue-600"}`}
-            onClick={() => onStatusChange(filePath, "pending")}
-            disabled={status === "pending"}
-          >
-            Reset
-          </Button>
-        </div>
-      </div>
-      {reason && <p className="text-sm text-gray-400 mb-2">Reason: {reason}</p>}
+      <Typography variant="subtitle2" gutterBottom sx={{ fontFamily: 'monospace' }}>
+        Diff for: {filePath}
+      </Typography>
+      <pre
+        style={{
+          fontFamily: 'monospace',
+          fontSize: '0.85rem',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-all',
+          color: isDarkMode ? '#e0e0e0' : '#333',
+        }}
+      >
+        {diffContent}
+      </pre>
+    </Box>
+  );
+};
 
-      {action === "add" && newContent && (
-        <div>
-          <h4 className="font-medium text-gray-300 mb-1">New Content:</h4>
-          <pre className="bg-gray-900 p-3 rounded-md overflow-auto text-xs text-gray-200">
-            <code>{newContent}</code>
-          </pre>
-        </div>
-      )}
-
-      {action === "modify" && (
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            {/* Original content cannot be displayed dynamically if not provided by the AI response */}
-            <h4 className="font-medium text-gray-300 mb-1">
-              Original Content: (Not available from AI response)
-            </h4>
-            <pre className="bg-gray-900 p-3 rounded-md overflow-auto text-xs text-gray-200">
-              <code>{/* Placeholder or fetch from backend if available */}
-              </code>
-            </pre>
-          </div>
-          <div className="flex-1">
-            <h4 className="font-medium text-gray-300 mb-1">New Content:</h4>
-            <pre className="bg-gray-900 p-3 rounded-md overflow-auto text-xs text-gray-200">
-              <code>{newContent}</code>
-            </pre>
-          </div>
-        </div>
-      )}
-
-      {action === "delete" && (
-        <p className="text-red-300 italic">This file will be deleted.</p>
-      )}
-    </div>
-  );
-}
-
-export function AiEditorPage() {
-  const [prompt, setPrompt] = useState<string>(
-    // Initial user-facing prompt. The full instruction and output format will be combined later.
-    "Generate TypeScript code to implement a simple React component that displays a welcome message. The component should be named WelcomeMessage.tsx and export a functional component.",
-  );
-  // State for directories to scan (these paths are RELATIVE to projectRootForAI)
-  const [scanDirectories, setScanDirectories] = useState<string>(
-    "apps/ai-editor-front/src", // Default to the app's src directory, assuming it's the initial project root
-  );
-  // State for the absolute path of the project root the AI will work within
-  const [projectRootForAI, setProjectRootForAI] = useState<string>(
-    import.meta.env.PROJECT_ROOT, // Initialize with the frontend app's root
-  );
-  // State for system instructions
-  const [systemInstructions, setSystemInstructions] = useState<string>(
-    INSTRUCTION, // Initialize with the default system instruction constant
-  );
-  // NEW: State for expected output format
-  const [expectedOutputFormat, setExpectedOutputFormat] = useState<string>(
-    ADDIONAL_INSTRUCTION_EXPECTED_OUTPUT,
+const AiEditorPage: React.FC = () => {
+  const {
+    instruction,
+    loading,
+    error,
+    currentProjectPath,
+    scanPathsInput,
+    lastLlmResponse,
+    selectedChanges,
+    currentDiff,
+    diffFilePath,
+    applyingChanges,
+    appliedMessages,
+  } = useStore(aiEditorStore);
+  const { isLoggedIn } = useStore(authStore);
+  const [projectInput, setProjectInput] = useState<string>(
+    currentProjectPath || import.meta.env.VITE_BASE_DIR || '',
   );
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [aiResponseContent, setAiResponseContent] = useState<AiResponseContent>(null);
-  const [proposedChanges, setProposedChanges] = useState<FrontendProposedFileChange[]>(
-    [],
-  );
-
-  const handleBrowseScanFolder = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const selectedAbsolutePath = await openDirectoryPicker();
-      if (selectedAbsolutePath) {
-        // Calculate path relative to the currently set projectRootForAI
-        const relativePath = getRelativePath(
-          selectedAbsolutePath,
-          projectRootForAI,
-        );
-
-        if (relativePath === selectedAbsolutePath && selectedAbsolutePath !== projectRootForAI) {
-          // If getRelativePath returns the original absolute path, it means it's not a subpath
-          alert(
-            `Selected directory '${selectedAbsolutePath}' is not inside the current AI project root '${projectRootForAI}'. Please select a directory within the project root.`, 
-          );
-          return;
-        }
-
-        const currentPaths = scanDirectories
-          .split(",")
-          .map((dir) => dir.trim())
-          .filter((dir) => dir !== "");
-
-        if (!currentPaths.includes(relativePath)) {
-          setScanDirectories(
-            [...currentPaths, relativePath]
-              .filter((p) => p !== "") // Ensure no empty strings from initial split/join
-              .join(","),
-          );
-        } else {
-          alert(`Directory '${relativePath}' is already in the scan list.`);
-        }
-      }
-    } catch (error) {
-      console.error("Error selecting scan directory:", error);
-      alert(`Failed to select scan directory: ${(error as Error).message}`);
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (currentProjectPath && projectInput !== currentProjectPath) {
+      setProjectInput(currentProjectPath);
     }
-  }, [scanDirectories, projectRootForAI]);
-
-  const handleBrowseProjectRoot = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const selectedAbsolutePath = await openDirectoryPicker();
-      if (selectedAbsolutePath) {
-        setProjectRootForAI(selectedAbsolutePath);
-        setScanDirectories(""); // Clear scan directories when project root changes
-        alert(`AI Project Root set to: ${selectedAbsolutePath}`);
-      }
-    } catch (error) {
-      console.error("Error selecting new project root:", error);
-      alert(`Failed to select new project root: ${(error as Error).message}`);
-    } finally {
-      setIsLoading(false);
+    if (!projectInput && import.meta.env.VITE_BASE_DIR) {
+      setProjectInput(import.meta.env.VITE_BASE_DIR);
+      aiEditorStore.setKey('currentProjectPath', import.meta.env.VITE_BASE_DIR);
     }
-  }, []);
+  }, [currentProjectPath, projectInput]);
 
-  const handleGenerateClick = useCallback(async () => {
-    if (!prompt.trim()) {
-      alert("Please enter a prompt.");
+  useEffect(() => {
+    // Clear diff when project or response changes
+    clearDiff();
+  }, [lastLlmResponse, currentProjectPath]);
+
+  const handleInstructionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInstruction(event.target.value);
+  };
+
+  const handleScanPathsInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setScanPathsInput(event.target.value);
+  };
+
+  const handleProjectInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setProjectInput(event.target.value);
+  };
+
+  const handleLoadProject = () => {
+    if (!projectInput) return;
+    aiEditorStore.setKey('currentProjectPath', projectInput);
+    setError(null);
+    setLastLlmResponse(null);
+    setAppliedMessages([]);
+    setCurrentDiff(null, null);
+  };
+
+  const handleGenerateCode = async () => {
+    if (!instruction) {
+      setError('Please provide instructions for the AI.');
+      return;
+    }
+    if (!isLoggedIn) {
+      setError('You must be logged in to use the AI Editor.');
+      return;
+    }
+    if (!currentProjectPath) {
+      setError('Please load a project first by entering a path above.');
       return;
     }
 
-    setIsLoading(true);
-    setAiResponseContent(null);
-    setProposedChanges([]);
-
-    // Validate projectRootForAI before proceeding
-    if (
-      !projectRootForAI ||
-      typeof projectRootForAI !== "string" ||
-      projectRootForAI.trim() === ""
-    ) {
-      alert(
-        "Error: AI Project Root directory is not set or is empty. Please select a valid root.",
-      );
-      setIsLoading(false);
-      return; // Abort the operation
-    }
-
-    // Prepare scan paths from input (these are already relative to projectRootForAI)
-    const scanPaths = scanDirectories
-      .split(",")
-      .map((dir) => dir.trim())
-      .filter((dir) => dir !== "");
+    setLoading(true);
+    setError(null);
+    setLastLlmResponse(null); // Clear previous response
+    setCurrentDiff(null, null); // Clear any previous diff
+    setAppliedMessages([]);
 
     try {
-      const llmInput: LLMInput = {
-        userPrompt: prompt.trim(),
-        projectRoot: projectRootForAI, // Use the user-selected project root for AI context
-        projectStructure: "", // Placeholder: Could be generated via file scanning later
-        relevantFiles: [], // Placeholder: Could be populated via file scanning later
-        // Use the user-defined system instructions
-        additionalInstructions: systemInstructions,
-        // Use the user-defined expectedOutputFormat directly
-        expectedOutputFormat: expectedOutputFormat,
-        scanPaths: scanPaths.length > 0 ? scanPaths : [], // Pass parsed scan paths
+      const parsedScanPaths = scanPathsInput
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s !== '');
+
+      const payload: LlmGeneratePayload = {
+        userPrompt: instruction,
+        projectRoot: currentProjectPath,
+        projectStructure: '',
+        relevantFiles: [],
+        additionalInstructions: INSTRUCTION,
+        expectedOutputFormat: ADDITIONAL_INSTRUCTION_EXPECTED_OUTPUT,
+        scanPaths: parsedScanPaths,
       };
 
-      // Call the LLM API service, which returns parsed LLMOutput directly
-      const llmOutput: LLMOutput = await callLLM(llmInput);
-      console.log("Parsed AI response (LLMOutput):", llmOutput);
-
-      // Basic validation to check if it looks like an LLMOutput
-      if (
-        llmOutput &&
-        typeof llmOutput === "object" &&
-        "changes" in llmOutput &&
-        Array.isArray(llmOutput.changes) &&
-        "summary" in llmOutput &&
-        typeof llmOutput.summary === "string"
-      ) {
-        setAiResponseContent(llmOutput);
-        // Initialize proposed changes with 'pending' status
-        const initialChanges: FrontendProposedFileChange[] = llmOutput.changes.map((change) => ({
-          ...change,
-          status: "pending",
-        }));
-        setProposedChanges(initialChanges);
-      } else {
-        // If parsing succeeded but didn't match LLMOutput structure, or was empty
-        setAiResponseContent(
-          "AI response was structured but not in the expected file change format or was empty.\n" +
-          JSON.stringify(llmOutput, null, 2),
-        );
-      }
-    } catch (error) {
-      console.error("Error generating AI response:", error);
-      // If the API call itself failed (e.g., non-2xx status, network error),
-      // the error object might contain a message.
-      setAiResponseContent(`Failed to generate response: ${(error as Error).message || "Unknown error"}`);
-      alert(`Failed to generate response: ${(error as Error).message}`);
+      const aiResponse: LlmResponse = await generateCode(payload);
+      setLastLlmResponse(aiResponse); // Store the full structured response
+    } catch (err) {
+      setError(`Failed to generate code: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [prompt, scanDirectories, projectRootForAI, systemInstructions, expectedOutputFormat]); // Add expectedOutputFormat to dependency array
+  };
 
-  const handleStatusChange = useCallback(
-    (filePath: string, status: "pending" | "accepted" | "rejected") => {
-      setProposedChanges((prevChanges) =>
-        prevChanges.map((change) =>
-          change.filePath === filePath ? { ...change, status } : change,
-        ),
+  const handleToggleChange = (change: ProposedFileChange) => {
+    toggleSelectedChange(change);
+  };
+
+  const handleShowDiff = async (change: ProposedFileChange) => {
+    if (!currentProjectPath) {
+      setError('Project root is not set.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    clearDiff();
+    try {
+      // For ADD actions, we don't have a file in git to diff against. We can show newContent.
+      // For MODIFY/DELETE, we get a git diff.
+      let diffContent: string;
+      if (change.action === FileAction.ADD) {
+        // Simulate diff for a new file: show its content as added
+        diffContent = `--- /dev/null\n+++ a/${change.filePath}\n@@ -0,0 +1,${change.newContent?.split('\n').length || 1} @@\n${change.newContent
+          ?.split('\n')
+          .map((line) => `+${line}`)
+          .join('\n')}`;
+      } else {
+        diffContent = await getGitDiff(change.filePath, currentProjectPath);
+      }
+
+      setCurrentDiff(change.filePath, diffContent);
+    } catch (err) {
+      setError(
+        `Failed to get diff for ${change.filePath}: ${err instanceof Error ? err.message : String(err)}`,
       );
-    },
-    [],
-  );
+      setCurrentDiff(change.filePath, `Error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleApplyChanges = useCallback(async () => {
-    const acceptedChanges = proposedChanges.filter(
-      (change) => change.status === "accepted",
-    );
-    if (acceptedChanges.length === 0) {
-      alert("No changes accepted to apply.");
+  const handleApplySelectedChanges = async () => {
+    if (Object.keys(selectedChanges).length === 0) {
+      setError('No changes selected to apply.');
+      return;
+    }
+    if (!currentProjectPath) {
+      setError('Project root is not set.');
       return;
     }
 
-    setIsLoading(true); // Indicate that changes are being applied
-
-    // Validate projectRootForAI before proceeding
-    if (
-      !projectRootForAI ||
-      typeof projectRootForAI !== "string" ||
-      projectRootForAI.trim() === ""
-    ) {
-      alert(
-        "Error: AI Project Root directory is not set or is empty. Cannot apply changes.",
-      );
-      setIsLoading(false);
-      return; // Abort the operation
-    }
-
-    const operations: Promise<any>[] = [];
-    const successfulChanges: string[] = [];
-    const failedChanges: { filePath: string; error: string }[] = [];
-
-    for (const change of acceptedChanges) {
-      // The filePath from LLMOutput is assumed to be relative to the projectRoot sent to LLM.
-      // Backend file operations expect absolute paths, so we join them with projectRootForAI.
-      const absoluteFilePath = joinPaths(projectRootForAI, change.filePath);
-
-      let apiCall: Promise<any>;
-      switch (change.action) {
-        case "add":
-          apiCall = createFile(absoluteFilePath, false, change.newContent || "");
-          break;
-        case "modify":
-          apiCall = writeFile(absoluteFilePath, change.newContent || "");
-          break;
-        case "delete":
-          apiCall = deleteFile(absoluteFilePath);
-          break;
-        default:
-          console.warn(`Unknown action type: ${change.action} for ${change.filePath}. Skipping.`);
-          continue; // Skip unknown actions
-      }
-
-      operations.push(apiCall.then(() => {
-        successfulChanges.push(change.filePath); // Track successful changes
-      }).catch(error => {
-        failedChanges.push({ filePath: change.filePath, error: error.message }); // Track failed changes
-        console.error(`Failed to apply change for ${change.filePath}:`, error);
-        // Do NOT re-throw here, as Promise.all should resolve even if some caught errors
-        // We're handling individual errors and collecting them.
-      }));
-    }
+    setApplyingChanges(true);
+    setError(null);
+    setAppliedMessages([]);
 
     try {
-      await Promise.all(operations);
-
-      if (failedChanges.length === 0) {
-        alert(`Successfully applied ${successfulChanges.length} changes.`);
-      } else {
-        alert(
-          `Applied ${successfulChanges.length} changes, but ${failedChanges.length} failed.\n` +
-          `Failed files:\n${failedChanges.map(f => `  - ${f.filePath}: ${f.error}`).join('\n')}`,
-        );
+      const changesToApply = Object.values(selectedChanges);
+      const result = await applyProposedChanges(changesToApply, currentProjectPath);
+      setAppliedMessages(result.messages);
+      if (!result.success) {
+        setError('Some changes failed to apply. Check messages above.');
       }
-
-      // Reset state after attempting all applications
-      setAiResponseContent(null);
-      setProposedChanges([]);
-      setPrompt("");
-
-    } catch (error) {
-      // This catch block would only be hit if one of the promises in 'operations'
-      // did not have its error caught and re-threw it, causing Promise.all to reject.
-      // With the individual .catch blocks, this specific catch might be less frequently hit,
-      // but it's good to keep for robustness.
-      console.error("An unexpected error occurred during application of changes:", error);
-      alert(`An unexpected error occurred: ${(error as Error).message}`);
+      // Clear the response and selected changes after applying
+      setLastLlmResponse(null);
+      deselectAllChanges();
+      clearDiff();
+    } catch (err) {
+      setError(`Failed to apply changes: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
-      setIsLoading(false);
+      setApplyingChanges(false);
     }
-  }, [proposedChanges, projectRootForAI]);
+  };
 
-  const acceptedCount = proposedChanges.filter(
-    (c) => c.status === "accepted",
-  ).length;
-
-  const isLlmOutput = (content: AiResponseContent): content is LLMOutput => {
-    return (
-      content !== null &&
-      typeof content === "object" &&
-      "changes" in content &&
-      Array.isArray(content.changes) &&
-      "summary" in content &&
-      typeof content.summary === "string"
-    );
+  const getFileActionChipColor = (action: FileAction) => {
+    switch (action) {
+      case FileAction.ADD:
+        return 'success';
+      case FileAction.MODIFY:
+        return 'info';
+      case FileAction.DELETE:
+        return 'error';
+      default:
+        return 'default';
+    }
   };
 
   return (
-    <div className="flex flex-col flex-grow p-4 md:p-8 max-w-full lg:max-w-7xl mx-auto w-full">
-      <h1 className="text-4xl font-bold text-white mb-6 text-center">
-        AI Editor <span className="text-indigo-400">Frontend</span>
-      </h1>
+    <Container maxWidth="lg" className="py-8">
+      <Paper elevation={3} className="p-6 mb-8">
+        <Typography variant="h4" component="h1" gutterBottom className="!font-bold !text-blue-700">
+          AI Code Editor
+        </Typography>
+        <Typography variant="body1" color="text.secondary" className="mb-4">
+          Provide instructions to the AI to generate or modify code in your project. Start by
+          loading your project.
+        </Typography>
 
-      {/* AI Project Root Directory Section */}
-      <div className="p-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700 mb-8">
-        <h2 className="text-2xl font-semibold text-indigo-300 mb-4">
-          AI Project Root Directory
-        </h2>
-        <div className="flex items-end gap-3">
-          <input
-            type="text"
-            className="flex-grow p-3 rounded-md bg-gray-900 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-            value={projectRootForAI}
-            readOnly // Make it read-only, user changes via browse button
-            placeholder="Absolute path to the project root for AI operations"
-            disabled={isLoading}
+        {!isLoggedIn && (
+          <Alert severity="warning" className="mb-4">
+            You need to be logged in to use the AI Editor functionality.
+          </Alert>
+        )}
+
+        <Box className="mb-6 flex gap-4 items-center flex-wrap">
+          <TextField
+            label="Project Root Path"
+            value={projectInput}
+            onChange={handleProjectInputChange}
+            placeholder="e.g., /home/user/my-project"
+            disabled={loading || applyingChanges}
+            sx={{ flexGrow: 1 }}
+            size="small"
           />
           <Button
-            onClick={handleBrowseProjectRoot}
-            disabled={isLoading}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 h-fit whitespace-nowrap"
+            variant="contained"
+            color="primary"
+            onClick={handleLoadProject}
+            disabled={loading || !projectInput || applyingChanges}
+            sx={{ flexShrink: 0 }}
           >
-            Browse Project Root
+            Load Project
           </Button>
-        </div>
-        <p className="text-sm text-gray-400 mt-2">
-          This is the base directory the AI will work within. All file paths in proposed changes and scan directories will be relative to this root.
-        </p>
-      </div>
-
-      {/* Directory Scanning Input Section */}
-      <div className="p-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700 mb-8">
-        <h2 className="text-2xl font-semibold text-indigo-300 mb-4">
-          Directories to Scan (for AI Context)
-        </h2>
-        <div className="flex items-end gap-3">
-          <textarea
-            className="flex-grow p-3 rounded-md bg-gray-900 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none min-h-[90px]"
-            rows={3}
-            placeholder="Enter comma-separated RELATIVE paths to directories within the AI Project Root (e.g., src/components, backend/src/services)"
-            value={scanDirectories}
-            onChange={(e) => setScanDirectories(e.target.value)}
-            disabled={isLoading}
-          ></textarea>
           <Button
-            onClick={handleBrowseScanFolder}
-            disabled={isLoading}
-            className="bg-gray-700 hover:bg-gray-600 text-white px-5 py-3 h-fit whitespace-nowrap"
+            variant="outlined"
+            color="secondary"
+            onClick={clearState}
+            disabled={loading || applyingChanges}
+            sx={{ flexShrink: 0 }}
           >
-            Browse Folder (relative to root)
+            Clear All
           </Button>
-        </div>
-        <p className="text-sm text-gray-400 mt-2">
-          These directories will be scanned to provide context to the AI (e.g., file contents, project structure). Paths should be relative to the{" "}
-          <span className="font-semibold text-indigo-200">AI Project Root</span> specified above.
-        </p>
-      </div>
+        </Box>
 
-      {/* System Instructions Input Section */}
-      <div className="p-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700 mb-8">
-        <h2 className="text-2xl font-semibold text-indigo-300 mb-4">
-          AI System Instructions (Advanced)
-        </h2>
-        <textarea
-          className="w-full p-3 rounded-md bg-gray-900 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none min-h-[150px] font-mono text-sm"
-          rows={8}
-          placeholder="Provide specific instructions to guide the AI's behavior and response style. This overrides the default system prompt."
-          value={systemInstructions}
-          onChange={(e) => setSystemInstructions(e.target.value)}
-          disabled={isLoading}
-        ></textarea>
-        <p className="text-sm text-gray-400 mt-2">
-          This field defines the AI's core behavior and rules.
-        </p>
-      </div>
+        {currentProjectPath && (
+          <Box className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
+            <Typography variant="h6" className="!font-semibold !text-gray-800">
+              Current Project Root:
+              <span className="font-normal text-blue-600"> {currentProjectPath}</span>
+            </Typography>
+            <Typography variant="body2" className="text-gray-600 mt-2">
+              AI will scan paths specified below within this project root.
+            </Typography>
+          </Box>
+        )}
 
-      {/* NEW: Expected Output Format Input Section */}
-      <div className="p-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700 mb-8">
-        <h2 className="text-2xl font-semibold text-indigo-300 mb-4">
-          Expected AI Output Format (JSON Schema)
-        </h2>
-        <textarea
-          className="w-full p-3 rounded-md bg-gray-900 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none min-h-[250px] font-mono text-sm"
-          rows={12} // Increased rows for better visibility of JSON
-          placeholder="Define the exact JSON structure the AI should return for file changes. This is critical for automated parsing."
-          value={expectedOutputFormat}
-          onChange={(e) => setExpectedOutputFormat(e.target.value)}
-          disabled={isLoading}
-        ></textarea>
-        <p className="text-sm text-gray-400 mt-2">
-          This field instructs the AI on the precise JSON format it should use for its response. Ensure this matches the `LLMOutput` type to enable automated parsing and application of changes. The AI will be explicitly told to return JSON matching this description.
-        </p>
-      </div>
+        <TextField
+          label="Scan Paths (comma-separated relative paths)"
+          value={scanPathsInput}
+          onChange={handleScanPathsInputChange}
+          placeholder="e.g., src/components,package.json,README.md"
+          disabled={loading || !isLoggedIn || !currentProjectPath || applyingChanges}
+          fullWidth
+          margin="normal"
+          helperText="Paths where the AI should focus its analysis for project structure and relevant files (relative to project root)."
+        />
 
-      {/* Prompt Input Section */}
-      <div className="p-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700 mb-8">
-        <h2 className="text-2xl font-semibold text-indigo-300 mb-4">
-          Your Request
-        </h2>
-        <textarea
-          className="w-full p-3 rounded-md bg-gray-900 text-gray-100 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-          rows={5}
-          placeholder="Describe the changes you want the AI to make (e.g., 'Add a new user authentication module', 'Refactor the data fetching logic in App.tsx to use React Query')."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          disabled={isLoading}
-        ></textarea>
-        <div className="mt-4 flex justify-end">
-          <Button
-            onClick={handleGenerateClick}
-            disabled={isLoading || !prompt.trim()}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            {isLoading ? "Generating..." : "Generate AI Changes"}
-          </Button>
-        </div>
-      </div>
+        <TextField
+          label="AI Instructions (User Prompt)"
+          multiline
+          rows={6}
+          value={instruction}
+          onChange={handleInstructionChange}
+          placeholder="e.g., Implement a new user authentication module with JWT. Include login and register endpoints."
+          disabled={loading || !isLoggedIn || !currentProjectPath || applyingChanges}
+          fullWidth
+          margin="normal"
+        />
 
-      {/* LLM Output and Proposed Changes */}
-      {isLoading && (
-        <div className="text-center text-indigo-400 text-xl py-8">
-          Thinking and generating changes... (Expecting JSON output)
-        </div>
-      )}
-
-      {!isLoading && aiResponseContent && (
-        <div className="p-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700 mb-8">
-          <h2 className="text-2xl font-semibold text-indigo-300 mb-4">
-            AI Proposed Solution
-          </h2>
-          {isLlmOutput(aiResponseContent) ? (
-            <>
-              <p className="text-lg text-gray-200 mb-4">
-                <span className="font-bold">Summary:</span> {aiResponseContent.summary}
-              </p>
-              {aiResponseContent.thoughtProcess && (
-                <div className="mb-4">
-                  <h3 className="text-xl font-medium text-gray-300 mb-2">
-                    Thought Process:
-                  </h3>
-                  <pre className="bg-gray-900 p-3 rounded-md whitespace-pre-wrap text-gray-400 leading-relaxed">
-                    {aiResponseContent.thoughtProcess}
-                  </pre>
-                </div>
-              )}
-
-              <h3 className="text-xl font-medium text-gray-300 mb-4 mt-6">
-                Review & Apply Changes ({acceptedCount} accepted)
-              </h3>
-              {proposedChanges.length > 0 ? (
-                <div className="space-y-4">
-                  {proposedChanges.map((change) => (
-                    <FileChangeDisplay
-                      key={change.filePath} // Assuming filePath is unique and now relative
-                      change={change}
-                      onStatusChange={handleStatusChange}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-400 italic">
-                  No changes proposed by the AI for this request.
-                </p>
-              )}
-
-              {proposedChanges.length > 0 && (
-                <div className="mt-6 flex justify-end">
-                  <Button
-                    onClick={handleApplyChanges}
-                    disabled={acceptedCount === 0 || isLoading} // Disable during application too
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    {isLoading
-                      ? "Applying..."
-                      : `Apply ${acceptedCount} Selected Changes`}
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <h3 className="text-xl font-medium text-gray-300 mb-2">
-                AI Response (Raw Text/Error):
-              </h3>
-              <pre className="bg-gray-900 p-3 rounded-md overflow-auto text-xs text-gray-200 whitespace-pre-wrap">
-                <code>{aiResponseContent}</code>
-              </pre>
-              <p className="text-gray-400 italic mt-2">
-                The AI did not return a response in the expected structured JSON format for file changes, or an error occurred.
-                Ensure your prompt explicitly asks for JSON matching the LLMOutput interface.
-              </p>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Go Back Home */}
-      <div className="mt-8 text-center">
-        <Link
-          to="/"
-          className="inline-flex items-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg shadow-md hover:bg-gray-600 transition-colors"
+        <Button
+          variant="contained"
+          color="success"
+          onClick={handleGenerateCode}
+          disabled={
+            loading || !instruction || !isLoggedIn || !currentProjectPath || applyingChanges
+          }
+          sx={{ mt: 3, py: 1.5, px: 4, fontSize: '1.05rem' }}
         >
-          Go Back Home
-        </Link>
-      </div>
-    </div>
+          {loading ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : null}
+          Generate/Modify Code
+        </Button>
+
+        {error && (
+          <Alert severity="error" sx={{ mt: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        {applyingChanges && ( // Show applying changes indicator
+          <Alert severity="info" sx={{ mt: 3 }}>
+            Applying selected changes...
+            <CircularProgress size={16} color="inherit" sx={{ ml: 1 }} />
+          </Alert>
+        )}
+
+        {appliedMessages.length > 0 && ( // Show messages after applying changes
+          <Paper
+            elevation={1}
+            sx={{ mt: 3, p: 2, bgcolor: 'background.paper', border: '1px solid #ddd' }}
+          >
+            <Typography variant="h6" className="!font-semibold !text-gray-800" gutterBottom>
+              Application Summary:
+            </Typography>
+            <Box
+              sx={{
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                p: 1,
+                bgcolor: 'grey.50',
+                borderRadius: 1,
+              }}
+            >
+              {appliedMessages.map((msg, index) => (
+                <Typography key={index} component="div" sx={{ mb: 0.5 }}>
+                  {msg}
+                </Typography>
+              ))}
+            </Box>
+          </Paper>
+        )}
+
+        {lastLlmResponse && (
+          <Paper elevation={1} sx={{ mt: 3, p: 3, bgcolor: 'background.paper' }}>
+            <Typography variant="h5" className="!font-bold !text-blue-700" gutterBottom>
+              AI Proposed Changes:
+            </Typography>
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              {lastLlmResponse.summary}
+            </Typography>
+            {lastLlmResponse.thoughtProcess && (
+              <Accordion sx={{ mb: 2 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography variant="subtitle1" className="!font-semibold">
+                    AI Thought Process
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography
+                    sx={{
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: 'monospace',
+                      bgcolor: 'grey.50',
+                      p: 2,
+                      borderRadius: 1,
+                      overflowX: 'auto',
+                    }}
+                  >
+                    {lastLlmResponse.thoughtProcess}
+                  </Typography>
+                </AccordionDetails>
+              </Accordion>
+            )}
+
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={selectAllChanges}
+                disabled={loading || applyingChanges}
+              >
+                Select All
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={deselectAllChanges}
+                disabled={loading || applyingChanges}
+              >
+                Deselect All
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleApplySelectedChanges}
+                disabled={loading || applyingChanges || Object.keys(selectedChanges).length === 0}
+                startIcon={applyingChanges ? <CircularProgress size={16} color="inherit" /> : null}
+              >
+                {applyingChanges ? 'Applying...' : 'Apply Selected Changes'}
+              </Button>
+            </Box>
+
+            <Typography
+              variant="h6"
+              className="!font-semibold !text-gray-800"
+              sx={{ mt: 3, mb: 2 }}
+            >
+              Detailed Changes:
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {lastLlmResponse.changes.map((change, index) => (
+                <Paper key={index} elevation={2} sx={{ p: 2, bgcolor: 'background.paper' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={!!selectedChanges[change.filePath]}
+                          onChange={() => handleToggleChange(change)}
+                          disabled={loading || applyingChanges}
+                        />
+                      }
+                      label={
+                        <Chip
+                          label={change.action.toUpperCase()}
+                          color={getFileActionChipColor(change.action)}
+                          size="small"
+                          sx={{ mr: 1 }}
+                        />
+                      }
+                    />
+                    <Typography variant="body1" sx={{ fontFamily: 'monospace', flexGrow: 1 }}>
+                      {change.filePath}
+                    </Typography>
+                    <Button
+                      size="small"
+                      onClick={() => handleShowDiff(change)}
+                      disabled={loading || applyingChanges}
+                    >
+                      Show Diff
+                    </Button>
+                  </Box>
+                  {change.reason && (
+                    <Typography variant="body2" color="text.secondary" sx={{ pl: 4, mb: 1 }}>
+                      Reason: {change.reason}
+                    </Typography>
+                  )}
+
+                  {diffFilePath === change.filePath && currentDiff && (
+                    <DiffViewer diffContent={currentDiff} filePath={change.filePath} />
+                  )}
+                </Paper>
+              ))}
+            </Box>
+          </Paper>
+        )}
+      </Paper>
+    </Container>
   );
-}
+};
+
+export default AiEditorPage;

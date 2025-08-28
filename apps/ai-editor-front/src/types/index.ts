@@ -1,51 +1,30 @@
-export interface ScannedFile {
-  filePath: string; // Absolute path to the file
-  relativePath: string; // Path relative to the project root (e.g., "src/components/MyComponent.tsx")
+import { ProposedFileChange } from './llm';
+import { LlmResponse } from './llm';
+
+export interface FileEntry {
+  name: string;
+  filePath: string; // Changed from 'path' to 'filePath'
+  type: 'file' | 'directory';
+  size?: number;
+  lastModified?: string;
+}
+
+export interface FileContentResponse {
   content: string;
+  filePath: string;
 }
 
-/**
- * Represents a proposed change to a file.
- * This is the structured output we expect from the LLM.
- */
-export interface ProposedFileChange {
-  filePath: string; // Path relative to the project root (e.g., "src/components/MyComponent.tsx")
-  action: "add" | "modify" | "delete";
-  /**
-   * For 'add' or 'modify' actions, this is the new content of the file.
-   * For 'delete' actions, this field is not used.
-   */
-  newContent?: string;
-  /**
-   * An optional human-readable reason or summary for the change.
-   */
-  reason?: string;
-}
-
-/**
- * Represents the structured input that will be sent to the LLM.
- */
-export interface LLMInput {
-  userPrompt: string;
-  projectRoot: string;
-  projectStructure: string; // A high-level overview of the project directory (e.g., tree string)
-  relevantFiles: ScannedFile[];
-  additionalInstructions: string; // Specific behavioral instructions for the LLM
-  expectedOutputFormat: string; // Instructions on the JSON format for the LLM's response
-  scanPaths: string[]; // Added scanPaths for LLM context based on CLI changes
-}
-
-/**
- * Represents the structured output received from the LLM.
- */
-export interface LLMOutput {
-  changes: ProposedFileChange[];
-  summary: string; // A concise summary of all changes made/proposed
-  thoughtProcess?: string; // LLM's detailed reasoning for the changes
-}
-
-// Frontend specific types for UI state
-export interface FrontendProposedFileChange extends ProposedFileChange {
-  status: "pending" | "accepted" | "rejected";
-  // relativePath is no longer needed here as ProposedFileChange.filePath is now relative
+export interface AiEditorState {
+  instruction: string;
+  currentProjectPath: string | null;
+  response: string | null; // AI's last raw response string
+  loading: boolean;
+  error: string | null;
+  scanPathsInput: string; // Add scanPathsInput to the state
+  lastLlmResponse: LlmResponse | null; // Stores the full structured response from LLM
+  selectedChanges: Record<string, ProposedFileChange>; // Map of filePath to ProposedFileChange
+  currentDiff: string | null; // The content of the diff for the currently viewed file
+  diffFilePath: string | null; // The filePath of the file whose diff is currently displayed
+  applyingChanges: boolean; // Indicates if apply changes operation is in progress
+  appliedMessages: string[]; // Messages from the backend after applying changes
 }

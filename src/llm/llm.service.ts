@@ -59,10 +59,11 @@ export class LlmService implements OnModuleInit {
 
   private async buildLLMPrompt(
     llmInput: LlmInputDto,
-    projectRoot: string,
+    scannedFiles: ScannedFileDto[], // Use the scanned files directly
+    projectStructure: string,
   ): Promise<string> {
     // Map each file to a promise that resolves to its formatted string content
-    const fileContentPromises = llmInput.relevantFiles.map(async (file) => {
+    const fileContentPromises = scannedFiles.map(async (file) => {
       // No need for 'await' here, as the string interpolation is synchronous
       return `// File: ${file.relativePath}\n${file.content}`;
     });
@@ -81,7 +82,7 @@ export class LlmService implements OnModuleInit {
       \`\`\`
       
       ## Project Context
-      ${llmInput.projectStructure}
+      ${projectStructure}
       
       ### Relevant Files (for analysis)
       \`\`\`files
@@ -147,22 +148,18 @@ export class LlmService implements OnModuleInit {
       );
     }
   }
-  async generateContent(
-    llmInput: LlmInputDto,
-    projectRoot: string,
-  ): Promise<LlmOutputDto> {
+  async generateContent(llmInput: LlmInputDto): Promise<LlmOutputDto> {
     this.ensureLlmModuleEnabled();
 
-    const relevantFiles = await this.fileService.scan(
-      llmInput.scanPaths,
-      projectRoot,
-    );
-    const projectStructure = await this.generateProjectStructure(projectRoot);
+    const projectRoot = llmInput.projectRoot; // Get projectRoot from DTO
+    const scanPaths = llmInput.scanPaths;
 
-    const fullPrompt = await this.buildLLMPrompt(
-      { ...llmInput, relevantFiles, projectStructure },
-      projectRoot,
-    );
+    // 1. Scan files based on the provided projectRoot and scanPaths
+    const scannedFiles = await this.fileService.scan(scanPaths, projectRoot, false); // verbose false by default
+    const projectStructure = await this.generateProjectStructure(projectRoot); // Generate project structure
+
+    // 2. Build the LLM prompt with the dynamically scanned files and project structure
+    const fullPrompt = await this.buildLLMPrompt(llmInput, scannedFiles, projectStructure);
     const systemInstructionForLLM = `${llmInput.additionalInstructions}\n\n${llmInput.expectedOutputFormat}`;
 
     this.logger.log('\n--- Prompt sent to LLM ---');
@@ -211,6 +208,10 @@ export class LlmService implements OnModuleInit {
           if (repairedJsonString.valid && repairedJsonString.repairedJson) {
             parsedResult = JSON.parse(repairedJsonString.repairedJson);
             this.logger.log('JSON parsing succeeded after repair.');
+          } else {
+            throw new Error(
+              JSON.stringify(repairedJsonString) || 'JSON repair failed to produce valid JSON',
+            );
           }
         } catch (repairError: unknown) {
           this.logger.error(

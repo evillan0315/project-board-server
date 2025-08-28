@@ -1,1 +1,161 @@
-# AI Editor Frontend\n\nThis project provides the frontend for an AI-powered editor, built with React, TypeScript, and Tailwind CSS. It is part of a larger monorepo that also includes a command-line interface (CLI) tool for AI code generation.\n\n## Project Structure\n\n- `src/App.tsx`: Main application entry point, setting up routing.\n- `src/components/`: Reusable UI components like `Layout.tsx` and `Button.tsx`.\n- `src/pages/`: Top-level page components, including `LandingPage.tsx`, `AuthPage.tsx`, and `AiEditorPage.tsx`.\n- `src/routes/`: Centralized routing configuration for the application.\n- `src/api/`: API client functions for interacting with the backend (e.g., authentication).\n- `src/context/`: React Contexts for global state management (e.g., `AuthContext.tsx`).\n- `src/hooks/`: Custom React Hooks.\n- `src/stores/`: Nanostores for simple, reactive state management.\n- `src/types/`: TypeScript type definitions.\n- `src/utils/`: Utility functions (e.g., JSON parsing helpers).\n- `src/index.css`: Global CSS, primarily for Tailwind CSS directives and custom properties.\n- `vite.config.ts`: Vite configuration, including path aliases and proxy settings.\n- `package.json`: Project dependencies and scripts.\n\n## Getting Started\n\nFollow these steps to set up and run the AI Editor Frontend locally.\n\n### Prerequisites\n\n- Node.js (LTS version recommended, e.g., 18.x or 20.x)\n- npm (Node Package Manager) or yarn or pnpm\n\n### Installation\n\n1. Navigate to the project root for the frontend application:\n `bash\ncd apps/ai-editor-front\n    `\n2. Install the dependencies:\n `bash\nnpm install\n# or yarn install\n# or pnpm install\n    `\n\n### Environment Variables\n\nCreate a `.env` file in the `apps/ai-editor-front` directory (same level as `package.json`). This file will store sensitive or environment-specific configuration.\n\nExample `.env` file:\n\n`env\nVITE_API_URL=http://localhost:3000 # Replace with your backend API URL\nGITHUB_CALLBACK_URL=http://localhost:5173/login # Your frontend's login page URL for GitHub OAuth callback\nGOOGLE_CALLBACK_URL=http://localhost:5173/login # Your frontend's login page URL for Google OAuth callback\n`\n\n- **`VITE_API_URL`**: The base URL of your AI Editor backend API. This is used by Vite's proxy to forward API requests (e.g., `/api/llm/generate-llm`) to your backend.\n- **`GITHUB_CALLBACK_URL`**: The URL where GitHub will redirect after successful OAuth authentication. This should point to your frontend's login page (e.g., `http://localhost:5173/login` for local development).\n- **`GOOGLE_CALLBACK_URL`**: The URL where Google will redirect after successful OAuth authentication. Similar to GitHub, this should point to your frontend's login page.\n- **`PROJECT_ROOT`**: This variable (`import.meta.env.PROJECT_ROOT` in code) is automatically defined by Vite using `process.cwd()` when `npm run dev` is executed. **It's critical that you run `npm run dev` from the `apps/ai-editor-front` directory** for this to correctly point to the root of this frontend application. This value serves as the initial `projectRoot` sent to the AI backend services for code generation and modifications. Users can dynamically change this 'AI Project Root' via the UI in the `AiEditorPage`.\n\n### Running the Application\n\nOnce dependencies are installed and `.env` is configured, you can start the development server:\n\n`bash\nnpm run dev\n# The application will typically be available at http://localhost:5173\n`\n\n## Available Scripts\n\nFrom this directory (`apps/ai-editor-front/`):\n\n- `npm run dev`: Starts the development server.\n- `npm run build`: Builds the project for production.\n- `npm run lint`: Runs ESLint for code quality checks.\n- `npm run preview`: Previews the production build.\n\n## Technologies Used\n\n- **React**: For building the user interface.\n- **TypeScript**: For type safety and better developer experience.\n- **Tailwind CSS**: For utility-first styling (v4).\n- **React Router DOM**: For declarative routing.\n- **Vite**: As a fast development build tool.\n- **Nanostores**: For lightweight global state management.\n\n## Expanding ESLint Configuration\n\nFor stricter type-aware linting, you can update your `eslint.config.ts` by replacing `tseslint.configs.recommended` with the following:\n\n`js\nexport default tseslint.config([\n  // ... other configs\n  {\n    files: ['**/*.{ts,tsx}'],\n    extends: [\n      ...tseslint.configs.recommendedTypeChecked,\n      // Alternatively, use this for stricter rules\n      // ...tseslint.configs.strictTypeChecked,\n      // Optionally, add this for stylistic rules\n      // ...tseslint.configs.stylisticTypeChecked,\n    ],\n    languageOptions: {\n      parserOptions: {\n        project: ['./tsconfig.node.json', './tsconfig.app.json'],\n        tsconfigRootDir: import.meta.dirname,\n      },\n    },\n  },\n  // ... other configs\n])\n`\n\nYou can also integrate React-specific lint rules by installing `eslint-plugin-react-x` and `eslint-plugin-react-dom` and adding them to your `extends` array:\n\n`js\n// eslint.config.js\nimport reactX from 'eslint-plugin-react-x'\nimport reactDom from 'eslint-plugin-react-dom'\n\nexport default tseslint.config([\n  // ... other configs\n  {\n    files: ['**/*.{ts,tsx}'],\n    extends: [\n      // ... other extends\n      reactX.configs['recommended-typescript'],\n      reactDom.configs.recommended,\n    ],\n    // ...\n  },\n])\n`\n
+# 🚀 AI Editor Frontend
+
+[![License](https://img.shields.io/github/license/your-username/your-repo)](LICENSE)
+[![Issues](https://img.shields.io/github/issues/your-username/your-repo)](https://github.com/your-username/your-repo/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/your-username/your-repo)](https://github.com/your-username/your-repo/pulls)
+[![Last Commit](https://img.shields.io/github/last-commit/your-username/your-repo)](https://github.com/your-username/your-repo/commits)
+
+> A React frontend for the AI Editor backend, built with Vite, React, Nanostores, Tailwind CSS, and Material-UI.
+
+---
+
+## 📖 Table of Contents
+
+- [Features](#-features)
+- [Project Structure](#-project-structure)
+- [Requirements](#-requirements)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [API Reference](#-api-reference)
+- [Environment Variables](#-environment-variables)
+- [Testing](#-testing)
+- [Deployment](#-deployment)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Acknowledgements](#-acknowledgements)
+- [Contact](#-contact)
+
+---
+
+## ✨ Features
+
+- ⚡ AI-powered file modification and generation
+- 🔒 Secure authentication with Google & GitHub OAuth2
+- 🌍 Responsive UI with Tailwind CSS and Material-UI
+- 📂 File system browsing and diff visualization
+
+---
+
+## 📂 Project Structure
+
+```bash
+apps/ai-editor-front/
+├── src/              # Source code
+├── docs/             # Documentation
+├── tests/            # Unit and integration tests
+├── .env.example      # Example environment variables
+├── package.json      # Dependencies & scripts
+└── README.md         # Project documentation
+```
+
+---
+
+## 📋 Requirements
+
+- Node.js >= 18
+- AI Editor Backend (running)
+
+---
+
+## 🛠️ Installation
+
+```bash
+# Navigate to the project root and then to this app
+cd full-stack/apps/ai-editor-front
+
+# Install dependencies
+pnpm install # or npm install / yarn install
+```
+
+---
+
+## ⚙️ Usage
+
+```bash
+# Development server
+pnpm run dev
+
+# Build for production
+pnpm run build
+
+# Start production build
+pnpm run preview
+```
+
+---
+
+## 📖 API Reference
+
+Refer to the main `ai-editor` backend documentation for API details.
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file in the root directory of `apps/ai-editor-front`.
+
+```ini
+VITE_API_URL=http://localhost:3000 # Or wherever your backend API is running
+VITE_FRONTEND_URL=http://localhost:3001 # Or your deployed frontend URL
+VITE_BASE_DIR=/path/to/your/project/root # Example: /media/eddie/Data/projects/nestJS/nest-modules/full-stack/apps/ai-editor
+GITHUB_CALLBACK_URL=/auth/github/callback
+GOOGLE_CALLBACK_URL=/auth/google/callback
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# With coverage
+npm run test:coverage
+```
+
+---
+
+## 📦 Deployment
+
+- **Vercel**
+  [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/your-username/your-repo)
+
+---
+
+## 📊 Roadmap
+
+- [ ] Visualize and apply AI-generated diffs
+- [ ] Real-time updates via WebSockets
+- [ ] Implement a file tree view for browsing
+- [ ] Add ability to save AI-generated changes
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+Please read [CONTRIBUTING.md](../../CONTRIBUTING.md) for details.
+
+---
+
+## 📜 License
+
+Distributed under the MIT License. See [LICENSE](../../LICENSE) for more information.
+
+---
+
+## 🙌 Acknowledgements
+
+- [React](https://react.dev/)
+- [Vite](https://vitejs.dev/)
+- [Nanostores](https://nanostores.github.io/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Material-UI](https://mui.com/)
+
+---
+
+## 📬 Contact
+
+Created by [@evillan0315](https://github.com/evillan0315) – feel free to reach out!
