@@ -21,6 +21,9 @@ import { lookup as mimeLookup } from 'mime-types';
 import { get as httpGet } from 'http';
 import { get as httpsGet } from 'https';
 import { URL } from 'url';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
 import { ModuleControlService } from '../module-control/module-control.service';
 import { CreateFileDto } from './dto/create-file.dto';
 import { ReadFileResponseDto } from './dto/read-file-response.dto';
@@ -36,6 +39,9 @@ import { REQUEST } from '@nestjs/core';
 import { Request, Response } from 'express';
 
 import { UtilsService } from '../utils/utils.service';
+import { FileAction, ProposedFileChangeDto } from 'src/llm/dto'; // Import FileAction enum and ProposedFileChangeDto
+
+const execAsync = promisify(exec);
 
 @Injectable()
 export class FileService implements OnModuleInit {
@@ -54,6 +60,7 @@ export class FileService implements OnModuleInit {
     '.json',
     '.md',
     '.yml',
+    '.yaml',
     '.html',
     '.css',
     '.scss',
@@ -110,8 +117,13 @@ export class FileService implements OnModuleInit {
     'yarn.lock',
     'pnpm-lock.yaml',
     '.DS_Store',
-    '.env',
     '.env.local',
+    '.env.development',
+    '.env.production',
+    'vite.config.ts.timestamp-1721727725916-d8f95c6999a46.mjs', // Temporary vite files
+    '.eslintrc.cjs', // Common ESLint config file
+    '.prettierrc.cjs', // Common Prettier config file
+    'ecosystem.config.cjs', // PM2 config
   ]);
 
   private static readonly RELEVANT_CONFIG_FILENAMES_FOR_SCAN = new Set([
@@ -131,9 +143,7 @@ export class FileService implements OnModuleInit {
     'README.txt',
     'biome.json',
     'jest.config.ts',
-    '.env.local',
-    '.env.development',
-    '.env.production',
+    '.env',
   ]);
   // --- END: New properties for the `scan` method's file/dir filtering ---
 
@@ -548,27 +558,30 @@ export class FileService implements OnModuleInit {
     let pathsToProcess: string[];
 
     // --- START: Implemented logic based on the interpretation ---
-    if (scanPaths.length === 0) {
-      // If no specific paths are provided, default to scanning the entire project root.
+    if (scanPaths.length === 0 || (scanPaths.length === 1 && scanPaths[0] === '.')) {
+      // If no specific paths are provided or only '.' is provided, default to scanning the entire project root.
       pathsToProcess = [projectRoot];
       this.logger.log(
         `Starting comprehensive file scan from project root: ${projectRoot}. No specific scan paths provided, defaulting to scanning the entire project root.`,
       );
     } else {
       // If specific paths are provided, only scan those paths.
-      pathsToProcess = scanPaths;
+      // Resolve all provided scan paths relative to the projectRoot.
+      pathsToProcess = scanPaths.map((p) => path.resolve(projectRoot, p));
+
       this.logger.log(
         `Starting comprehensive file scan from project root: ${projectRoot}. Specific scan paths provided.`,
       );
       if (verbose) {
         this.logger.debug(`Scan paths received: ${scanPaths.join(', ')}`);
+        this.logger.debug(`Resolved paths for scan: ${pathsToProcess.join(', ')}`);
       }
     }
     // --- END: Implemented logic ---
 
     for (const currentPath of pathsToProcess) {
       // Loop over the determined pathsToProcess
-      const absolutePath = path.resolve(projectRoot, currentPath);
+      const absolutePath = path.resolve(currentPath); // Already resolved above if scanPaths were provided
 
       if (processedAbsolutePaths.has(absolutePath)) {
         if (verbose) {
@@ -618,7 +631,10 @@ export class FileService implements OnModuleInit {
       } else if (stats.isDirectory()) {
         // Additional check for the top-level directory itself if it was explicitly passed
         // This is mainly relevant if projectRoot itself is being scanned as a single entry
-        if (currentPath !== projectRoot && this.isExcludedDirForScan(path.basename(absolutePath))) {
+        if (
+          absolutePath !== projectRoot &&
+          this.isExcludedDirForScan(path.basename(absolutePath))
+        ) {
           if (verbose) {
             this.logger.debug(
               `  Excluding top-level directory for scan: ${path.relative(projectRoot, absolutePath)}`,
@@ -1095,6 +1111,154 @@ export class FileService implements OnModuleInit {
 
     await walk(resolvedDir);
     return results;
+  }
+
+  /**
+   * Applies a list of proposed file changes (add, modify, delete).
+   * @param changes An array of ProposedFileChangeDto describing the actions.
+   * @param projectRoot The root directory of the project for context.
+   * @returns A summary of applied changes.
+   */
+  async applyFileChanges(
+    changes: ProposedFileChangeDto[],
+    projectRoot: string,
+  ): Promise<{ success: boolean; messages: string[] }> {
+    this.ensureFileModuleEnabled();
+    const messages: string[] = [];
+
+    for (const change of changes) {
+      const absolutePath = path.resolve(projectRoot, change.filePath);
+      this.logger.log(`Applying change: ${change.action} ${absolutePath}`);
+
+      try {
+        switch (change.action) {
+          case FileAction.ADD:
+            // Ensure parent directory exists before writing file
+            await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+            await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
+            messages.push(`Added file: ${change.filePath}`);
+            break;
+          case FileAction.MODIFY:
+            await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
+            messages.push(`Modified file: ${change.filePath}`);
+            break;
+          case FileAction.DELETE:
+            if (await fsExtra.pathExists(absolutePath)) {
+              await fs.unlink(absolutePath);
+              messages.push(`Deleted file: ${change.filePath}`);
+            } else {
+              messages.push(`Skipped delete: File not found ${change.filePath}`);
+            }
+            break;
+          default:
+            this.logger.warn(`Unknown file action: ${change.action} for ${change.filePath}`);
+            messages.push(`Skipped unknown action: ${change.action} for ${change.filePath}`);
+            break;
+        }
+      } catch (error) {
+        this.logger.error(
+          `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
+          (error as Error).stack,
+        );
+        messages.push(
+          `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
+        );
+        // Optionally, re-throw or handle critical errors differently
+      }
+    }
+    return { success: true, messages };
+  }
+
+  /**
+   * Generates a git diff for a specific file relative to its current HEAD.
+   * Assumes the projectRoot is a Git repository.
+   * @param filePath The absolute path to the file.
+   * @param projectRoot The absolute path to the Git repository root.
+   * @returns A string containing the git diff, or an empty string if no changes or error.
+   */
+  async getGitDiff(filePath: string, projectRoot: string): Promise<string> {
+    this.ensureFileModuleEnabled();
+
+    const absoluteFilePath = path.resolve(filePath);
+    const absoluteProjectRoot = path.resolve(projectRoot);
+
+    try {
+      // Check if projectRoot is a git repository
+      const { stdout: gitRootOutput } = await execAsync('git rev-parse --is-inside-work-tree', {
+        cwd: absoluteProjectRoot,
+      });
+      if (gitRootOutput.trim() !== 'true') {
+        throw new BadRequestException(`Directory ${projectRoot} is not a Git repository.`);
+      }
+
+      // Check if the file exists and is tracked by Git
+      const relativeFilePath = path.relative(absoluteProjectRoot, absoluteFilePath);
+      try {
+        await execAsync(`git ls-files --error-unmatch "${relativeFilePath}"`, {
+          cwd: absoluteProjectRoot,
+        });
+      } catch (lsFilesError) {
+        // If git ls-files --error-unmatch fails, it means the file is not tracked.
+        // We can still try to get diff if it's an untracked file, but it will be against /dev/null
+        // For simplicity, let's first get diff against HEAD if tracked, else against working tree.
+        // A simpler initial approach: diff against the working tree if it exists.
+        if (!(await fsExtra.pathExists(absoluteFilePath))) {
+          throw new NotFoundException(`File not found: ${filePath}`);
+        }
+        this.logger.warn(
+          `File ${filePath} is not tracked by Git. Generating diff against /dev/null.`,
+        );
+        // To get a diff for an untracked file, we compare it against an empty file or its last known state.
+        // git diff --no-index /dev/null <file> shows it as an addition.
+        // Or, for a tracked file, git diff <file>.
+        // Let's use `git diff <file>` which works for both staged and unstaged changes for tracked files,
+        // and `git diff --no-index /dev/null <file>` for untracked files if that's what's intended for 'newContent' diffs.
+        // For the purpose of showing what 'newContent' *would* look like compared to current disk state,
+        // a simple `diff` command or a library might be better. But if we want *git* diff, it implies it's either staged/unstaged.
+        // If the file is untracked, `git diff <file>` won't work.
+        // `git diff --no-index /dev/null ${relativeFilePath}` will show it as an added file.
+        // `git diff ${relativeFilePath}` works for both staged and unstaged changes of tracked files.
+        // We want to show the diff of the *current* file content on disk vs. what's in git.
+        try {
+          const { stdout } = await execAsync(`git diff "${relativeFilePath}"`, {
+            cwd: absoluteProjectRoot,
+          });
+          return stdout.trim();
+        } catch (innerDiffError) {
+          // If file is untracked, git diff <file> will likely fail. Use --no-index.
+          this.logger.warn(
+            `git diff failed for ${relativeFilePath}, trying git diff --no-index: ${(innerDiffError as Error).message}`,
+          );
+          try {
+            const { stdout } = await execAsync(
+              `git diff --no-index /dev/null "${relativeFilePath}"`, // Shows it as a new file
+              { cwd: absoluteProjectRoot },
+            );
+            return stdout.trim();
+          } catch (noIndexDiffError) {
+            this.logger.error(
+              `Failed to generate diff for ${filePath} even with --no-index: ${(noIndexDiffError as Error).message}`,
+            );
+            return `Error generating diff: ${(noIndexDiffError as Error).message}`;
+          }
+        }
+      }
+
+      // If the file is tracked, `git diff <file>` will show changes against the index/HEAD.
+      const { stdout } = await execAsync(`git diff "${relativeFilePath}"`, {
+        cwd: absoluteProjectRoot,
+      });
+      return stdout.trim();
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      this.logger.error(
+        `Failed to generate git diff for ${filePath}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      return `Error generating git diff: ${(error as Error).message}`;
+    }
   }
 
   /**

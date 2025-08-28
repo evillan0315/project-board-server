@@ -439,6 +439,77 @@
         ]
       }
     },
+    "/api/auth/forgot-password": {
+      "post": {
+        "operationId": "AuthController_forgotPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "If a matching account was found, a password reset email has been sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "If a matching account was found, a password reset email has been sent."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Request a password reset link for the given email",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password has been successfully reset.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Password has been successfully reset."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired password reset token."
+          }
+        },
+        "summary": "Reset user password using a provided token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/auth/me": {
       "get": {
         "operationId": "AuthController_me",
@@ -1809,6 +1880,143 @@
           }
         ],
         "summary": "Scans specified directories and files for relevant code files",
+        "tags": [
+          "File & Folder"
+        ]
+      }
+    },
+    "/api/file/apply-changes": {
+      "post": {
+        "operationId": "FileController_applyChanges",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyChangesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully applied selected file changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input for proposed changes."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to apply file changes."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Apply proposed AI-generated file changes",
+        "tags": [
+          "File & Folder"
+        ]
+      }
+    },
+    "/api/file/git-diff": {
+      "post": {
+        "operationId": "FileController_getDiff",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filePath": {
+                    "type": "string",
+                    "example": "/path/to/project/src/file.ts"
+                  },
+                  "projectRoot": {
+                    "type": "string",
+                    "example": "/path/to/project"
+                  }
+                },
+                "required": [
+                  "filePath",
+                  "projectRoot"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Git diff successfully generated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "diff": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or not a Git repository."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "File not found in the repository."
+          },
+          "500": {
+            "description": "Failed to generate git diff."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get git diff for a specific file",
         "tags": [
           "File & Folder"
         ]
@@ -3555,6 +3763,303 @@
         "summary": "Attempt to repair invalid JSON",
         "tags": [
           "Utilities"
+        ]
+      }
+    },
+    "/api/database/tables": {
+      "get": {
+        "operationId": "DatabaseController_getTables",
+        "parameters": [
+          {
+            "name": "connectionString",
+            "required": false,
+            "in": "query",
+            "description": "Optional custom database connection string. Defaults to DATABASE_URL if omitted.",
+            "schema": {
+              "example": "postgresql://postgres:password@localhost:5432/mydb",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dbType",
+            "required": true,
+            "in": "query",
+            "description": "Type of database",
+            "schema": {
+              "enum": [
+                "postgres",
+                "mysql",
+                "mongodb"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tables with column metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": [
+                    {
+                      "tableName": "users",
+                      "columns": [
+                        {
+                          "column_name": "id",
+                          "data_type": "integer",
+                          "is_nullable": "NO",
+                          "column_default": "nextval('users_id_seq'::regclass)"
+                        },
+                        {
+                          "column_name": "email",
+                          "data_type": "text",
+                          "is_nullable": "NO",
+                          "column_default": null
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all tables and their columns",
+        "tags": [
+          "Database"
+        ]
+      }
+    },
+    "/api/database/create-table": {
+      "post": {
+        "operationId": "DatabaseController_createTable",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTableDto"
+              },
+              "examples": {
+                "example1": {
+                  "summary": "Create users table",
+                  "value": {
+                    "connectionString": "postgresql://postgres:password@localhost:5432/mydb",
+                    "dbType": "postgres",
+                    "tableName": "users",
+                    "columns": [
+                      {
+                        "columnName": "id",
+                        "dataType": "SERIAL PRIMARY KEY"
+                      },
+                      {
+                        "columnName": "email",
+                        "dataType": "TEXT NOT NULL"
+                      },
+                      {
+                        "columnName": "created_at",
+                        "dataType": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Table created successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new table",
+        "tags": [
+          "Database"
+        ]
+      }
+    },
+    "/api/database/columns": {
+      "get": {
+        "operationId": "DatabaseController_getTableColumns",
+        "parameters": [
+          {
+            "name": "connectionString",
+            "required": false,
+            "in": "query",
+            "description": "PostgreSQL connection string",
+            "schema": {
+              "example": "postgresql://postgres:password@localhost:5432/mydb",
+              "type": "string"
+            }
+          },
+          {
+            "name": "tableName",
+            "required": true,
+            "in": "query",
+            "description": "Name of the table to query columns from",
+            "schema": {
+              "example": "users",
+              "type": "string"
+            }
+          },
+          {
+            "name": "columnName",
+            "required": false,
+            "in": "query",
+            "description": "Filter by column name (optional)",
+            "schema": {
+              "example": "email",
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by data type (optional)",
+            "schema": {
+              "example": "text",
+              "type": "string"
+            }
+          },
+          {
+            "name": "isNullable",
+            "required": false,
+            "in": "query",
+            "description": "Filter by nullable status (optional)",
+            "schema": {
+              "example": "NO",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of column metadata matching filters",
+            "schema": {
+              "example": [
+                {
+                  "column_name": "id",
+                  "data_type": "integer",
+                  "is_nullable": "NO",
+                  "column_default": "nextval('users_id_seq'::regclass)"
+                },
+                {
+                  "column_name": "email",
+                  "data_type": "text",
+                  "is_nullable": "NO",
+                  "column_default": null
+                }
+              ]
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ColumnMetadataDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all columns from a specific table with optional filters",
+        "tags": [
+          "Database"
+        ]
+      }
+    },
+    "/api/database/execute": {
+      "post": {
+        "operationId": "DatabaseController_executeSql",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteSqlDto"
+              },
+              "examples": {
+                "validQuery": {
+                  "summary": "Example of a SELECT query on the Documentation table",
+                  "value": {
+                    "sql": "SELECT * FROM \"Documentation\";",
+                    "connectionString": "postgresql://postgres:postgres@localhost:5432/appdb",
+                    "dbType": "postgres"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SQL execution result"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Execute raw SQL against the target database",
+        "tags": [
+          "Database"
         ]
       }
     },
@@ -11032,17 +11537,7 @@
     "/api/llm/generate-llm": {
       "post": {
         "operationId": "LlmController_generateContent",
-        "parameters": [
-          {
-            "name": "projectRoot",
-            "required": true,
-            "in": "query",
-            "description": "Absolute path to the project root directory. Files will be scanned and proposed changes will be relative to this root.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -12444,6 +12939,315 @@
           "Media"
         ]
       }
+    },
+    "/bulk-data/import": {
+      "post": {
+        "description": "Imports data from JSON, SQL, or CSV format. Can receive data either directly in the request body or as an uploaded file.",
+        "operationId": "BulkDataController_import",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Data to import. If uploading a file, specify format as a form field. If providing data in body, use application/json or text/plain.",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "format": {
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "sql",
+                          "csv"
+                        ],
+                        "example": "json",
+                        "description": "The format of the data to be imported (JSON, SQL, or CSV string)."
+                      },
+                      "data": {
+                        "type": "string",
+                        "description": "The data string to be imported. Required if no file is uploaded."
+                      }
+                    },
+                    "required": [
+                      "format"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "format": {
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "sql",
+                          "csv"
+                        ],
+                        "example": "csv",
+                        "description": "The format of the data in the uploaded file."
+                      },
+                      "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "The file containing the bulk data."
+                      }
+                    },
+                    "required": [
+                      "format",
+                      "file"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "jsonBody": {
+                  "summary": "Import JSON data via Request Body",
+                  "description": "Set Content-Type: application/json. Format is inferred from the DTO structure.",
+                  "value": {
+                    "format": "json",
+                    "data": "[\n  {\n    \"name\": \"Example User 1\",\n    \"email\": \"user1@example.com\",\n    \"age\": 22\n  },\n  {\n    \"name\": \"Example User 2\",\n    \"email\": \"user2@example.com\",\n    \"age\": 34\n  }\n]"
+                  }
+                },
+                "csvFile": {
+                  "summary": "Import CSV data via File Upload",
+                  "description": "Set Content-Type: multipart/form-data. File field name must be `file`.",
+                  "value": {
+                    "format": "csv",
+                    "file": "CSV content here"
+                  }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "format": {
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "sql",
+                          "csv"
+                        ],
+                        "example": "json",
+                        "description": "The format of the data to be imported (JSON, SQL, or CSV string)."
+                      },
+                      "data": {
+                        "type": "string",
+                        "description": "The data string to be imported. Required if no file is uploaded."
+                      }
+                    },
+                    "required": [
+                      "format"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "format": {
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "sql",
+                          "csv"
+                        ],
+                        "example": "csv",
+                        "description": "The format of the data in the uploaded file."
+                      },
+                      "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "The file containing the bulk data."
+                      }
+                    },
+                    "required": [
+                      "format",
+                      "file"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "jsonBody": {
+                  "summary": "Import JSON data via Request Body",
+                  "description": "Set Content-Type: application/json. Format is inferred from the DTO structure.",
+                  "value": {
+                    "format": "json",
+                    "data": "[\n  {\n    \"name\": \"Example User 1\",\n    \"email\": \"user1@example.com\",\n    \"age\": 22\n  },\n  {\n    \"name\": \"Example User 2\",\n    \"email\": \"user2@example.com\",\n    \"age\": 34\n  }\n]"
+                  }
+                },
+                "csvFile": {
+                  "summary": "Import CSV data via File Upload",
+                  "description": "Set Content-Type: multipart/form-data. File field name must be `file`.",
+                  "value": {
+                    "format": "csv",
+                    "file": "CSV content here"
+                  }
+                }
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "format": {
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "sql",
+                          "csv"
+                        ],
+                        "example": "json",
+                        "description": "The format of the data to be imported (JSON, SQL, or CSV string)."
+                      },
+                      "data": {
+                        "type": "string",
+                        "description": "The data string to be imported. Required if no file is uploaded."
+                      }
+                    },
+                    "required": [
+                      "format"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "format": {
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "sql",
+                          "csv"
+                        ],
+                        "example": "csv",
+                        "description": "The format of the data in the uploaded file."
+                      },
+                      "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "The file containing the bulk data."
+                      }
+                    },
+                    "required": [
+                      "format",
+                      "file"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "jsonBody": {
+                  "summary": "Import JSON data via Request Body",
+                  "description": "Set Content-Type: application/json. Format is inferred from the DTO structure.",
+                  "value": {
+                    "format": "json",
+                    "data": "[\n  {\n    \"name\": \"Example User 1\",\n    \"email\": \"user1@example.com\",\n    \"age\": 22\n  },\n  {\n    \"name\": \"Example User 2\",\n    \"email\": \"user2@example.com\",\n    \"age\": 34\n  }\n]"
+                  }
+                },
+                "csvFile": {
+                  "summary": "Import CSV data via File Upload",
+                  "description": "Set Content-Type: multipart/form-data. File field name must be `file`.",
+                  "value": {
+                    "format": "csv",
+                    "file": "CSV content here"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bulk data imported successfully."
+          },
+          "400": {
+            "description": "Invalid data or unsupported format."
+          }
+        },
+        "summary": "Import bulk data",
+        "tags": [
+          "Bulk Data Operations"
+        ]
+      }
+    },
+    "/bulk-data/export": {
+      "get": {
+        "description": "Exports all data for the configured model (e.g., User) in the specified format.",
+        "operationId": "BulkDataController_export",
+        "parameters": [
+          {
+            "name": "format",
+            "required": true,
+            "in": "query",
+            "description": "The desired export format.",
+            "schema": {
+              "enum": [
+                "json",
+                "sql",
+                "csv"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bulk data exported successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "number",
+                        "example": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                      },
+                      "email": {
+                        "type": "string",
+                        "example": "john.doe@example.com"
+                      },
+                      "age": {
+                        "type": "number",
+                        "example": 30
+                      }
+                    }
+                  }
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "INSERT INTO `users` (`id`, `name`, `email`, `age`) VALUES (1, 'John Doe', 'john.doe@example.com', 30);"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "example": "id,name,email,age\n1,John Doe,john.doe@example.com,30"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported format."
+          }
+        },
+        "summary": "Export bulk data",
+        "tags": [
+          "Bulk Data Operations"
+        ]
+      }
     }
   },
   "info": {
@@ -12651,6 +13455,38 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address of the user requesting password reset",
+            "example": "user@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Password reset token received via email"
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "New secure password for the user",
+            "example": "NewStrongPassword123",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "token",
+          "newPassword"
         ]
       },
       "AuthUserDto": {
@@ -13122,6 +13958,61 @@
           "content"
         ]
       },
+      "ProposedFileChangeDto": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The absolute or relative path of the file to be changed.",
+            "example": "src/components/WelcomeMessage.tsx"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "add",
+              "modify",
+              "delete"
+            ],
+            "description": "The type of operation to perform on the file.",
+            "example": "add"
+          },
+          "newContent": {
+            "type": "string",
+            "description": "The new content of the file for \"add\" or \"modify\" operations. Not applicable for \"delete\".",
+            "example": "import React from \"react\";\n\nconst WelcomeMessage = () => <div>Hello, AI User!</div>;\n\nexport default WelcomeMessage;"
+          },
+          "reason": {
+            "type": "string",
+            "description": "A brief explanation or justification for this specific file change.",
+            "example": "New component to display a welcome message."
+          }
+        },
+        "required": [
+          "filePath",
+          "action"
+        ]
+      },
+      "ApplyChangesDto": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "description": "Array of proposed file changes to apply.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProposedFileChangeDto"
+            }
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "The absolute path to the project root directory where changes should be applied.",
+            "example": "/path/to/your/project"
+          }
+        },
+        "required": [
+          "changes",
+          "projectRoot"
+        ]
+      },
       "RemoteFileEntryDto": {
         "type": "object",
         "properties": {
@@ -13443,6 +14334,114 @@
         },
         "required": [
           "json"
+        ]
+      },
+      "ColumnDto": {
+        "type": "object",
+        "properties": {
+          "columnName": {
+            "type": "string",
+            "example": "id"
+          },
+          "dataType": {
+            "type": "string",
+            "example": "integer"
+          }
+        },
+        "required": [
+          "columnName",
+          "dataType"
+        ]
+      },
+      "CreateTableDto": {
+        "type": "object",
+        "properties": {
+          "connectionString": {
+            "type": "string",
+            "example": "postgresql://user:pass@localhost:5432/db"
+          },
+          "tableName": {
+            "type": "string",
+            "example": "users"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnDto"
+            }
+          },
+          "dbType": {
+            "type": "string",
+            "example": "postgres",
+            "enum": [
+              "postgres",
+              "mysql",
+              "mongodb"
+            ]
+          }
+        },
+        "required": [
+          "connectionString",
+          "tableName",
+          "columns",
+          "dbType"
+        ]
+      },
+      "ColumnMetadataDto": {
+        "type": "object",
+        "properties": {
+          "column_name": {
+            "type": "string",
+            "example": "id"
+          },
+          "data_type": {
+            "type": "string",
+            "example": "integer"
+          },
+          "is_nullable": {
+            "type": "string",
+            "example": "NO",
+            "description": "Indicates whether the column is nullable"
+          },
+          "column_default": {
+            "type": "object",
+            "example": "nextval('users_id_seq'::regclass)",
+            "nullable": true
+          }
+        },
+        "required": [
+          "column_name",
+          "data_type",
+          "is_nullable",
+          "column_default"
+        ]
+      },
+      "ExecuteSqlDto": {
+        "type": "object",
+        "properties": {
+          "sql": {
+            "type": "string",
+            "example": "SELECT * FROM users;",
+            "description": "SQL script to be executed."
+          },
+          "connectionString": {
+            "type": "string",
+            "example": "postgresql://user:pass@localhost:5432/db",
+            "description": "Optional connection string. Defaults to DATABASE_URL."
+          },
+          "dbType": {
+            "type": "string",
+            "example": "postgres",
+            "enum": [
+              "postgres",
+              "mysql"
+            ],
+            "description": "Type of the database."
+          }
+        },
+        "required": [
+          "sql",
+          "dbType"
         ]
       },
       "SshCommandDto": {
@@ -13994,7 +14993,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-08-27T21:07:42.795Z",
+            "example": "2025-08-28T22:55:00.167Z",
             "format": "date-time"
           },
           "requestType": {
@@ -15921,21 +16920,16 @@
           },
           "projectStructure": {
             "type": "string",
-            "description": "A high-level overview of the project directory structure, typically generated as a tree string or simplified list.",
+            "description": "A high-level overview of the project directory structure, typically generated as a tree string or simplified list. Sent by frontend as empty, generated by backend.",
             "example": "\nproject-root/\n├── src/\n│   ├── app.module.ts\n│   ├── app.controller.ts\n│   └── main.ts\n├── package.json\n└── tsconfig.json\n"
           },
           "relevantFiles": {
-            "description": "An array of relevant files from the project, including their paths and content, for the LLM to analyze or modify.",
+            "description": "An array of relevant files from the project, including their paths and content, for the LLM to analyze or modify. Sent by frontend as empty, generated by backend.",
             "example": [
               {
                 "filePath": "/path/to/your/project/src/app.module.ts",
                 "relativePath": "src/app.module.ts",
                 "content": "import { Module } from '@nestjs/common';\nimport { AppController } from './app.controller';\nimport { AppService } from './app.service';\n\n@Module({\n  imports: [],\n  controllers: [AppController],\n  providers: [AppService],\n})\nexport class AppModule {}\n"
-              },
-              {
-                "filePath": "/path/to/your/project/src/app.controller.ts",
-                "relativePath": "src/app.controller.ts",
-                "content": "import { Controller, Get } from '@nestjs/common';\nimport { AppService } from './app.service';\n\n@Controller()\nexport class AppController {\n  constructor(private readonly appService: AppService) {}\n\n  @Get()\n  getHello(): string {\n    return this.appService.getHello();\n  }\n}\n"
               }
             ],
             "items": {
@@ -15972,40 +16966,6 @@
           "additionalInstructions",
           "expectedOutputFormat",
           "scanPaths"
-        ]
-      },
-      "ProposedFileChangeDto": {
-        "type": "object",
-        "properties": {
-          "filePath": {
-            "type": "string",
-            "description": "The absolute or relative path of the file to be changed.",
-            "example": "src/components/WelcomeMessage.tsx"
-          },
-          "action": {
-            "type": "string",
-            "enum": [
-              "add",
-              "modify",
-              "delete"
-            ],
-            "description": "The type of operation to perform on the file.",
-            "example": "add"
-          },
-          "newContent": {
-            "type": "string",
-            "description": "The new content of the file for \"add\" or \"modify\" operations. Not applicable for \"delete\".",
-            "example": "import React from \"react\";\n\nconst WelcomeMessage = () => <div>Hello, AI User!</div>;\n\nexport default WelcomeMessage;"
-          },
-          "reason": {
-            "type": "string",
-            "description": "A brief explanation or justification for this specific file change.",
-            "example": "New component to display a welcome message."
-          }
-        },
-        "required": [
-          "filePath",
-          "action"
         ]
       },
       "LlmOutputDto": {
@@ -16513,6 +17473,66 @@
           "page",
           "pageSize",
           "totalPages"
+        ]
+      },
+      "ImportBulkDataDto": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "sql",
+              "csv"
+            ],
+            "example": "json",
+            "description": "The format of the data to be imported."
+          },
+          "data": {
+            "type": "string",
+            "description": "The data string to be imported (JSON, SQL, or CSV content). Required if no file is uploaded.",
+            "examples": {
+              "json": {
+                "summary": "JSON Array Example",
+                "value": "[\n  {\n    \"name\": \"John Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"age\": 30\n  },\n  {\n    \"name\": \"Jane Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"age\": 25\n  }\n]"
+              },
+              "sql": {
+                "summary": "SQL Insert Example",
+                "value": "INSERT INTO `users` (`name`, `email`, `age`) VALUES ('Alice', 'alice@example.com', 28);\nINSERT INTO `users` (`name`, `email`, `age`) VALUES ('Bob', 'bob@example.com', 35);"
+              },
+              "csv": {
+                "summary": "CSV Data Example",
+                "value": "name,email,age\nAlice,alice@example.com,28\nBob,bob@example.com,35"
+              }
+            }
+          }
+        },
+        "required": [
+          "format"
+        ]
+      },
+      "ImportFileDto": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "sql",
+              "csv"
+            ],
+            "example": "csv",
+            "description": "The format of the data in the uploaded file."
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "The file containing the bulk data."
+          }
+        },
+        "required": [
+          "format",
+          "file"
         ]
       }
     }

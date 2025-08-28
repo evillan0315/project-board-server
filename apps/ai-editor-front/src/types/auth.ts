@@ -1,28 +1,17 @@
-/**
- * Represents a simplified user object for frontend consumption.
- * This should align with the data returned by the backend's /api/auth/me endpoint.
- */
-export interface User {
-  id: string;
-  email: string;
+export interface UserProfile {
+  id?: string;
+  email?: string;
   name?: string;
-  role?: "USER" | "ADMIN" | "MANAGER" | "SUPERADMIN"; // Matching NestJS Role enum
   image?: string;
-  phone_number?: string;
+  role?: 'USER' | 'ADMIN' | 'MANAGER' | 'SUPERADMIN'; // Mirroring backend Role enum
   username?: string;
-  emailVerified?: Date | null;
-  createdAt?: Date;
-  updatedAt?: Date;
+  provider?: 'google' | 'github';
+  accessToken?: string; // Only for client-side use if needed, backend sets HTTP-only cookie
 }
 
-/**
- * Defines the shape of the authentication context.
- */
-export interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (userData: User) => void;
-  logout: () => Promise<void>;
-  checkAuthStatus: () => Promise<void>;
+export interface AuthState {
+  isLoggedIn: boolean;
+  user: UserProfile | null;
+  loading: boolean; // Indicates if auth status is being loaded (e.g., on app start)
+  error: string | null;
 }

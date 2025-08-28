@@ -1,77 +1,65 @@
-export async function createFile(filePath: string, overwrite: boolean, content: string): Promise<void> {
-  try {
-    const response = await fetch('/api/file/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ filePath, overwrite, content }),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to create file '${filePath}': ${errorData.message || response.statusText}`);
-    }
-  } catch (error) {
-    console.error(`Error creating file '${filePath}':`, error);
-    throw error;
-  }
+import { getToken } from '@/stores/authStore';
+import { FileEntry } from '@/types';
+
+const API_BASE_URL = `/api`;
+
+interface ApiError extends Error {
+  statusCode?: number;
+  message: string;
 }
 
-export async function writeFile(filePath: string, content: string): Promise<void> {
+const handleResponse = async <T,>(response: Response): Promise<T> => {
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || `API error: ${response.status}`);
+  }
+  return response.json();
+};
+
+const fetchWithAuth = async (url: string, options?: RequestInit) => {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...options?.headers,
+  };
+
+  return fetch(url, { ...options, headers });
+};
+
+export const fetchProjectFiles = async (
+  projectRoot: string,
+  scanPaths: string[],
+): Promise<FileEntry[]> => {
   try {
-    const response = await fetch('/api/file/write', {
+    const response = await fetchWithAuth(`${API_BASE_URL}/file/scan`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ filePath, content }),
+      body: JSON.stringify({
+        scanPaths: scanPaths,
+        projectRoot: projectRoot,
+        verbose: false,
+      }),
     });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to write file '${filePath}': ${errorData.message || response.statusText}`);
-    }
+    return handleResponse<FileEntry[]>(response);
   } catch (error) {
-    console.error(`Error writing file '${filePath}':`, error);
+    console.error('Error fetching project files:', error);
     throw error;
   }
-}
+};
 
-export async function deleteFile(filePath: string): Promise<void> {
+export const readFileContent = async (filePath: string): Promise<string> => {
   try {
-    const response = await fetch('/api/file/delete', {
+    // Ensure the filePath is sent in the body for the POST request
+    const response = await fetchWithAuth(`${API_BASE_URL}/file/read`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ filePath }),
+      body: JSON.stringify({ filePath: filePath }),
     });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to delete file '${filePath}': ${errorData.message || response.statusText}`);
-    }
+    const data = await handleResponse<FileContentResponse>(response);
+    return data.content;
   } catch (error) {
-    console.error(`Error deleting file '${filePath}':`, error);
+    console.error(`Error reading file ${filePath}:`, error);
     throw error;
   }
-}
+};
 
-export async function openDirectoryPicker(): Promise<string | null> {
-  try {
-    const response = await fetch('/api/file/select-directory'); // Assume this endpoint exists on backend
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Failed to open directory picker: ${errorData.message || response.statusText}`);
-    }
-    const data = await response.json();
-    // The backend should return { path: "/absolute/path/to/selected/directory" }
-    if (data && typeof data.path === 'string') {
-      return data.path;
-    } else {
-      console.error("Backend response for directory picker was not as expected:", data);
-      return null;
-    }
-  } catch (error) {
-    console.error("Error opening directory picker:", error);
-    throw error; // Re-throw to be handled by the calling component
-  }
-}
+// Add more file-related API calls as needed, e.g., create, update, delete, apply diffs
