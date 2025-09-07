@@ -1,6 +1,6 @@
-import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import type { AuthContextType } from "../types/auth";
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import type { AuthContextType } from '../types/auth';
 
 /**
  * Custom hook to access the authentication context.
@@ -10,7 +10,7 @@ import type { AuthContextType } from "../types/auth";
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

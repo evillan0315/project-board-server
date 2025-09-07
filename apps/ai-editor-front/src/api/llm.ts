@@ -1,5 +1,9 @@
 import { getToken } from '@/stores/authStore';
-import { LlmGeneratePayload, LlmResponse, ProposedFileChange } from '@/types/llm'; // Import new LLM types and ProposedFileChange
+import {
+  LlmGeneratePayload,
+  LlmResponse,
+  ProposedFileChange,
+} from '@/types/llm'; // Import new LLM types and ProposedFileChange
 
 const API_BASE_URL = `/api`; // Changed to relative path for Vite proxy consistency
 
@@ -8,7 +12,7 @@ interface ApiError extends Error {
   message: string;
 }
 
-const handleResponse = async <T,>(response: Response): Promise<T> => {
+const handleResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
     const errorData: ApiError = await response.json();
     throw new Error(errorData.message || `API error: ${response.status}`);
@@ -33,7 +37,9 @@ const fetchWithAuth = async (url: string, options?: RequestInit) => {
  * @param data The payload containing user prompt, project root, scan paths, and instructions.
  * @returns A promise that resolves to the LLM's structured response with proposed file changes.
  */
-export const generateCode = async (data: LlmGeneratePayload): Promise<LlmResponse> => {
+export const generateCode = async (
+  data: LlmGeneratePayload,
+): Promise<LlmResponse> => {
   try {
     // projectRoot is now part of LlmGeneratePayload, no need for it as a query parameter.
     const response = await fetchWithAuth(`${API_BASE_URL}/llm/generate-llm`, {
@@ -75,7 +81,10 @@ export const applyProposedChanges = async (
  * @param projectRoot The root directory of the project (git repository).
  * @returns A promise that resolves to the git diff string.
  */
-export const getGitDiff = async (filePath: string, projectRoot: string): Promise<string> => {
+export const getGitDiff = async (
+  filePath: string,
+  projectRoot: string,
+): Promise<string> => {
   try {
     const response = await fetchWithAuth(`${API_BASE_URL}/file/git-diff`, {
       method: 'POST',

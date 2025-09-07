@@ -5,17 +5,14 @@ import {
   HttpException,
   HttpStatus,
   UseGuards,
+  Logger,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBody,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 import { TerminalCommandDto } from './dto/terminal-command.dto';
 import { SshCommandDto } from './dto/ssh-command.dto';
+import { GetPackageScriptsDto } from './dto/get-package-scripts.dto';
+import { ProjectScriptsResponse } from './interfaces/package-script.interface';
 import { TerminalService } from './terminal.service';
 
 import { JwtAuthGuard } from '../auth/auth.guard';
@@ -29,6 +26,8 @@ import { readFileSync } from 'fs';
 @ApiTags('Terminal')
 @Controller('api/terminal')
 export class TerminalController {
+  private readonly logger = new Logger(TerminalController.name);
+
   constructor(private readonly terminalService: TerminalService) {}
   @Post('ssh/run')
   @Roles(UserRole.ADMIN)
@@ -66,8 +65,7 @@ export class TerminalController {
     status: 200,
     description: 'Command executed successfully',
     schema: {
-      example:
-        '15:42:35 up 2 days,  3:12,  2 users,  load average: 0.15, 0.09, 0.10\n',
+      example: '15:42:35 up 2 days,  3:12,  2 users,  load average: 0.15, 0.09, 0.10\n',
     },
   })
   @ApiResponse({
@@ -111,8 +109,7 @@ export class TerminalController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Execute a terminal command locally',
-    description:
-      'Runs a local terminal command and returns stdout/stderr/exit code.',
+    description: 'Runs a local terminal command and returns stdout/stderr/exit code.',
   })
   @ApiBody({ type: TerminalCommandDto })
   @ApiResponse({
@@ -136,6 +133,43 @@ export class TerminalController {
     } catch (error) {
       throw new HttpException(
         { message: 'Command execution failed', details: error.message },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('package-scripts')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Get package.json scripts and detect package manager',
+    description:
+      'Reads the package.json file from the specified project root and returns its scripts and detected package manager.',
+  })
+  @ApiBody({ type: GetPackageScriptsDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Package scripts retrieved successfully',
+    schema: {
+      example: {
+        scripts: [
+          { name: 'dev', script: 'vite' },
+          { name: 'build', script: 'tsc && vite build' },
+        ],
+        packageManager: 'pnpm',
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input or failed to read package.json' })
+  async getPackageScripts(@Body() body: GetPackageScriptsDto): Promise<ProjectScriptsResponse> {
+    try {
+      return await this.terminalService.getPackageScripts(body.projectRoot);
+    } catch (error) {
+      this.logger.error(
+        `Failed to load package scripts for project root: ${body.projectRoot}. Error: ${error.message}`,
+        error.stack,
+      );
+      throw new HttpException(
+        { message: 'Failed to load package scripts', details: error.message },
         HttpStatus.BAD_REQUEST,
       );
     }

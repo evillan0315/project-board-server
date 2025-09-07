@@ -1,10 +1,11 @@
+````markdown
 # Overall System Architecture
 
 This project is built as a robust, scalable, and modular backend application primarily using NestJS. It follows a layered architecture design, promoting separation of concerns and maintainability. The system provides both traditional RESTful API endpoints and real-time communication capabilities via WebSockets, catering to various client needs, including web applications and command-line interfaces.
 
 ## 1. Core Principles
 
-- **Modularity:** Features are organized into distinct NestJS modules (e.g., Authentication, File Management), each with its own controllers, services, and data transfer objects (DTOs).
+- **Modularity:** Features are organized into distinct NestJS modules (e.g., Authentication, File Management, Google AI, Conversation), each with its own controllers, services, and data transfer objects (DTOs).
 - **Layered Architecture:** Clear separation between presentation (controllers), business logic (services), and data access (Prisma).
 - **Security:** Comprehensive authentication (local and OAuth2) and authorization (role-based access control) mechanisms are built-in.
 - **Type Safety:** Written entirely in TypeScript to ensure strong typing and reduce runtime errors.
@@ -16,7 +17,7 @@ This project is built as a robust, scalable, and modular backend application pri
 - **Language:** TypeScript
 - **Database:** PostgreSQL (via Prisma ORM)
 - **Authentication:** JWT (JSON Web Tokens), Passport.js (for local, Google OAuth2, GitHub OAuth2)
-- **Real-time Communication:** Socket.IO (integrated with NestJS WebSockets)
+- **Real-time Communication:** Socket.IO (integrated with NestJS WebSockets) for features like collaborative editing, interactive terminals, and live AI streaming.
 - **File System Interaction:** Node.js `fs` module, `fs-extra` for extended operations, `ssh2` for remote file management (SFTP/SSH)
 - **Validation:** `class-validator` and `class-transformer`
 - **API Documentation:** Swagger (OpenAPI)
@@ -63,6 +64,7 @@ graph TD
     linkStyle 5 stroke:#000,stroke-width:1px;
     linkStyle 6 stroke:#000,stroke-width:1px;
 ```
+````
 
 ## 4. Key Modules & Data Flow
 
@@ -89,15 +91,33 @@ graph TD
   - `FileLanguageService`: Detects programming languages and provides formatting hints.
 - **Data Flow:** Clients interact with `FileController` or `RemoteFileController` (HTTP) or `FileGateway` (WebSockets) -> Services handle operations (e.g., `FileService` for local, `RemoteFileService` for remote) -> Interact with `fs`, `ssh2`, etc. -> Responses returned to client.
 
+### 4.3. Google AI Module
+
+- **Purpose:** Integrates various Google AI services, primarily Google Gemini, for advanced generative capabilities.
+- **Components:**
+  - `GoogleGeminiController`, `GoogleGeminiFileController`, `GoogleGeminiImageController`, `GoogleGeminiTtsController`: HTTP endpoints for text, code, image, file-based, and video generation, as well as text-to-speech.
+  - `GoogleGeminiService`, `GoogleGeminiFileService`, `GoogleGeminiImageService`, `GoogleGeminiTtsService`: Business logic for interacting with different facets of the Gemini API (e.g., multimodal inputs, long-running operations like video generation).
+  - `GoogleGeminiLiveGateway`, `GoogleGeminiLiveService`: WebSocket gateway and service for real-time, streaming conversational AI interactions.
+  - `LlmService`: Orchestrates complex Large Language Model (LLM) operations, including code analysis, repair, and generation, often leveraging Gemini. This service is responsible for building detailed prompts with project context and parsing structured LLM responses.
+- **Data Flow:** Clients send prompts/files to Google AI controllers (HTTP) or `GoogleGeminiLiveGateway` (WebSockets) -> Services (e.g., `GoogleGeminiFileService`, `LlmService`) construct requests to Google Gemini API -> Gemini processes and returns responses (text, images, video URIs, code suggestions) -> Results returned to client.
+
+### 4.4. Conversation Module
+
+- **Purpose:** Manages the persistence and retrieval of AI chat conversation history, allowing users to review and continue past interactions.
+- **Components:**
+  - `ConversationController`: HTTP endpoints for listing conversation summaries and fetching detailed message history.
+  - `ConversationService`: Business logic for aggregating `GeminiRequest` and `GeminiResponse` entries into a coherent conversation flow.
+- **Data Flow:** Clients request conversation data from `ConversationController` -> `ConversationService` queries `PrismaService` to retrieve and structure `GeminiRequest` and `GeminiResponse` records based on `conversationId` and `userId` -> Summarized or detailed conversation history returned to client.
+
 ## 5. Data Persistence
 
 - **Prisma ORM:** Used as the Object-Relational Mapper to interact with PostgreSQL. It provides a type-safe and intuitive way to define database schemas and perform queries. `PrismaService` is injected into services that require database access.
-- **PostgreSQL:** The primary relational database for storing user accounts, authentication details, and any structured application data.
+- **PostgreSQL:** The primary relational database for storing user accounts, authentication details, conversation history, terminal sessions, command history, and any structured application data.
 
 ## 6. Communication
 
 - **RESTful APIs:** Exposed through NestJS Controllers, providing standard HTTP methods (GET, POST, PUT, DELETE) for most operations.
-- **WebSockets (Socket.IO):** Used for real-time, bi-directional communication, particularly for collaborative file editing and progress updates (e.g., file downloads, scan progress).
+- **WebSockets (Socket.IO):** Used for real-time, bi-directional communication, particularly for collaborative file editing, interactive terminal sessions, and streaming AI responses.
 
 ## 7. Security Considerations
 

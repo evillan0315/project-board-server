@@ -16,9 +16,8 @@ import { UtilsModule } from '../utils/utils.module';
 
 import { ConversationModule } from '../conversation/conversation.module';
 import { GoogleGeminiLiveModule } from './google-gemini-live/google-gemini-live.module';
-import { GoogleTranslatorModule } from './google-translator/google-translator.module'; // NEW: Import GoogleTranslatorModule
-import { GoogleTranslatorController } from './google-translator/google-translator.controller'; // NEW: Import GoogleTranslatorController
-import { GoogleTranslatorService } from './google-translator/google-translator.service'; // NEW: Import GoogleTranslatorService
+import { GoogleTranslatorService } from './google-translator/google-translator.service';
+import { GoogleTranslatorController } from './google-translator/google-translator.controller';
 
 @Module({
   imports: [
@@ -28,14 +27,13 @@ import { GoogleTranslatorService } from './google-translator/google-translator.s
     UtilsModule,
     ConversationModule,
     GoogleGeminiLiveModule,
-    GoogleTranslatorModule, // NEW: Add GoogleTranslatorModule to imports
   ],
   controllers: [
     GoogleGeminiController,
     GoogleGeminiImageController,
     GoogleGeminiTtsController,
     GoogleGeminiFileController,
-    GoogleTranslatorController, // NEW: Add GoogleTranslatorController to controllers
+    GoogleTranslatorController,
   ],
   providers: [
     //GoogleOAuthService,
@@ -43,8 +41,8 @@ import { GoogleTranslatorService } from './google-translator/google-translator.s
     GoogleGeminiImageService,
     GoogleGeminiTtsService,
     GoogleGeminiFileService,
-    GoogleTranslatorService, // NEW: Add GoogleTranslatorService to providers
+    GoogleTranslatorService,
   ],
-  exports: [GoogleGeminiService, GoogleGeminiFileService, GoogleTranslatorService], // NEW: Export GoogleTranslatorService if needed by other modules
+  exports: [GoogleGeminiService, GoogleGeminiFileService, GoogleTranslatorService],
 })
 export class GoogleModule {}

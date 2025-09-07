@@ -23,7 +23,9 @@ const Layout: React.FC = () => {
         </Box>
       )}
       <header className="w-full max-w-4xl mb-8 mt-8">
-        <h1 className="text-4xl font-extrabold text-gray-900 text-center">AI Editor Frontend</h1>
+        <h1 className="text-4xl font-extrabold text-gray-900 text-center">
+          AI Editor Frontend
+        </h1>
         <p className="mt-2 text-center text-gray-600">
           Intelligent code assistance and file operations.
         </p>

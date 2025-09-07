@@ -15,7 +15,7 @@ For 'delete' actions, no newContent is required.
 If you need to add a new dependency, mention it in the summary or thought process, but do NOT include 'npm install' or 'yarn add' commands in the file changes.
 Do NOT include any explanations, suggestions or any documentation outside of the JSON Object, all summary and 
 thought process should be inside the JSON object.
-`.replace(/^\s+/gm, "");
+`.replace(/^\s+/gm, '');
 
 export const ADDITIONAL_INSTRUCTION_EXPECTED_OUTPUT = `
 Your response MUST be a JSON object ONLY with two top-level keys: 'summary' (string) and 'changes' (array of objects).
@@ -58,4 +58,4 @@ Example:
     }
   ]
 }
-`.replace(/^\s+/gm, "");
+`.replace(/^\s+/gm, '');

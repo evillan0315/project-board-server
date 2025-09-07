@@ -1,13 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import * as pty from 'node-pty';
 import * as os from 'os';
 import { Client, ConnectConfig } from 'ssh2';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import { Socket } from 'socket.io'; // Import Socket type
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTerminalSessionDto } from './dto/create-terminal-session.dto';
 import { CreateCommandHistoryDto } from './dto/create-command-history.dto';
+import {
+  ProjectScriptsResponse,
+  PackageScript,
+  PackageManager,
+} from './interfaces/package-script.interface'; // New import
 
 interface TerminalSession {
   ptyProcess: pty.IPty;
@@ -17,9 +23,9 @@ interface TerminalSession {
 
 @Injectable()
 export class TerminalService {
-  private readonly defaultShell =
-    os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+  private readonly defaultShell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
   private sessions = new Map<string, TerminalSession>();
+  private readonly logger = new Logger(TerminalService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -70,10 +76,7 @@ export class TerminalService {
     });
 
     shell.onExit(({ exitCode, signal }) => {
-      client.emit(
-        'close',
-        `Process exited with code ${exitCode}, signal ${signal ?? 'none'}!`,
-      );
+      client.emit('close', `Process exited with code ${exitCode}, signal ${signal ?? 'none'}!`);
       this.dispose(sessionId); // Call dispose to update DB status
     });
 
@@ -88,7 +91,7 @@ export class TerminalService {
     if (session) {
       session.ptyProcess.write(input);
     } else {
-      console.warn(`No active PTY session found for ${sessionId} to write to.`);
+      this.logger.warn(`No active PTY session found for ${sessionId} to write to.`);
     }
   }
 
@@ -97,7 +100,7 @@ export class TerminalService {
     if (session) {
       session.ptyProcess.resize(cols, rows);
     } else {
-      console.warn(`No active PTY session found for ${sessionId} to resize.`);
+      this.logger.warn(`No active PTY session found for ${sessionId} to resize.`);
     }
   }
 
@@ -190,14 +193,7 @@ export class TerminalService {
     privateKeyPath?: string;
     command: string;
   }): Promise<string> {
-    const {
-      host,
-      port = 22,
-      username,
-      password,
-      privateKeyPath,
-      command,
-    } = options;
+    const { host, port = 22, username, password, privateKeyPath, command } = options;
 
     const config: ConnectConfig = {
       host,
@@ -240,5 +236,53 @@ export class TerminalService {
         })
         .connect(config);
     });
+  }
+
+  async getPackageScripts(projectRoot: string): Promise<ProjectScriptsResponse> {
+    const packageJsonPath = join(projectRoot, 'package.json');
+
+    if (!existsSync(packageJsonPath)) {
+      this.logger.warn(`package.json not found at ${packageJsonPath}`);
+      throw new Error(`package.json not found at the specified project root.`);
+    }
+
+    try {
+      const packageJsonContent = readFileSync(packageJsonPath, 'utf8');
+      const packageJson = JSON.parse(packageJsonContent);
+
+      const scripts: PackageScript[] = Object.entries(packageJson.scripts || {}).map(
+        ([name, script]) => ({
+          name,
+          script: script as string,
+        }),
+      );
+
+      const packageManager = this.detectPackageManager(projectRoot);
+
+      return { scripts, packageManager };
+    } catch (error) {
+      this.logger.error(
+        `Error reading or parsing package.json at ${packageJsonPath}: ${error.message}`,
+        error.stack,
+      );
+      throw new Error(`Failed to read or parse package.json: ${error.message}`);
+    }
+  }
+
+  private detectPackageManager(projectRoot: string): PackageManager {
+    const yarnLockPath = join(projectRoot, 'yarn.lock');
+    const pnpmLockPath = join(projectRoot, 'pnpm-lock.yaml');
+    const npmLockPath = join(projectRoot, 'package-lock.json');
+
+    if (existsSync(yarnLockPath)) {
+      return 'yarn';
+    }
+    if (existsSync(pnpmLockPath)) {
+      return 'pnpm';
+    }
+    if (existsSync(npmLockPath)) {
+      return 'npm';
+    }
+    return 'npm'; // Default to npm if no specific lock file found
   }
 }

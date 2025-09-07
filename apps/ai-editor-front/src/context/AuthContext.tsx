@@ -4,9 +4,9 @@ import React, {
   useEffect,
   useCallback,
   type PropsWithChildren,
-} from "react";
-import { getProfile, logout as apiLogout } from "../api/auth";
-import type { User, AuthContextType } from "../types/auth";
+} from 'react';
+import { getProfile, logout as apiLogout } from '../api/auth';
+import type { User, AuthContextType } from '../types/auth';
 
 // Create the Auth Context with a default null value
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await apiLogout();
       setUser(null);
     } catch (error) {
-      console.error("Failed to log out:", error);
+      console.error('Failed to log out:', error);
       // Optionally, show an error message to the user
     }
   }, []);
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const userData = await getProfile();
       setUser(userData);
     } catch (error) {
-      console.error("Error checking auth status:", error);
+      console.error('Error checking auth status:', error);
       setUser(null);
     } finally {
       setIsLoading(false);

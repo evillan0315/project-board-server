@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { GoogleTranslatorService } from './google-translator.service';
 import { TranslateContentDto } from './dto/translate-content.dto';
@@ -12,41 +12,39 @@ export class GoogleTranslatorController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      'Translate text or file content to a target language using Google Cloud Translation API',
+      'Translate text or file content to a target language using Google Cloud Translation API.',
     description:
-      'Accepts either a plain text string or base64-encoded file content, along with a target language code, and returns the translated text.',
+      'Provide either `content` for text translation or `fileData`, `fileName`, and `fileMimeType` for file translation. The target language is required.',
   })
-  @ApiBody({
-    type: TranslateContentDto,
-    examples: {
-      textExample: {
-        summary: 'Translate plain text',
-        value: { content: 'Hello, how are you?', targetLanguage: 'es' },
-      },
-      fileExample: {
-        summary: 'Translate content from a text file (base64 encoded)',
-        value: {
-          fileData: Buffer.from('The quick brown fox jumps over the lazy dog.').toString('base64'),
-          fileName: 'example.txt',
-          fileMimeType: 'text/plain',
-          targetLanguage: 'fr',
-        },
-      },
-    },
-  })
+  @ApiBody({ type: TranslateContentDto })
   @ApiResponse({
     status: 200,
-    description: 'Content translated successfully.',
+    description: 'Successfully translated content.',
     type: String,
     example: 'Hola, ¿cómo estás?',
   })
-  @ApiResponse({ status: 400, description: 'Bad Request: Invalid input or missing content.' })
   @ApiResponse({
-    status: 500,
-    description: 'Internal Server Error: API key missing or configuration issue.',
+    status: 400,
+    description: 'Bad Request - Invalid input or missing required fields.',
   })
-  @ApiResponse({ status: 502, description: 'Bad Gateway: Google Translation API request failed.' })
+  @ApiResponse({
+    status: 502,
+    description: 'Bad Gateway - Google Cloud Translation API request failed.',
+  })
   async translate(@Body() dto: TranslateContentDto): Promise<string> {
+    if (!dto.content && !dto.fileData) {
+      throw new HttpException(
+        'Either content or fileData must be provided for translation.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (dto.fileData && (!dto.fileName || !dto.fileMimeType)) {
+      throw new HttpException(
+        'fileName and fileMimeType are required when fileData is provided.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     return this.googleTranslatorService.translateContent(dto);
   }
 }

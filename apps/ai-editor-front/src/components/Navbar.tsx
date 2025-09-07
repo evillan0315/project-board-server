@@ -22,7 +22,11 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <AppBar position="static" color="primary" sx={{ bgcolor: 'var(--tw-colors-blue-600)' }}>
+    <AppBar
+      position="static"
+      color="primary"
+      sx={{ bgcolor: 'var(--tw-colors-blue-600)' }}
+    >
       <Toolbar className="flex justify-between items-center mx-auto w-full px-4 sm:px-6 lg:px-8 text-gray-800 bg-gray-100">
         <Typography
           variant="h6"
@@ -38,15 +42,27 @@ const Navbar: React.FC = () => {
           ) : isLoggedIn ? (
             <>
               <AccountCircle sx={{}} />
-              <Typography variant="body1" sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Typography
+                variant="body1"
+                sx={{ display: { xs: 'none', sm: 'block' } }}
+              >
                 {user?.name || user?.email || 'User'}
               </Typography>
-              <Button color="inherit" onClick={onLogout} sx={{ fontWeight: 'bold' }}>
+              <Button
+                color="inherit"
+                onClick={onLogout}
+                sx={{ fontWeight: 'bold' }}
+              >
                 Logout
               </Button>
             </>
           ) : (
-            <Button color="inherit" component={Link} to="/login" sx={{ fontWeight: 'bold' }}>
+            <Button
+              color="inherit"
+              component={Link}
+              to="/login"
+              sx={{ fontWeight: 'bold' }}
+            >
               Login
             </Button>
           )}

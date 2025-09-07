@@ -1,3 +1,4 @@
+```markdown
 # Project Features Overview
 
 This monorepo project offers a suite of integrated applications and services designed to enhance productivity for developers and provide various utility tools. Below is an overview of the key features across different components.
@@ -54,13 +55,23 @@ Located in `src/` (root backend) and `ai-editor/src/` (AI Editor specific backen
 
 - **Authentication & Authorization**: JWT-based authentication with OAuth support (Google, GitHub).
 - **File Management**: APIs for creating, reading, updating, deleting, and searching files and folders across the project.
-- **LLM Integration**: Seamless integration with large language models (e.g., Google Gemini) for text generation, code analysis, and more.
-- **Terminal & Shell Execution**: Securely execute shell commands on the server, providing terminal-like functionality to web clients.
+- **LLM Integration**: Seamless integration with large language models (e.g., Google Gemini) for:
+  - **Text Generation**: General text, code snippets, documentation.
+  - **Code Analysis & Repair**: Identify issues, suggest improvements, fix syntax or logical errors.
+  - **Code Optimization**: Improve code for performance and readability.
+  - **Image Captioning**: Generate descriptions for images.
+  - **File Content Analysis**: Analyze content from various file types (e.g., SQL schemas, text documents).
+  - **Video Generation**: Generate short videos from text prompts using the Veo model.
+  - **Resume Tools**: Generate, optimize, and enhance resumes.
+  - **Live Conversational AI**: Real-time, streaming text and audio interactions.
+- **Terminal & Shell Execution**: Securely execute shell commands on the server, providing terminal-like functionality to web clients, with **persistent session and command history logging**.
 - **AWS Service Interaction**: APIs for interacting with AWS services (EC2, S3, RDS, Security Groups, Billing, DynamoDB).
 - **Code Extraction & Linting**: Services for extracting code from various formats and linting source code (ESLint integration).
 - **Audio/Video Processing**: Services for media transcoding and processing (FFmpeg integration).
 - **Resume Parsing**: Backend services to parse and analyze resume documents.
-- **Real-time Communication**: WebSocket gateways for real-time updates (e.g., terminal output, file changes, LLM streaming).
+- **Conversation Management**: Track and retrieve the full history of AI interactions, enabling context-aware follow-ups.
+- **Real-time Communication**: WebSocket gateways for real-time updates (e.g., terminal output, file changes, LLM streaming, live AI interactions).
 - **Logging**: Centralized logging of application events and errors.
 - **Dynamic Schema Management**: Manage and submit dynamic schemas for form generation.
 - **Microservice Architecture**: Organized into logical modules (Auth, File, LLM, Terminal, AWS, etc.) for scalability and maintainability.
+```
