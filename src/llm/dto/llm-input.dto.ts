@@ -1,9 +1,10 @@
 // src/llm/dto/llm-input.dto.ts
 
-import { IsString, IsArray, ValidateNested, IsDefined, IsOptional } from 'class-validator'; // Import IsOptional
+import { IsString, IsArray, ValidateNested, IsDefined, IsOptional, IsEnum } from 'class-validator'; // Import IsOptional, IsEnum
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ScannedFileDto } from '../../file/dto/scan-file.dto'; // Ensure this path is correct
+import { RequestType } from '@prisma/client'; // Import RequestType from Prisma
 
 /**
  * Represents the structured input that will be sent to the LLM.
@@ -43,7 +44,7 @@ project-root/
     required: false,
   })
   @IsString()
-  @IsOptional() // Made optional for frontend input, backend will generate if empty
+  @IsOptional()
   projectStructure?: string; // Changed to optional
 
   @ApiPropertyOptional({
@@ -83,13 +84,14 @@ project-root/
       'Detailed instructions on the exact JSON format the LLM is expected to return for its response.',
     example: `
 {
+  "title": "Commit Message Example",
   "summary": "A brief summary of the proposed changes.",
   "thoughtProcess": "Detailed explanation of the AI's reasoning and steps taken.",
   "changes": [
     {
       "filePath": "path/to/file.ts",
-      "action": "add" | "modify" | "delete",
-      "newContent": "Optional: New content for 'add'/'modify'",
+      "action": "add" | "modify" | "delete" | "repair" | "analyze",
+      "newContent": "Optional: New content for 'add'/'modify'/'repair'",
       "reason": "Optional: Explanation for this specific change"
     }
   ]
@@ -113,4 +115,13 @@ project-root/
   @IsString({ each: true }) // Validates each element in the array is a string
   @IsDefined()
   scanPaths: string[];
+
+  @ApiPropertyOptional({
+    description: 'Optional: The type of request being made to the LLM.',
+    enum: RequestType,
+    example: RequestType.LLM_GENERATION,
+  })
+  @IsOptional()
+  @IsEnum(RequestType)
+  requestType?: RequestType;
 }

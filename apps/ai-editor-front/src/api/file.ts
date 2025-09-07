@@ -8,7 +8,7 @@ interface ApiError extends Error {
   message: string;
 }
 
-const handleResponse = async <T,>(response: Response): Promise<T> => {
+const handleResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
     const errorData: ApiError = await response.json();
     throw new Error(errorData.message || `API error: ${response.status}`);

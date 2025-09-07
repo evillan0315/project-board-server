@@ -8,38 +8,38 @@ datasource db {
 }
 
 model User {
-  id                      String              @id @default(uuid())
-  email                   String              @unique
-  username                String?
-  emailVerified           DateTime?
-  image                   String?
-  name                    String?
-  phone_number            String?
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime?           @updatedAt
-  deletedAt               DateTime?
-  role                    Role?
-  passwordResetToken      String? // Stores the hashed password reset token
-  passwordResetExpiresAt  DateTime? // Stores the expiration time for the reset token
-  Account                 Account[]
-  Database                Database[]
-  Documentation           Documentation[]
-  File                    File[]
-  Folder                  Folder[]
-  Form                    Form[]
-  Module                  Module[]
-  Organization            Organization[]
-  password                Password?
-  Project                 Project[]
-  Schema                  Schema[]
-  Session                 Session[]
-  Submission              Submission[]
-  geminiRequests          GeminiRequest[]
-  Recording               Recording[]
-  SchemaSubmission        SchemaSubmission[]
-  SystemInstruction       SystemInstruction[]
-  terminalCommands        TerminalCommand[]
-  commandHistory          CommandHistory[]
+  id                     String              @id @default(uuid())
+  email                  String              @unique
+  username               String?
+  emailVerified          DateTime?
+  image                  String?
+  name                   String?
+  phone_number           String?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime?           @updatedAt
+  deletedAt              DateTime?
+  role                   Role?
+  passwordResetToken     String? // Stores the hashed password reset token
+  passwordResetExpiresAt DateTime? // Stores the expiration time for the reset token
+  Account                Account[]
+  Database               Database[]
+  Documentation          Documentation[]
+  File                   File[]
+  Folder                 Folder[]
+  Form                   Form[]
+  Module                 Module[]
+  Organization           Organization[]
+  password               Password?
+  Project                Project[]
+  Schema                 Schema[]
+  Session                Session[]
+  Submission             Submission[]
+  geminiRequests         GeminiRequest[]
+  Recording              Recording[]
+  SchemaSubmission       SchemaSubmission[]
+  SystemInstruction      SystemInstruction[]
+  terminalCommands       TerminalCommand[]
+  commandHistory         CommandHistory[]
 
   terminalSessions TerminalSession[]
 }
@@ -129,16 +129,16 @@ model Project {
   id             String        @id @default(uuid())
   name           String
   description    String?
-  path           String        @unique 
+  path           String        @unique
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  status         ProjectStatus @default(DEVELOPMENT) 
-  technologies   String[] 
-  versionControl String? 
-  repositoryUrl  String? 
-  lastOpenedAt   DateTime? 
-  ownerId        String? 
-  metadata       Json? 
+  status         ProjectStatus @default(DEVELOPMENT)
+  technologies   String[]
+  versionControl String?
+  repositoryUrl  String?
+  lastOpenedAt   DateTime?
+  ownerId        String?
+  metadata       Json?
   createdById    String
   createdBy      User          @relation(fields: [createdById], references: [id])
 }
@@ -189,6 +189,7 @@ model GeminiResponse {
   safetyRatings Json?
   tokenCount    Int?
   createdAt     DateTime      @default(now())
+  projectRoot   String?
 
   @@index([requestId])
 }
@@ -417,6 +418,11 @@ enum RequestType {
   RESUME_ENHANCEMENT
   VIDEO_GENERATION
   IMAGE_GENERATION
+  AUDIO_GENERATION
+  TEXT_TO_SPEECH
+  SPEECH_TO_TEXT
+  VOICE_COMMAND
+  AUDIO_TRANSCRIPTION
 }
 
 enum TerminalSessionStatus {
@@ -425,7 +431,6 @@ enum TerminalSessionStatus {
   DISCONNECTED
   ERROR
 }
-
 
 enum ProjectStatus {
   ACTIVE

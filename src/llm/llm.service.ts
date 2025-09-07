@@ -1,4 +1,3 @@
-// src/llm/llm.service.ts
 import {
   Injectable,
   Logger,
@@ -10,13 +9,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import {
-  LlmInputDto,
-  LlmOutputDto,
-  ProposedFileChangeDto,
-  FileAction,
-} from './dto';
-import { ScannedFileDto, ScanFileDto } from '../file/dto/scan-file.dto';
+import { LlmInputDto, LlmOutputDto, ProposedFileChangeDto, FileAction } from './dto';
+import { ScannedFileDto } from '../file/dto/scan-file.dto';
 import { GenerateTextDto } from '../google/google-gemini/google-gemini-file/dto/generate-text.dto';
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
 import { ModuleControlService } from '../module-control/module-control.service';
@@ -64,37 +58,39 @@ export class LlmService implements OnModuleInit {
   ): Promise<string> {
     // Map each file to a promise that resolves to its formatted string content
     const fileContentPromises = scannedFiles.map(async (file) => {
+      let filePath = file.relativePath;
+      if (llmInput.projectRoot) {
+        filePath = `${llmInput.projectRoot}/${file.relativePath}`;
+      }
       // No need for 'await' here, as the string interpolation is synchronous
-      return `// File: ${file.relativePath}\n${file.content}`;
+      return `// File: ${filePath}\n${file.content}`;
     });
 
     // Wait for all promises to resolve, then join the resulting array of strings
-    const formattedRelevantFiles = (
-      await Promise.all(fileContentPromises)
-    ).join('\n\n');
+    const formattedRelevantFiles = (await Promise.all(fileContentPromises)).join('\n\n');
 
     const prompt = `
-      # AI Code Generation Request
-      
-      ## User Request
-      \`\`\`text
-      ${llmInput.userPrompt}
-      \`\`\`
-      
-      ## Project Context
-      ${projectStructure}
-      
-      ### Relevant Files (for analysis)
-      \`\`\`files
-      ${formattedRelevantFiles}
-      \`\`\`
-      `;
+# AI Code Generation Request
+
+## User Request
+\`\`\`text
+${llmInput.userPrompt}
+\`\`\`
+
+## Project Context
+${projectStructure}
+
+### Relevant Files (for analysis)
+\`\`\`files
+${formattedRelevantFiles}
+\`\`\`
+`;
 
     return prompt.trim();
   }
 
   private static repairJsonBadEscapes(jsonString: string): string {
-    //return jsonString.replace(/\\"/g, '"');
+    //return jsonString.replace(/\"/g, '"');
     return jsonString;
   }
 
@@ -175,21 +171,17 @@ export class LlmService implements OnModuleInit {
 
       const response = await this.googleGeminiFileService.generateText(
         payload,
-        RequestType.LLM_GENERATION,
+        llmInput.requestType || RequestType.LLM_GENERATION, // Use requestType from input, fallback to LLM_GENERATION
       );
 
       if (!response) {
         this.logger.error(`Google Gemini API Error (via NestJS)`);
-        throw new InternalServerErrorException(
-          `Failed to get response from Google Gemini API`,
-        );
+        throw new InternalServerErrorException(`Failed to get response from Google Gemini API`);
       }
 
       const rawText = response;
 
-      this.logger.log(
-        '\n--- Raw LLM Response (from Google Gemini via NestJS) ---',
-      );
+      this.logger.log('\n--- Raw LLM Response (from Google Gemini via NestJS) ---');
       this.logger.log(rawText);
       this.logger.log('--------------------------------------------------\n');
 
@@ -203,8 +195,7 @@ export class LlmService implements OnModuleInit {
           'Warning: Initial JSON parsing failed. Attempting to repair bad escaped characters.',
         );
         try {
-          let repairedJsonString =
-            await this.jsonFixService.repair(cleanedJsonString);
+          let repairedJsonString = await this.jsonFixService.repair(cleanedJsonString);
           if (repairedJsonString.valid && repairedJsonString.repairedJson) {
             parsedResult = JSON.parse(repairedJsonString.repairedJson);
             this.logger.log('JSON parsing succeeded after repair.');
@@ -214,9 +205,7 @@ export class LlmService implements OnModuleInit {
             );
           }
         } catch (repairError: unknown) {
-          this.logger.error(
-            'Error parsing LLM response as JSON even after repair attempt.',
-          );
+          this.logger.error('Error parsing LLM response as JSON even after repair attempt.');
           this.logger.error('Raw LLM Response before cleaning:', rawText);
           this.logger.error('Cleaned JSON string attempt:', cleanedJsonString);
           this.logger.error(
@@ -224,7 +213,9 @@ export class LlmService implements OnModuleInit {
             (repairError as Error).message,
           );
           throw new InternalServerErrorException(
-            `Invalid JSON response from LLM: ${(jsonError as Error).message}. Repair attempt failed: ${(repairError as Error).message}`,
+            `Invalid JSON response from LLM: ${(jsonError as Error).message}. Repair attempt failed: ${
+              (repairError as Error).message
+            }`,
           );
         }
       }
@@ -236,6 +227,7 @@ export class LlmService implements OnModuleInit {
           "LLM returned an array directly instead of the full LlmOutputDto object. Wrapping it as 'changes'.",
         );
         llmOutput = {
+          title: 'AI Generated Changes (title not provided by LLM).',
           changes: parsedResult as ProposedFileChangeDto[],
           summary: 'Changes proposed by AI (summary not provided by LLM).',
           thoughtProcess:
@@ -244,19 +236,20 @@ export class LlmService implements OnModuleInit {
       } else if (typeof parsedResult === 'object' && parsedResult !== null) {
         if (
           Array.isArray(parsedResult.changes) &&
-          typeof parsedResult.summary === 'string'
+          typeof parsedResult.summary === 'string' &&
+          typeof parsedResult.title === 'string' // Check for title
         ) {
           llmOutput = parsedResult as LlmOutputDto;
         } else {
           this.logger.error(
-            'Parsed LLM output object is missing expected "changes" array or "summary" string.',
+            'Parsed LLM output object is missing expected "changes" array, "summary" string, or "title" string.',
           );
           this.logger.error(
             'Received object (stringified):',
             JSON.stringify(parsedResult, null, 2),
           );
           throw new InternalServerErrorException(
-            'LLM response object missing expected "changes" array or "summary" string.',
+            'LLM response object missing expected "changes" array, "summary" string, or "title" string.',
           );
         }
       } else {
@@ -271,10 +264,7 @@ export class LlmService implements OnModuleInit {
       }
 
       for (const change of llmOutput.changes) {
-        if (
-          !change.filePath ||
-          !['add', 'modify', 'delete'].includes(change.action)
-        ) {
+        if (!change.filePath || !Object.values(FileAction).includes(change.action)) {
           this.logger.error(
             `Invalid change object found: ${JSON.stringify(change)}. Missing filePath or invalid action.`,
           );
@@ -282,39 +272,51 @@ export class LlmService implements OnModuleInit {
             `Invalid change object received from LLM: Missing filePath or invalid action.`,
           );
         }
-        if (
-          (change.action === FileAction.ADD ||
-            change.action === FileAction.MODIFY) &&
-          change.newContent !== undefined
-        ) {
-          try {
-            const detectedLanguage = this.utilsService.detectLanguage(
-              change.filePath,
-            );
-            if (detectedLanguage) {
-              change.newContent = await this.utilsService.formatCode(
-                change.newContent!,
-                detectedLanguage,
+
+        switch (change.action) {
+          case FileAction.ADD:
+          case FileAction.MODIFY:
+          case FileAction.REPAIR:
+            if (change.newContent === undefined) {
+              this.logger.warn(
+                `Warning: Change for ${change.filePath} (action: ${change.action}) has undefined newContent. This might be an issue and could lead to empty files or incorrect repairs.`,
               );
             } else {
+              try {
+                const detectedLanguage = this.utilsService.detectLanguage(change.filePath);
+                if (detectedLanguage) {
+                  change.newContent = await this.utilsService.formatCode(
+                    change.newContent,
+                    detectedLanguage,
+                  );
+                } else {
+                  this.logger.warn(
+                    `Could not detect language for file: ${change.filePath}. Skipping formatting.`,
+                  );
+                }
+              } catch (formatError) {
+                this.logger.error(
+                  `Failed to format content for file ${change.filePath}: ${
+                    (formatError as Error).message
+                  }`,
+                );
+              }
+            }
+            break;
+          case FileAction.DELETE:
+          case FileAction.ANALYZE:
+            if (change.newContent !== undefined) {
               this.logger.warn(
-                `Could not detect language for file: ${change.filePath}. Skipping formatting.`,
+                `Warning: Change for ${change.filePath} (action: ${change.action}) unexpectedly contains newContent. This will be ignored.`,
+              );
+              delete change.newContent; // Remove it if it was provided erroneously
+            }
+            if (change.action === FileAction.ANALYZE && !change.reason) {
+              this.logger.warn(
+                `Warning: Analyze action for ${change.filePath} is missing a 'reason'.`,
               );
             }
-          } catch (formatError) {
-            this.logger.error(
-              `Failed to format content for file ${change.filePath}: ${(formatError as Error).message}`,
-            );
-            // Optionally, re-throw or handle more gracefully if formatting is critical
-          }
-        } else if (
-          (change.action === FileAction.ADD ||
-            change.action === FileAction.MODIFY) &&
-          change.newContent === undefined
-        ) {
-          this.logger.warn(
-            `Warning: Change for ${change.filePath} (action: ${change.action}) has undefined newContent. This might be an issue and could lead to empty files.`,
-          );
+            break;
         }
       }
 

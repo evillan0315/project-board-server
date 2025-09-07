@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
 
 export function LandingPage() {
   return (
     <div className="flex flex-col items-center justify-center text-center max-w-4xl mx-auto p-4">
       <h1 className="text-6xl font-extrabold text-white mb-6 leading-tight">
-        Unleash Your Creativity with{" "}
+        Unleash Your Creativity with{' '}
         <span className="text-indigo-400">AI-Powered Editing</span>
       </h1>
       <p className="text-xl text-gray-300 mb-8 max-w-2xl">

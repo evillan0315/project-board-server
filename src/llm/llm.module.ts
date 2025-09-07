@@ -6,14 +6,9 @@ import { FileModule } from '../file/file.module';
 import { ModuleControlModule } from '../module-control/module-control.module';
 import { UtilsModule } from '../utils/utils.module';
 import { JsonFixModule } from '../utils/json-fix/json-fix.module';
+
 @Module({
-  imports: [
-    GoogleModule,
-    ModuleControlModule,
-    FileModule,
-    UtilsModule,
-    JsonFixModule,
-  ],
+  imports: [GoogleModule, ModuleControlModule, FileModule, UtilsModule, JsonFixModule],
   providers: [LlmService],
   controllers: [LlmController],
 })

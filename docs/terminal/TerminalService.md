@@ -1,3 +1,4 @@
+```markdown
 ## TerminalService
 
 `TerminalService` manages the core logic for interacting with shell environments. It handles spawning local pseudo-terminal (PTY) processes, executing one-off commands (both local and remote SSH), managing SSH client connections, and **persisting terminal session and command history data to the database**.
@@ -13,15 +14,15 @@
 
 ### Core Functionality
 
-- **Persistent PTY Sessions:** Manages long-lived interactive shell sessions for each connected WebSocket client, with their lifecycle tracked in the database.
-- **Command History Logging:** Records every executed command within a session for auditing and review.
+- **Persistent PTY Sessions:** Manages long-lived interactive shell sessions for each connected WebSocket client, with their lifecycle tracked in the database (`TerminalSession` model).
+- **Command History Logging:** Records every executed command within a session for auditing and review (`CommandHistory` model).
 - **One-Off Command Execution:** Provides methods for executing non-interactive commands via HTTP API.
 - **SSH Connection Management:** Handles the details of connecting to and executing commands on remote SSH servers.
 
 ### Properties
 
 - `defaultShell`: `string` - The default shell to use for local PTY sessions (e.g., `bash` on Linux/macOS, `powershell.exe` on Windows).
-- `sessions: Map<string, TerminalSession>`: Stores active local PTY sessions, mapped by client ID. Each entry includes the `ptyProcess`, `clientSocket`, and its associated `dbSessionId`.
+- `sessions: Map<string, TerminalSession>`: Stores active local PTY sessions, mapped by client ID. Each entry includes the `ptyProcess`, `clientSocket`, and its associated `dbSessionId` (the ID of the corresponding database record).
 
 ### Methods
 
@@ -36,7 +37,7 @@ Initializes and manages a persistent pseudo-terminal (PTY) session for a given c
   - `userId`: `string` - The ID of the authenticated user initiating the session.
 - **Behavior:**
   - Spawns a `node-pty` process for the `defaultShell`.
-  - **Creates a `TerminalSession` entry in the database, associating it with the `userId` and client connection details.**
+  - **Creates a `TerminalSession` entry in the database, associating it with the `userId` and client connection details (IP address, user agent, client info).**
   - Attaches event listeners to stream `onData` from the PTY back to the client via `client.emit('output')`.
   - Handles PTY `onExit` events to clean up the session.
   - Resizes the PTY to default dimensions (80x30).
@@ -99,3 +100,4 @@ Executes a single command on a remote SSH server. Used for one-off SSH commands 
     - `command`: `string` - The command to execute on the remote server.
 - **Returns:** A Promise resolving to the standard output of the command.
 - **Throws:** `Error` if authentication fails, connection fails, or command execution fails.
+```

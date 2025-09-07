@@ -36,8 +36,16 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { generateCode, applyProposedChanges, getGitDiff } from '@/api/llm';
-import { LlmGeneratePayload, LlmResponse, ProposedFileChange, FileAction } from '@/types/llm';
-import { INSTRUCTION, ADDITIONAL_INSTRUCTION_EXPECTED_OUTPUT } from '@/constants';
+import {
+  LlmGeneratePayload,
+  LlmResponse,
+  ProposedFileChange,
+  FileAction,
+} from '@/types/llm';
+import {
+  INSTRUCTION,
+  ADDITIONAL_INSTRUCTION_EXPECTED_OUTPUT,
+} from '@/constants';
 
 // Basic Diff Viewer Component (can be replaced with a more advanced library)
 const DiffViewer: React.FC<{ diffContent: string; filePath: string }> = ({
@@ -58,7 +66,11 @@ const DiffViewer: React.FC<{ diffContent: string; filePath: string }> = ({
         border: '1px solid ' + (isDarkMode ? '#444' : '#ccc'),
       }}
     >
-      <Typography variant="subtitle2" gutterBottom sx={{ fontFamily: 'monospace' }}>
+      <Typography
+        variant="subtitle2"
+        gutterBottom
+        sx={{ fontFamily: 'monospace' }}
+      >
         Diff for: {filePath}
       </Typography>
       <pre
@@ -110,15 +122,21 @@ const AiEditorPage: React.FC = () => {
     clearDiff();
   }, [lastLlmResponse, currentProjectPath]);
 
-  const handleInstructionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInstructionChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setInstruction(event.target.value);
   };
 
-  const handleScanPathsInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScanPathsInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setScanPathsInput(event.target.value);
   };
 
-  const handleProjectInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProjectInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setProjectInput(event.target.value);
   };
 
@@ -170,7 +188,9 @@ const AiEditorPage: React.FC = () => {
       const aiResponse: LlmResponse = await generateCode(payload);
       setLastLlmResponse(aiResponse); // Store the full structured response
     } catch (err) {
-      setError(`Failed to generate code: ${err instanceof Error ? err.message : String(err)}`);
+      setError(
+        `Failed to generate code: ${err instanceof Error ? err.message : String(err)}`,
+      );
     } finally {
       setLoading(false);
     }
@@ -207,7 +227,10 @@ const AiEditorPage: React.FC = () => {
       setError(
         `Failed to get diff for ${change.filePath}: ${err instanceof Error ? err.message : String(err)}`,
       );
-      setCurrentDiff(change.filePath, `Error: ${err instanceof Error ? err.message : String(err)}`);
+      setCurrentDiff(
+        change.filePath,
+        `Error: ${err instanceof Error ? err.message : String(err)}`,
+      );
     } finally {
       setLoading(false);
     }
@@ -229,7 +252,10 @@ const AiEditorPage: React.FC = () => {
 
     try {
       const changesToApply = Object.values(selectedChanges);
-      const result = await applyProposedChanges(changesToApply, currentProjectPath);
+      const result = await applyProposedChanges(
+        changesToApply,
+        currentProjectPath,
+      );
       setAppliedMessages(result.messages);
       if (!result.success) {
         setError('Some changes failed to apply. Check messages above.');
@@ -239,7 +265,9 @@ const AiEditorPage: React.FC = () => {
       deselectAllChanges();
       clearDiff();
     } catch (err) {
-      setError(`Failed to apply changes: ${err instanceof Error ? err.message : String(err)}`);
+      setError(
+        `Failed to apply changes: ${err instanceof Error ? err.message : String(err)}`,
+      );
     } finally {
       setApplyingChanges(false);
     }
@@ -261,12 +289,17 @@ const AiEditorPage: React.FC = () => {
   return (
     <Container maxWidth="lg" className="py-8">
       <Paper elevation={3} className="p-6 mb-8">
-        <Typography variant="h4" component="h1" gutterBottom className="!font-bold !text-blue-700">
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          className="!font-bold !text-blue-700"
+        >
           AI Code Editor
         </Typography>
         <Typography variant="body1" color="text.secondary" className="mb-4">
-          Provide instructions to the AI to generate or modify code in your project. Start by
-          loading your project.
+          Provide instructions to the AI to generate or modify code in your
+          project. Start by loading your project.
         </Typography>
 
         {!isLoggedIn && (
@@ -309,7 +342,10 @@ const AiEditorPage: React.FC = () => {
           <Box className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
             <Typography variant="h6" className="!font-semibold !text-gray-800">
               Current Project Root:
-              <span className="font-normal text-blue-600"> {currentProjectPath}</span>
+              <span className="font-normal text-blue-600">
+                {' '}
+                {currentProjectPath}
+              </span>
             </Typography>
             <Typography variant="body2" className="text-gray-600 mt-2">
               AI will scan paths specified below within this project root.
@@ -322,7 +358,9 @@ const AiEditorPage: React.FC = () => {
           value={scanPathsInput}
           onChange={handleScanPathsInputChange}
           placeholder="e.g., src/components,package.json,README.md"
-          disabled={loading || !isLoggedIn || !currentProjectPath || applyingChanges}
+          disabled={
+            loading || !isLoggedIn || !currentProjectPath || applyingChanges
+          }
           fullWidth
           margin="normal"
           helperText="Paths where the AI should focus its analysis for project structure and relevant files (relative to project root)."
@@ -335,7 +373,9 @@ const AiEditorPage: React.FC = () => {
           value={instruction}
           onChange={handleInstructionChange}
           placeholder="e.g., Implement a new user authentication module with JWT. Include login and register endpoints."
-          disabled={loading || !isLoggedIn || !currentProjectPath || applyingChanges}
+          disabled={
+            loading || !isLoggedIn || !currentProjectPath || applyingChanges
+          }
           fullWidth
           margin="normal"
         />
@@ -345,11 +385,17 @@ const AiEditorPage: React.FC = () => {
           color="success"
           onClick={handleGenerateCode}
           disabled={
-            loading || !instruction || !isLoggedIn || !currentProjectPath || applyingChanges
+            loading ||
+            !instruction ||
+            !isLoggedIn ||
+            !currentProjectPath ||
+            applyingChanges
           }
           sx={{ mt: 3, py: 1.5, px: 4, fontSize: '1.05rem' }}
         >
-          {loading ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : null}
+          {loading ? (
+            <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+          ) : null}
           Generate/Modify Code
         </Button>
 
@@ -369,9 +415,18 @@ const AiEditorPage: React.FC = () => {
         {appliedMessages.length > 0 && ( // Show messages after applying changes
           <Paper
             elevation={1}
-            sx={{ mt: 3, p: 2, bgcolor: 'background.paper', border: '1px solid #ddd' }}
+            sx={{
+              mt: 3,
+              p: 2,
+              bgcolor: 'background.paper',
+              border: '1px solid #ddd',
+            }}
           >
-            <Typography variant="h6" className="!font-semibold !text-gray-800" gutterBottom>
+            <Typography
+              variant="h6"
+              className="!font-semibold !text-gray-800"
+              gutterBottom
+            >
               Application Summary:
             </Typography>
             <Box
@@ -396,8 +451,15 @@ const AiEditorPage: React.FC = () => {
         )}
 
         {lastLlmResponse && (
-          <Paper elevation={1} sx={{ mt: 3, p: 3, bgcolor: 'background.paper' }}>
-            <Typography variant="h5" className="!font-bold !text-blue-700" gutterBottom>
+          <Paper
+            elevation={1}
+            sx={{ mt: 3, p: 3, bgcolor: 'background.paper' }}
+          >
+            <Typography
+              variant="h5"
+              className="!font-bold !text-blue-700"
+              gutterBottom
+            >
               AI Proposed Changes:
             </Typography>
             <Typography variant="body1" color="text.secondary" gutterBottom>
@@ -446,8 +508,16 @@ const AiEditorPage: React.FC = () => {
                 variant="contained"
                 color="primary"
                 onClick={handleApplySelectedChanges}
-                disabled={loading || applyingChanges || Object.keys(selectedChanges).length === 0}
-                startIcon={applyingChanges ? <CircularProgress size={16} color="inherit" /> : null}
+                disabled={
+                  loading ||
+                  applyingChanges ||
+                  Object.keys(selectedChanges).length === 0
+                }
+                startIcon={
+                  applyingChanges ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : null
+                }
               >
                 {applyingChanges ? 'Applying...' : 'Apply Selected Changes'}
               </Button>
@@ -462,7 +532,11 @@ const AiEditorPage: React.FC = () => {
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {lastLlmResponse.changes.map((change, index) => (
-                <Paper key={index} elevation={2} sx={{ p: 2, bgcolor: 'background.paper' }}>
+                <Paper
+                  key={index}
+                  elevation={2}
+                  sx={{ p: 2, bgcolor: 'background.paper' }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <FormControlLabel
                       control={
@@ -481,7 +555,10 @@ const AiEditorPage: React.FC = () => {
                         />
                       }
                     />
-                    <Typography variant="body1" sx={{ fontFamily: 'monospace', flexGrow: 1 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{ fontFamily: 'monospace', flexGrow: 1 }}
+                    >
                       {change.filePath}
                     </Typography>
                     <Button
@@ -493,13 +570,20 @@ const AiEditorPage: React.FC = () => {
                     </Button>
                   </Box>
                   {change.reason && (
-                    <Typography variant="body2" color="text.secondary" sx={{ pl: 4, mb: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ pl: 4, mb: 1 }}
+                    >
                       Reason: {change.reason}
                     </Typography>
                   )}
 
                   {diffFilePath === change.filePath && currentDiff && (
-                    <DiffViewer diffContent={currentDiff} filePath={change.filePath} />
+                    <DiffViewer
+                      diffContent={currentDiff}
+                      filePath={change.filePath}
+                    />
                   )}
                 </Paper>
               ))}

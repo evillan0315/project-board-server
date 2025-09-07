@@ -97,7 +97,10 @@ export const deselectAllChanges = () => {
   aiEditorStore.setKey('selectedChanges', {});
 };
 
-export const setCurrentDiff = (filePath: string | null, diffContent: string | null) => {
+export const setCurrentDiff = (
+  filePath: string | null,
+  diffContent: string | null,
+) => {
   aiEditorStore.setKey('diffFilePath', filePath);
   aiEditorStore.setKey('currentDiff', diffContent);
 };

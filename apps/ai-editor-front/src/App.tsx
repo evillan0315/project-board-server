@@ -8,7 +8,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<AiEditorPage />} /> {/* Changed to AiEditorPage */}
+        <Route index element={<AiEditorPage />} />{' '}
+        {/* Changed to AiEditorPage */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         {/* Add more routes here as needed */}

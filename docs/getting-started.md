@@ -1,3 +1,4 @@
+````markdown
 # Getting Started
 
 This guide will walk you through setting up and running the full-stack monorepo project on your local machine.
@@ -15,6 +16,8 @@ Before you begin, ensure you have the following installed:
   - Enable the Gemini API in your Google Cloud Project.
   - Create an API key and enable the `generativelanguage.googleapis.com` API.
   - **Important**: Keep your API key secure and do not commit it to version control.
+- **FFmpeg:** Required for screen recording and screenshots. [Download & Install FFmpeg](https://ffmpeg.org/download.html)
+- **Pandoc:** Required for converting Markdown/HTML to DOCX. [Download & Install Pandoc](https://pandoc.org/installing.html)
 
 ## Setup Steps
 
@@ -24,6 +27,7 @@ Before you begin, ensure you have the following installed:
 git clone https://github.com/evillan0315/project-board-server.git # Replace with actual repo URL
 cd project-board-server
 ```
+````
 
 ### 2. Install Dependencies
 
@@ -47,6 +51,7 @@ The project relies on environment variables for various configurations, includin
 
   # Google Gemini API (required for AI features)
   GOOGLE_GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
+  GOOGLE_GEMINI_MODEL="gemini-1.5-flash" # e.g., gemini-pro, gemini-1.5-flash, gemini-1.5-pro
 
   # Github OAuth (optional, for authentication)
   GITHUB_CLIENT_ID="YOUR_GITHUB_CLIENT_ID"
@@ -148,7 +153,7 @@ pnpm run dev
 # This will typically start on http://localhost:5174 or similar
 ```
 
-Repeat similar commands for `apps/ai-editor-front` and `apps/point-of-sale` if you intend to use them. Check their respective `package.json` for specific `dev` scripts.
+Repeat similar commands for `apps/ai-editor-front` and `apps/point-of-sale` if you intend to use them.
 
 ### 7. Running the AI Editor CLI
 

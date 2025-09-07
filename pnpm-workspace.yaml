@@ -13,5 +13,6 @@ onlyBuiltDependencies:
   - node-pty
   - prisma
   - protobufjs
+  - puppeteer
   - sharp
   - ssh2
