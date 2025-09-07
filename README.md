@@ -1,3 +1,4 @@
+````markdown
 # Full-Stack Developer Toolkit & Utilities Server
 
 A comprehensive backend application built with **NestJS**, providing robust authentication, extensive file and folder management (local and remote), powerful AI-powered code and content generation (Google Gemini), a suite of developer utilities, and screen recording capabilities. Designed for rapid development and enhanced productivity.
@@ -7,7 +8,6 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 ![Full-Stack Developer Toolkit Demo](/media/eddie/Data/projects/nestJS/nest-modules/full-stack/downloads/recordings/550acedf-2d16-4d84-9abf-2171840930ac/recorded-1755262332872_1756208611532.gif)
 
 ## Key Features
-
 
 ### JWT-based authentication via HTTP-only cookies and optional Bearer header
 
@@ -33,7 +33,7 @@ A comprehensive backend application built with **NestJS**, providing robust auth
   - Execute shell commands on remote servers.
 - ✅ **GitHub Repository Management:** Create, commit, delete, list, and view contents of GitHub repositories.
 
-### Generative AI (Google Gemini)
+### Generative AI (Google Gemini & Translator)
 
 - ✅ **Text Generation:** General purpose text generation from prompts.
 - ✅ **Image Captioning:** Generate descriptions for images from URLs or local files.
@@ -44,6 +44,9 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 - ✅ **Code Analysis:** Identify issues, improvements, and best practices in code.
 - ✅ **Code Repair:** Fix syntax or logical errors in code.
 - ✅ **File Content Analysis:** Analyze content from uploaded files (e.g., SQL schemas, text documents).
+- ✅ **Video Generation:** Generate videos from text prompts using the Veo model.
+- ✅ **Live Conversational AI:** Real-time, streaming interactions with Gemini models for dynamic dialogue.
+- ✅ **Text Translation:** Translate text or file content to various languages using Google Cloud Translation API.
 - ✅ **Resume Tools:**
   - Generate new resumes based on detailed prompts.
   - Optimize existing resumes against job descriptions.
@@ -99,6 +102,7 @@ git clone https://github.com/evillan0315/project-board-server.git
 cd project-board-server
 pnpm install
 ```
+````
 
 ### 2. Environment Configuration
 
@@ -122,6 +126,9 @@ GITHUB_CALLBACK_URL='http://localhost:3000/api/auth/github/callback'
 # Google Gemini AI Credentials
 GOOGLE_GEMINI_API_KEY='your_gemini_api_key' # API Key for Google Gemini
 GOOGLE_GEMINI_MODEL='gemini-1.5-flash' # e.g., gemini-pro, gemini-1.5-flash, gemini-1.5-pro
+
+# Google Cloud Translation API Key
+GOOGLE_TRANSLATION_API_KEY='your_translation_api_key' # NEW: API Key for Google Cloud Translation
 
 # Base URL for API (for email verification links, etc.)
 BASE_URL='http://localhost:3000'
@@ -206,7 +213,7 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `DELETE` | `/repos/:repoName`          | Delete a GitHub repository                         |
 | `GET`    | `/repos/:repoName/contents` | Get repository files and directory contents        |
 
-### Generative AI (Google Gemini)
+### Generative AI (Google Gemini & Translator)
 
 | Method | Endpoint                               | Description                             |
 | ------ | -------------------------------------- | --------------------------------------- |
@@ -218,6 +225,23 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `POST` | `/api/gemini/file/generate-file`       | Analyze uploaded file content           |
 | `POST` | `/api/gemini/file/generate-resume`     | Generate a new resume                   |
 | `POST` | `/api/gemini/file/optimize-resume`     | Optimize resume against job description |
+| `POST` | `/api/gemini/file/enhance-resume`      | Enhance specific resume sections        |
+| `POST` | `/api/gemini/file/generate-video`      | Generate a video from a text prompt     |
+| `POST` | `/api/google-translator/translate`     | Translate text or file content          |
+
+### LLM Operations
+
+| Method | Endpoint                     | Description                                     |
+| ------ | ---------------------------- | ----------------------------------------------- |
+| `POST` | `/api/llm/generate-llm`      | Generate code/content and proposed file changes |
+| `GET`  | `/api/llm/project-structure` | Generate project structure (directory tree)     |
+
+### Conversation Management
+
+| Method | Endpoint                         | Description                                      |
+| ------ | -------------------------------- | ------------------------------------------------ |
+| `GET`  | `/api/conversations`             | Get paginated list of conversation summaries     |
+| `GET`  | `/api/conversations/:id/history` | Get paginated history of a specific conversation |
 
 ### Developer Utilities & Shell
 
@@ -265,16 +289,51 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 
 ```
 src/
+├── account/            # User account management
+├── app.module.ts       # Root module
 ├── auth/               # User authentication, authorization, OAuth (Google, GitHub)
-├── common/             # Common services (e.g., file validation) and DTOs
+├── aws/                # AWS service integrations (EC2, RDS, S3, DynamoDB, Security Groups, Billing)
+├── bulk-data/          # Bulk data import/export functionalities
+├── code-extractor/     # Extracting code from various file formats
+├── command-history/    # Persistence for terminal command history
+├── common/             # Common DTOs, services, and helpers
+├── config/             # Application configuration (e.g., feature flags)
 ├── conversation/       # Chat conversation history for AI interactions
+├── database/           # Database management and SQL utilities
+├── endpoints/          # API endpoint discovery and constants generation
+├── eslint/             # ESLint integration for code linting
+├── feature/            # Feature toggle management
+├── ffmpeg/             # FFmpeg integration for audio/video processing
 ├── file/               # Local and remote file system operations (read, write, list, stream, SSH/SFTP)
-├── google/             # Google AI integrations (Gemini, TTS, Image Captioning)
+├── folder/             # Folder specific operations
+├── gemini-request/     # Persistence for Gemini AI requests
+├── gemini-response/    # Persistence for Gemini AI responses
+├── google/             # Google AI integrations (Gemini, TTS, Image Captioning, Video Generation, Live AI, Translation)
+├── icon/               # Icon management service
+├── llm/                # Large Language Model integration for code generation, analysis, and repair
+├── log/                # Application logging with persistence
 ├── mail/               # Email sending (e.g., for verification)
+├── manifest/           # Manifest generation service
+├── media/              # Media file management
 ├── module-control/     # Toggle modules on/off
+├── organization/       # Organization management
 ├── prisma/             # Prisma ORM setup and service
+├── project/            # Project management (metadata, status, etc.)
 ├── recording/          # Screen recording and screenshot capture
-├── terminal/           # Terminal command execution, local and remote SSH shell
+├── repos/              # GitHub repository management
+├── resume/             # Resume parsing and generation services
+├── schema/             # Dynamic schema definition management
+├── schema-submission/  # Handling submissions against defined schemas
+├── setup/              # Initial application setup and environment configuration
+├── shared/             # Shared interfaces and constants
+├── subtitle/           # Subtitle processing service
+├── system-instruction/ # Management of AI system instructions
+├── terminal/           # Terminal command execution, local and remote SSH shell, session management
+├── terminal-command/   # Persistence for user-defined terminal commands
+├── terminal-session/   # Persistence for terminal session metadata
+├── transpiler/         # Code transpilation services (e.g., JS/TS/React/Solid JSX)
+├── types/              # Global TypeScript type definitions
+├── user/               # User management (beyond authentication)
 └── utils/              # General utilities (encoding, markdown, SQL parsing, image conversion, JSON/YAML, transpilation, ESLint)
 ```
 
