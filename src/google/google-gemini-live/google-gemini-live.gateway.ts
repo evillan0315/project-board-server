@@ -1,4 +1,3 @@
-// src/google/google-gemini-live/google-gemini-live.gateway.ts
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -97,10 +96,8 @@ export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDi
     try {
       await this.geminiService.sendText(payload.sessionId, payload.text);
       this.logger.debug(`Text buffered for session ${payload.sessionId}: "${payload.text}"`);
-      const turn = await this.geminiService.waitTurn(payload.sessionId);
       // Optionally, emit an acknowledgement if needed
       client.emit('textInputBuffered', {
-        turn,
         sessionId: payload.sessionId,
         success: true,
       });
