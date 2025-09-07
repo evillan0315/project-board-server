@@ -1,12 +1,5 @@
 // src/google/google-gemini-live/google-gemini-live.controller.ts
-import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  HttpStatus,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -98,19 +91,8 @@ export class GoogleGeminiLiveController {
     description: 'Invalid session ID, audio data, or MIME type.',
   })
   async sendAudio(@Body() body: LiveAudioInputDto) {
-    // Decode the base64 audio chunk.
-    const buffer = Buffer.from(body.audioChunk, 'base64');
-
-    await this.geminiLiveService.sendAudioChunks(
-      body.sessionId,
-      [
-        buffer.buffer.slice(
-          buffer.byteOffset,
-          buffer.byteOffset + buffer.byteLength,
-        ),
-      ], // Extract ArrayBuffer from Buffer
-      body.mimeType,
-    );
+    // Directly pass the base64 audio chunk to the service
+    await this.geminiLiveService.sendAudioChunks(body.sessionId, [body.audioChunk], body.mimeType);
 
     return { success: true, message: 'Audio chunk buffered.' };
   }
@@ -127,8 +109,7 @@ export class GoogleGeminiLiveController {
   @ApiResponse({
     status: 200,
     type: LiveTurnResultDto,
-    description:
-      'Turn results from Gemini Live session, including AI response.',
+    description: 'Turn results from Gemini Live session, including AI response.',
   })
   @ApiBadRequestResponse({
     description: 'No input provided for the turn, or invalid session ID.',

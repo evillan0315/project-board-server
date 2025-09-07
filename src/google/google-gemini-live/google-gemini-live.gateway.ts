@@ -29,9 +29,7 @@ import {
   namespace: '/gemini',
   cors: { origin: '*' },
 })
-export class GoogleGeminiLiveGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -80,14 +78,10 @@ export class GoogleGeminiLiveGateway
       const { sessionId } = await this.geminiService.connect(payload.options);
       const response: LiveSessionResponseDto = { sessionId };
 
-      this.logger.log(
-        `Live session ${sessionId} started for client ${client.id}`,
-      );
+      this.logger.log(`Live session ${sessionId} started for client ${client.id}`);
       client.emit('sessionStarted', response);
     } catch (e: any) {
-      this.logger.error(
-        `Failed to start session for client ${client.id}: ${e.message}`,
-      );
+      this.logger.error(`Failed to start session for client ${client.id}: ${e.message}`);
       client.emit('error', {
         message: `Failed to start session: ${e.message}`,
       });
@@ -99,15 +93,10 @@ export class GoogleGeminiLiveGateway
    * No AI response is generated until `processTurn` is called.
    */
   @SubscribeMessage('textInput') // Renamed from 'message' for clarity with 'audioInput'
-  async onTextInput(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: LiveTextInputDto,
-  ) {
+  async onTextInput(@ConnectedSocket() client: Socket, @MessageBody() payload: LiveTextInputDto) {
     try {
       await this.geminiService.sendText(payload.sessionId, payload.text);
-      this.logger.debug(
-        `Text buffered for session ${payload.sessionId}: "${payload.text}"`,
-      );
+      this.logger.debug(`Text buffered for session ${payload.sessionId}: "${payload.text}"`);
       const turn = await this.geminiService.waitTurn(payload.sessionId);
       // Optionally, emit an acknowledgement if needed
       client.emit('textInputBuffered', {
@@ -116,9 +105,7 @@ export class GoogleGeminiLiveGateway
         success: true,
       });
     } catch (e: any) {
-      this.logger.error(
-        `Error buffering text for session ${payload.sessionId}: ${e.message}`,
-      );
+      this.logger.error(`Error buffering text for session ${payload.sessionId}: ${e.message}`);
       client.emit('error', { message: `Failed to send text: ${e.message}` });
     }
   }
@@ -128,33 +115,16 @@ export class GoogleGeminiLiveGateway
    * Multiple audio chunks can be sent. No AI response is generated until `processTurn` is called.
    */
   @SubscribeMessage('audioInput')
-  async onAudioInput(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: LiveAudioInputDto,
-  ) {
+  async onAudioInput(@ConnectedSocket() client: Socket, @MessageBody() payload: LiveAudioInputDto) {
     try {
-      // Decode the base64 audio chunk back to a Uint8Array
-      // Note: `atob` is a browser global, but Node.js also has it.
-      // For Node.js-only, `Buffer.from(payload.audioChunk, 'base64')` is generally preferred.
-      // However, `Uint8Array.from(atob(str), char => char.charCodeAt(0))` is also valid in Node.js >= 16.
-      const buffer = Uint8Array.from(atob(payload.audioChunk), (c) =>
-        c.charCodeAt(0),
-      );
-
-      // sendAudioChunks expects ArrayBuffer[], `buffer` is a Uint8Array.
-      // We need to pass the underlying ArrayBuffer of the Uint8Array.
+      // Directly pass the base64 audio chunk to the service without intermediate conversions
       await this.geminiService.sendAudioChunks(
         payload.sessionId,
-        [
-          buffer.buffer.slice(
-            buffer.byteOffset,
-            buffer.byteOffset + buffer.byteLength,
-          ),
-        ],
+        [payload.audioChunk],
         payload.mimeType,
       );
       this.logger.debug(
-        `Audio chunk buffered for session ${payload.sessionId}. Size: ${buffer.length} bytes.`,
+        `Audio chunk buffered for session ${payload.sessionId}. Size: ${payload.audioChunk.length} base64 bytes.`,
       );
       // Optionally, emit an acknowledgement if needed
       client.emit('audioInputBuffered', {
@@ -162,9 +132,7 @@ export class GoogleGeminiLiveGateway
         success: true,
       });
     } catch (e: any) {
-      this.logger.error(
-        `Error buffering audio for session ${payload.sessionId}: ${e.message}`,
-      );
+      this.logger.error(`Error buffering audio for session ${payload.sessionId}: ${e.message}`);
       client.emit('error', { message: `Failed to buffer audio: ${e.message}` });
     }
   }
@@ -174,15 +142,10 @@ export class GoogleGeminiLiveGateway
    * and sends the AI's response back to the client.
    */
   @SubscribeMessage('processTurn')
-  async onProcessTurn(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: ProcessTurnDto,
-  ) {
+  async onProcessTurn(@ConnectedSocket() client: Socket, @MessageBody() payload: ProcessTurnDto) {
     try {
       this.logger.log(`Processing turn for session ${payload.sessionId}...`);
-      const result: LiveTurnResultDto = await this.geminiService.waitTurn(
-        payload.sessionId,
-      );
+      const result: LiveTurnResultDto = await this.geminiService.waitTurn(payload.sessionId);
       this.logger.debug(
         `Turn completed for session ${payload.sessionId}. Result: ${JSON.stringify(result)}`,
       );
@@ -194,9 +157,7 @@ export class GoogleGeminiLiveGateway
       client.emit('aiResponse', result);
       this.logger.log(`AI response sent for session ${payload.sessionId}.`);
     } catch (e: any) {
-      this.logger.error(
-        `Error processing turn for session ${payload.sessionId}: ${e.message}`,
-      );
+      this.logger.error(`Error processing turn for session ${payload.sessionId}: ${e.message}`);
       client.emit('error', { message: `Failed to process turn: ${e.message}` });
     }
   }
@@ -215,9 +176,7 @@ export class GoogleGeminiLiveGateway
       client.emit('sessionEnded', { sessionId: payload.sessionId });
       this.logger.log(`Session ${payload.sessionId} ended`);
     } catch (e: any) {
-      this.logger.error(
-        `Failed to close session ${payload.sessionId}: ${e.message}`,
-      );
+      this.logger.error(`Failed to close session ${payload.sessionId}: ${e.message}`);
       client.emit('error', {
         message: `Failed to close session: ${e.message}`,
       });

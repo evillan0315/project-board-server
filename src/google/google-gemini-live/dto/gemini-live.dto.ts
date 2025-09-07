@@ -1,5 +1,3 @@
-// src/gemini/dto/gemini-live.dto.ts
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -62,8 +60,7 @@ export class LiveTurnResultDto {
 
   @ApiProperty({
     type: [Object],
-    description:
-      'Array of raw data contents (may contain audio or inline data).',
+    description: 'Array of raw data contents (may contain audio or inline data).',
   })
   @IsArray()
   datas: any[];
@@ -107,7 +104,7 @@ export class LiveConnectOptionsDto {
  * Interface for audio payload chunks (primarily for internal service use to buffer audio).
  */
 export interface LiveAudioPayloadDto {
-  data: Uint8Array;
+  data: string; // Changed from Uint8Array to string (base64)
   mimeType: string;
 }
 
@@ -170,16 +167,14 @@ export class LiveAudioInputDto {
   sessionId: string;
 
   @ApiProperty({
-    description:
-      'Base64 encoded audio chunk. Each request should ideally contain one chunk.',
+    description: 'Base64 encoded audio chunk. Each request should ideally contain one chunk.',
     format: 'byte', // Indicates binary string in Swagger
   })
   @IsString()
   audioChunk: string;
 
   @ApiProperty({
-    description:
-      'MIME type of the audio (e.g., audio/webm, audio/wav, audio/mpeg).',
+    description: 'MIME type of the audio (e.g., audio/webm, audio/wav, audio/mpeg).',
   })
   @IsString()
   mimeType: string;

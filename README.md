@@ -126,6 +126,7 @@ GITHUB_CALLBACK_URL='http://localhost:3000/api/auth/github/callback'
 # Google Gemini AI Credentials
 GOOGLE_GEMINI_API_KEY='your_gemini_api_key' # API Key for Google Gemini
 GOOGLE_GEMINI_MODEL='gemini-1.5-flash' # e.g., gemini-pro, gemini-1.5-flash, gemini-1.5-pro
+GOOGLE_GEMINI_LIVE_MODEL='gemini-live-2.5-flash-preview' # Specific model for live audio interactions
 
 # Google Cloud Translation API Key
 GOOGLE_TRANSLATION_API_KEY='your_translation_api_key' # NEW: API Key for Google Cloud Translation

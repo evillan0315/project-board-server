@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI, Modality, LiveServerMessage } from '@google/genai';
 import * as crypto from 'node:crypto';
@@ -25,7 +21,7 @@ type InternalLiveSessionHandle = PublicLiveSessionHandleDto & {
   sdkSession: Awaited<ReturnType<GoogleGenAI['live']['connect']>>;
   responseQueue: LiveMessageDto[];
   sendText: (text: string) => Promise<void>;
-  sendAudio: (payload: LiveAudioPayloadDto) => Promise<void>;
+  sendAudio: (payload: LiveAudioPayloadDto) => Promise<void>; // Updated LiveAudioPayloadDto
   waitForTurn: () => Promise<LiveTurnResultDto>;
   close: () => Promise<void>;
 };
@@ -41,12 +37,9 @@ export class GoogleGeminiLiveService {
   private readonly genaiClient: GoogleGenAI;
 
   constructor(private readonly config: ConfigService) {
-    this.GOOGLE_API_KEY_FOR_TOKEN_CREATION = this.config.get<string>(
-      'GOOGLE_GEMINI_API_KEY',
-    )!;
+    this.GOOGLE_API_KEY_FOR_TOKEN_CREATION = this.config.get<string>('GOOGLE_GEMINI_API_KEY')!;
     this.GOOGLE_GEMINI_MODEL =
-      this.config.get<string>('GOOGLE_GEMINI_LIVE_MODEL') ||
-      'gemini-live-2.5-flash-preview';
+      this.config.get<string>('GOOGLE_GEMINI_LIVE_MODEL') || 'gemini-live-2.5-flash-preview';
 
     if (!this.GOOGLE_API_KEY_FOR_TOKEN_CREATION) {
       this.logger.error(
@@ -71,86 +64,89 @@ export class GoogleGeminiLiveService {
 
     // inside connect() just after `const responseQueue: LiveMessageDto[] = [];`
 
-const waitMessage = async (): Promise<LiveMessageDto> => {
-  while (true) {
-    const msg = responseQueue.shift();
-    if (msg) return msg;
-    await new Promise((r) => setTimeout(r, 50));
-  }
-};
-
-// Heuristic: finish the turn if no new messages arrive for this long *after* at least one model message.
-const IDLE_END_MS = 800;
-// Hard stop (safety net)
-const HARD_TIMEOUT_MS = 15000;
-
-const handleTurn = async (): Promise<LiveTurnResultDto> => {
-  const messages: LiveMessageDto[] = [];
-  const texts: string[] = [];
-  const datas: any[] = [];
-
-  let lastMsgAt = Date.now();
-  let sawAnyModelOutput = false;
-  let resolved = false;
-
-  const hardTimeout = setTimeout(() => {
-    if (!resolved) {
-      resolved = true;
-      throw new Error('waitTurn timeout – no turnComplete received');
-    }
-  }, HARD_TIMEOUT_MS);
-
-  const idleTicker = setInterval(() => {
-    // End on silence if we already saw some model output
-    if (!resolved && sawAnyModelOutput && Date.now() - lastMsgAt >= IDLE_END_MS) {
-      resolved = true;
-      clearTimeout(hardTimeout);
-      clearInterval(idleTicker);
-      // synthesize a turnComplete so downstream code stays the same
-      messages.push({ serverContent: { turnComplete: true }, text: undefined });
-    }
-  }, 100);
-
-  try {
-    while (true) {
-      const msg = await waitMessage();
-      // optional: detailed logging
-      this.logger.debug(`waitTurn received: ${JSON.stringify(msg)}`);
-
-      lastMsgAt = Date.now();
-
-      // collect
-      messages.push(msg);
-      if (msg.text) {
-        texts.push(msg.text);
-        sawAnyModelOutput = true;
+    const waitMessage = async (): Promise<LiveMessageDto> => {
+      while (true) {
+        const msg = responseQueue.shift();
+        if (msg) return msg;
+        await new Promise((r) => setTimeout(r, 50));
       }
-      if ((msg as any).data) datas.push((msg as any).data);
+    };
 
-      // normalize different shapes that may indicate turn completion
-      const m: any = msg as any;
-      const turnComplete =
-        m?.serverContent?.turnComplete === true ||
-        m?.turnComplete === true ||
-        m?.type === 'turnComplete' ||
-        m?.event === 'turn_complete' ||
-        m?.response?.completed === true;
+    // Heuristic: finish the turn if no new messages arrive for this long *after* at least one model message.
+    const IDLE_END_MS = 800;
+    // Hard stop (safety net)
+    const HARD_TIMEOUT_MS = 15000;
 
-      if (turnComplete) {
-        resolved = true;
+    const handleTurn = async (): Promise<LiveTurnResultDto> => {
+      const messages: LiveMessageDto[] = [];
+      const texts: string[] = [];
+      const datas: any[] = [];
+
+      let lastMsgAt = Date.now();
+      let sawAnyModelOutput = false;
+      let resolved = false;
+
+      const hardTimeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          throw new Error('waitTurn timeout – no turnComplete received');
+        }
+      }, HARD_TIMEOUT_MS);
+
+      const idleTicker = setInterval(() => {
+        // End on silence if we already saw some model output
+        if (!resolved && sawAnyModelOutput && Date.now() - lastMsgAt >= IDLE_END_MS) {
+          resolved = true;
+          clearTimeout(hardTimeout);
+          clearInterval(idleTicker);
+          // synthesize a turnComplete so downstream code stays the same
+          messages.push({
+            serverContent: { turnComplete: true },
+            text: undefined,
+          });
+        }
+      }, 100);
+
+      try {
+        while (true) {
+          const msg = await waitMessage();
+          // optional: detailed logging
+          this.logger.debug(`waitTurn received: ${JSON.stringify(msg)}`);
+
+          lastMsgAt = Date.now();
+
+          // collect
+          messages.push(msg);
+          if (msg.text) {
+            texts.push(msg.text);
+            sawAnyModelOutput = true;
+          }
+          if ((msg as any).data) datas.push((msg as any).data);
+
+          // normalize different shapes that may indicate turn completion
+          const m: any = msg as any;
+          const turnComplete =
+            m?.serverContent?.turnComplete === true ||
+            m?.turnComplete === true ||
+            m?.type === 'turnComplete' ||
+            m?.event === 'turn_complete' ||
+            m?.response?.completed === true;
+
+          if (turnComplete) {
+            resolved = true;
+            clearTimeout(hardTimeout);
+            clearInterval(idleTicker);
+            break;
+          }
+        }
+
+        return { messages, texts, datas };
+      } catch (e) {
         clearTimeout(hardTimeout);
         clearInterval(idleTicker);
-        break;
+        throw e;
       }
-    }
-
-    return { messages, texts, datas };
-  } catch (e) {
-    clearTimeout(hardTimeout);
-    clearInterval(idleTicker);
-    throw e;
-  }
-};
+    };
     let sdkSession: Awaited<ReturnType<GoogleGenAI['live']['connect']>>;
     try {
       sdkSession = await this.genaiClient.live.connect({
@@ -159,7 +155,7 @@ const handleTurn = async (): Promise<LiveTurnResultDto> => {
         callbacks: {
           onopen: () => this.logger.debug(`Live session ${sessionId} opened`),
           onmessage: (message: LiveServerMessage) => {
-            this.logger.debug(`Live session onmessage`, message)
+            this.logger.debug(`Live session onmessage`, message);
             // normalize a broad set of shapes from the SDK
             const m: any = message;
             const normalized: LiveMessageDto = {
@@ -180,19 +176,15 @@ const handleTurn = async (): Promise<LiveTurnResultDto> => {
             responseQueue.push(normalized);
           },
           onerror: (e: any) => {
-            this.logger.error(
-              `Live session ${sessionId} error: ${e?.message ?? e}`,
-            );
+            this.logger.error(`Live session ${sessionId} error: ${e?.message ?? e}`);
             // push a synthetic turnComplete to unblock collectors
             responseQueue.push({
-              text: `Error: ${e?.message ?? 'unknown'}`,
+              text: `Error: ${e?.message ?? 'unknown'} `,
               serverContent: { turnComplete: true },
             } as LiveMessageDto);
           },
           onclose: (e: any) => {
-            this.logger.debug(
-              `Live session ${sessionId} closed: ${e?.reason ?? 'unknown'}`,
-            );
+            this.logger.debug(`Live session ${sessionId} closed: ${e?.reason ?? 'unknown'} `);
             // also unblock on close
             responseQueue.push({
               serverContent: { turnComplete: true },
@@ -201,13 +193,8 @@ const handleTurn = async (): Promise<LiveTurnResultDto> => {
         },
       });
     } catch (err: any) {
-      this.logger.error(
-        `Failed to connect Live session: ${err?.message}`,
-        err?.stack,
-      );
-      throw new InternalServerErrorException(
-        `Failed to connect to Gemini Live: ${err?.message}`,
-      );
+      this.logger.error(`Failed to connect Live session: ${err?.message}`, err?.stack);
+      throw new InternalServerErrorException(`Failed to connect to Gemini Live: ${err?.message}`);
     }
 
     const internalHandle: InternalLiveSessionHandle = {
@@ -227,9 +214,9 @@ const handleTurn = async (): Promise<LiveTurnResultDto> => {
       },
 
       sendAudio: async (payload: LiveAudioPayloadDto) => {
-        const base64 = Buffer.from(payload.data).toString('base64');
+        // payload.data is now expected to be a base64 string directly
         await sdkSession.sendRealtimeInput({
-          audio: { data: base64, mimeType: payload.mimeType },
+          audio: { data: payload.data, mimeType: payload.mimeType },
         });
       },
 
@@ -255,8 +242,7 @@ const handleTurn = async (): Promise<LiveTurnResultDto> => {
 
   private getHandle(sessionId: string): InternalLiveSessionHandle {
     const h = this.sessions.get(sessionId);
-    if (!h)
-      throw new InternalServerErrorException('Invalid or expired sessionId');
+    if (!h) throw new InternalServerErrorException('Invalid or expired sessionId');
     return h;
   }
 
@@ -267,12 +253,12 @@ const handleTurn = async (): Promise<LiveTurnResultDto> => {
 
   async sendAudioChunks(
     sessionId: string,
-    chunks: ArrayBuffer[],
+    chunks: string[], // Changed from ArrayBuffer[] to string[] (base64 chunks)
     mimeType: string,
   ): Promise<void> {
     const h = this.getHandle(sessionId);
     for (const chunk of chunks) {
-      await h.sendAudio({ data: new Uint8Array(chunk), mimeType });
+      await h.sendAudio({ data: chunk, mimeType }); // Directly pass base64 chunk
     }
   }
 
