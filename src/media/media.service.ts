@@ -12,7 +12,17 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJwtUserDto } from '../auth/dto/auth.dto';
-import { File, FileType, Prisma, Metadata, MetadataType } from '@prisma/client';
+import {
+  File,
+  FileType,
+  Prisma,
+  Metadata,
+  MetadataType,
+  Song,
+  Video,
+  Artist,
+  Album,
+} from '@prisma/client';
 import {
   PaginationMediaQueryDto,
   MediaScanRequestDto,
@@ -20,6 +30,7 @@ import {
 } from './dto';
 import * as recursiveReaddir from 'recursive-readdir';
 import { v4 as uuidv4 } from 'uuid'; // Import uuid
+import * as ffprobe from 'ffprobe-client';
 
 // Define supported media extensions and map them to FileType
 const MEDIA_EXTENSIONS: Record<string, FileType> = {
@@ -75,7 +86,7 @@ export class MediaService {
   private readonly logger = new Logger(MediaService.name);
   private readonly downloadDir = path.resolve(process.cwd(), 'downloads');
   private readonly cookiesDir = path.resolve(process.cwd(), 'cookies');
-  private readonly thumbnailDir = path.join(this.downloadDir, 'thumbnails'); // New: Thumbnail directory
+  private readonly thumbnailDir = path.join(this.downloadDir, 'thumbnails');
 
   constructor(
     private prisma: PrismaService,
@@ -102,6 +113,44 @@ export class MediaService {
     }
     return this.request.user.id;
   }
+
+  // Replace the ffprobe import with this implementation
+private async getMediaDuration(filePath: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const ffprobe = spawn('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      filePath
+    ]);
+
+    let output = '';
+    let errorOutput = '';
+    
+    ffprobe.stdout.on('data', (data) => output += data.toString());
+    ffprobe.stderr.on('data', (data) => errorOutput += data.toString());
+
+    ffprobe.on('close', (code) => {
+      if (code === 0) {
+        const duration = parseFloat(output.trim());
+        if (isNaN(duration)) {
+          this.logger.warn(`Could not parse duration from ffprobe output: ${output}`);
+          resolve(0);
+        } else {
+          resolve(duration);
+        }
+      } else {
+        this.logger.warn(`FFprobe failed for ${filePath}: ${errorOutput}`);
+        resolve(0);
+      }
+    });
+
+    ffprobe.on('error', (err) => {
+      this.logger.warn(`FFprobe error for ${filePath}: ${err.message}`);
+      resolve(0);
+    });
+  });
+}
   private async fetchYoutubeMetadata(url: string, cookieFile?: string) {
     return new Promise<any>((resolve, reject) => {
       const args = ['-j', url];
@@ -151,8 +200,7 @@ export class MediaService {
       proc.on('close', (code) => {
         if (code === 0) {
           resolve(output.trim());
-        }
-        else {
+        } else {
           reject(
             new Error(
               `${command} exited with code ${code}. Stderr: ${errorOutput}`,
@@ -185,15 +233,21 @@ export class MediaService {
     const thumbnailFileName = `${fileId}.jpg`;
     const thumbnailPath = path.join(userThumbnailDir, thumbnailFileName);
 
-    this.logger.log(`Attempting to generate thumbnail for ${videoFilePath} at ${thumbnailPath}`);
+    this.logger.log(
+      `Attempting to generate thumbnail for ${videoFilePath} at ${thumbnailPath}`,
+    );
 
     return new Promise((resolve) => {
       // ffmpeg -i input.mp4 -ss 00:00:01 -vframes 1 -q:v 2 output.jpg
       const ffmpegArgs = [
-        '-i', videoFilePath,
-        '-ss', '00:00:01', // Seek to 1 second
-        '-vframes', '1', // Take one frame
-        '-q:v', '2', // Quality (1-5, 1 being best, 5 worst)
+        '-i',
+        videoFilePath,
+        '-ss',
+        '00:00:01', // Seek to 1 second
+        '-vframes',
+        '1', // Take one frame
+        '-q:v',
+        '2', // Quality (1-5, 1 being best, 5 worst)
         thumbnailPath,
       ];
 
@@ -225,6 +279,161 @@ export class MediaService {
     });
   }
 
+  /**
+   * Finds or creates Artist, Album, Song, or Video entities based on file type and metadata.
+   * This helper method prevents duplication and ensures related media entities are present.
+   * For existing Song/Video entities, it updates relevant metadata.
+   * @returns An object containing songId and/or videoId if created/found.
+   */
+  private async _processMediaContentAndLinkToPrisma(
+    fileType: FileType,
+    fileTitle: string,
+    userId: string,
+    metadata?: any,
+    filePath?: string, // Used for ffprobe if available
+  ): Promise<{ songId?: string; videoId?: string }> {
+    const result: { songId?: string; videoId?: string } = {};
+
+    if (fileType === FileType.AUDIO) {
+
+      let duration = metadata?.duration ?? 0;
+    
+    // If metadata doesn't have duration or it's 0, try to get it from the file
+    if ((duration === 0 || !duration) && filePath) {
+      duration = await this.getMediaDuration(filePath);
+    }
+      const artistName =
+        metadata?.artist || metadata?.uploader || 'Unknown Artist';
+      const albumTitle = metadata?.album || 'Unknown Album';
+
+      // 1. Find or create Artist
+      let artist = await this.prisma.artist.findFirst({
+        where: { name: artistName, createdById: userId },
+      });
+      if (!artist) {
+        artist = await this.prisma.artist.create({
+          data: {
+            name: artistName,
+            createdById: userId,
+            bio: 'Automatically created entry.',
+          },
+        });
+        this.logger.log(`Created new Artist: ${artist.name}`);
+      }
+
+      // 2. Find or create Album
+      let album = await this.prisma.album.findFirst({
+        where: { title: albumTitle, artistId: artist.id, createdById: userId },
+      });
+      if (!album) {
+        album = await this.prisma.album.create({
+          data: {
+            title: albumTitle,
+            artistId: artist.id,
+            createdById: userId,
+            releaseDate: metadata?.release_date
+              ? new Date(metadata.release_date)
+              : null,
+          },
+        });
+        this.logger.log(`Created new Album: ${album.title}`);
+      }
+
+      // 3. Find or create Song, and update if it exists
+      let song = await this.prisma.song.findFirst({
+        where: {
+          title: fileTitle,
+          artistId: artist.id,
+          albumId: album.id,
+          createdById: userId,
+        },
+      });
+      if (song) {
+        song = await this.prisma.song.update({
+          where: { id: song.id },
+          data: {
+            duration: duration,
+            year: metadata?.release_year || null,
+            updatedAt: new Date(),
+          },
+        });
+        this.logger.log(`Updated existing Song: ${song.title}`);
+      } else {
+        song = await this.prisma.song.create({
+          data: {
+            title: fileTitle,
+            duration: duration,
+            year: metadata?.release_year || null,
+            artistId: artist.id,
+            albumId: album.id,
+            createdById: userId,
+          },
+        });
+        this.logger.log(`Created new Song: ${song.title}`);
+      }
+      result.songId = song.id;
+    } else if (fileType === FileType.VIDEO) {
+      let videoDuration: number = metadata?.duration ?? 0; // In seconds
+      let videoDescription: string =
+        metadata?.description || 'No description available.';
+      let videoYear: number = metadata?.release_year || 1900;
+      let videoCast: string[] = metadata?.cast || [];
+
+      // If metadata is not available (e.g., for scanned local files), try ffprobe for duration
+      if (filePath && videoDuration === 0) {
+        try {
+          const ffprobeData = await ffprobe(filePath);
+          if (
+            ffprobeData &&
+            ffprobeData.format &&
+            ffprobeData.format.duration
+          ) {
+            videoDuration = Math.round(ffprobeData.format.duration);
+            this.logger.debug(
+              `FFprobe extracted duration: ${videoDuration}s for ${filePath}`,
+            );
+          }
+        } catch (err) {
+          this.logger.warn(
+            `Could not extract duration with ffprobe for ${filePath}: ${err.message}`,
+          );
+        }
+      }
+
+      // Find or create Video, and update if it exists
+      let video = await this.prisma.video.findFirst({
+        where: { title: fileTitle, createdById: userId },
+      });
+      if (video) {
+        video = await this.prisma.video.update({
+          where: { id: video.id },
+          data: {
+            description: videoDescription,
+            duration: videoDuration,
+            year: videoYear,
+            cast: videoCast,
+            updatedAt: new Date(),
+          },
+        });
+        this.logger.log(`Updated existing Video: ${video.title}`);
+      } else {
+        video = await this.prisma.video.create({
+          data: {
+            title: fileTitle,
+            description: videoDescription,
+            duration: videoDuration,
+            year: videoYear,
+            cast: videoCast,
+            createdById: userId,
+          },
+        });
+        this.logger.log(`Created new Video: ${video.title}`);
+      }
+      result.videoId = video.id;
+    }
+    return result;
+  }
+
   async extractAudioVideoFromYoutube(
     url: string,
     format: 'mp3' | 'webm' | 'm4a' | 'wav' | 'mp4' | 'flv' = 'webm',
@@ -237,181 +446,197 @@ export class MediaService {
     provider?: string,
     cookieAccess?: boolean,
   ): Promise<FileWithMetadata> {
-    return new Promise(async (resolve, reject) => {
-      const isAudio = ['mp3', 'm4a', 'wav'].includes(format);
-      const baseTypeDirName = isAudio ? 'audio' : 'videos';
-      const providerName = provider || 'unknown';
-      const currentUserId = this.userId;
+    return new Promise(
+      async (resolve, reject) => {
+        const isAudio = ['mp3', 'm4a', 'wav'].includes(format);
+        const baseTypeDirName = isAudio ? 'audio' : 'videos';
+        const providerName = provider || 'unknown';
+        const currentUserId = this.userId;
 
-      // Construct the target directory: downloads/<audio|videos>/<provider>/<userId>
-      const targetDirectoryPath = path.join(
-        this.downloadDir,
-        baseTypeDirName,
-        providerName,
-        currentUserId,
-      );
-
-      // Ensure the target directory exists
-      await fs.promises.mkdir(targetDirectoryPath, { recursive: true });
-
-      // Generate a unique file ID upfront to use for both the file and its potential thumbnail
-      const fileId = uuidv4();
-      const outputTemplate = path.join(
-        targetDirectoryPath,
-        fileId + '.%(ext)s', // Use the fileId as part of the filename, yt-dlp will append original extension
-      );
-      const args: string[] = [];
-
-      // Check yt-dlp, python, and ffmpeg versions for logging/debugging
-      try {
-        const ytVersion = await this.checkVersion('yt-dlp', ['--version']);
-        const pythonVersion = await this.checkVersion('python', ['--version']);
-        const ffmpegVersion = await this.checkVersion('ffmpeg', ['-version']); // Check ffmpeg version
-        this.logger.debug(`yt-dlp version: ${ytVersion}`);
-        this.logger.debug(`Python version: ${pythonVersion}`);
-        this.logger.debug(`FFmpeg version: ${ffmpegVersion.split('\n')[0]}`); // Only take first line of ffmpeg version
-      } catch (err) {
-        this.logger.warn(`Failed to get tool versions: ${err.message}`);
-        // Decide if this is a fatal error or just a warning.
-        // For now, we'll log and continue, but you might want to `reject` if tools are critical.
-      }
-      let metadataFromYtDlp: any;
-      // cookies if needed
-      if (cookieAccess && provider) {
-        const cookieFile = path.join(
-          this.cookiesDir,
-          `${provider}_cookies.txt`,
+        // Construct the target directory: downloads/<audio|videos>/<provider>/<userId>
+        const targetDirectoryPath = path.join(
+          this.downloadDir,
+          baseTypeDirName,
+          providerName,
+          currentUserId,
         );
 
+        // Ensure the target directory exists
+        await fs.promises.mkdir(targetDirectoryPath, { recursive: true });
+
+        // Generate a unique file ID upfront to use for both the file and its potential thumbnail
+        const fileId = uuidv4();
+        const outputTemplate = path.join(
+          targetDirectoryPath,
+          fileId + '.%(ext)s', // Use the fileId as part of the filename, yt-dlp will append original extension
+        );
+        const args: string[] = [];
+
+        // Check yt-dlp, python, and ffmpeg versions for logging/debugging
         try {
-          metadataFromYtDlp = await this.fetchYoutubeMetadata(url, cookieFile);
-          this.logger.debug(`Fetched metadata for ${url}: ${metadataFromYtDlp.title}`);
+          const ytVersion = await this.checkVersion('yt-dlp', ['--version']);
+          const pythonVersion = await this.checkVersion('python', [
+            '--version',
+          ]);
+          const ffmpegVersion = await this.checkVersion('ffmpeg', ['-version']); // Check ffmpeg version
+          this.logger.debug(`yt-dlp version: ${ytVersion}`);
+          this.logger.debug(`Python version: ${pythonVersion}`);
+          this.logger.debug(`FFmpeg version: ${ffmpegVersion.split('\n')[0]}`); // Only take first line of ffmpeg version
         } catch (err) {
-          this.logger.warn(`Failed to fetch metadata: ${err.message}`);
+          this.logger.warn(`Failed to get tool versions: ${err.message}`);
+          // Decide if this is a fatal error or just a warning.
+          // For now, we'll log and continue, but you might want to `reject` if tools are critical.
         }
-        if (fs.existsSync(cookieFile)) {
-          args.push('--cookies', cookieFile);
-        } else {
-          this.logger.warn(
-            `Cookie file not found for provider ${provider} at ${cookieFile}`,
+        let metadataFromYtDlp: any;
+        // cookies if needed
+        if (cookieAccess && provider) {
+          const cookieFile = path.join(
+            this.cookiesDir,
+            `${provider}_cookies.txt`,
           );
-        }
-      }
-      // 1) Fetch metadata first
 
-      // format args
-      if (isAudio) {
-        args.push('-x', '--audio-format', format);
-      } else {
-        // For video, ensure the best available video+audio is combined
-        // '-f bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' for example
-        args.push('-f', `bestvideo[ext=${format}]+bestaudio/best`);
-      }
-      args.push('-o', outputTemplate, url);
-
-      this.logger.debug(
-        `Spawning yt-dlp with arguments: yt-dlp ${args.join(' ')}`,
-      );
-
-      const ytDlp = spawn('yt-dlp', args);
-
-      let actualFilePath: string | null = null; // Store the actual downloaded file path
-      let filePathEmitted = false;
-      let stderrBuffer = '';
-      const handleOutput = (text: string) => {
-        stderrBuffer += text;
-
-        for (const line of text.split('\n')) {
-          // 1) progress lines
-          const prog = line.match(
-            /\[download\]\s+(\d+(?:\.\d+)?)%\s+of\s+([\d.]+[KMGTP]?i?B).*/,
-          );
-          if (prog && onProgress) {
-            const percent = parseFloat(prog[1]);
-            const totalSize = this.parseSize(prog[2]);
-            const downloadedSize = (percent * totalSize) / 100;
-            onProgress({
-              percent,
-              downloaded: downloadedSize,
-              total: totalSize,
-            });
-          }
-
-          // 2) destination line
-          const dest =
-            line.match(
-              isAudio
-                ? /\[ExtractAudio\] Destination:\s+(.+)/
-                : /\[download\] Destination:\s+(.+)/,
-            ) ||
-            line.match(/\[download\]\s+(.+)\s+has already been downloaded/);
-
-          if (dest && !filePathEmitted) {
-            let resolved = dest[1].trim();
-            if (!path.isAbsolute(resolved)) {
-              this.logger.warn(
-                `yt-dlp reported relative path: ${resolved}. Resolving against CWD.`,
-              );
-              resolved = path.join(process.cwd(), resolved);
-            }
-            actualFilePath = resolved;
-            filePathEmitted = true;
-            if (onFilePathReady) {
-              onFilePathReady(resolved);
-            }
-          }
-        }
-      };
-      // listen to stderr (yt-dlp writes progress & destination there, and errors!)
-      ytDlp.stderr.on('data', (chunk: Buffer) =>
-        handleOutput(chunk.toString()),
-      );
-      ytDlp.stdout.on('data', (chunk: Buffer) =>
-        handleOutput(chunk.toString()),
-      );
-      ytDlp.on('error', (err) => {
-        // This 'error' event is typically for issues spawning the process itself (e.g., 'yt-dlp' not found)
-        this.logger.error('yt-dlp failed to start (process spawn error)', err);
-        reject(new Error(`Failed to start yt-dlp process: ${err.message}`));
-      });
-
-      ytDlp.on('close', async (code) => {
-        if (code === 0 && actualFilePath) {
           try {
-            let thumbnailUrl: string | null = null;
-            const fileType = isAudio ? FileType.AUDIO : FileType.VIDEO; // Determine fileType based on isAudio
-            if (fileType === FileType.VIDEO) {
-              thumbnailUrl = await this._generateThumbnail(actualFilePath, fileId, currentUserId);
-            }
-            const createdFile = await this.saveMediaFileToPrisma(
-              fileId, // Pass the pre-generated fileId
-              actualFilePath,
-              url, // Original YouTube URL
-              format, // Desired media format
-              providerName,
-              currentUserId,
-              metadataFromYtDlp,
-              thumbnailUrl, // Pass the generated thumbnail URL
+            metadataFromYtDlp = await this.fetchYoutubeMetadata(
+              url,
+              cookieFile,
             );
-            resolve(createdFile);
-          } catch (prismaError) {
-            this.logger.error(
-              `Download successful but failed to save media metadata to Prisma: ${prismaError.message}`,
+            this.logger.debug(
+              `Fetched metadata for ${url}: ${metadataFromYtDlp.title}`,
             );
-            // Reject with a more specific error for metadata saving failure
-            reject(
-              new Error(
-                `Download successful but failed to save metadata: ${prismaError.message}`,
-              ),
+          } catch (err) {
+            this.logger.warn(`Failed to fetch metadata: ${err.message}`);
+          }
+          if (fs.existsSync(cookieFile)) {
+            args.push('--cookies', cookieFile);
+          } else {
+            this.logger.warn(
+              `Cookie file not found for provider ${provider} at ${cookieFile}`,
             );
           }
-        } else {
-          const errorMessage = `yt-dlp exited with code ${code}. Stderr: ${stderrBuffer || 'No stderr output captured.'}`;
-          this.logger.error(errorMessage);
-          reject(new Error(errorMessage));
         }
-      });
-    });
+        // 1) Fetch metadata first
+
+        // format args
+        if (isAudio) {
+          args.push('-x', '--audio-format', format);
+        } else {
+          // For video, ensure the best available video+audio is combined
+          // '-f bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best' for example
+          args.push('-f', `bestvideo[ext=${format}]+bestaudio/best`);
+        }
+        args.push('-o', outputTemplate, url);
+
+        this.logger.debug(
+          `Spawning yt-dlp with arguments: yt-dlp ${args.join(' ')}`,
+        );
+
+        const ytDlp = spawn('yt-dlp', args);
+
+        let actualFilePath: string | null = null; // Store the actual downloaded file path
+        let filePathEmitted = false;
+        let stderrBuffer = '';
+        const handleOutput = (text: string) => {
+          stderrBuffer += text;
+
+          for (const line of text.split('\n')) {
+            // 1) progress lines
+            const prog = line.match(
+              /\[download\]\s+(\d+(?:\.\d+)?)%\s+of\s+([\d.]+[KMGTP]?i?B).*/,
+            );
+            if (prog && onProgress) {
+              const percent = parseFloat(prog[1]);
+              const totalSize = this.parseSize(prog[2]);
+              const downloadedSize = (percent * totalSize) / 100;
+              onProgress({
+                percent,
+                downloaded: downloadedSize,
+                total: totalSize,
+              });
+            }
+
+            // 2) destination line
+            const dest =
+              line.match(
+                isAudio
+                  ? /\[ExtractAudio\] Destination:\s+(.+)/
+                  : /\[download\] Destination:\s+(.+)/,
+              ) ||
+              line.match(/\[download\]\s+(.+)\s+has already been downloaded/);
+
+            if (dest && !filePathEmitted) {
+              let resolved = dest[1].trim();
+              if (!path.isAbsolute(resolved)) {
+                this.logger.warn(
+                  `yt-dlp reported relative path: ${resolved}. Resolving against CWD.`,
+                );
+                resolved = path.join(process.cwd(), resolved);
+              }
+              actualFilePath = resolved;
+              filePathEmitted = true;
+              if (onFilePathReady) {
+                onFilePathReady(resolved);
+              }
+            }
+          }
+        };
+        // listen to stderr (yt-dlp writes progress & destination there, and errors!)
+        ytDlp.stderr.on('data', (chunk: Buffer) =>
+          handleOutput(chunk.toString()),
+        );
+        ytDlp.stdout.on('data', (chunk: Buffer) =>
+          handleOutput(chunk.toString()),
+        );
+        ytDlp.on('error', (err) => {
+          // This 'error' event is typically for issues spawning the process itself (e.g., 'yt-dlp' not found)
+          this.logger.error(
+            'yt-dlp failed to start (process spawn error)',
+            err,
+          );
+          reject(new Error(`Failed to start yt-dlp process: ${err.message}`));
+        });
+
+        ytDlp.on('close', async (code) => {
+          if (code === 0 && actualFilePath) {
+            try {
+              let thumbnailUrl: string | null = null;
+              const fileType = isAudio ? FileType.AUDIO : FileType.VIDEO; // Determine fileType based on isAudio
+              if (fileType === FileType.VIDEO) {
+                thumbnailUrl = await this._generateThumbnail(
+                  actualFilePath,
+                  fileId,
+                  currentUserId,
+                );
+              }
+              const createdFile = await this.saveMediaFileToPrisma(
+                fileId, // Pass the pre-generated fileId
+                actualFilePath,
+                url, // Original YouTube URL
+                format, // Desired media format
+                providerName,
+                currentUserId,
+                metadataFromYtDlp,
+                thumbnailUrl, // Pass the generated thumbnail URL
+              );
+              resolve(createdFile);
+            } catch (prismaError) {
+              this.logger.error(
+                `Download successful but failed to save media metadata to Prisma: ${prismaError.message}`,
+              );
+              // Reject with a more specific error for metadata saving failure
+              reject(
+                new Error(
+                  `Download successful but failed to save metadata: ${prismaError.message}`,
+                ),
+              );
+            }
+          } else {
+            const errorMessage = `yt-dlp exited with code ${code}. Stderr: ${stderrBuffer || 'No stderr output captured.'}`;
+            this.logger.error(errorMessage);
+            reject(new Error(errorMessage));
+          }
+        });
+      }, // ADDED: Closes the async (resolve, reject) => { ... } function block.
+    ); // CORRECTED: This now correctly closes the new Promise(...) call.
   }
 
   /**
@@ -437,6 +662,8 @@ export class MediaService {
 
     // Determine file name and extension
     const fileNameWithExt = path.basename(absoluteFilePath);
+    const fileTitle =
+      metadataFromYtDlp?.title || path.parse(fileNameWithExt).name;
     const fileExtension = path.extname(absoluteFilePath).slice(1);
 
     // Determine FileType enum value
@@ -507,6 +734,13 @@ export class MediaService {
       currentParentFolderId = folder.id;
     }
 
+    const { songId, videoId } = await this._processMediaContentAndLinkToPrisma(
+      fileType,
+      fileTitle,
+      userId,
+      metadataFromYtDlp,
+    );
+
     // Prepare metadata for Prisma
     const fileMetadataData: Prisma.InputJsonValue = {
       title: metadataFromYtDlp?.title,
@@ -516,31 +750,35 @@ export class MediaService {
       thumbnail: metadataFromYtDlp?.thumbnails?.[0]?.url || thumbnailUrl,
     };
 
-    // Create the File entry in Prisma
     const file = await this.prisma.file.create({
       data: {
-        id: fileId, // Use the pre-generated fileId
+        // Data object starts
+        id: fileId, // Use the newFileId for creation
         name: fileNameWithExt,
         path: absoluteFilePath,
         fileType: fileType,
         mimeType: mimeType,
         size: fileSize,
-        provider: provider,
-        url: originalUrl,
+        provider: 'local',
         createdById: userId,
         folderId: currentParentFolderId,
+        songId: songId,
+        videoId: videoId,
         metadata: {
           create: {
             type: fileType,
-            data: fileMetadataData,
-            tags: ['youtube', provider].filter(Boolean) as string[], // Filter out undefined provider
+            data: {
+              title: fileTitle,
+              thumbnail: thumbnailUrl, // Add thumbnail URL to metadata
+              duration: (await ffprobe(absoluteFilePath)).format?.duration || 0, // Attempt to get duration using ffprobe
+            },
+            tags: ['local', 'scanned'],
           },
         },
-      },
-      include: { metadata: true },
-    });
-    this.logger.log(`Created file entry in Prisma: ${file.path}`);
-
+      }, // <-- This curly brace closes the `data` object
+      include: { metadata: true, song: true, video: true }, // <-- This is the `include` property
+    }); // <-- This closes the `prisma.file.create` method call
+    this.logger.log(`Created file entry from scan in Prisma: ${file.path}`);
     return file;
   }
 
@@ -571,9 +809,24 @@ export class MediaService {
     }
 
     // Basic security check: prevent scanning root or highly sensitive directories
-    const forbiddenPaths = ['/etc', '/boot', '/usr', '/var', '/dev', '/proc', '/sys', '/node_modules'];
-    if (forbiddenPaths.some(p => path.normalize(directoryPath).startsWith(path.normalize(p)))) {
-        throw new BadRequestException('Scanning of this directory is not allowed for security reasons.');
+    const forbiddenPaths = [
+      '/etc',
+      '/boot',
+      '/usr',
+      '/var',
+      '/dev',
+      '/proc',
+      '/sys',
+      '/node_modules',
+    ];
+    if (
+      forbiddenPaths.some((p) =>
+        path.normalize(directoryPath).startsWith(path.normalize(p)),
+      )
+    ) {
+      throw new BadRequestException(
+        'Scanning of this directory is not allowed for security reasons.',
+      );
     }
 
     try {
@@ -581,21 +834,29 @@ export class MediaService {
       let ffmpegAvailable = false;
       try {
         const ffmpegVersion = await this.checkVersion('ffmpeg', ['-version']);
-        this.logger.debug(`FFmpeg version for scan: ${ffmpegVersion.split('\n')[0]}`);
+        this.logger.debug(
+          `FFmpeg version for scan: ${ffmpegVersion.split('\n')[0]}`,
+        );
         ffmpegAvailable = true;
       } catch (err) {
-        this.logger.warn(`FFmpeg not found or failed to check version for scan: ${err.message}. Video thumbnails will not be generated.`);
+        this.logger.warn(
+          `FFmpeg not found or failed to check version for scan: ${err.message}. Video thumbnails will not be generated.`,
+        );
         // Don't throw, just log and continue without thumbnail generation for scans
       }
 
       const filesInDirectory = await recursiveReaddir(directoryPath);
-      this.logger.debug(`Found ${filesInDirectory.length} potential files in ${directoryPath}`);
-      
+      this.logger.debug(
+        `Found ${filesInDirectory.length} potential files in ${directoryPath}`,
+      );
+
       for (const filePath of filesInDirectory) {
         const fileExtension = path.extname(filePath).toLowerCase();
-        
+
         const fileType = MEDIA_EXTENSIONS[fileExtension];
-        this.logger.log(`Found file type ${fileType || 'UNKNOWN'} for file: ${filePath}`);
+        this.logger.log(
+          `Found file type ${fileType || 'UNKNOWN'} for file: ${filePath}`,
+        );
 
         if (fileType) {
           try {
@@ -624,7 +885,12 @@ export class MediaService {
         ? `Successfully scanned directory. Found ${scannedFilesCount} new media files.`
         : `Scanned directory with ${scannedFilesCount} new media files, but encountered ${errors.length} errors.`;
 
-      return { success, message, scannedFilesCount, errors: errors.length > 0 ? errors : undefined };
+      return {
+        success,
+        message,
+        scannedFilesCount,
+        errors: errors.length > 0 ? errors : undefined,
+      };
     } catch (error) {
       this.logger.error(
         `Error during directory scan for ${directoryPath}: ${error.message}`,
@@ -649,15 +915,12 @@ export class MediaService {
     baseScanDirectory: string,
     ffmpegAvailable: boolean,
   ): Promise<FileWithMetadata | null> {
-    // Check if a file with this path already exists for this user, including its metadata
-    const existingFile: FileWithMetadata | null = await this.prisma.file.findFirst({
-      where: {
-        path: absoluteFilePath,
-        createdById: userId,
-      },
+    // Check if file already exists
+    const existingFile = await this.prisma.file.findFirst({
+      where: { path: absoluteFilePath, createdById: userId },
       include: { metadata: true },
     });
-
+  
     if (existingFile) {
       this.logger.debug(`File already exists in DB: ${absoluteFilePath}`);
 
@@ -669,7 +932,7 @@ export class MediaService {
 
         // Only proceed if existingVideoMetadata is found
         if (existingVideoMetadata) {
-          const hasThumbnailInMetadata = 
+          const hasThumbnailInMetadata =
             typeof existingVideoMetadata.data === 'object' &&
             existingVideoMetadata.data !== null &&
             !Array.isArray(existingVideoMetadata.data) && // Ensure it's not an array
@@ -677,7 +940,9 @@ export class MediaService {
             (existingVideoMetadata.data as Prisma.JsonObject).thumbnail; // Cast for explicit access
 
           if (!hasThumbnailInMetadata) {
-            this.logger.log(`Generating missing thumbnail for existing video file: ${absoluteFilePath}`);
+            this.logger.log(
+              `Generating missing thumbnail for existing video file: ${absoluteFilePath}`,
+            );
             const thumbnailUrl = await this._generateThumbnail(
               absoluteFilePath,
               existingFile.id,
@@ -703,7 +968,9 @@ export class MediaService {
                   },
                 },
               });
-              this.logger.log(`Updated existing file ${existingFile.name} with new thumbnail.`);
+              this.logger.log(
+                `Updated existing file ${existingFile.name} with new thumbnail.`,
+              );
 
               // Manually update metadata in the returned object to reflect the change
               const updatedMetadataArray = existingFile.metadata.map((m) =>
@@ -725,105 +992,82 @@ export class MediaService {
       }
       return existingFile; // Return existing file, either with existing thumbnail or if it's not a video
     }
-
-    // If file does not exist, proceed with creation logic
+  
+    // Get file stats
     const fileStats = await fs.promises.stat(absoluteFilePath);
     const fileSize = BigInt(fileStats.size);
     const fileNameWithExt = path.basename(absoluteFilePath);
+    const fileTitle = path.parse(fileNameWithExt).name;
     const fileExtension = path.extname(absoluteFilePath).toLowerCase();
     const mimeType = MIME_TYPES_MAP[fileExtension] || 'application/octet-stream';
-
-    // Generate a new unique file ID for the new file
     const newFileId = uuidv4();
-
-    // Build folder hierarchy in Prisma relative to `baseScanDirectory`
+  
+    // Create folder structure based on the actual file path
+    const relativePath = path.relative(baseScanDirectory, path.dirname(absoluteFilePath));
+    const pathSegments = relativePath.split(path.sep).filter(segment => segment !== '' && segment !== '.');
+    
     let currentParentFolderId: string | null = null;
-    let currentPathSegment = baseScanDirectory;
-
-    // Find or create the baseScanDirectory as a root or child of 'downloads'
-    let downloadsFolder = await this.prisma.folder.findFirst({
-      where: { path: this.downloadDir, createdById: userId, parentId: null },
+    let currentPath = baseScanDirectory;
+  
+    // Find or create the base scan directory folder
+    let parentFolder = await this.prisma.folder.findFirst({
+      where: { path: baseScanDirectory, createdById: userId },
     });
-
-    if (!downloadsFolder) {
-      downloadsFolder = await this.prisma.folder.create({
-        data: {
-          name: 'downloads',
-          path: this.downloadDir,
-          createdById: userId,
-          parentId: null,
-        },
-      });
-      this.logger.log(`Created root 'downloads' folder in Prisma: ${downloadsFolder.path}`);
-    }
-
-    const scansDirPath = path.join(this.downloadDir, 'scans');
-    let scansFolder = await this.prisma.folder.findFirst({
-      where: { path: scansDirPath, createdById: userId, parentId: downloadsFolder.id },
-    });
-
-    if (!scansFolder) {
-      scansFolder = await this.prisma.folder.create({
-        data: {
-          name: 'scans',
-          path: scansDirPath,
-          createdById: userId,
-          parentId: downloadsFolder.id,
-        },
-      });
-      this.logger.log(`Created 'scans' sub-folder under 'downloads': ${scansFolder.path}`);
-    }
-
-    let rootScanFolder = await this.prisma.folder.findFirst({
-      where: { path: baseScanDirectory, createdById: userId, parentId: scansFolder.id },
-    });
-
-    if (!rootScanFolder) {
-      rootScanFolder = await this.prisma.folder.create({
+  
+    if (!parentFolder) {
+      parentFolder = await this.prisma.folder.create({
         data: {
           name: path.basename(baseScanDirectory),
           path: baseScanDirectory,
           createdById: userId,
-          parentId: scansFolder.id,
+          parentId: null,
         },
       });
-      this.logger.log(`Created base scan folder in Prisma: ${rootScanFolder.path}`);
+      this.logger.log(`Created base scan folder: ${parentFolder.path}`);
     }
-    currentParentFolderId = rootScanFolder.id;
-    currentPathSegment = baseScanDirectory;
-
-    const relativeFilePath = path.relative(baseScanDirectory, absoluteFilePath);
-    const dirName = path.dirname(relativeFilePath);
-    const folderSegments = dirName.split(path.sep).filter(segment => segment !== '.');
-
-    for (const segment of folderSegments) {
-      currentPathSegment = path.join(currentPathSegment, segment);
+    currentParentFolderId = parentFolder.id;
+  
+    // Create nested folder structure
+    for (const segment of pathSegments) {
+      currentPath = path.join(currentPath, segment);
+      
       let folder = await this.prisma.folder.findFirst({
-        where: { path: currentPathSegment, createdById: userId, parentId: currentParentFolderId },
+        where: { path: currentPath, createdById: userId },
       });
-
+  
       if (!folder) {
         folder = await this.prisma.folder.create({
           data: {
             name: segment,
-            path: currentPathSegment,
+            path: currentPath,
             createdById: userId,
             parentId: currentParentFolderId,
           },
         });
-        this.logger.log(`Created sub-folder in Prisma: ${folder.path}`);
+        this.logger.log(`Created folder: ${folder.path}`);
       }
       currentParentFolderId = folder.id;
     }
-
+  
+    // Generate thumbnail if needed
     let thumbnailUrl: string | null = null;
     if (fileType === FileType.VIDEO && ffmpegAvailable) {
       thumbnailUrl = await this._generateThumbnail(absoluteFilePath, newFileId, userId);
     }
-
+  
+    // Process media content
+    const { songId, videoId } = await this._processMediaContentAndLinkToPrisma(
+      fileType,
+      fileTitle,
+      userId,
+      undefined,
+      absoluteFilePath,
+    );
+  
+    // Create file entry
     const file = await this.prisma.file.create({
       data: {
-        id: newFileId, // Use the newFileId for creation
+        id: newFileId,
         name: fileNameWithExt,
         path: absoluteFilePath,
         fileType: fileType,
@@ -832,12 +1076,15 @@ export class MediaService {
         provider: 'local',
         createdById: userId,
         folderId: currentParentFolderId,
+        songId: songId,
+        videoId: videoId,
         metadata: {
           create: {
             type: fileType,
             data: {
-              title: fileNameWithExt,
-              thumbnail: thumbnailUrl, // Add thumbnail URL to metadata
+              title: fileTitle,
+              thumbnail: thumbnailUrl,
+              duration: (await ffprobe(absoluteFilePath)).format?.duration || 0,
             },
             tags: ['local', 'scanned'],
           },
@@ -845,9 +1092,12 @@ export class MediaService {
       },
       include: { metadata: true },
     });
-    this.logger.log(`Created file entry from scan in Prisma: ${file.path}`);
+  
+    this.logger.log(`Created file entry from scan: ${file.path}`);
     return file;
   }
+
+ 
 
   async findAllPaginated(
     query: PaginationMediaQueryDto,
@@ -879,8 +1129,12 @@ export class MediaService {
         url: true,
         createdAt: true,
         updatedAt: true,
+        songId: true, // Include songId
+        videoId: true, // Include videoId
       }),
       metadata: true, // ensure metadata always included
+      song: true,
+      video: true,
     };
 
     const [items, total] = await this.prisma.$transaction([
@@ -928,7 +1182,9 @@ export class MediaService {
     try {
       if (fs.existsSync(file.path)) {
         await fs.promises.unlink(file.path);
-        this.logger.log(`Successfully deleted physical media file: ${file.path}`);
+        this.logger.log(
+          `Successfully deleted physical media file: ${file.path}`,
+        );
       } else {
         this.logger.warn(
           `Physical media file not found at ${file.path}, deleting database entry only.`,
@@ -950,19 +1206,32 @@ export class MediaService {
     );
 
     if (thumbnailMetadata) {
-      const thumbnailPath = (thumbnailMetadata.data as any)['thumbnail'] as string;
+      const thumbnailPath = (thumbnailMetadata.data as any)[
+        'thumbnail'
+      ] as string;
       // Ensure the thumbnail path is within the designated thumbnail directory for safety
-      if (thumbnailPath && thumbnailPath.startsWith(this.thumbnailDir) && fs.existsSync(thumbnailPath)) {
-          try {
-              await fs.promises.unlink(thumbnailPath);
-              this.logger.log(`Successfully deleted thumbnail file: ${thumbnailPath}`);
-          } catch (error) {
-              this.logger.error(
-                  `Failed to delete thumbnail file ${thumbnailPath}: ${error.message}`,
-              );
-          }
-      } else if (thumbnailPath && !thumbnailPath.startsWith(this.thumbnailDir)) {
-          this.logger.warn(`Thumbnail path '${thumbnailPath}' is outside the expected thumbnail directory. Skipping deletion for safety.`);
+      if (
+        thumbnailPath &&
+        thumbnailPath.startsWith(this.thumbnailDir) &&
+        fs.existsSync(thumbnailPath)
+      ) {
+        try {
+          await fs.promises.unlink(thumbnailPath);
+          this.logger.log(
+            `Successfully deleted thumbnail file: ${thumbnailPath}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to delete thumbnail file ${thumbnailPath}: ${error.message}`,
+          );
+        }
+      } else if (
+        thumbnailPath &&
+        !thumbnailPath.startsWith(this.thumbnailDir)
+      ) {
+        this.logger.warn(
+          `Thumbnail path '${thumbnailPath}' is outside the expected thumbnail directory. Skipping deletion for safety.`,
+        );
       }
     }
 

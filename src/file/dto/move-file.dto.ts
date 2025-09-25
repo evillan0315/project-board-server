@@ -29,7 +29,8 @@ export class MoveFileResponseDto {
 
   @ApiProperty({
     description: 'A message describing the result of the operation',
-    example: 'Successfully moved "/path/to/old/file.txt" to "/path/to/new/location/file.txt"',
+    example:
+      'Successfully moved "/path/to/old/file.txt" to "/path/to/new/location/file.txt"',
   })
   message: string;
 

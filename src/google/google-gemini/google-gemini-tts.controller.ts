@@ -1,19 +1,32 @@
+
 import {
   Controller,
   Post,
   Body,
+  UseInterceptors,
+  UploadedFile,
   HttpCode,
   Res,
   HttpStatus,
+  BadRequestException,
   HttpException,
+  UseGuards,
 } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+import { CreateJwtUserDto } from '../../auth/dto/auth.dto';
+
 import { GoogleGeminiTtsService } from './google-gemini-tts.service';
+
 import {
   ApiTags,
+  ApiProperty,
   ApiOperation,
   ApiResponse,
+  ApiConsumes,
   ApiBody,
-  ApiProperty,
+  ApiCreatedResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Response } from 'express';
 import * as fs from 'fs';
@@ -58,6 +71,13 @@ export class TtsRequestDto {
   languageCode?: string;
 }
 
+import { JwtAuthGuard } from '../../auth/auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { UserRole } from '../../auth/enums/user-role.enum';
+
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('Google Gemini')
 @Controller('api/google-tts')
 export class GoogleGeminiTtsController {

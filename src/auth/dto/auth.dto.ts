@@ -1,7 +1,14 @@
 // src/auth/dto/auth.dto.ts
 import { Role } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, MinLength, IsOptional, IsString, IsEnum } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  MinLength,
+  IsOptional,
+  IsString,
+  IsEnum,
+} from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty({

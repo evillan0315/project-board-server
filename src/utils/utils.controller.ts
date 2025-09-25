@@ -134,15 +134,18 @@ export class UtilsController {
 
   @Get('detect-language') // <-- NEW ENDPOINT
   @ApiOperation({
-    summary: 'Detect programming language or file type from filename or MIME type.',
-    description: 'Attempts to detect the programming language or general file type (e.g., "javascript", "audio", "image") ' +
-                 'based on the provided `filename` and/or `mimeType`. At least one parameter is required.',
+    summary:
+      'Detect programming language or file type from filename or MIME type.',
+    description:
+      'Attempts to detect the programming language or general file type (e.g., "javascript", "audio", "image") ' +
+      'based on the provided `filename` and/or `mimeType`. At least one parameter is required.',
   })
   @ApiQuery({
     name: 'filename',
     type: String,
     required: false,
-    description: 'The filename, including extension (e.g., "main.ts", "image.jpg").',
+    description:
+      'The filename, including extension (e.g., "main.ts", "image.jpg").',
     example: 'app.component.ts',
   })
   @ApiQuery({
@@ -171,7 +174,9 @@ export class UtilsController {
     @Query('mimeType') mimeType?: string,
   ): Promise<{ language: string | undefined }> {
     if (!filename && !mimeType) {
-      throw new BadRequestException('Either filename or mimeType must be provided for language detection.');
+      throw new BadRequestException(
+        'Either filename or mimeType must be provided for language detection.',
+      );
     }
     const detected = this.utilsService.detectLanguage(filename!, mimeType); // Use non-null assertion as checked above
     return { language: detected };
@@ -789,4 +794,3 @@ function add(a: number, b: number): number {
     }
   }
 }
-

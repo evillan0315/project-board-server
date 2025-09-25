@@ -4,7 +4,8 @@ import { ApiProperty } from '@nestjs/swagger';
 export class GenerateVideoDto {
   @ApiProperty({
     description: 'The prompt text to generate the video from.',
-    example: 'A close up of two people staring at a cryptic drawing on a wall, torchlight flickering.',
+    example:
+      'A close up of two people staring at a cryptic drawing on a wall, torchlight flickering.',
     maxLength: 1000,
   })
   @IsString()
@@ -13,7 +14,8 @@ export class GenerateVideoDto {
   prompt: string;
 
   @ApiProperty({
-    description: 'Optional ID of an ongoing conversation to link this video generation to.',
+    description:
+      'Optional ID of an ongoing conversation to link this video generation to.',
     example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
     required: false,
   })
@@ -25,4 +27,3 @@ export class GenerateVideoDto {
   // e.g., duration, style, aspect ratio, camera movement
   // For this example, we stick to just the prompt as in the provided REST example.
 }
-

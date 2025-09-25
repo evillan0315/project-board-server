@@ -8,7 +8,13 @@ import { UtilsModule } from '../utils/utils.module';
 import { JsonFixModule } from '../utils/json-fix/json-fix.module';
 
 @Module({
-  imports: [GoogleModule, ModuleControlModule, FileModule, UtilsModule, JsonFixModule],
+  imports: [
+    GoogleModule,
+    ModuleControlModule,
+    FileModule,
+    UtilsModule,
+    JsonFixModule,
+  ],
   providers: [LlmService],
   controllers: [LlmController],
 })

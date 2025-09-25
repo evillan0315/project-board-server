@@ -1,11 +1,4 @@
-import {
-  Logger,
-  Injectable,
-  Inject,
-  ForbiddenException,
-  BadRequestException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Logger, Injectable, Inject, ForbiddenException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ModuleControlService } from '../module-control/module-control.service';
 
@@ -19,19 +12,17 @@ import { UpdateGeminiResponseDto } from './dto/update-gemini-response.dto';
 
 import { Prisma } from '@prisma/client';
 
-import { CreateJwtUserDto } from '../auth/dto/auth.dto';
 
-import { REQUEST } from '@nestjs/core';
-import { Request, Response } from 'express';
+
 
 @Injectable()
 export class GeminiResponseService {
   private readonly logger = new Logger(GeminiResponseService.name);
   constructor(
-    private readonly moduleControlService: ModuleControlService,
+    
+    private readonly moduleControlService: ModuleControlService, 
     private prisma: PrismaService,
-    @Inject(REQUEST)
-    private readonly request: Request & { user?: CreateJwtUserDto },
+    
   ) {}
   // Use OnModuleInit to check the module status after all dependencies are initialized
   onModuleInit() {
@@ -49,48 +40,52 @@ export class GeminiResponseService {
       );
     }
   }
-
-  private get userId(): string | undefined {
-    return this.request.user?.id;
-  }
+  
+  
 
   create(data: CreateGeminiResponseDto) {
     this.ensureFileModuleEnabled();
-    const createData: any = { ...data };
+    let createData: any = { ...data };
+    
+    
+    
 
+   
     return this.prisma.geminiResponse.create({ data: createData });
   }
-
+  
   async findAllPaginated(
-    query: PaginationGeminiResponseQueryDto,
-    select?: Prisma.GeminiResponseSelect,
-  ) {
-    const page = query.page ? Number(query.page) : 1;
-    const pageSize = query.pageSize ? Number(query.pageSize) : 10;
-    const skip = (page - 1) * pageSize;
-    const take = pageSize;
+  query: PaginationGeminiResponseQueryDto,
+  select?: Prisma.GeminiResponseSelect,
+) {
+  const page = query.page ? Number(query.page) : 1;
+  const pageSize = query.pageSize ? Number(query.pageSize) : 10;
+  const skip = (page - 1) * pageSize;
+  const take = pageSize;
 
-    const where = this.buildWhereFromQuery(query);
+  const where = this.buildWhereFromQuery(query);
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.geminiResponse.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take,
-        ...(select ? { select } : {}),
-      }),
-      this.prisma.geminiResponse.count({ where }),
-    ]);
+  const [items, total] = await this.prisma.$transaction([
+    this.prisma.geminiResponse.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+      ...(select ? { select } : {}),
+    }),
+    this.prisma.geminiResponse.count({ where }),
+  ]);
 
-    return {
-      items,
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
-    };
-  }
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+}
+
+
 
   findAll() {
     this.ensureFileModuleEnabled();
@@ -100,7 +95,11 @@ export class GeminiResponseService {
   findOne(id: string) {
     this.ensureFileModuleEnabled();
 
-    return this.prisma.geminiResponse.findUnique({ where: { id } });
+    return this.prisma.geminiResponse.findUnique(
+    
+    { where: { id } }
+    
+    );
   }
 
   update(id: string, data: UpdateGeminiResponseDto) {
@@ -115,27 +114,52 @@ export class GeminiResponseService {
     return this.prisma.geminiResponse.delete({ where: { id } });
   }
 
-  private buildWhereFromQuery(
-    query: PaginationGeminiResponseQueryDto,
-  ): Prisma.GeminiResponseWhereInput {
-    const where: Prisma.GeminiResponseWhereInput = {};
 
-    if (query.requestId !== undefined) {
-      where.requestId = query.requestId;
-    }
-    if (query.responseText !== undefined) {
-      where.responseText = query.responseText;
-    }
-    if (query.finishReason !== undefined) {
-      where.finishReason = query.finishReason;
-    }
-    if (query.safetyRatings !== undefined) {
-      where.safetyRatings = query.safetyRatings;
-    }
-    if (query.tokenCount !== undefined) {
-      where.tokenCount = query.tokenCount;
-    }
+  
+  
+  private buildWhereFromQuery(query: PaginationGeminiResponseQueryDto): Prisma.GeminiResponseWhereInput {
 
-    return where;
+  const where: Prisma.GeminiResponseWhereInput = {
+    
+  };
+     
+  if (query.requestId !== undefined) {
+    
+    where.requestId = query.requestId;
+    
   }
+  if (query.title !== undefined) {
+    
+    where.title = query.title;
+    
+  }
+  if (query.responseText !== undefined) {
+    
+    where.responseText = query.responseText;
+    
+  }
+  if (query.finishReason !== undefined) {
+    
+    where.finishReason = query.finishReason;
+    
+  }
+  if (query.safetyRatings !== undefined) {
+    
+    where.safetyRatings = query.safetyRatings;
+    
+  }
+  if (query.tokenCount !== undefined) {
+    
+    where.tokenCount = query.tokenCount;
+    
+  }
+  if (query.projectRoot !== undefined) {
+    
+    where.projectRoot = query.projectRoot;
+    
+  }
+
+
+  return where;
+}
 }

@@ -1,4 +1,8 @@
-import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI, Modality, LiveServerMessage } from '@google/genai';
 import * as crypto from 'node:crypto';
@@ -37,9 +41,12 @@ export class GoogleGeminiLiveService {
   private readonly genaiClient: GoogleGenAI;
 
   constructor(private readonly config: ConfigService) {
-    this.GOOGLE_API_KEY_FOR_TOKEN_CREATION = this.config.get<string>('GOOGLE_GEMINI_API_KEY')!;
+    this.GOOGLE_API_KEY_FOR_TOKEN_CREATION = this.config.get<string>(
+      'GOOGLE_GEMINI_API_KEY',
+    )!;
     this.GOOGLE_GEMINI_MODEL =
-      this.config.get<string>('GOOGLE_GEMINI_LIVE_MODEL') || 'gemini-live-2.5-flash-preview';
+      this.config.get<string>('GOOGLE_GEMINI_LIVE_MODEL') ||
+      'gemini-live-2.5-flash-preview';
 
     if (!this.GOOGLE_API_KEY_FOR_TOKEN_CREATION) {
       this.logger.error(
@@ -95,7 +102,11 @@ export class GoogleGeminiLiveService {
 
       const idleTicker = setInterval(() => {
         // End on silence if we already saw some model output
-        if (!resolved && sawAnyModelOutput && Date.now() - lastMsgAt >= IDLE_END_MS) {
+        if (
+          !resolved &&
+          sawAnyModelOutput &&
+          Date.now() - lastMsgAt >= IDLE_END_MS
+        ) {
           resolved = true;
           clearTimeout(hardTimeout);
           clearInterval(idleTicker);
@@ -176,7 +187,9 @@ export class GoogleGeminiLiveService {
             responseQueue.push(normalized);
           },
           onerror: (e: any) => {
-            this.logger.error(`Live session ${sessionId} error: ${e?.message ?? e}`);
+            this.logger.error(
+              `Live session ${sessionId} error: ${e?.message ?? e}`,
+            );
             // push a synthetic turnComplete to unblock collectors
             responseQueue.push({
               text: `Error: ${e?.message ?? 'unknown'} `,
@@ -184,7 +197,9 @@ export class GoogleGeminiLiveService {
             } as LiveMessageDto);
           },
           onclose: (e: any) => {
-            this.logger.debug(`Live session ${sessionId} closed: ${e?.reason ?? 'unknown'} `);
+            this.logger.debug(
+              `Live session ${sessionId} closed: ${e?.reason ?? 'unknown'} `,
+            );
             // also unblock on close
             responseQueue.push({
               serverContent: { turnComplete: true },
@@ -193,8 +208,13 @@ export class GoogleGeminiLiveService {
         },
       });
     } catch (err: any) {
-      this.logger.error(`Failed to connect Live session: ${err?.message}`, err?.stack);
-      throw new InternalServerErrorException(`Failed to connect to Gemini Live: ${err?.message}`);
+      this.logger.error(
+        `Failed to connect Live session: ${err?.message}`,
+        err?.stack,
+      );
+      throw new InternalServerErrorException(
+        `Failed to connect to Gemini Live: ${err?.message}`,
+      );
     }
 
     const internalHandle: InternalLiveSessionHandle = {
@@ -242,7 +262,8 @@ export class GoogleGeminiLiveService {
 
   private getHandle(sessionId: string): InternalLiveSessionHandle {
     const h = this.sessions.get(sessionId);
-    if (!h) throw new InternalServerErrorException('Invalid or expired sessionId');
+    if (!h)
+      throw new InternalServerErrorException('Invalid or expired sessionId');
     return h;
   }
 

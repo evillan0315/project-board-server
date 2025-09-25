@@ -21,9 +21,7 @@ import * as fs from 'fs';
   ],
   providers: [FfmpegService, SubtitleService],
   exports: [FfmpegService, SubtitleService],
-  controllers: [
-    FfmpegController,
-  ],
+  controllers: [FfmpegController],
 })
 export class FfmpegModule {
   constructor() {

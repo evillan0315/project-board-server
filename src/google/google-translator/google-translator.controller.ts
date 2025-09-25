@@ -1,4 +1,11 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  HttpException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { GoogleTranslatorService } from './google-translator.service';
 import { TranslateContentDto } from './dto/translate-content.dto';
@@ -6,7 +13,9 @@ import { TranslateContentDto } from './dto/translate-content.dto';
 @ApiTags('Google Translator')
 @Controller('api/google-translator')
 export class GoogleTranslatorController {
-  constructor(private readonly googleTranslatorService: GoogleTranslatorService) {}
+  constructor(
+    private readonly googleTranslatorService: GoogleTranslatorService,
+  ) {}
 
   @Post('translate')
   @HttpCode(HttpStatus.OK)

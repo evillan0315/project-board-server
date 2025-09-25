@@ -19,20 +19,24 @@ export class BulkDataService {
    */
   private _parseCsv(csvString: string): Record<string, any>[] {
     const parseResult = Papa.parse(csvString, {
-      header: true,            // Treat the first row as headers and return an array of objects
-      skipEmptyLines: true,    // Skip any blank lines
-      dynamicTyping: true,     // Automatically convert numeric and boolean values
+      header: true, // Treat the first row as headers and return an array of objects
+      skipEmptyLines: true, // Skip any blank lines
+      dynamicTyping: true, // Automatically convert numeric and boolean values
       transformHeader: (header) => header.trim(), // Trim whitespace from headers
     });
 
     if (parseResult.errors.length > 0) {
       // Aggregate papaparse errors for a more informative message
-      const errorMessages = parseResult.errors.map(err => `${err.code}: ${err.message} (Row: ${err.row})`).join('; ');
+      const errorMessages = parseResult.errors
+        .map((err) => `${err.code}: ${err.message} (Row: ${err.row})`)
+        .join('; ');
       throw new BadRequestException(`CSV parsing errors: ${errorMessages}`);
     }
 
     if (!Array.isArray(parseResult.data) || parseResult.data.length === 0) {
-      throw new BadRequestException('CSV data must contain at least headers and one record.');
+      throw new BadRequestException(
+        'CSV data must contain at least headers and one record.',
+      );
     }
 
     return parseResult.data as Record<string, any>[];
@@ -70,7 +74,9 @@ export class BulkDataService {
         try {
           records = JSON.parse(dto.data ?? '');
           if (!Array.isArray(records)) {
-            throw new BadRequestException('JSON data must be an array of records');
+            throw new BadRequestException(
+              'JSON data must be an array of records',
+            );
           }
         } catch (error) {
           throw new BadRequestException(`Invalid JSON data: ${error.message}`);
@@ -80,10 +86,12 @@ export class BulkDataService {
       case ImportFormat.CSV:
         try {
           // Use papaparse for CSV parsing
-          records = this._parseCsv(dto.data ?? '') ;
+          records = this._parseCsv(dto.data ?? '');
           // _parseCsv already includes checks for empty data/errors, but a final check doesn't hurt.
           if (records.length === 0) {
-            throw new BadRequestException('No valid records found in CSV data after parsing.');
+            throw new BadRequestException(
+              'No valid records found in CSV data after parsing.',
+            );
           }
         } catch (error) {
           throw new BadRequestException(`CSV import error: ${error.message}`);
@@ -97,7 +105,9 @@ export class BulkDataService {
           await this.prisma.$executeRawUnsafe(dto.data ?? '');
           return { message: 'SQL script executed successfully' };
         } catch (error) {
-          throw new BadRequestException(`SQL execution error: ${error.message}`);
+          throw new BadRequestException(
+            `SQL execution error: ${error.message}`,
+          );
         }
 
       default:
@@ -110,34 +120,46 @@ export class BulkDataService {
       // Access the Prisma model dynamically using the string modelName
       const model = (this.prisma as any)[this.modelName];
       if (!model || typeof model.create !== 'function') {
-        throw new Error(`Prisma model '${this.modelName}' not found or does not support 'create' operation.`);
+        throw new Error(
+          `Prisma model '${this.modelName}' not found or does not support 'create' operation.`,
+        );
       }
 
       // Use Prisma's transaction for atomicity
       const createdRecords = await this.prisma.$transaction(
-        records.map((record) => model.create({ data: record }))
+        records.map((record) => model.create({ data: record })),
       );
       importCount = createdRecords.length;
     } catch (error) {
       // Catch specific Prisma errors for better feedback if desired
-      if (error.code) { // Prisma error codes
-        if (error.code === 'P2002') { // Example: Unique constraint violation
-          throw new BadRequestException(`Database error (P2002 - Unique Constraint): A record with a duplicate unique field already exists. ${error.message}`);
+      if (error.code) {
+        // Prisma error codes
+        if (error.code === 'P2002') {
+          // Example: Unique constraint violation
+          throw new BadRequestException(
+            `Database error (P2002 - Unique Constraint): A record with a duplicate unique field already exists. ${error.message}`,
+          );
         }
         // Add more specific error handling for other Prisma codes if needed
-        throw new BadRequestException(`Database error (${error.code}): ${error.message}`);
+        throw new BadRequestException(
+          `Database error (${error.code}): ${error.message}`,
+        );
       }
       throw new BadRequestException(`Database import error: ${error.message}`);
     }
 
-    return { message: `${importCount} ${dto.format.toUpperCase()} records imported successfully` };
+    return {
+      message: `${importCount} ${dto.format.toUpperCase()} records imported successfully`,
+    };
   }
 
   async exportData(dto: ExportBulkDataDto): Promise<{ data: string }> {
     // Access the Prisma model dynamically using the string modelName
     const model = (this.prisma as any)[this.modelName];
     if (!model || typeof model.findMany !== 'function') {
-      throw new Error(`Prisma model '${this.modelName}' not found or does not support 'findMany' operation.`);
+      throw new Error(
+        `Prisma model '${this.modelName}' not found or does not support 'findMany' operation.`,
+      );
     }
     const records = await model.findMany(); // Using the dynamic model access
 
@@ -146,12 +168,12 @@ export class BulkDataService {
     } else if (dto.format === ExportFormat.SQL) {
       const sqlStatements = records.map((record: any) => {
         const columns = Object.keys(record)
-          .filter(key => record[key] !== undefined && record[key] !== null)
+          .filter((key) => record[key] !== undefined && record[key] !== null)
           .map((key) => `\`${key}\``)
           .join(', ');
 
         const values = Object.keys(record)
-          .filter(key => record[key] !== undefined && record[key] !== null)
+          .filter((key) => record[key] !== undefined && record[key] !== null)
           .map((key) => {
             const value = record[key];
             if (typeof value === 'string') {

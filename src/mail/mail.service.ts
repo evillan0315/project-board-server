@@ -18,12 +18,18 @@ export class MailService {
       },
       // Optional: Add TLS options if needed, especially for self-signed certs or specific configurations
       tls: {
-        rejectUnauthorized: this.configService.get<string>('MAIL_REJECT_UNAUTHORIZED') !== 'false',
+        rejectUnauthorized:
+          this.configService.get<string>('MAIL_REJECT_UNAUTHORIZED') !==
+          'false',
       },
     });
   }
 
-  async sendVerificationEmail(to: string, name: string, verificationLink: string) {
+  async sendVerificationEmail(
+    to: string,
+    name: string,
+    verificationLink: string,
+  ) {
     const mailOptions = {
       from: this.configService.get<string>('MAIL_FROM'),
       to: to,

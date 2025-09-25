@@ -1,4 +1,11 @@
-import { Logger, Injectable, Inject, ForbiddenException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Logger,
+  Injectable,
+  Inject,
+  ForbiddenException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ModuleControlService } from '../module-control/module-control.service';
 
@@ -14,20 +21,17 @@ import { Prisma } from '@prisma/client';
 
 import { CreateJwtUserDto } from '../auth/dto/auth.dto';
 
-
 import { REQUEST } from '@nestjs/core';
 import { Request, Response } from 'express';
-
-
 
 @Injectable()
 export class FolderService {
   private readonly logger = new Logger(FolderService.name);
   constructor(
-    
-    private readonly moduleControlService: ModuleControlService, 
+    private readonly moduleControlService: ModuleControlService,
     private prisma: PrismaService,
-    @Inject(REQUEST) private readonly request: Request & { user?: CreateJwtUserDto },
+    @Inject(REQUEST)
+    private readonly request: Request & { user?: CreateJwtUserDto },
   ) {}
   // Use OnModuleInit to check the module status after all dependencies are initialized
   onModuleInit() {
@@ -45,19 +49,15 @@ export class FolderService {
       );
     }
   }
-  
-  
+
   private get userId(): string | undefined {
-  return this.request.user?.id;
-}
-  
+    return this.request.user?.id;
+  }
 
   create(data: CreateFolderDto) {
     this.ensureFileModuleEnabled();
     let createData: any = { ...data };
 
-    
-    
     const hasCreatedById = data.hasOwnProperty('createdById');
     if (this.userId) {
       createData.createdBy = {
@@ -66,46 +66,41 @@ export class FolderService {
       if (hasCreatedById) {
         delete createData.createdById;
       }
-      
     }
-    
 
-   
     return this.prisma.folder.create({ data: createData });
   }
-  
+
   async findAllPaginated(
-  query: PaginationFolderQueryDto,
-  select?: Prisma.FolderSelect,
-) {
-  const page = query.page ? Number(query.page) : 1;
-  const pageSize = query.pageSize ? Number(query.pageSize) : 10;
-  const skip = (page - 1) * pageSize;
-  const take = pageSize;
+    query: PaginationFolderQueryDto,
+    select?: Prisma.FolderSelect,
+  ) {
+    const page = query.page ? Number(query.page) : 1;
+    const pageSize = query.pageSize ? Number(query.pageSize) : 10;
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
 
-  const where = this.buildWhereFromQuery(query);
+    const where = this.buildWhereFromQuery(query);
 
-  const [items, total] = await this.prisma.$transaction([
-    this.prisma.folder.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take,
-      ...(select ? { select } : {}),
-    }),
-    this.prisma.folder.count({ where }),
-  ]);
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.folder.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+        ...(select ? { select } : {}),
+      }),
+      this.prisma.folder.count({ where }),
+    ]);
 
-  return {
-    items,
-    total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-  };
-}
-
-
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
 
   findAll() {
     this.ensureFileModuleEnabled();
@@ -115,11 +110,7 @@ export class FolderService {
   findOne(id: string) {
     this.ensureFileModuleEnabled();
 
-    return this.prisma.folder.findUnique(
-    
-    { where: { id } }
-    
-    );
+    return this.prisma.folder.findUnique({ where: { id } });
   }
 
   update(id: string, data: UpdateFolderDto) {
@@ -134,34 +125,23 @@ export class FolderService {
     return this.prisma.folder.delete({ where: { id } });
   }
 
+  private buildWhereFromQuery(
+    query: PaginationFolderQueryDto,
+  ): Prisma.FolderWhereInput {
+    const where: Prisma.FolderWhereInput = {
+      createdById: this.userId,
+    };
 
-  
-  
-  private buildWhereFromQuery(query: PaginationFolderQueryDto): Prisma.FolderWhereInput {
+    if (query.name !== undefined) {
+      where.name = query.name;
+    }
+    if (query.path !== undefined) {
+      where.path = query.path;
+    }
+    if (query.parentId !== undefined) {
+      where.parentId = query.parentId;
+    }
 
-  const where: Prisma.FolderWhereInput = {
-    
-    createdById:this.userId
-    
-  };
-     
-  if (query.name !== undefined) {
-    
-    where.name = query.name;
-    
+    return where;
   }
-  if (query.path !== undefined) {
-    
-    where.path = query.path;
-    
-  }
-  if (query.parentId !== undefined) {
-    
-    where.parentId = query.parentId;
-    
-  }
-
-
-  return where;
-}
 }

@@ -48,7 +48,8 @@ export class GoogleGeminiFileService {
     'https://generativelanguage.googleapis.com/v1beta/models';
 
   private readonly VEO_MODEL_NAME = 'veo-2.0-generate-001';
-  private readonly VEO_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
+  private readonly VEO_API_BASE_URL =
+    'https://generativelanguage.googleapis.com/v1beta';
   private readonly POLLING_INTERVAL_MS = 10000;
   private readonly POLLING_TIMEOUT_MS = 900000;
 
@@ -126,7 +127,7 @@ export class GoogleGeminiFileService {
           const key = JSON.stringify({ role: item.role, parts: item.parts });
           if (!seen.has(key)) {
             seen.add(key);
-            const { createdAt, requestType, tokenCount, id,  ...rest } = item;
+            const { createdAt, requestType, tokenCount, id, ...rest } = item;
 
             uniqueHistory.push(rest);
           }
@@ -153,19 +154,24 @@ export class GoogleGeminiFileService {
         );
       }
 
-      const result = await response.json();
+      let result = await response.json();
+      this.logger.log(`Gemini result`, result);
+      const candidate = result.candidates?.[0];
 
-      if (result.candidates?.[0]?.content?.parts?.length > 0) {
-        return result;
+      // Extract parts if available
+      const parts = candidate?.content?.parts ?? [];
+
+      if (parts.length > 0) {
+        result.fullText = parts.map((p: any) => p.text ?? '').join('');
       } else {
+        // ✅ Do not throw — just log and allow continuation
         this.logger.warn(
-          'Gemini API response structure unexpected or content missing. Raw response:',
-          result,
+          `Gemini API response missing parts. finishReason=${candidate?.finishReason}`,
         );
-        throw new InternalServerErrorException(
-          'No content found in Gemini API response.',
-        );
+        result.fullText = '';
       }
+      this.logger.log(`Gemini result`, result);
+      return result;
     } catch (error) {
       if (error instanceof InternalServerErrorException) throw error;
       this.logger.error(
@@ -190,6 +196,8 @@ export class GoogleGeminiFileService {
     fileMimeType?: string,
     fileData?: string,
   ): Promise<string> {
+    //const parts = geminiApiResult.candidates[0].content.parts;
+    //const generatedText = parts.map((p) => p.text ?? '').join('');
     const generatedText = geminiApiResult.candidates[0].content.parts[0].text;
     const geminiRequest = await this.prisma.geminiRequest.create({
       data: {
@@ -208,6 +216,7 @@ export class GoogleGeminiFileService {
     await this.prisma.geminiResponse.create({
       data: {
         requestId: geminiRequest.id,
+        //title: JSON.parse(generatedText).title,
         responseText: generatedText,
         finishReason: geminiApiResult.candidates[0].finishReason || null,
         safetyRatings: geminiApiResult.candidates[0].safetyRatings
@@ -242,14 +251,18 @@ export class GoogleGeminiFileService {
     await this.prisma.geminiResponse.create({
       data: {
         requestId: geminiRequest.id,
-        responseText: videoUri || `Video generation operation ${operationName} status pending or failed.`,
+        responseText:
+          videoUri ||
+          `Video generation operation ${operationName} status pending or failed.`,
         finishReason: videoUri ? 'SUCCESS' : 'PENDING_OR_FAILED',
         tokenCount: null,
         safetyRatings: Prisma.JsonNull,
       },
     });
 
-    this.logger.debug(`Video generation interaction saved for operation ${operationName}.`);
+    this.logger.debug(
+      `Video generation interaction saved for operation ${operationName}.`,
+    );
   }
 
   private async _performGeminiOperation<
@@ -313,18 +326,54 @@ export class GoogleGeminiFileService {
         parts: [{ text: effectiveSystemInstruction }],
       };
     }
-
+    (payload as any).generationConfig = {
+      //maxOutputTokens: 20000,
+      //temperature: 0.7,
+      //topP: 0.95,
+    };
     try {
-      const geminiApiResult = await this.callGeminiApi(
+      let geminiApiResult = await this.callGeminiApi(
         modelName,
         payload,
         conversationHistory,
       );
+      //const parts = geminiApiResult.candidates[0].content.parts;
+      //const generatedText = parts.map((p) => p.text ?? '').join('');
+      let generatedText = geminiApiResult.fullText;
 
-      const generatedText = geminiApiResult.candidates[0].content.parts[0].text;
-      this.logger.debug(
-        `Gemini API generatedText ${requestType}: ${JSON.stringify(generatedText, null, 2)}`,
-      );
+      //generatedText += geminiApiResult.fullText ?? '';
+      let n = 1;
+      
+     
+      while (geminiApiResult.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+        this.logger.warn(
+          'Gemini output truncated (MAX_TOKENS), requesting continuation...',
+        );
+        n++;
+        const continuationPayload = {
+          contents: [
+            ...payload.contents,
+            {
+              role: 'model',
+              parts: geminiApiResult.candidates?.[0]?.content?.parts ?? [],
+            },
+            {
+              role: 'user',
+              parts: [{ text: 'Please continue from where you left off.' }],
+            },
+          ],
+          //generationConfig: { maxOutputTokens: 5000 },
+        };
+
+        geminiApiResult = await this.callGeminiApi(
+          modelName,
+          continuationPayload,
+          conversationHistory ?? [],
+        );
+
+        generatedText += geminiApiResult.fullText ?? '';
+         
+      }
       await this.saveGeminiInteraction(
         currentUserId,
         prompt,
@@ -597,62 +646,100 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
     }) as Promise<string>;
   }
 
-
   private async _pollVideoOperation(operationName: string): Promise<any> {
     // Ensure API key is present before making the request
     if (!this.GEMINI_API_KEY) {
-      throw new InternalServerErrorException('Gemini API key is not configured for video generation polling.');
+      throw new InternalServerErrorException(
+        'Gemini API key is not configured for video generation polling.',
+      );
     }
 
     const startTime = Date.now();
     while (Date.now() - startTime < this.POLLING_TIMEOUT_MS) {
       try {
-        const statusResponse = await fetch(`${this.VEO_API_BASE_URL}/${operationName}`, {
-          method: 'GET',
-          // FIX: Use non-null assertion as GEMINI_API_KEY is checked above
-          headers: { 'x-goog-api-key': this.GEMINI_API_KEY! },
-        });
+        const statusResponse = await fetch(
+          `${this.VEO_API_BASE_URL}/${operationName}`,
+          {
+            method: 'GET',
+            // FIX: Use non-null assertion as GEMINI_API_KEY is checked above
+            headers: { 'x-goog-api-key': this.GEMINI_API_KEY! },
+          },
+        );
 
         if (!statusResponse.ok) {
           const errorData = await statusResponse.json();
-          this.logger.error(`Veo operation status error (${statusResponse.status}): ${JSON.stringify(errorData)}`);
-          throw new InternalServerErrorException(`Veo operation status error: ${errorData.error?.message || 'Unknown API error'}`);
+          this.logger.error(
+            `Veo operation status error (${statusResponse.status}): ${JSON.stringify(errorData)}`,
+          );
+          throw new InternalServerErrorException(
+            `Veo operation status error: ${errorData.error?.message || 'Unknown API error'}`,
+          );
         }
 
         const statusResult = await statusResponse.json();
-        this.logger.debug(`Polling operation ${operationName}: done=${statusResult.done}, progress=${JSON.stringify(statusResult.metadata)}`);
+        this.logger.debug(
+          `Polling operation ${operationName}: done=${statusResult.done}, progress=${JSON.stringify(statusResult.metadata)}`,
+        );
 
         if (statusResult.done === true) {
-          if (statusResult.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri) {
+          if (
+            statusResult.response?.generateVideoResponse?.generatedSamples?.[0]
+              ?.video?.uri
+          ) {
             return statusResult;
           } else if (statusResult.error) {
-            this.logger.error(`Veo operation ${operationName} failed: ${JSON.stringify(statusResult.error)}`);
-            throw new InternalServerErrorException(`Video generation operation failed: ${statusResult.error.message || 'Unknown error'}`);
+            this.logger.error(
+              `Veo operation ${operationName} failed: ${JSON.stringify(statusResult.error)}`,
+            );
+            throw new InternalServerErrorException(
+              `Video generation operation failed: ${statusResult.error.message || 'Unknown error'}`,
+            );
           } else {
-            this.logger.error(`Veo operation ${operationName} finished but video URI not found: ${JSON.stringify(statusResult)}`);
-            throw new InternalServerErrorException('Video generation completed but failed to retrieve video URI.');
+            this.logger.error(
+              `Veo operation ${operationName} finished but video URI not found: ${JSON.stringify(statusResult)}`,
+            );
+            throw new InternalServerErrorException(
+              'Video generation completed but failed to retrieve video URI.',
+            );
           }
         }
       } catch (error) {
         if (error instanceof InternalServerErrorException) {
           throw error;
         }
-        this.logger.error(`Unexpected error polling Veo operation ${operationName}: ${error.message}`, error.stack);
-        throw new InternalServerErrorException(`Unexpected error polling video operation: ${error.message}`);
+        this.logger.error(
+          `Unexpected error polling Veo operation ${operationName}: ${error.message}`,
+          error.stack,
+        );
+        throw new InternalServerErrorException(
+          `Unexpected error polling video operation: ${error.message}`,
+        );
       }
 
-      await new Promise(resolve => setTimeout(resolve, this.POLLING_INTERVAL_MS));
+      await new Promise((resolve) =>
+        setTimeout(resolve, this.POLLING_INTERVAL_MS),
+      );
     }
-    throw new InternalServerErrorException(`Video generation operation timed out after ${this.POLLING_TIMEOUT_MS / 1000} seconds.`);
+    throw new InternalServerErrorException(
+      `Video generation operation timed out after ${this.POLLING_TIMEOUT_MS / 1000} seconds.`,
+    );
   }
 
-  async generateVideo(generateVideoDto: GenerateVideoDto): Promise<VideoGenerationResultDto> {
+  async generateVideo(
+    generateVideoDto: GenerateVideoDto,
+  ): Promise<VideoGenerationResultDto> {
     if (!this.moduleControlService.isModuleEnabled('GoogleModule')) {
-      this.logger.warn('Gemini API calls are disabled by ModuleControlService. Aborting API call.');
-      throw new InternalServerErrorException('Gemini API functionality is currently disabled.');
+      this.logger.warn(
+        'Gemini API calls are disabled by ModuleControlService. Aborting API call.',
+      );
+      throw new InternalServerErrorException(
+        'Gemini API functionality is currently disabled.',
+      );
     }
     if (!this.GEMINI_API_KEY) {
-      throw new InternalServerErrorException('Gemini API key is not configured for video generation.');
+      throw new InternalServerErrorException(
+        'Gemini API key is not configured for video generation.',
+      );
     }
 
     const { prompt, conversationId } = generateVideoDto;
@@ -660,7 +747,9 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
     const requestType = RequestType.VIDEO_GENERATION;
     let effectiveConversationId = conversationId || uuidv4();
 
-    this.logger.log(`Initiating video generation for user ${currentUserId}, conversation ${effectiveConversationId} with prompt: "${prompt}"`);
+    this.logger.log(
+      `Initiating video generation for user ${currentUserId}, conversation ${effectiveConversationId} with prompt: "${prompt}"`,
+    );
 
     let operationName: string | undefined;
     let videoUri: string | null = null;
@@ -670,20 +759,27 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
         instances: [{ prompt: prompt }],
       };
 
-      const initialResponse = await fetch(`${this.VEO_API_BASE_URL}/models/${this.VEO_MODEL_NAME}:predictLongRunning`, {
-        method: 'POST',
-        headers: {
-          // FIX: Use non-null assertion as GEMINI_API_KEY is checked above
-          'x-goog-api-key': this.GEMINI_API_KEY!,
-          'Content-Type': 'application/json',
+      const initialResponse = await fetch(
+        `${this.VEO_API_BASE_URL}/models/${this.VEO_MODEL_NAME}:predictLongRunning`,
+        {
+          method: 'POST',
+          headers: {
+            // FIX: Use non-null assertion as GEMINI_API_KEY is checked above
+            'x-goog-api-key': this.GEMINI_API_KEY!,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(generateVideoPayload),
         },
-        body: JSON.stringify(generateVideoPayload),
-      });
+      );
 
       if (!initialResponse.ok) {
         const errorData = await initialResponse.json();
-        this.logger.error(`Failed to initiate Veo video generation (${initialResponse.status}): ${JSON.stringify(errorData)}`);
-        throw new InternalServerErrorException(`Failed to initiate video generation: ${errorData.error?.message || 'Unknown API error'}`);
+        this.logger.error(
+          `Failed to initiate Veo video generation (${initialResponse.status}): ${JSON.stringify(errorData)}`,
+        );
+        throw new InternalServerErrorException(
+          `Failed to initiate video generation: ${errorData.error?.message || 'Unknown API error'}`,
+        );
       }
 
       const initialResult: { name: string } = await initialResponse.json();
@@ -691,9 +787,13 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
       this.logger.debug(`Video generation operation started: ${operationName}`);
 
       const finalResult = await this._pollVideoOperation(operationName);
-      videoUri = finalResult.response.generateVideoResponse.generatedSamples[0].video.uri;
+      videoUri =
+        finalResult.response.generateVideoResponse.generatedSamples[0].video
+          .uri;
 
-      this.logger.log(`Video generation complete for operation ${operationName}. URI: ${videoUri}`);
+      this.logger.log(
+        `Video generation complete for operation ${operationName}. URI: ${videoUri}`,
+      );
 
       await this._saveVideoGenerationInteraction(
         currentUserId,
@@ -702,15 +802,20 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
         requestType,
         operationName,
         videoUri,
-        effectiveConversationId
+        effectiveConversationId,
       );
 
       // FIX: Use non-null assertion for videoUri here
       return { videoUri: videoUri! };
     } catch (error) {
-      this.logger.error(`Error in video generation process for prompt "${prompt}": ${error.message}`, error.stack);
+      this.logger.error(
+        `Error in video generation process for prompt "${prompt}": ${error.message}`,
+        error.stack,
+      );
       if (operationName) {
-        this.logger.warn(`Operation ${operationName} failed to complete or retrieve URI.`);
+        this.logger.warn(
+          `Operation ${operationName} failed to complete or retrieve URI.`,
+        );
         await this._saveVideoGenerationInteraction(
           currentUserId,
           prompt,
@@ -718,11 +823,14 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
           requestType,
           operationName,
           null,
-          effectiveConversationId
-        ).catch(saveError => this.logger.error(`Failed to save failed video generation interaction: ${saveError.message}`));
+          effectiveConversationId,
+        ).catch((saveError) =>
+          this.logger.error(
+            `Failed to save failed video generation interaction: ${saveError.message}`,
+          ),
+        );
       }
       throw error;
     }
   }
 }
-

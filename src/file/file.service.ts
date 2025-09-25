@@ -39,7 +39,7 @@ import { REQUEST } from '@nestjs/core';
 import { Request, Response } from 'express';
 
 import { UtilsService } from '../utils/utils.service';
-import { FileAction, ProposedFileChangeDto } from 'src/llm/dto'; // Import FileAction enum and ProposedFileChangeDto
+import { FileAction, ProposedFileChangeDto } from '../llm/dto'; // Import FileAction enum and ProposedFileChangeDto
 
 const execAsync = promisify(exec);
 
@@ -156,9 +156,12 @@ export class FileService implements OnModuleInit {
     private readonly request: Request & { user?: CreateJwtUserDto },
     private readonly eventEmitter: EventEmitter2,
   ) {
-    this.maxFileSize = this.configService.get<number>('file.maxSize') ?? 5 * 1024 * 1024;
-    this.allowedMimeTypes = this.configService.get<string[]>('file.allowedMimeTypes') ?? [];
-    this.allowedExtensions = this.configService.get<string[]>('file.allowedExtensions') ?? [];
+    this.maxFileSize =
+      this.configService.get<number>('file.maxSize') ?? 5 * 1024 * 1024;
+    this.allowedMimeTypes =
+      this.configService.get<string[]>('file.allowedMimeTypes') ?? [];
+    this.allowedExtensions =
+      this.configService.get<string[]>('file.allowedExtensions') ?? [];
 
     this.ensureConfigurationIsValid();
   }
@@ -201,7 +204,9 @@ export class FileService implements OnModuleInit {
     }
     if (
       !Array.isArray(this.allowedExtensions) ||
-      this.allowedExtensions.some((ext) => typeof ext !== 'string' || !ext.startsWith('.'))
+      this.allowedExtensions.some(
+        (ext) => typeof ext !== 'string' || !ext.startsWith('.'),
+      )
     ) {
       this.logger.error(
         'File validation configuration error: file.allowedExtensions must be an array of strings starting with a dot.',
@@ -277,7 +282,10 @@ export class FileService implements OnModuleInit {
 
       const normalizedContentType = contentType?.split(';')[0].toLowerCase();
 
-      if (normalizedContentType && !this.allowedMimeTypes.includes(normalizedContentType)) {
+      if (
+        normalizedContentType &&
+        !this.allowedMimeTypes.includes(normalizedContentType)
+      ) {
         throw new BadRequestException(
           `Unsupported remote file type: "${contentType}". Allowed types are: ${this.allowedMimeTypes.join(', ')}.`,
         );
@@ -367,7 +375,9 @@ export class FileService implements OnModuleInit {
     try {
       const stats = await fs.stat(absolutePath);
       if (!stats.isFile()) {
-        throw new BadRequestException(`Path '${filePath}' is not a file or does not exist.`);
+        throw new BadRequestException(
+          `Path '${filePath}' is not a file or does not exist.`,
+        );
       }
 
       return fsExtra.createReadStream(absolutePath);
@@ -412,7 +422,10 @@ export class FileService implements OnModuleInit {
       });
 
       stream.on('error', (err) => {
-        this.logger.error(`File stream error for ${filePath}: ${err.message}`, err.stack);
+        this.logger.error(
+          `File stream error for ${filePath}: ${err.message}`,
+          err.stack,
+        );
         emitter.emit('fileError', { clientId, error: err.message });
       });
 
@@ -431,7 +444,10 @@ export class FileService implements OnModuleInit {
    * Lists files and folders in a specified directory, optionally recursively.
    * This method uses the injected EXCLUDED_FOLDERS and specific blockedPaths.
    */
-  async getFilesByDirectory(directory = '', recursive = false): Promise<FileTreeNode[]> {
+  async getFilesByDirectory(
+    directory = '',
+    recursive = false,
+  ): Promise<FileTreeNode[]> {
     this.ensureFileModuleEnabled(); // Ensure module is enabled for this operation
 
     const dir = path.resolve(this.BASE_DIR || process.cwd(), directory);
@@ -464,8 +480,12 @@ export class FileService implements OnModuleInit {
           const isDir = stat.isDirectory();
 
           // Detect language and MIME type
-          const mimeType = isDir ? undefined : mimeLookup(entry.name) || 'application/octet-stream';
-          let lang = isDir ? undefined : this.utilsService.detectLanguage(entry.name, mimeType);
+          const mimeType = isDir
+            ? undefined
+            : mimeLookup(entry.name) || 'application/octet-stream';
+          let lang = isDir
+            ? undefined
+            : this.utilsService.detectLanguage(entry.name, mimeType);
 
           if (mimeType?.startsWith('image/')) {
             lang = 'image';
@@ -512,7 +532,9 @@ export class FileService implements OnModuleInit {
         `Failed to list directory contents for "${dir}": ${err.message}`,
         err.stack,
       );
-      throw new InternalServerErrorException(`Failed to list directory contents: ${err.message}`);
+      throw new InternalServerErrorException(
+        `Failed to list directory contents: ${err.message}`,
+      );
     }
   }
 
@@ -558,7 +580,10 @@ export class FileService implements OnModuleInit {
     let pathsToProcess: string[];
 
     // --- START: Implemented logic based on the interpretation ---
-    if (scanPaths.length === 0 || (scanPaths.length === 1 && scanPaths[0] === '.')) {
+    if (
+      scanPaths.length === 0 ||
+      (scanPaths.length === 1 && scanPaths[0] === '.')
+    ) {
       // If no specific paths are provided or only '.' is provided, default to scanning the entire project root.
       pathsToProcess = [projectRoot];
       this.logger.log(
@@ -574,7 +599,9 @@ export class FileService implements OnModuleInit {
       );
       if (verbose) {
         this.logger.debug(`Scan paths received: ${scanPaths.join(', ')}`);
-        this.logger.debug(`Resolved paths for scan: ${pathsToProcess.join(', ')}`);
+        this.logger.debug(
+          `Resolved paths for scan: ${pathsToProcess.join(', ')}`,
+        );
       }
     }
     // --- END: Implemented logic ---
@@ -585,7 +612,9 @@ export class FileService implements OnModuleInit {
 
       if (processedAbsolutePaths.has(absolutePath)) {
         if (verbose) {
-          this.logger.debug(`  Skipping '${absolutePath}' (already processed).`);
+          this.logger.debug(
+            `  Skipping '${absolutePath}' (already processed).`,
+          );
         }
         continue;
       }
@@ -613,7 +642,10 @@ export class FileService implements OnModuleInit {
 
         try {
           const content = await fs.readFile(absolutePath, 'utf-8');
-          const relativeToProjectRoot = path.relative(projectRoot, absolutePath);
+          const relativeToProjectRoot = path.relative(
+            projectRoot,
+            absolutePath,
+          );
           allScannedFiles.push({
             filePath: absolutePath,
             relativePath: relativeToProjectRoot,
@@ -621,7 +653,9 @@ export class FileService implements OnModuleInit {
           });
           processedAbsolutePaths.add(absolutePath);
           if (verbose) {
-            this.logger.debug(`  Included explicit file: ${relativeToProjectRoot}`);
+            this.logger.debug(
+              `  Included explicit file: ${relativeToProjectRoot}`,
+            );
           }
         } catch (readError) {
           this.logger.warn(
@@ -644,7 +678,9 @@ export class FileService implements OnModuleInit {
         }
 
         if (verbose) {
-          this.logger.log(`  Initiating recursive scan for directory: ${absolutePath}`);
+          this.logger.log(
+            `  Initiating recursive scan for directory: ${absolutePath}`,
+          );
         }
         const queue: string[] = [absolutePath];
 
@@ -662,12 +698,17 @@ export class FileService implements OnModuleInit {
 
           for (const entry of entries) {
             const entryFullPath = path.join(currentDir, entry.name);
-            const relativeToProjectRoot = path.relative(projectRoot, entryFullPath);
+            const relativeToProjectRoot = path.relative(
+              projectRoot,
+              entryFullPath,
+            );
 
             if (entry.isDirectory()) {
               if (this.isExcludedDirForScan(entry.name)) {
                 if (verbose) {
-                  this.logger.debug(`    Excluding directory for scan: ${relativeToProjectRoot}`);
+                  this.logger.debug(
+                    `    Excluding directory for scan: ${relativeToProjectRoot}`,
+                  );
                 }
                 continue;
               }
@@ -695,7 +736,9 @@ export class FileService implements OnModuleInit {
                     });
                     processedAbsolutePaths.add(entryFullPath);
                     if (verbose) {
-                      this.logger.debug(`    Included for scan: ${relativeToProjectRoot}`);
+                      this.logger.debug(
+                        `    Included for scan: ${relativeToProjectRoot}`,
+                      );
                     }
                   } catch (readError) {
                     this.logger.warn(
@@ -718,7 +761,9 @@ export class FileService implements OnModuleInit {
           }
         }
       } else {
-        this.logger.warn(`'${absolutePath}' is neither a file nor a directory. Skipping for scan.`);
+        this.logger.warn(
+          `'${absolutePath}' is neither a file nor a directory. Skipping for scan.`,
+        );
       }
     }
 
@@ -777,7 +822,9 @@ export class FileService implements OnModuleInit {
     try {
       parsedUrl = new URL(url);
       if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        throw new BadRequestException('Unsupported protocol. Only http and https are allowed.');
+        throw new BadRequestException(
+          'Unsupported protocol. Only http and https are allowed.',
+        );
       }
     } catch (error) {
       this.logger.error(
@@ -795,7 +842,9 @@ export class FileService implements OnModuleInit {
           if (contentType) {
             res.setHeader('Content-Type', contentType);
           } else {
-            this.logger.warn(`No Content-Type header for URL: ${url}. Defaulting to image/jpeg.`);
+            this.logger.warn(
+              `No Content-Type header for URL: ${url}. Defaulting to image/jpeg.`,
+            );
             res.setHeader('Content-Type', 'image/jpeg');
           }
           imageRes.pipe(res);
@@ -839,7 +888,8 @@ export class FileService implements OnModuleInit {
         return { success: true, filePath: resolvedPath };
       } else {
         this.validateFileExtension(resolvedPath);
-        const finalContent: string = content?.trim() === '' || content == null ? ' ' : content;
+        const finalContent: string =
+          content?.trim() === '' || content == null ? ' ' : content;
         await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
         await fs.writeFile(resolvedPath, finalContent, 'utf-8');
         return { success: true, filePath: resolvedPath };
@@ -875,14 +925,18 @@ export class FileService implements OnModuleInit {
         `Failed to write file to ${filePath}: ${(error as Error).message}`,
         (error as Error).stack,
       );
-      throw new InternalServerErrorException(`Failed to write file: ${(error as Error).message}`);
+      throw new InternalServerErrorException(
+        `Failed to write file: ${(error as Error).message}`,
+      );
     }
   }
 
   /**
    * Deletes a file or directory at the specified path.
    */
-  async deleteLocalFile(filePath: string): Promise<{ success: boolean; message: string }> {
+  async deleteLocalFile(
+    filePath: string,
+  ): Promise<{ success: boolean; message: string }> {
     this.ensureFileModuleEnabled();
 
     try {
@@ -921,11 +975,15 @@ export class FileService implements OnModuleInit {
 
     try {
       if (!(await fsExtra.pathExists(resolvedOldPath))) {
-        throw new NotFoundException(`Source path does not exist: ${resolvedOldPath}`);
+        throw new NotFoundException(
+          `Source path does not exist: ${resolvedOldPath}`,
+        );
       }
 
       if (await fsExtra.pathExists(resolvedNewPath)) {
-        throw new BadRequestException(`Target path already exists: ${resolvedNewPath}`);
+        throw new BadRequestException(
+          `Target path already exists: ${resolvedNewPath}`,
+        );
       }
 
       await fsExtra.move(resolvedOldPath, resolvedNewPath);
@@ -966,7 +1024,9 @@ export class FileService implements OnModuleInit {
 
     try {
       if (!(await fsExtra.pathExists(resolvedSourcePath))) {
-        throw new NotFoundException(`Source path does not exist: ${resolvedSourcePath}`);
+        throw new NotFoundException(
+          `Source path does not exist: ${resolvedSourcePath}`,
+        );
       }
 
       // Check if destination exists. If it does, we consider it a BadRequest unless an overwrite flag is used (not implemented here).
@@ -977,7 +1037,9 @@ export class FileService implements OnModuleInit {
       }
 
       await fsExtra.copy(resolvedSourcePath, resolvedDestinationPath);
-      this.logger.log(`Copied "${resolvedSourcePath}" to "${resolvedDestinationPath}"`);
+      this.logger.log(
+        `Copied "${resolvedSourcePath}" to "${resolvedDestinationPath}"`,
+      );
 
       return {
         success: true,
@@ -990,7 +1052,10 @@ export class FileService implements OnModuleInit {
         `Failed to copy "${resolvedSourcePath}" to "${resolvedDestinationPath}": ${(error as Error).message}`,
         (error as Error).stack,
       );
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       throw new InternalServerErrorException(
@@ -1013,7 +1078,9 @@ export class FileService implements OnModuleInit {
 
     try {
       if (!(await fsExtra.pathExists(resolvedSourcePath))) {
-        throw new NotFoundException(`Source path does not exist: ${resolvedSourcePath}`);
+        throw new NotFoundException(
+          `Source path does not exist: ${resolvedSourcePath}`,
+        );
       }
 
       // Check if destination exists. For 'move', if destination is an existing empty directory, move might place source *inside* it.
@@ -1027,7 +1094,9 @@ export class FileService implements OnModuleInit {
       }
 
       await fsExtra.move(resolvedSourcePath, resolvedDestinationPath);
-      this.logger.log(`Moved "${resolvedSourcePath}" to "${resolvedDestinationPath}"`);
+      this.logger.log(
+        `Moved "${resolvedSourcePath}" to "${resolvedDestinationPath}"`,
+      );
 
       return {
         success: true,
@@ -1040,7 +1109,10 @@ export class FileService implements OnModuleInit {
         `Failed to move "${resolvedSourcePath}" to "${resolvedDestinationPath}": ${(error as Error).message}`,
         (error as Error).stack,
       );
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       throw new InternalServerErrorException(
@@ -1081,7 +1153,9 @@ export class FileService implements OnModuleInit {
       for (const entry of entries) {
         // Here, assuming this.EXCLUDED_FOLDERS are basenames for generic file browsing
         if (this.EXCLUDED_FOLDERS.includes(entry.name)) {
-          this.logger.debug(`Skipping user-excluded folder during search: ${entry.name}`);
+          this.logger.debug(
+            `Skipping user-excluded folder during search: ${entry.name}`,
+          );
           continue;
         }
 
@@ -1113,61 +1187,77 @@ export class FileService implements OnModuleInit {
     return results;
   }
 
-  /**
-   * Applies a list of proposed file changes (add, modify, delete).
-   * @param changes An array of ProposedFileChangeDto describing the actions.
-   * @param projectRoot The root directory of the project for context.
-   * @returns A summary of applied changes.
-   */
-  async applyFileChanges(
-    changes: ProposedFileChangeDto[],
-    projectRoot: string,
-  ): Promise<{ success: boolean; messages: string[] }> {
-    this.ensureFileModuleEnabled();
-    const messages: string[] = [];
+ /**
+ * Applies a list of proposed file changes (add, modify, delete, repair).
+ */
+async applyFileChanges(
+  changes: ProposedFileChangeDto[],
+  projectRoot: string,
+): Promise<{ success: boolean; messages: string[] }> {
+  this.ensureFileModuleEnabled();
+  const messages: string[] = [];
 
-    for (const change of changes) {
-      const absolutePath = path.resolve(projectRoot, change.filePath);
-      this.logger.log(`Applying change: ${change.action} ${absolutePath}`);
+  for (const change of changes) {
+    const absolutePath = path.resolve(projectRoot, change.filePath);
+    this.logger.log(`Applying change: ${change.action} ${absolutePath}`);
 
-      try {
-        switch (change.action) {
-          case FileAction.ADD:
-            // Ensure parent directory exists before writing file
+    try {
+      switch (change.action) {
+        case FileAction.ADD:
+          await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+          await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
+          messages.push(`Added file: ${change.filePath}`);
+          break;
+
+        case FileAction.MODIFY:
+          await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
+          messages.push(`Modified file: ${change.filePath}`);
+          break;
+
+        case FileAction.DELETE:
+          if (await fsExtra.pathExists(absolutePath)) {
+            await fs.unlink(absolutePath);
+            messages.push(`Deleted file: ${change.filePath}`);
+          } else {
+            messages.push(`Skipped delete: File not found ${change.filePath}`);
+          }
+          break;
+
+        case FileAction.REPAIR:
+          if (!(await fsExtra.pathExists(absolutePath))) {
+            // If file does not exist, create it
             await fs.mkdir(path.dirname(absolutePath), { recursive: true });
             await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
-            messages.push(`Added file: ${change.filePath}`);
-            break;
-          case FileAction.MODIFY:
+            messages.push(`Repaired (created missing) file: ${change.filePath}`);
+          } else {
+            // If file exists, optionally overwrite with new content
             await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
-            messages.push(`Modified file: ${change.filePath}`);
-            break;
-          case FileAction.DELETE:
-            if (await fsExtra.pathExists(absolutePath)) {
-              await fs.unlink(absolutePath);
-              messages.push(`Deleted file: ${change.filePath}`);
-            } else {
-              messages.push(`Skipped delete: File not found ${change.filePath}`);
-            }
-            break;
-          default:
-            this.logger.warn(`Unknown file action: ${change.action} for ${change.filePath}`);
-            messages.push(`Skipped unknown action: ${change.action} for ${change.filePath}`);
-            break;
-        }
-      } catch (error) {
-        this.logger.error(
-          `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
-          (error as Error).stack,
-        );
-        messages.push(
-          `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
-        );
-        // Optionally, re-throw or handle critical errors differently
+            messages.push(`Repaired (updated) file: ${change.filePath}`);
+          }
+          break;
+
+        default:
+          this.logger.warn(
+            `Unknown file action: ${change.action} for ${change.filePath}`,
+          );
+          messages.push(
+            `Skipped unknown action: ${change.action} for ${change.filePath}`,
+          );
+          break;
       }
+    } catch (error) {
+      this.logger.error(
+        `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      messages.push(
+        `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
+      );
     }
-    return { success: true, messages };
   }
+
+  return { success: true, messages };
+}
 
   /**
    * Generates a git diff for a specific file relative to its current HEAD.
@@ -1184,15 +1274,23 @@ export class FileService implements OnModuleInit {
 
     try {
       // Check if projectRoot is a git repository
-      const { stdout: gitRootOutput } = await execAsync('git rev-parse --is-inside-work-tree', {
-        cwd: absoluteProjectRoot,
-      });
+      const { stdout: gitRootOutput } = await execAsync(
+        'git rev-parse --is-inside-work-tree',
+        {
+          cwd: absoluteProjectRoot,
+        },
+      );
       if (gitRootOutput.trim() !== 'true') {
-        throw new BadRequestException(`Directory ${projectRoot} is not a Git repository.`);
+        throw new BadRequestException(
+          `Directory ${projectRoot} is not a Git repository.`,
+        );
       }
 
       // Check if the file exists and is tracked by Git
-      const relativeFilePath = path.relative(absoluteProjectRoot, absoluteFilePath);
+      const relativeFilePath = path.relative(
+        absoluteProjectRoot,
+        absoluteFilePath,
+      );
       try {
         await execAsync(`git ls-files --error-unmatch "${relativeFilePath}"`, {
           cwd: absoluteProjectRoot,
@@ -1250,7 +1348,10 @@ export class FileService implements OnModuleInit {
       });
       return stdout.trim();
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
       this.logger.error(

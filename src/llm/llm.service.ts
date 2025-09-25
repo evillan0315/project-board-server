@@ -9,7 +9,13 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { LlmInputDto, LlmOutputDto, ProposedFileChangeDto, FileAction } from './dto';
+import {
+  LlmInputDto,
+  LlmOutputDto,
+  ProposedFileChangeDto,
+  FileAction,
+  LlmReportErrorDto,
+} from './dto'; // Import LlmReportErrorDto
 import { ScannedFileDto } from '../file/dto/scan-file.dto';
 import { GenerateTextDto } from '../google/google-gemini/google-gemini-file/dto/generate-text.dto';
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
@@ -67,25 +73,123 @@ export class LlmService implements OnModuleInit {
     });
 
     // Wait for all promises to resolve, then join the resulting array of strings
-    const formattedRelevantFiles = (await Promise.all(fileContentPromises)).join('\n\n');
+    const formattedRelevantFiles = (
+      await Promise.all(fileContentPromises)
+    ).join('\n\n');
 
     const prompt = `
 # AI Code Generation Request
 
 ## User Request
-\`\`\`text
-${llmInput.userPrompt}
+
+${llmInput.userPrompt}\n\n
+
+
+## Project Context
+${projectStructure}\n\n
+
+### Relevant Files (for analysis)
+
+${formattedRelevantFiles}\n\n
+
+`;
+
+    return prompt.trim();
+  }
+
+  private async buildErrorReportPrompt(
+    errorReport: LlmReportErrorDto,
+    scannedFiles: ScannedFileDto[],
+    projectStructure: string,
+  ): Promise<string> {
+    const fileContentPromises = scannedFiles.map(async (file) => {
+      let filePath = file.relativePath;
+      if (errorReport.projectRoot) {
+        filePath = `${errorReport.projectRoot}/${file.relativePath}`;
+      }
+      return `// File: ${filePath}\n${file.content}`;
+    });
+    const formattedRelevantFiles = (
+      await Promise.all(fileContentPromises)
+    ).join('\n\n');
+
+    let failedChangesDescription = '';
+    if (
+      errorReport.context?.failedChanges && // Added optional chaining
+      errorReport.context.failedChanges.length > 0
+    ) {
+      failedChangesDescription =
+        'The following changes were proposed and caused the error:\n';
+      failedChangesDescription += errorReport.context.failedChanges
+        .map(
+          (change) =>
+            `  - File: ${change.filePath}, Action: ${change.action}, Reason: ${change.reason || 'N/A'}\n${
+              change.newContent
+                ? '    Content:\n' +
+                  change.newContent
+                    .split('\n')
+                    .map((line) => '    ' + line)
+                    .join('\n')
+                : ''
+            }`,
+        )
+        .join('\n\n');
+    }
+
+    const prompt = `
+# AI Error Report Analysis Request
+
+## Error Details
+
+The following error occurred after applying some changes or attempting an operation:
+\`\`\`
+${errorReport.errorDetails}
 \`\`\`
 
 ## Project Context
 ${projectStructure}
 
-### Relevant Files (for analysis)
-\`\`\`files
+## Original Request Context (leading to the error)
+
+${errorReport.context?.originalUserPrompt ? `**Original User Prompt:**\n\`\`\`\n${errorReport.context.originalUserPrompt}\n\`\`\`\n` : ''}
+${errorReport.context?.systemInstruction ? `**System Instruction used:**\n\`\`\`\n${errorReport.context.systemInstruction}\n\`\`\`\n` : ''}
+
+${failedChangesDescription}
+
+### Relevant Files (for analysis of the error)
+
 ${formattedRelevantFiles}
+
+## Task for AI
+
+Analyze the provided error details, the project context, and the original request context. Identify the root cause of the error. Then, propose a solution or set of changes to fix the problem.
+
+**Expected Output Format:**
+Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` schema. If no specific file changes are needed, provide a detailed analysis and recommendations in the \`summary\` and \`thoughtProcess\` fields, and include an \`ANALYZE\` action for a dummy file like \`error-analysis.md\` with the explanation as content.
+
+\`\`\`json
+{
+  "title": "Error Analysis and Proposed Fix",
+  "summary": "Concise explanation of the error and proposed solution.",
+  "thoughtProcess": "Detailed reasoning behind the analysis and recommended changes.",
+  "changes": [
+    {
+      "filePath": "path/to/problematic/file.ts",
+      "action": "repair",
+      "newContent": "corrected content",
+      "reason": "Fixing the identified issue."
+    },
+    // ... potentially other changes or an ANALYZE action
+    {
+      "filePath": "error-analysis.md",
+      "action": "analyze",
+      "newContent": "### Error Analysis\\n\\n...\\n\\n### Recommendations\\n\\n...",
+      "reason": "Detailed analysis of the error and steps for resolution."
+    }
+  ]
+}
 \`\`\`
 `;
-
     return prompt.trim();
   }
 
@@ -144,18 +248,26 @@ ${formattedRelevantFiles}
       );
     }
   }
-  async generateContent(llmInput: LlmInputDto): Promise<LlmOutputDto> {
+  async generateContent(llmInput: LlmInputDto): Promise<any> {
     this.ensureLlmModuleEnabled();
 
     const projectRoot = llmInput.projectRoot; // Get projectRoot from DTO
     const scanPaths = llmInput.scanPaths;
 
     // 1. Scan files based on the provided projectRoot and scanPaths
-    const scannedFiles = await this.fileService.scan(scanPaths, projectRoot, false); // verbose false by default
+    const scannedFiles = await this.fileService.scan(
+      scanPaths,
+      projectRoot,
+      false,
+    ); // verbose false by default
     const projectStructure = await this.generateProjectStructure(projectRoot); // Generate project structure
 
     // 2. Build the LLM prompt with the dynamically scanned files and project structure
-    const fullPrompt = await this.buildLLMPrompt(llmInput, scannedFiles, projectStructure);
+    const fullPrompt = await this.buildLLMPrompt(
+      llmInput,
+      scannedFiles,
+      projectStructure,
+    );
     const systemInstructionForLLM = `${llmInput.additionalInstructions}\n\n${llmInput.expectedOutputFormat}`;
 
     this.logger.log('\n--- Prompt sent to LLM ---');
@@ -176,151 +288,13 @@ ${formattedRelevantFiles}
 
       if (!response) {
         this.logger.error(`Google Gemini API Error (via NestJS)`);
-        throw new InternalServerErrorException(`Failed to get response from Google Gemini API`);
-      }
-
-      const rawText = response;
-
-      this.logger.log('\n--- Raw LLM Response (from Google Gemini via NestJS) ---');
-      this.logger.log(rawText);
-      this.logger.log('--------------------------------------------------\n');
-
-      let cleanedJsonString = LlmService.extractJsonFromMarkdown(rawText);
-
-      let parsedResult: any;
-      try {
-        parsedResult = JSON.parse(cleanedJsonString);
-      } catch (jsonError: unknown) {
-        this.logger.warn(
-          'Warning: Initial JSON parsing failed. Attempting to repair bad escaped characters.',
-        );
-        try {
-          let repairedJsonString = await this.jsonFixService.repair(cleanedJsonString);
-          if (repairedJsonString.valid && repairedJsonString.repairedJson) {
-            parsedResult = JSON.parse(repairedJsonString.repairedJson);
-            this.logger.log('JSON parsing succeeded after repair.');
-          } else {
-            throw new Error(
-              JSON.stringify(repairedJsonString) || 'JSON repair failed to produce valid JSON',
-            );
-          }
-        } catch (repairError: unknown) {
-          this.logger.error('Error parsing LLM response as JSON even after repair attempt.');
-          this.logger.error('Raw LLM Response before cleaning:', rawText);
-          this.logger.error('Cleaned JSON string attempt:', cleanedJsonString);
-          this.logger.error(
-            'Repaired JSON string attempt (which also failed):',
-            (repairError as Error).message,
-          );
-          throw new InternalServerErrorException(
-            `Invalid JSON response from LLM: ${(jsonError as Error).message}. Repair attempt failed: ${
-              (repairError as Error).message
-            }`,
-          );
-        }
-      }
-
-      let llmOutput: LlmOutputDto;
-
-      if (Array.isArray(parsedResult)) {
-        this.logger.warn(
-          "LLM returned an array directly instead of the full LlmOutputDto object. Wrapping it as 'changes'.",
-        );
-        llmOutput = {
-          title: 'AI Generated Changes (title not provided by LLM).',
-          changes: parsedResult as ProposedFileChangeDto[],
-          summary: 'Changes proposed by AI (summary not provided by LLM).',
-          thoughtProcess:
-            'LLM returned only the changes array, so a default summary and thought process are provided.',
-        };
-      } else if (typeof parsedResult === 'object' && parsedResult !== null) {
-        if (
-          Array.isArray(parsedResult.changes) &&
-          typeof parsedResult.summary === 'string' &&
-          typeof parsedResult.title === 'string' // Check for title
-        ) {
-          llmOutput = parsedResult as LlmOutputDto;
-        } else {
-          this.logger.error(
-            'Parsed LLM output object is missing expected "changes" array, "summary" string, or "title" string.',
-          );
-          this.logger.error(
-            'Received object (stringified):',
-            JSON.stringify(parsedResult, null, 2),
-          );
-          throw new InternalServerErrorException(
-            'LLM response object missing expected "changes" array, "summary" string, or "title" string.',
-          );
-        }
-      } else {
-        this.logger.error(
-          'Parsed LLM output is neither an array nor an object, or null:',
-          typeof parsedResult,
-          parsedResult,
-        );
         throw new InternalServerErrorException(
-          'Invalid top-level JSON structure from LLM. Expected an object or an array.',
+          `Failed to get response from Google Gemini API`,
         );
+      } else {
+        //let cleanedJsonString = LlmService.extractJsonFromMarkdown(response);
+        return response;
       }
-
-      for (const change of llmOutput.changes) {
-        if (!change.filePath || !Object.values(FileAction).includes(change.action)) {
-          this.logger.error(
-            `Invalid change object found: ${JSON.stringify(change)}. Missing filePath or invalid action.`,
-          );
-          throw new BadRequestException(
-            `Invalid change object received from LLM: Missing filePath or invalid action.`,
-          );
-        }
-
-        switch (change.action) {
-          case FileAction.ADD:
-          case FileAction.MODIFY:
-          case FileAction.REPAIR:
-            if (change.newContent === undefined) {
-              this.logger.warn(
-                `Warning: Change for ${change.filePath} (action: ${change.action}) has undefined newContent. This might be an issue and could lead to empty files or incorrect repairs.`,
-              );
-            } else {
-              try {
-                const detectedLanguage = this.utilsService.detectLanguage(change.filePath);
-                if (detectedLanguage) {
-                  change.newContent = await this.utilsService.formatCode(
-                    change.newContent,
-                    detectedLanguage,
-                  );
-                } else {
-                  this.logger.warn(
-                    `Could not detect language for file: ${change.filePath}. Skipping formatting.`,
-                  );
-                }
-              } catch (formatError) {
-                this.logger.error(
-                  `Failed to format content for file ${change.filePath}: ${
-                    (formatError as Error).message
-                  }`,
-                );
-              }
-            }
-            break;
-          case FileAction.DELETE:
-          case FileAction.ANALYZE:
-            if (change.newContent !== undefined) {
-              this.logger.warn(
-                `Warning: Change for ${change.filePath} (action: ${change.action}) unexpectedly contains newContent. This will be ignored.`,
-              );
-              delete change.newContent; // Remove it if it was provided erroneously
-            }
-            if (change.action === FileAction.ANALYZE && !change.reason) {
-              this.logger.warn(
-                `Warning: Analyze action for ${change.filePath} is missing a 'reason'.`,
-              );
-            }
-            break;
-        }
-      }
-
-      return llmOutput;
     } catch (error: unknown) {
       if (
         error instanceof ForbiddenException ||
@@ -336,6 +310,85 @@ ${formattedRelevantFiles}
       );
       throw new InternalServerErrorException(
         `Failed to get response from LLM: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async reportErrorToLlm(
+    errorReport: LlmReportErrorDto,
+  ): Promise<LlmOutputDto> {
+    this.ensureLlmModuleEnabled();
+
+    const projectRoot = errorReport.projectRoot;
+    const scanPaths = errorReport.scanPaths || [];
+
+    // Add original file paths from context to scan paths
+    if (
+      errorReport.context?.originalFilePaths && // FIX: Added optional chaining here
+      errorReport.context.originalFilePaths.length > 0
+    ) {
+      scanPaths.push(...errorReport.context.originalFilePaths);
+    }
+
+    // Ensure unique paths
+    const uniqueScanPaths = Array.from(new Set(scanPaths));
+
+    // 1. Scan files based on the provided projectRoot and scanPaths
+    const scannedFiles = await this.fileService.scan(
+      uniqueScanPaths,
+      projectRoot,
+      false,
+    );
+    const projectStructure = await this.generateProjectStructure(projectRoot);
+
+    // 2. Build the LLM prompt specifically for error reporting
+    const fullPrompt = await this.buildErrorReportPrompt(
+      errorReport,
+      scannedFiles,
+      projectStructure,
+    );
+
+    // Define the expected output format for error analysis, which is LlmOutputDto
+    const systemInstructionForLLM = `
+You are an expert AI assistant tasked with analyzing errors in codebases and providing solutions.
+Your response MUST be a JSON object adhering to the LlmOutputDto schema, which includes 'title', 'summary', 'thoughtProcess', and 'changes'.
+If you recommend file modifications, use 'add', 'modify', 'delete', or 'repair' actions.
+If your primary output is an analysis or explanation without direct code changes, use the 'analyze' action for a file named 'error-analysis.md' and put your detailed analysis and recommendations in its 'newContent' field.
+`;
+
+    this.logger.log('\n--- Error Report Prompt sent to LLM ---');
+    this.logger.log(`Prompt size: ${fullPrompt.length} characters.`);
+    this.logger.log('--------------------------------------\n');
+
+    try {
+      const payload: GenerateTextDto = {
+        prompt: fullPrompt,
+        systemInstruction: systemInstructionForLLM,
+      };
+
+      const response = await this.googleGeminiFileService.generateText(
+        payload,
+        RequestType.LLM_GENERATION,
+      );
+
+      if (!response) {
+        this.logger.error(
+          `Google Gemini API Error (via NestJS) for error reporting`,
+        );
+        throw new InternalServerErrorException(
+          `Failed to get response from Google Gemini API for error report`,
+        );
+      }
+
+      let cleanedJsonString = LlmService.extractJsonFromMarkdown(response);
+      return JSON.parse(cleanedJsonString) as LlmOutputDto;
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error calling LLM for error report (via GoogleGeminiFileService): ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        `Failed to get LLM analysis for error report: ${(error as Error).message}`,
       );
     }
   }

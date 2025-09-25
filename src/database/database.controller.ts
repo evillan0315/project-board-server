@@ -6,6 +6,7 @@ import {
   Body,
   BadRequestException,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -23,6 +24,7 @@ import { ColumnMetadataDto } from './dto/column-metadata.dto';
 import { CreateTableDto } from './dto/create-table.dto';
 import { TableInfo } from './database.service';
 import { ExecuteSqlDto } from './dto/execute-sql.dto';
+import { DropTableDto } from './dto/drop-table.dto';
 
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -91,6 +93,7 @@ export class DatabaseController {
 
     return this.databaseService.getAllTables(connectionString, query.dbType);
   }
+
   @Post('create-table')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new table' })
@@ -119,6 +122,47 @@ export class DatabaseController {
   })
   async createTable(@Body() dto: CreateTableDto): Promise<string> {
     return this.databaseService.createTable(dto);
+  }
+
+  @Delete('drop-table')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Drop a table or collection' })
+  @ApiResponse({
+    status: 200,
+    description: 'Table/Collection dropped successfully.',
+  })
+  @ApiBody({
+    type: DropTableDto,
+    examples: {
+      postgresExample: {
+        summary: 'Drop a PostgreSQL table',
+        value: {
+          connectionString:
+            'postgresql://postgres:password@localhost:5432/mydb',
+          dbType: 'postgres',
+          tableName: 'users',
+        },
+      },
+      mysqlExample: {
+        summary: 'Drop a MySQL table',
+        value: {
+          connectionString: 'mysql://root:password@localhost:3306/mydb',
+          dbType: 'mysql',
+          tableName: 'products',
+        },
+      },
+      mongoExample: {
+        summary: 'Drop a MongoDB collection',
+        value: {
+          connectionString: 'mongodb://localhost:27017/mydb',
+          dbType: 'mongodb',
+          tableName: 'myCollection',
+        },
+      },
+    },
+  })
+  async dropTable(@Body() dto: DropTableDto): Promise<string> {
+    return this.databaseService.dropTable(dto);
   }
 
   @Get('columns')

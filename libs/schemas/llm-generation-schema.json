@@ -1,0 +1,328 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "LLM Code/Application Generation Builder Model (Production)",
+  "description": "Production-ready schema describing outputs of an LLM-driven Code/Application Generation Builder. Contains project metadata, generation parameters, modules, artifacts, provenance, and CI/security information.",
+  "type": "object",
+  "required": [
+    "title",
+    "summary",
+    "thoughtProcess",
+    "projectMetadata",
+    "generationParameters",
+    "modules",
+    "changes",
+    "artifacts",
+    "provenance"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "semver": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z-.]+)?(?:\\+[0-9A-Za-z-.]+)?$"
+    },
+    "url": { "type": "string", "format": "uri" },
+    "dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "$ref": "#/definitions/nonEmptyString" },
+        "version": { "$ref": "#/definitions/semver" },
+        "source": { "$ref": "#/definitions/url" },
+        "dev": { "type": "boolean" }
+      }
+    },
+    "apiEndpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "method"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "method": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
+        },
+        "description": { "type": "string" },
+        "authRequired": { "type": "boolean" },
+        "requestSchemaRef": { "type": "string" },
+        "responseSchemaRef": { "type": "string" }
+      }
+    },
+    "fileChange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filePath", "action"],
+      "properties": {
+        "filePath": { "type": "string", "minLength": 1 },
+        "action": {
+          "type": "string",
+          "enum": ["add", "modify", "delete", "repair", "analyze"]
+        },
+        "newContent": { "type": "string" },
+        "reason": { "type": "string" },
+        "encoding": { "type": "string", "enum": ["utf-8", "base64"] },
+        "checksum": {
+          "type": "string",
+          "description": "SHA256 hex of newContent (if provided)"
+        },
+        "sizeBytes": { "type": "integer", "minimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "action": { "const": "delete" } } },
+          "then": { "not": { "required": ["newContent"] } }
+        },
+        {
+          "if": { "properties": { "action": { "enum": ["add", "modify", "repair"] } } },
+          "then": { "required": ["newContent"] }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "docker-image",
+            "archive",
+            "binary",
+            "sbom",
+            "report",
+            "container-image"
+          ]
+        },
+        "path": { "type": "string", "description": "relative or registry path" },
+        "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+        "sizeBytes": { "type": "integer", "minimum": 0 },
+        "platform": { "type": "string" },
+        "metadata": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "securityScan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tool": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "summary": { "type": "string" },
+        "critical": { "type": "integer", "minimum": 0 },
+        "high": { "type": "integer", "minimum": 0 },
+        "medium": { "type": "integer", "minimum": 0 },
+        "low": { "type": "integer", "minimum": 0 },
+        "detailsRef": { "type": "string" }
+      }
+    }
+  },
+  "properties": {
+    "title": { "$ref": "#/definitions/nonEmptyString" },
+    "summary": { "type": "string" },
+    "thoughtProcess": { "type": "string" },
+    "documentation": { "type": "string", "description": "Extended Markdown docs (optional)" },
+    "projectMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "language", "frameworks", "createdAt"],
+      "properties": {
+        "name": { "$ref": "#/definitions/nonEmptyString" },
+        "version": { "$ref": "#/definitions/semver" },
+        "language": { "type": "string" },
+        "frameworks": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "packageManager": { "type": "string", "description": "e.g., npm, yarn, pnpm, pip" },
+        "license": { "type": "string" },
+        "authors": { "type": "array", "items": { "type": "string" } },
+        "repository": { "$ref": "#/definitions/url" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastUpdated": { "type": "string", "format": "date-time" },
+        "ciConfigured": { "type": "boolean" }
+      }
+    },
+    "generationParameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "temperature", "maxTokens"],
+      "properties": {
+        "model": { "type": "string" },
+        "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+        "maxTokens": { "type": "integer", "minimum": 1 },
+        "prompt": { "type": "string" },
+        "seed": { "type": "integer" },
+        "stopSequences": { "type": "array", "items": { "type": "string" } },
+        "metadata": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description", "dependencies"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "dependencies": { "type": "array", "items": { "$ref": "#/definitions/dependency" } },
+          "apiEndpoints": { "type": "array", "items": { "$ref": "#/definitions/apiEndpoint" } },
+          "tests": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "unitTests": { "type": "boolean" },
+              "integrationTests": { "type": "boolean" },
+              "coveragePercent": { "type": "number", "minimum": 0, "maximum": 100 }
+            }
+          },
+          "linting": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": { "tool": { "type": "string" }, "configured": { "type": "boolean" } }
+          }
+        }
+      }
+    },
+    "buildScripts": { "type": "object", "additionalProperties": { "type": "string" } },
+    "changes": { "type": "array", "items": { "$ref": "#/definitions/fileChange" } },
+    "artifacts": { "type": "array", "items": { "$ref": "#/definitions/artifact" } },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generatedBy", "generatedAt"],
+      "properties": {
+        "generatedBy": { "type": "string", "description": "Agent (LLM/model/version) or tool name" },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "promptRef": { "type": "string" },
+        "commitHash": { "type": "string" },
+        "generationId": { "type": "string" },
+        "humanReview": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required": { "type": "boolean" },
+            "reviewer": { "type": "string" },
+            "reviewedAt": { "type": "string", "format": "date-time" },
+            "notes": { "type": "string" }
+          }
+        },
+        "signatures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["keyId", "signature", "algorithm"],
+            "properties": {
+              "keyId": { "type": "string" },
+              "signature": { "type": "string" },
+              "algorithm": { "type": "string" },
+              "signedAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+    "ci": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": { "type": "string" },
+        "pipelineRef": { "type": "string" },
+        "status": { "type": "string", "enum": ["not-configured", "passing", "failing", "unknown"] },
+        "requiredChecks": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "containerization": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dockerfilePath": { "type": "string" },
+        "imageName": { "type": "string" },
+        "baseImage": { "type": "string" },
+        "recommendedRuntime": { "type": "string" }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sbom": { "type": "string", "description": "Path to SBOM artifact" },
+        "securityScans": { "type": "array", "items": { "$ref": "#/definitions/securityScan" } },
+        "licenseCompliance": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": { "type": "string", "enum": ["ok", "warning", "violation", "unknown"] },
+            "details": { "type": "string" }
+          }
+        },
+        "secretsHandling": {
+          "type": "string",
+          "description": "high-level note: e.g., 'no secrets persisted; use vault for runtime secrets'."
+        }
+      }
+    },
+    "gitInstructions": { "type": "array", "items": { "type": "string" } }
+  },
+  "examples": [
+    {
+      "title": "Example App",
+      "summary": "Generated React + NestJS starter with auth",
+      "thoughtProcess": "Used modular architecture, prioritized security and testability.",
+      "projectMetadata": {
+        "name": "example-app",
+        "version": "1.0.0",
+        "language": "TypeScript",
+        "frameworks": ["React", "NestJS"],
+        "packageManager": "pnpm",
+        "license": "MIT",
+        "createdAt": "2025-09-20T00:00:00Z",
+        "ciConfigured": true
+      },
+      "generationParameters": {
+        "model": "gpt-5",
+        "temperature": 0.0,
+        "maxTokens": 8000,
+        "prompt": "Generate a secure starter fullstack app",
+        "seed": 42
+      },
+      "modules": [
+        {
+          "name": "api",
+          "description": "NestJS backend with auth",
+          "dependencies": [{ "name": "nestjs", "version": "10.0.0", "dev": false }],
+          "apiEndpoints": [{ "path": "/api/auth/login", "method": "POST", "authRequired": false }],
+          "tests": { "unitTests": true, "integrationTests": true, "coveragePercent": 85 }
+        }
+      ],
+      "changes": [
+        {
+          "filePath": "packages/api/src/main.ts",
+          "action": "add",
+          "newContent": "// ...",
+          "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sizeBytes": 1200
+        }
+      ],
+      "artifacts": [
+        {
+          "type": "sbom",
+          "path": "artifacts/app.sbom.json",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "sizeBytes": 1024
+        }
+      ],
+      "provenance": {
+        "generatedBy": "gpt-5:2025-09-20",
+        "generatedAt": "2025-09-20T01:00:00Z",
+        "generationId": "gen-0001"
+      },
+      "security": {
+        "sbom": "artifacts/app.sbom.json",
+        "securityScans": [],
+        "secretsHandling": "No secrets persisted; runtime use Vault"
+      }
+    }
+  ]
+}
+

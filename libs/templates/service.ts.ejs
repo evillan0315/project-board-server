@@ -24,10 +24,10 @@ import { Prisma<% if (className === 'User') { %>, Role<% } %> } from '@prisma/cl
 <% if (className === 'User') { %>
 import * as bcrypt from 'bcrypt';
 import { CreateJwtUserDto } from '../auth/dto/auth.dto';
-<% } else if (isProtected || hasCreatedBy) { %>
+<% } else if (isProtected && hasCreatedBy) { %>
 import { CreateJwtUserDto } from '../auth/dto/auth.dto';
 <% } %>
-<% if (hasCreatedBy || isProtected) { %>
+<% if (hasCreatedBy && isProtected) { %>
 import { REQUEST } from '@nestjs/core';
 import { Request, Response } from 'express';
 <% } %>
@@ -95,7 +95,7 @@ export class <%= className %>Service {
     <% } %>
     private readonly moduleControlService: ModuleControlService, 
     private prisma: PrismaService,
-    <% if (hasCreatedBy || isProtected) { %>@Inject(REQUEST) private readonly request: Request & { user?: CreateJwtUserDto },<% } %>
+    <% if (hasCreatedBy && isProtected) { %>@Inject(REQUEST) private readonly request: Request & { user?: CreateJwtUserDto },<% } %>
   ) {}
   // Use OnModuleInit to check the module status after all dependencies are initialized
   onModuleInit() {
@@ -141,7 +141,7 @@ export class <%= className %>Service {
 }
   
   <% } %>
-  <% if (hasCreatedBy || isProtected) { %>
+  <% if (hasCreatedBy && isProtected) { %>
   private get userId(): string | undefined {
   return this.request.user?.id;
 }
@@ -150,9 +150,15 @@ export class <%= className %>Service {
   create(data: Create<%= className %>Dto) {
     this.ensureFileModuleEnabled();
     let createData: any = { ...data };
-
+    <% if (className === 'User') { %>
+    // Set default role to USER if not provided
+    if (!createData.role) {
+      createData.role = Role.USER;
+    }
+    <% } %>
     
     <% if (hasCreatedBy && className !== 'User') { %>
+    
     const hasCreatedById = data.hasOwnProperty('createdById');
     if (this.userId) {
       createData.createdBy = {
@@ -425,7 +431,7 @@ export class <%= className %>Service {
   private buildWhereFromQuery(query: Pagination<%= className %>QueryDto): Prisma.<%= className %>WhereInput {
 
   const where: Prisma.<%= className %>WhereInput = {
-    <% if (hasCreatedBy || isProtected) { %>
+    <% if (hasCreatedBy && isProtected) { %>
     createdById:this.userId
     <%  } %>
   };

@@ -16,23 +16,34 @@ import { Type } from 'class-transformer';
 
 export class CreateGeminiResponseDto {
   @ApiProperty({ description: 'requestId field' })
-  @IsString()
-  requestId: string;
+    @IsString()
+    requestId: string;
+  @ApiProperty({ description: 'title field' })
+    @IsOptional()
+    @IsString()
+    title: string;
   @ApiProperty({ description: 'responseText field' })
-  @IsString()
-  responseText: string;
+    @IsString()
+    responseText: string;
   @ApiProperty({ description: 'finishReason field' })
-  @IsOptional()
-  @IsString()
-  finishReason: string;
+    @IsOptional()
+    @IsString()
+    finishReason: string;
   @ApiProperty({ description: 'safetyRatings field' })
-  @IsOptional()
-  @IsObject()
-  safetyRatings: any;
+    @IsOptional()
+    @IsObject()
+    safetyRatings: any;
   @ApiProperty({ description: 'tokenCount field' })
-  @IsOptional()
-  @IsInt()
-  tokenCount: number;
+    @IsOptional()
+    @IsInt()
+    tokenCount: number;
+  @ApiProperty({ description: 'projectRoot field' })
+    @IsOptional()
+    @IsString()
+    projectRoot: string;
+
+
+
 }
 
 export class PaginationGeminiResponseResultDto {
@@ -66,23 +77,48 @@ export class PaginationGeminiResponseQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by requestId' })
   requestId?: string;
   @IsOptional()
+  
   @IsString()
+  
+  @ApiPropertyOptional({ description: 'Filter by title' })
+  title?: string;
+  @IsOptional()
+  
+  @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by responseText' })
   responseText?: string;
   @IsOptional()
+  
   @IsString()
+  
   @ApiPropertyOptional({ description: 'Filter by finishReason' })
   finishReason?: string;
   @IsOptional()
+  
   @ApiPropertyOptional({ description: 'Filter by safetyRatings' })
   safetyRatings?: any;
   @IsOptional()
+  
   @Type(() => Number)
   @IsNumber()
+  
   @ApiPropertyOptional({ description: 'Filter by tokenCount' })
   tokenCount?: number;
+  @IsOptional()
+  
+  @IsString()
+  
+  @ApiPropertyOptional({ description: 'Filter by projectRoot' })
+  projectRoot?: string;
+
+
+
 }
+

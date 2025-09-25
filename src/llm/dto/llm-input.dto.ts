@@ -1,6 +1,13 @@
 // src/llm/dto/llm-input.dto.ts
 
-import { IsString, IsArray, ValidateNested, IsDefined, IsOptional, IsEnum } from 'class-validator'; // Import IsOptional, IsEnum
+import {
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsDefined,
+  IsOptional,
+  IsEnum,
+} from 'class-validator'; // Import IsOptional, IsEnum
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ScannedFileDto } from '../../file/dto/scan-file.dto'; // Ensure this path is correct
@@ -21,7 +28,8 @@ export class LlmInputDto {
   userPrompt: string;
 
   @ApiProperty({
-    description: 'The absolute path to the root directory of the project being edited.',
+    description:
+      'The absolute path to the root directory of the project being edited.',
     example: '/path/to/your/project',
     required: true,
   })

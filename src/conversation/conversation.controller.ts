@@ -21,7 +21,10 @@ import { JwtAuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/enums/user-role.enum';
-import { ConversationHistoryItemDto, ConversationSummaryDto } from './dto/conversation-history-item.dto'; // Import ConversationSummaryDto for ApiResponse
+import {
+  ConversationHistoryItemDto,
+  ConversationSummaryDto,
+} from './dto/conversation-history-item.dto'; // Import ConversationSummaryDto for ApiResponse
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 import { RequestType } from '@prisma/client'; // Import RequestType for ApiQuery enum
@@ -35,10 +38,13 @@ export class ConversationController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get conversations with optional search and filter' })
+  @ApiOperation({
+    summary: 'Get conversations with optional search and filter',
+  })
   @ApiResponse({
     status: 200,
-    description: 'Successfully retrieved paginated list of conversation summaries.',
+    description:
+      'Successfully retrieved paginated list of conversation summaries.',
     type: PaginatedResponseDto<ConversationSummaryDto>, // Use generic DTO for response type
   })
   @ApiQuery({
@@ -67,7 +73,8 @@ export class ConversationController {
   })
   async getConversations(
     @Query() paginationDto: PaginationDto,
-  ): Promise<PaginatedResponseDto<ConversationSummaryDto>> { // Changed to ConversationSummaryDto
+  ): Promise<PaginatedResponseDto<ConversationSummaryDto>> {
+    // Changed to ConversationSummaryDto
     return this.conversationService.getConversations(paginationDto);
   }
 
@@ -112,4 +119,3 @@ export class ConversationController {
     );
   }
 }
-

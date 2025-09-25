@@ -24,6 +24,13 @@
     { "name": "ModuleControlModule", "enabled": true },
     { "name": "FeatureModule", "enabled": true },
     { "name": "LlmModule", "enabled": true },
-    { "name": "SchemaSubmissionModule", "enabled": true }
+    { "name": "PlaylistModule", "enabled": true },
+    { "name": "PlaylistMediaFileModule", "enabled": true },
+    { "name": "SchemaSubmissionModule", "enabled": true },
+    { "name": "SongModule", "enabled": true },
+    { "name": "VideoModule", "enabled": true },
+    { "name": "AlbumModule", "enabled": true },
+    { "name": "ArtistModule", "enabled": true },
+    { "name": "MetadataModule", "enabled": true }
   ]
 }

@@ -38,7 +38,11 @@ class ImportFileDto {
   })
   format: ImportFormat;
 
-  @ApiProperty({ type: 'string', format: 'binary', description: 'The file containing the bulk data.' })
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    description: 'The file containing the bulk data.',
+  })
   file: any;
 }
 
@@ -53,26 +57,34 @@ export class BulkDataController {
   @Post('import')
   @ApiOperation({
     summary: 'Import bulk data',
-    description: 'Imports data from JSON, SQL, or CSV format. Can receive data either directly in the request body or as an uploaded file.',
+    description:
+      'Imports data from JSON, SQL, or CSV format. Can receive data either directly in the request body or as an uploaded file.',
   })
   @ApiConsumes('multipart/form-data', 'application/json', 'text/plain') // Allow file upload, JSON, or plain text
   @ApiBody({
-    description: 'Data to import. If uploading a file, specify format as a form field. If providing data in body, use application/json or text/plain.',
+    description:
+      'Data to import. If uploading a file, specify format as a form field. If providing data in body, use application/json or text/plain.',
     examples: {
       jsonBody: {
         summary: 'Import JSON data via Request Body',
-        description: 'Set Content-Type: application/json. Format is inferred from the DTO structure.',
+        description:
+          'Set Content-Type: application/json. Format is inferred from the DTO structure.',
         value: {
           format: ImportFormat.JSON,
-          data: JSON.stringify([
-            { name: 'Example User 1', email: 'user1@example.com', age: 22 },
-            { name: 'Example User 2', email: 'user2@example.com', age: 34 },
-          ], null, 2),
+          data: JSON.stringify(
+            [
+              { name: 'Example User 1', email: 'user1@example.com', age: 22 },
+              { name: 'Example User 2', email: 'user2@example.com', age: 34 },
+            ],
+            null,
+            2,
+          ),
         } satisfies ImportBulkDataDto,
       },
       csvFile: {
         summary: 'Import CSV data via File Upload',
-        description: 'Set Content-Type: multipart/form-data. File field name must be `file`.',
+        description:
+          'Set Content-Type: multipart/form-data. File field name must be `file`.',
         value: {
           format: ImportFormat.CSV,
           file: 'CSV content here', // This hints at the file content in the example.
@@ -90,11 +102,13 @@ export class BulkDataController {
               type: 'string',
               enum: Object.values(ImportFormat), // Use enum values for Swagger
               example: ImportFormat.JSON,
-              description: 'The format of the data to be imported (JSON, SQL, or CSV string).',
+              description:
+                'The format of the data to be imported (JSON, SQL, or CSV string).',
             },
             data: {
               type: 'string',
-              description: 'The data string to be imported. Required if no file is uploaded.',
+              description:
+                'The data string to be imported. Required if no file is uploaded.',
             },
           },
           required: ['format'],
@@ -109,7 +123,11 @@ export class BulkDataController {
               example: ImportFormat.CSV,
               description: 'The format of the data in the uploaded file.',
             },
-            file: { type: 'string', format: 'binary', description: 'The file containing the bulk data.' },
+            file: {
+              type: 'string',
+              format: 'binary',
+              description: 'The file containing the bulk data.',
+            },
           },
           required: ['format', 'file'],
         },
@@ -117,7 +135,10 @@ export class BulkDataController {
     },
   })
   @ApiResponse({ status: 201, description: 'Bulk data imported successfully.' })
-  @ApiResponse({ status: 400, description: 'Invalid data or unsupported format.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid data or unsupported format.',
+  })
   @UseInterceptors(FileInterceptor('file')) // 'file' is the name of the field in the form data
   async import(
     @Body() importDto: ImportBulkDataDto, // Body can contain format and data string
@@ -138,7 +159,9 @@ export class BulkDataController {
     }
 
     if (!dataToImport) {
-      throw new BadRequestException('No data provided for import. Provide data in the body or upload a file.');
+      throw new BadRequestException(
+        'No data provided for import. Provide data in the body or upload a file.',
+      );
     }
 
     return this.bulkDataService.importData({
@@ -150,9 +173,15 @@ export class BulkDataController {
   @Get('export')
   @ApiOperation({
     summary: 'Export bulk data',
-    description: 'Exports all data for the configured model (e.g., User) in the specified format.',
+    description:
+      'Exports all data for the configured model (e.g., User) in the specified format.',
   })
-  @ApiQuery({ name: 'format', enum: ExportFormat, example: ExportFormat.JSON, description: 'The desired export format.' })
+  @ApiQuery({
+    name: 'format',
+    enum: ExportFormat,
+    example: ExportFormat.JSON,
+    description: 'The desired export format.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Bulk data exported successfully.',
@@ -172,10 +201,17 @@ export class BulkDataController {
         },
       },
       'text/plain': {
-        schema: { type: 'string', example: "INSERT INTO `users` (`id`, `name`, `email`, `age`) VALUES (1, 'John Doe', 'john.doe@example.com', 30);" },
+        schema: {
+          type: 'string',
+          example:
+            "INSERT INTO `users` (`id`, `name`, `email`, `age`) VALUES (1, 'John Doe', 'john.doe@example.com', 30);",
+        },
       },
       'text/csv': {
-        schema: { type: 'string', example: "id,name,email,age\n1,John Doe,john.doe@example.com,30" },
+        schema: {
+          type: 'string',
+          example: 'id,name,email,age\n1,John Doe,john.doe@example.com,30',
+        },
       },
     },
   })

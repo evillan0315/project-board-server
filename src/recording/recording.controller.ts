@@ -54,7 +54,10 @@ class StopRecordingResponse {
 @ApiTags('Recording')
 @Controller('api/recording')
 export class RecordingController {
-  constructor(private readonly recordingService: RecordingService,private readonly ffmpegService: FfmpegService) {}
+  constructor(
+    private readonly recordingService: RecordingService,
+    private readonly ffmpegService: FfmpegService,
+  ) {}
 
   @Get('status')
   @ApiQuery({

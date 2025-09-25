@@ -28,7 +28,9 @@ import {
   namespace: '/gemini',
   cors: { origin: '*' },
 })
-export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class GoogleGeminiLiveGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -77,10 +79,14 @@ export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDi
       const { sessionId } = await this.geminiService.connect(payload.options);
       const response: LiveSessionResponseDto = { sessionId };
 
-      this.logger.log(`Live session ${sessionId} started for client ${client.id}`);
+      this.logger.log(
+        `Live session ${sessionId} started for client ${client.id}`,
+      );
       client.emit('sessionStarted', response);
     } catch (e: any) {
-      this.logger.error(`Failed to start session for client ${client.id}: ${e.message}`);
+      this.logger.error(
+        `Failed to start session for client ${client.id}: ${e.message}`,
+      );
       client.emit('error', {
         message: `Failed to start session: ${e.message}`,
       });
@@ -92,17 +98,24 @@ export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDi
    * No AI response is generated until `processTurn` is called.
    */
   @SubscribeMessage('textInput') // Renamed from 'message' for clarity with 'audioInput'
-  async onTextInput(@ConnectedSocket() client: Socket, @MessageBody() payload: LiveTextInputDto) {
+  async onTextInput(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: LiveTextInputDto,
+  ) {
     try {
       await this.geminiService.sendText(payload.sessionId, payload.text);
-      this.logger.debug(`Text buffered for session ${payload.sessionId}: "${payload.text}"`);
+      this.logger.debug(
+        `Text buffered for session ${payload.sessionId}: "${payload.text}"`,
+      );
       // Optionally, emit an acknowledgement if needed
       client.emit('textInputBuffered', {
         sessionId: payload.sessionId,
         success: true,
       });
     } catch (e: any) {
-      this.logger.error(`Error buffering text for session ${payload.sessionId}: ${e.message}`);
+      this.logger.error(
+        `Error buffering text for session ${payload.sessionId}: ${e.message}`,
+      );
       client.emit('error', { message: `Failed to send text: ${e.message}` });
     }
   }
@@ -112,7 +125,10 @@ export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDi
    * Multiple audio chunks can be sent. No AI response is generated until `processTurn` is called.
    */
   @SubscribeMessage('audioInput')
-  async onAudioInput(@ConnectedSocket() client: Socket, @MessageBody() payload: LiveAudioInputDto) {
+  async onAudioInput(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: LiveAudioInputDto,
+  ) {
     try {
       // Directly pass the base64 audio chunk to the service without intermediate conversions
       await this.geminiService.sendAudioChunks(
@@ -129,7 +145,9 @@ export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDi
         success: true,
       });
     } catch (e: any) {
-      this.logger.error(`Error buffering audio for session ${payload.sessionId}: ${e.message}`);
+      this.logger.error(
+        `Error buffering audio for session ${payload.sessionId}: ${e.message}`,
+      );
       client.emit('error', { message: `Failed to buffer audio: ${e.message}` });
     }
   }
@@ -139,10 +157,15 @@ export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDi
    * and sends the AI's response back to the client.
    */
   @SubscribeMessage('processTurn')
-  async onProcessTurn(@ConnectedSocket() client: Socket, @MessageBody() payload: ProcessTurnDto) {
+  async onProcessTurn(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: ProcessTurnDto,
+  ) {
     try {
       this.logger.log(`Processing turn for session ${payload.sessionId}...`);
-      const result: LiveTurnResultDto = await this.geminiService.waitTurn(payload.sessionId);
+      const result: LiveTurnResultDto = await this.geminiService.waitTurn(
+        payload.sessionId,
+      );
       this.logger.debug(
         `Turn completed for session ${payload.sessionId}. Result: ${JSON.stringify(result)}`,
       );
@@ -154,7 +177,9 @@ export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDi
       client.emit('aiResponse', result);
       this.logger.log(`AI response sent for session ${payload.sessionId}.`);
     } catch (e: any) {
-      this.logger.error(`Error processing turn for session ${payload.sessionId}: ${e.message}`);
+      this.logger.error(
+        `Error processing turn for session ${payload.sessionId}: ${e.message}`,
+      );
       client.emit('error', { message: `Failed to process turn: ${e.message}` });
     }
   }
@@ -173,7 +198,9 @@ export class GoogleGeminiLiveGateway implements OnGatewayConnection, OnGatewayDi
       client.emit('sessionEnded', { sessionId: payload.sessionId });
       this.logger.log(`Session ${payload.sessionId} ended`);
     } catch (e: any) {
-      this.logger.error(`Failed to close session ${payload.sessionId}: ${e.message}`);
+      this.logger.error(
+        `Failed to close session ${payload.sessionId}: ${e.message}`,
+      );
       client.emit('error', {
         message: `Failed to close session: ${e.message}`,
       });

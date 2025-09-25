@@ -23,7 +23,8 @@ interface TerminalSession {
 
 @Injectable()
 export class TerminalService {
-  private readonly defaultShell = os.platform() === 'win32' ? 'powershell.exe' : 'bash';
+  private readonly defaultShell =
+    os.platform() === 'win32' ? 'powershell.exe' : 'bash';
   private sessions = new Map<string, TerminalSession>();
   private readonly logger = new Logger(TerminalService.name);
 
@@ -76,7 +77,10 @@ export class TerminalService {
     });
 
     shell.onExit(({ exitCode, signal }) => {
-      client.emit('close', `Process exited with code ${exitCode}, signal ${signal ?? 'none'}!`);
+      client.emit(
+        'close',
+        `Process exited with code ${exitCode}, signal ${signal ?? 'none'}!`,
+      );
       this.dispose(sessionId); // Call dispose to update DB status
     });
 
@@ -91,7 +95,9 @@ export class TerminalService {
     if (session) {
       session.ptyProcess.write(input);
     } else {
-      this.logger.warn(`No active PTY session found for ${sessionId} to write to.`);
+      this.logger.warn(
+        `No active PTY session found for ${sessionId} to write to.`,
+      );
     }
   }
 
@@ -100,7 +106,9 @@ export class TerminalService {
     if (session) {
       session.ptyProcess.resize(cols, rows);
     } else {
-      this.logger.warn(`No active PTY session found for ${sessionId} to resize.`);
+      this.logger.warn(
+        `No active PTY session found for ${sessionId} to resize.`,
+      );
     }
   }
 
@@ -193,7 +201,14 @@ export class TerminalService {
     privateKeyPath?: string;
     command: string;
   }): Promise<string> {
-    const { host, port = 22, username, password, privateKeyPath, command } = options;
+    const {
+      host,
+      port = 22,
+      username,
+      password,
+      privateKeyPath,
+      command,
+    } = options;
 
     const config: ConnectConfig = {
       host,
@@ -238,7 +253,9 @@ export class TerminalService {
     });
   }
 
-  async getPackageScripts(projectRoot: string): Promise<ProjectScriptsResponse> {
+  async getPackageScripts(
+    projectRoot: string,
+  ): Promise<ProjectScriptsResponse> {
     const packageJsonPath = join(projectRoot, 'package.json');
 
     if (!existsSync(packageJsonPath)) {
@@ -250,12 +267,12 @@ export class TerminalService {
       const packageJsonContent = readFileSync(packageJsonPath, 'utf8');
       const packageJson = JSON.parse(packageJsonContent);
 
-      const scripts: PackageScript[] = Object.entries(packageJson.scripts || {}).map(
-        ([name, script]) => ({
-          name,
-          script: script as string,
-        }),
-      );
+      const scripts: PackageScript[] = Object.entries(
+        packageJson.scripts || {},
+      ).map(([name, script]) => ({
+        name,
+        script: script as string,
+      }));
 
       const packageManager = this.detectPackageManager(projectRoot);
 

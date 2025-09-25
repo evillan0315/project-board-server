@@ -9,6 +9,7 @@ import { MongoClient } from 'mongodb';
 import { ConfigService } from '@nestjs/config';
 import { CreateTableDto } from './dto/create-table.dto';
 import { ExecuteSqlDto } from './dto/execute-sql.dto';
+import { DropTableDto } from './dto/drop-table.dto';
 
 export interface TableColumn {
   column_name: string;
@@ -161,6 +162,7 @@ export class DatabaseService {
       }
     }
   }
+
   private async getMongoCollections(
     connectionString: string,
   ): Promise<TableInfo[]> {
@@ -208,6 +210,7 @@ export class DatabaseService {
       }
     }
   }
+
   async getTableColumns(
     connectionString: string,
     tableName: string,
@@ -251,6 +254,7 @@ export class DatabaseService {
       await client.end();
     }
   }
+
   async createTable(
     dto: CreateTableDto & { dbType: 'postgres' | 'mysql' | 'mongodb' },
   ): Promise<string> {
@@ -343,6 +347,102 @@ export class DatabaseService {
         throw new Error('Unsupported database type');
     }
   }
+
+  async dropTable(dto: DropTableDto): Promise<string> {
+    const { connectionString, tableName, dbType } = dto;
+
+    if (!connectionString) {
+      throw new BadRequestException('Connection string is required.');
+    }
+
+    try {
+      switch (dbType) {
+        case 'postgres':
+          return await this.dropPostgresTable(connectionString, tableName);
+        case 'mysql':
+          return await this.dropMysqlTable(connectionString, tableName);
+        case 'mongodb':
+          return await this.dropMongoCollection(connectionString, tableName);
+        default:
+          throw new BadRequestException(`Unsupported database type: ${dbType}`);
+      }
+    } catch (error) {
+      console.error(`[DatabaseService] dropTable error for ${dbType}:`, error);
+      throw new InternalServerErrorException(
+        `Failed to drop table/collection "${tableName}" from ${dbType} database.`,
+      );
+    }
+  }
+
+  private async dropPostgresTable(
+    connectionString: string,
+    tableName: string,
+  ): Promise<string> {
+    const client = new PgClient({ connectionString });
+    const dropQuery = `DROP TABLE IF EXISTS "${tableName.replace(/"/g, '""')}" CASCADE;`;
+
+    try {
+      await client.connect();
+      await client.query(dropQuery);
+      return `PostgreSQL table "${tableName}" and its dependent objects dropped successfully.`;
+    } catch (error) {
+      console.error('Failed to drop PostgreSQL table:', error);
+      throw error;
+    } finally {
+      await client.end();
+    }
+  }
+
+  private async dropMysqlTable(
+    connectionString: string,
+    tableName: string,
+  ): Promise<string> {
+    let connection: mysql.Connection | undefined;
+    const dropQuery = `DROP TABLE IF EXISTS \`${tableName.replace(/`/g, '``')}\`;`;
+
+    try {
+      connection = await mysql.createConnection(connectionString);
+      await connection.execute(dropQuery);
+      return `MySQL table "${tableName}" dropped successfully.`;
+    } catch (error) {
+      console.error('Failed to drop MySQL table:', error);
+      throw error;
+    } finally {
+      if (connection) {
+        await connection.end();
+      }
+    }
+  }
+
+  private async dropMongoCollection(
+    connectionString: string,
+    collectionName: string,
+  ): Promise<string> {
+    let mongoClient: MongoClient | null = null;
+    try {
+      mongoClient = new MongoClient(connectionString);
+      await mongoClient.connect();
+      const db = mongoClient.db();
+
+      const collections = await db
+        .listCollections({ name: collectionName })
+        .toArray();
+      if (collections.length > 0) {
+        await db.collection(collectionName).drop();
+        return `MongoDB collection "${collectionName}" dropped successfully.`;
+      } else {
+        return `MongoDB collection "${collectionName}" does not exist.`;
+      }
+    } catch (error) {
+      console.error('Failed to drop MongoDB collection:', error);
+      throw error;
+    } finally {
+      if (mongoClient) {
+        await mongoClient.close();
+      }
+    }
+  }
+
   async executeSql(dto: ExecuteSqlDto): Promise<any> {
     const { sql, dbType } = dto;
     const connectionString =

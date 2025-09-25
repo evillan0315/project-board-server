@@ -1,6 +1,13 @@
 // src/llm/dto/llm-output.dto.ts
 
-import { IsString, IsArray, ValidateNested, IsEnum, IsOptional, IsDefined } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsOptional,
+  IsDefined,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'; // Import Swagger decorators
 
@@ -39,7 +46,8 @@ export class ProposedFileChangeDto {
   newContent?: string;
 
   @ApiPropertyOptional({
-    description: 'A brief explanation or justification for this specific file change.',
+    description:
+      'A brief explanation or justification for this specific file change.',
     example: 'New component to display a welcome message.',
   })
   @IsString()
@@ -52,7 +60,8 @@ export class ProposedFileChangeDto {
  */
 export class LlmOutputDto {
   @ApiProperty({
-    description: 'A brief, high-level title for the overall changes or response.',
+    description:
+      'A brief, high-level title for the overall changes or response.',
     example: 'Implement User Authentication Module',
   })
   @IsString()
@@ -70,7 +79,8 @@ export class LlmOutputDto {
   summary: string;
 
   @ApiPropertyOptional({
-    description: "The LLM's detailed thought process or reasoning behind the proposed changes.",
+    description:
+      "The LLM's detailed thought process or reasoning behind the proposed changes.",
     example:
       'The user requested a React component, so I created a functional component in TypeScript. I decided to place it in `src/components` for better organization and provided a simple "Hello" message as a starting point, anticipating future customization.',
   })

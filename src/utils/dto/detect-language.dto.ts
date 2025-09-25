@@ -4,7 +4,8 @@ import { IsOptional, IsString, IsNotEmpty } from 'class-validator';
 
 export class DetectLanguageDto {
   @ApiProperty({
-    description: 'The filename to detect the language from (e.g., "index.ts", "styles.css").',
+    description:
+      'The filename to detect the language from (e.g., "index.ts", "styles.css").',
     example: 'index.ts',
     required: false, // At least one of filename or mimeType should be provided
   })
@@ -14,7 +15,8 @@ export class DetectLanguageDto {
   filename?: string;
 
   @ApiProperty({
-    description: 'The MIME type to detect the language from (e.g., "text/typescript", "application/json").',
+    description:
+      'The MIME type to detect the language from (e.g., "text/typescript", "application/json").',
     example: 'text/typescript',
     required: false, // At least one of filename or mimeType should be provided
   })
@@ -23,4 +25,3 @@ export class DetectLanguageDto {
   @IsNotEmpty() // Ensures if provided, it's not an empty string
   mimeType?: string;
 }
-

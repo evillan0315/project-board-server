@@ -1,10 +1,9 @@
-// File: /media/eddie/Data/projects/nestJS/nest-modules/full-stack/src/app.module.ts
-
 import { Module } from '@nestjs/common';
 import * as path from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ConfigModule } from '@nestjs/config';
 import { DiscoveryModule } from '@nestjs/core'; // Important for DiscoveryService
+import { APP_INTERCEPTOR } from '@nestjs/core'; // <--- Add this
 
 import { join } from 'path';
 import { AppController } from './app.controller';
@@ -59,8 +58,22 @@ import { TerminalCommandModule } from './terminal-command/terminal-command.modul
 import { CommandHistoryModule } from './command-history/command-history.module';
 import { MediaModule } from './media/media.module';
 import { BulkDataModule } from './bulk-data/bulk-data.module';
+import { PlaylistMediaFileModule } from './playlist-media-file/playlist-media-file.module';
 
 import fileConfig from './config/file.config';
+import { BigIntSerializationInterceptor } from './common/interceptors/bigint-serialization.interceptor'; // <--- Add this import
+import { SongModule } from './song/song.module';
+import { VideoModule } from './video/video.module';
+import { AlbumModule } from './album/album.module';
+import { ArtistModule } from './artist/artist.module';
+import { MetadataModule } from './metadata/metadata.module';
+import { GenreModule } from './genre/genre.module';
+import { FavoriteSongModule } from './favorite-song/favorite-song.module';
+import { FavoriteVideoModule } from './favorite-video/favorite-video.module';
+import { MusicHistoryModule } from './music-history/music-history.module';
+import { VideoHistoryModule } from './video-history/video-history.module';
+import { ProxyModule } from './proxy/proxy.module';
+import { PlannerModule } from './planner/planner.module';
 
 /**
  * The root module of the NestJS application.
@@ -207,6 +220,19 @@ import fileConfig from './config/file.config';
     CommandHistoryModule,
     MediaModule,
     BulkDataModule,
+    PlaylistMediaFileModule,
+    SongModule,
+    VideoModule,
+    AlbumModule,
+    ArtistModule,
+    MetadataModule,
+    GenreModule,
+    FavoriteSongModule,
+    FavoriteVideoModule,
+    MusicHistoryModule,
+    VideoHistoryModule,
+    ProxyModule,
+    PlannerModule,
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.
@@ -220,6 +246,11 @@ import fileConfig from './config/file.config';
     AppService,
     EndpointDiscoveryService,
     EndpointConstantsGeneratorService,
+    {
+      // <--- Add this provider
+      provide: APP_INTERCEPTOR,
+      useClass: BigIntSerializationInterceptor,
+    },
   ],
 })
 export class AppModule {}

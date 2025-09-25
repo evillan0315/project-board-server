@@ -17,7 +17,10 @@ export class PaginationMediaQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsPositive()
-  @ApiPropertyOptional({ default: 1, description: 'Page number for pagination' })
+  @ApiPropertyOptional({
+    default: 1,
+    description: 'Page number for pagination',
+  })
   page?: number = 1;
 
   @IsOptional()
@@ -78,7 +81,9 @@ export class PaginationMediaResultDto {
   @Type(() => MediaFileResponseDto)
   items: MediaFileResponseDto[];
 
-  @ApiProperty({ description: 'Total number of media files matching the query.' })
+  @ApiProperty({
+    description: 'Total number of media files matching the query.',
+  })
   @IsNumber()
   total: number;
 

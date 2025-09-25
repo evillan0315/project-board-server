@@ -43,6 +43,10 @@ import { GoogleTranslatorController } from './google-translator/google-translato
     GoogleGeminiFileService,
     GoogleTranslatorService,
   ],
-  exports: [GoogleGeminiService, GoogleGeminiFileService, GoogleTranslatorService],
+  exports: [
+    GoogleGeminiService,
+    GoogleGeminiFileService,
+    GoogleTranslatorService,
+  ],
 })
 export class GoogleModule {}

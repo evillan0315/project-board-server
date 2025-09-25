@@ -94,7 +94,7 @@ export class <%= className %>Controller {
     return this.fileService.getFilesByDirectory(directory, recursive);
   }
   <% if (isProtected) { %>
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.USER)
   <% } %>
   @Post('read')
   @ApiOperation({
@@ -174,7 +174,11 @@ export class <%= className %>Controller {
       filePath,
     );
   }
+
   @Post('write')
+    <% if (isProtected) { %>
+  @Roles(UserRole.ADMIN)
+  <% } %>
 @ApiOperation({ summary: 'Write content to a file at a specified path' })
 @ApiResponse({ status: 200, description: 'File written successfully.' })
 @ApiBody({
@@ -253,7 +257,7 @@ async writeFileContent(
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  <% if (hasCreatedBy || isProtected) { %>
+  <% if (isProtected) { %>
   @Roles(UserRole.ADMIN)
   <% } %>
   @ApiOperation({ summary: 'Retrieve all <%= className %> records' })

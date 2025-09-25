@@ -52,4 +52,3 @@ export class PaginationDto {
   @IsEnum(RequestType) // Validate against the RequestType enum
   requestType?: RequestType;
 }
-

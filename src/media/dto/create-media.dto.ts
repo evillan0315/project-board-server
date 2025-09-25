@@ -1,7 +1,14 @@
 import { IsString, IsOptional, IsBoolean, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-const allowedMediaFormats = ['mp3', 'webm', 'm4a', 'wav', 'mp4', 'flv'] as const;
+const allowedMediaFormats = [
+  'mp3',
+  'webm',
+  'm4a',
+  'wav',
+  'mp4',
+  'flv',
+] as const;
 type AllowedMediaFormat = (typeof allowedMediaFormats)[number];
 
 export class CreateMediaDto {
@@ -13,7 +20,8 @@ export class CreateMediaDto {
   url: string;
 
   @ApiPropertyOptional({
-    description: "The desired format for the extracted media. Defaults to 'webm'.",
+    description:
+      "The desired format for the extracted media. Defaults to 'webm'.",
     enum: allowedMediaFormats,
     example: 'mp4',
     default: 'webm',

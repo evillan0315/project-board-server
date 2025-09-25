@@ -185,4 +185,3 @@ export class ConversationSummaryDto {
   @IsEnum(RequestType)
   firstRequestType?: RequestType;
 }
-

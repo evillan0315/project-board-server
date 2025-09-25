@@ -126,9 +126,7 @@ export class ConversationService {
     if (search) {
       const lowerCaseSearch = search.toLowerCase();
       allConversationSummaries = allConversationSummaries.filter((summary) =>
-        (summary.firstPrompt || '')
-          .toLowerCase()
-          .includes(lowerCaseSearch),
+        (summary.firstPrompt || '').toLowerCase().includes(lowerCaseSearch),
       );
     }
 
@@ -239,4 +237,3 @@ export class ConversationService {
     };
   }
 }
-

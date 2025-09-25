@@ -47,7 +47,8 @@ export class TranslateContentDto {
   fileName?: string;
 
   @ApiPropertyOptional({
-    description: 'The MIME type of the uploaded file (e.g., text/plain, application/pdf).',
+    description:
+      'The MIME type of the uploaded file (e.g., text/plain, application/pdf).',
     example: 'text/plain',
     required: false,
   })
@@ -55,7 +56,9 @@ export class TranslateContentDto {
   @IsString()
   @IsMimeType({ message: 'File MIME type must be a valid MIME type string.' })
   @ValidateIf((o) => !!o.fileData)
-  @IsNotEmpty({ message: 'File MIME type is required if file data is provided.' })
+  @IsNotEmpty({
+    message: 'File MIME type is required if file data is provided.',
+  })
   fileMimeType?: string;
 
   @ApiProperty({

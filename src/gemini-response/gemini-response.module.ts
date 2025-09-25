@@ -6,6 +6,10 @@ import { ModuleControlModule } from '../module-control/module-control.module';
 @Module({
   imports: [PrismaModule, ModuleControlModule],
   controllers: [GeminiResponseController],
-  providers: [GeminiResponseService],
+  providers: [
+      GeminiResponseService,
+      
+    ]
 })
 export class GeminiResponseModule {}
+

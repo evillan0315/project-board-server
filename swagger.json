@@ -3605,6 +3605,206 @@
         ]
       }
     },
+    "/api/utils/json-yaml/validate-yaml": {
+      "post": {
+        "description": "Validates YAML syntax and returns any errors found.",
+        "operationId": "JsonYamlController_validateYaml",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateYamlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "YAML validation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateYamlResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Validate YAML syntax",
+        "tags": [
+          "Utilities"
+        ]
+      }
+    },
+    "/api/utils/json-yaml/fix-yaml": {
+      "post": {
+        "description": "Attempts to fix common YAML syntax issues like multiline keys and indentation problems.",
+        "operationId": "JsonYamlController_fixYaml",
+        "parameters": [
+          {
+            "name": "save",
+            "required": false,
+            "in": "query",
+            "description": "Whether to save the result to a file",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FixYamlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fixed YAML output",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FixYamlResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Fix common YAML syntax issues",
+        "tags": [
+          "Utilities"
+        ]
+      }
+    },
+    "/api/utils/json-yaml/upload-validate-yaml": {
+      "post": {
+        "description": "Uploads a YAML file and validates its syntax.",
+        "operationId": "JsonYamlController_uploadValidateYaml",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "YAML validation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateYamlResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload and validate YAML file",
+        "tags": [
+          "Utilities"
+        ]
+      }
+    },
+    "/api/utils/json-yaml/upload-fix-yaml": {
+      "post": {
+        "description": "Uploads a YAML file and attempts to fix common syntax issues.",
+        "operationId": "JsonYamlController_uploadFixYaml",
+        "parameters": [
+          {
+            "name": "save",
+            "required": false,
+            "in": "query",
+            "description": "Whether to save the result to a file",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fixed YAML output",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FixYamlResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload and fix YAML file",
+        "tags": [
+          "Utilities"
+        ]
+      }
+    },
     "/api/utils/json/validate": {
       "post": {
         "operationId": "JsonFixController_validate",
@@ -3903,6 +4103,71 @@
           }
         ],
         "summary": "Create a new table",
+        "tags": [
+          "Database"
+        ]
+      }
+    },
+    "/api/database/drop-table": {
+      "delete": {
+        "operationId": "DatabaseController_dropTable",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DropTableDto"
+              },
+              "examples": {
+                "postgresExample": {
+                  "summary": "Drop a PostgreSQL table",
+                  "value": {
+                    "connectionString": "postgresql://postgres:password@localhost:5432/mydb",
+                    "dbType": "postgres",
+                    "tableName": "users"
+                  }
+                },
+                "mysqlExample": {
+                  "summary": "Drop a MySQL table",
+                  "value": {
+                    "connectionString": "mysql://root:password@localhost:3306/mydb",
+                    "dbType": "mysql",
+                    "tableName": "products"
+                  }
+                },
+                "mongoExample": {
+                  "summary": "Drop a MongoDB collection",
+                  "value": {
+                    "connectionString": "mongodb://localhost:27017/mydb",
+                    "dbType": "mongodb",
+                    "tableName": "myCollection"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Table/Collection dropped successfully."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Drop a table or collection",
         "tags": [
           "Database"
         ]
@@ -4863,6 +5128,11 @@
             }
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Generate TTS audio with multiple speakers using Google Gemini",
         "tags": [
           "Google Gemini"
@@ -5183,12 +5453,22 @@
                 "TEXT_WITH_IMAGE",
                 "TEXT_WITH_FILE",
                 "LLM_GENERATION",
+                "LLM_CODE_ANALYSIS",
+                "LLM_CODE_OPTIMIZATION",
+                "LLM_CODE_REPAIR",
+                "LLM_CODE_DOCUMENTATION",
+                "LLM_ERROR_REPORTING",
                 "LIVE_API",
                 "RESUME_GENERATION",
                 "RESUME_OPTIMIZATION",
                 "RESUME_ENHANCEMENT",
                 "VIDEO_GENERATION",
-                "IMAGE_GENERATION"
+                "IMAGE_GENERATION",
+                "AUDIO_GENERATION",
+                "TEXT_TO_SPEECH",
+                "SPEECH_TO_TEXT",
+                "VOICE_COMMAND",
+                "AUDIO_TRANSCRIPTION"
               ],
               "type": "string"
             }
@@ -5277,12 +5557,22 @@
                 "TEXT_WITH_IMAGE",
                 "TEXT_WITH_FILE",
                 "LLM_GENERATION",
+                "LLM_CODE_ANALYSIS",
+                "LLM_CODE_OPTIMIZATION",
+                "LLM_CODE_REPAIR",
+                "LLM_CODE_DOCUMENTATION",
+                "LLM_ERROR_REPORTING",
                 "LIVE_API",
                 "RESUME_GENERATION",
                 "RESUME_OPTIMIZATION",
                 "RESUME_ENHANCEMENT",
                 "VIDEO_GENERATION",
-                "IMAGE_GENERATION"
+                "IMAGE_GENERATION",
+                "AUDIO_GENERATION",
+                "TEXT_TO_SPEECH",
+                "SPEECH_TO_TEXT",
+                "VOICE_COMMAND",
+                "AUDIO_TRANSCRIPTION"
               ]
             }
           }
@@ -8527,6 +8817,15 @@
             }
           },
           {
+            "name": "title",
+            "required": false,
+            "in": "query",
+            "description": "Filter by title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "responseText",
             "required": false,
             "in": "query",
@@ -8560,6 +8859,15 @@
             "description": "Filter by tokenCount",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "projectRoot",
+            "required": false,
+            "in": "query",
+            "description": "Filter by projectRoot",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -11672,6 +11980,44 @@
         ]
       }
     },
+    "/api/llm/report-error": {
+      "post": {
+        "description": "This endpoint sends detailed error information and project context to the LLM, which will analyze the problem and propose changes or an explanation.",
+        "operationId": "LlmController_reportError",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LlmReportErrorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "LLM analysis and proposed fixes or explanations for the reported error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmOutputDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report an error (e.g., build failure) to the LLM for analysis and suggested fixes.",
+        "tags": [
+          "LLM Operations"
+        ]
+      }
+    },
     "/api/llm/project-structure": {
       "get": {
         "operationId": "LlmController_getProjectStructure",
@@ -12777,6 +13123,175 @@
         ]
       }
     },
+    "/api/media/{id}/transcribe": {
+      "post": {
+        "description": "Transcribes an audio file using speech-to-text and saves the transcription with timestamps.",
+        "operationId": "MediaController_transcribeAudio",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcription completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptionResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "File is not an audio file or transcription failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Media file not found."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Transcribe an audio file",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/api/media/{id}/transcription": {
+      "get": {
+        "description": "Retrieves the transcription for an audio file if it exists.",
+        "operationId": "MediaController_getTranscription",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transcription found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptionResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Transcription not found."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get transcription for a media file",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
+    "/api/media/{id}/transcription/sync": {
+      "post": {
+        "description": "Returns transcription segments synchronized with current playback time for highlighting.",
+        "operationId": "MediaController_getSynchronizedTranscription",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncTranscriptionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Synchronized transcription data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncTranscriptionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Transcription not found."
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get synchronized transcription data",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
     "/api/media/extract": {
       "post": {
         "description": "Requires authentication with ADMIN or USER role.",
@@ -12830,6 +13345,59 @@
         ]
       }
     },
+    "/api/media/scan-directory": {
+      "post": {
+        "description": "Requires authentication with ADMIN or USER role. Scans the provided directory recursively for supported media file types (audio, video, image) and creates database entries for new files. Prevents scanning of sensitive system directories.",
+        "operationId": "MediaController_scanDirectory",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MediaScanRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the result of the directory scan, including count of new files and any errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaScanResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid directory path or scanning of this directory is not allowed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Scans a specified directory for media files and adds them to the database.",
+        "tags": [
+          "Media"
+        ]
+      }
+    },
     "/api/media": {
       "get": {
         "operationId": "MediaController_findAllPaginated",
@@ -12878,6 +13446,22 @@
                 "IMAGE",
                 "DOCUMENT",
                 "CODE",
+                "TEXT",
+                "ZIP",
+                "PDF",
+                "MARKDOWN",
+                "YAML",
+                "JSON",
+                "JAVASCRIPT",
+                "TYPESCRIPT",
+                "JSX",
+                "TSX",
+                "CSS",
+                "HTML",
+                "SQL",
+                "PYTHON",
+                "JAVA",
+                "XML",
                 "OTHER"
               ]
             }
@@ -13038,6 +13622,1652 @@
         "summary": "Delete a media file by ID.",
         "tags": [
           "Media"
+        ]
+      }
+    },
+    "/api/playlists": {
+      "post": {
+        "operationId": "PlaylistController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlaylistDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePlaylistDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Playlist",
+        "tags": [
+          "Playlist"
+        ]
+      },
+      "get": {
+        "operationId": "PlaylistController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Playlist records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreatePlaylistDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Playlist records",
+        "tags": [
+          "Playlist"
+        ]
+      }
+    },
+    "/api/playlists/paginated": {
+      "get": {
+        "operationId": "PlaylistController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Filter by name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "required": false,
+            "in": "query",
+            "description": "Filter by description",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isPublic",
+            "required": false,
+            "in": "query",
+            "description": "Filter by isPublic",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationPlaylistResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Playlist records",
+        "tags": [
+          "Playlist"
+        ]
+      }
+    },
+    "/api/playlists/{id}": {
+      "get": {
+        "operationId": "PlaylistController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePlaylistDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Playlist by ID",
+        "tags": [
+          "Playlist"
+        ]
+      },
+      "patch": {
+        "operationId": "PlaylistController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlaylistDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatePlaylistDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Playlist by ID",
+        "tags": [
+          "Playlist"
+        ]
+      },
+      "delete": {
+        "operationId": "PlaylistController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Playlist by ID",
+        "tags": [
+          "Playlist"
+        ]
+      }
+    },
+    "/api/song": {
+      "post": {
+        "operationId": "SongController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSongDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSongDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Song",
+        "tags": [
+          "Song"
+        ]
+      },
+      "get": {
+        "operationId": "SongController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Song records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateSongDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Song records",
+        "tags": [
+          "Song"
+        ]
+      }
+    },
+    "/api/song/paginated": {
+      "get": {
+        "operationId": "SongController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "title",
+            "required": false,
+            "in": "query",
+            "description": "Filter by title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "duration",
+            "required": false,
+            "in": "query",
+            "description": "Filter by duration",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Filter by year",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "artistId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by artistId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "albumId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by albumId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationSongResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Song records",
+        "tags": [
+          "Song"
+        ]
+      }
+    },
+    "/api/song/{id}": {
+      "get": {
+        "operationId": "SongController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSongDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Song by ID",
+        "tags": [
+          "Song"
+        ]
+      },
+      "patch": {
+        "operationId": "SongController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSongDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSongDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Song by ID",
+        "tags": [
+          "Song"
+        ]
+      },
+      "delete": {
+        "operationId": "SongController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Song by ID",
+        "tags": [
+          "Song"
+        ]
+      }
+    },
+    "/api/video": {
+      "post": {
+        "operationId": "VideoController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVideoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateVideoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Video",
+        "tags": [
+          "Video"
+        ]
+      },
+      "get": {
+        "operationId": "VideoController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Video records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateVideoDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Video records",
+        "tags": [
+          "Video"
+        ]
+      }
+    },
+    "/api/video/paginated": {
+      "get": {
+        "operationId": "VideoController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "title",
+            "required": false,
+            "in": "query",
+            "description": "Filter by title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "required": false,
+            "in": "query",
+            "description": "Filter by description",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "duration",
+            "required": false,
+            "in": "query",
+            "description": "Filter by duration",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Filter by year",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "rating",
+            "required": false,
+            "in": "query",
+            "description": "Filter by rating",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "director",
+            "required": false,
+            "in": "query",
+            "description": "Filter by director",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cast",
+            "required": false,
+            "in": "query",
+            "description": "Filter by cast",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "resolution",
+            "required": false,
+            "in": "query",
+            "description": "Filter by resolution",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationVideoResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Video records",
+        "tags": [
+          "Video"
+        ]
+      }
+    },
+    "/api/video/{id}": {
+      "get": {
+        "operationId": "VideoController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateVideoDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Video by ID",
+        "tags": [
+          "Video"
+        ]
+      },
+      "patch": {
+        "operationId": "VideoController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVideoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateVideoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Video by ID",
+        "tags": [
+          "Video"
+        ]
+      },
+      "delete": {
+        "operationId": "VideoController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Video by ID",
+        "tags": [
+          "Video"
+        ]
+      }
+    },
+    "/api/artist": {
+      "post": {
+        "operationId": "ArtistController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateArtistDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateArtistDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Artist",
+        "tags": [
+          "Artist"
+        ]
+      },
+      "get": {
+        "operationId": "ArtistController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Artist records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateArtistDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Artist records",
+        "tags": [
+          "Artist"
+        ]
+      }
+    },
+    "/api/artist/paginated": {
+      "get": {
+        "operationId": "ArtistController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Filter by name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bio",
+            "required": false,
+            "in": "query",
+            "description": "Filter by bio",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "image",
+            "required": false,
+            "in": "query",
+            "description": "Filter by image",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationArtistResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Artist records",
+        "tags": [
+          "Artist"
+        ]
+      }
+    },
+    "/api/artist/{id}": {
+      "get": {
+        "operationId": "ArtistController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateArtistDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Artist by ID",
+        "tags": [
+          "Artist"
+        ]
+      },
+      "patch": {
+        "operationId": "ArtistController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateArtistDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateArtistDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Artist by ID",
+        "tags": [
+          "Artist"
+        ]
+      },
+      "delete": {
+        "operationId": "ArtistController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Artist by ID",
+        "tags": [
+          "Artist"
+        ]
+      }
+    },
+    "/api/album": {
+      "post": {
+        "operationId": "AlbumController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAlbumDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAlbumDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Album",
+        "tags": [
+          "Album"
+        ]
+      },
+      "get": {
+        "operationId": "AlbumController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Album records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateAlbumDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Album records",
+        "tags": [
+          "Album"
+        ]
+      }
+    },
+    "/api/album/paginated": {
+      "get": {
+        "operationId": "AlbumController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "title",
+            "required": false,
+            "in": "query",
+            "description": "Filter by title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "releaseDate",
+            "required": false,
+            "in": "query",
+            "description": "Filter by releaseDate",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "coverArt",
+            "required": false,
+            "in": "query",
+            "description": "Filter by coverArt",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "artistId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by artistId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationAlbumResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Album records",
+        "tags": [
+          "Album"
+        ]
+      }
+    },
+    "/api/album/{id}": {
+      "get": {
+        "operationId": "AlbumController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAlbumDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Album by ID",
+        "tags": [
+          "Album"
+        ]
+      },
+      "patch": {
+        "operationId": "AlbumController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAlbumDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAlbumDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Album by ID",
+        "tags": [
+          "Album"
+        ]
+      },
+      "delete": {
+        "operationId": "AlbumController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Album by ID",
+        "tags": [
+          "Album"
         ]
       }
     },
@@ -13347,6 +15577,2133 @@
         "summary": "Export bulk data",
         "tags": [
           "Bulk Data Operations"
+        ]
+      }
+    },
+    "/api/playlist-media-file": {
+      "post": {
+        "operationId": "PlaylistMediaFileController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlaylistMediaFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePlaylistMediaFileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new PlaylistMediaFile",
+        "tags": [
+          "PlaylistMediaFile"
+        ]
+      },
+      "get": {
+        "operationId": "PlaylistMediaFileController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of PlaylistMediaFile records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreatePlaylistMediaFileDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all PlaylistMediaFile records",
+        "tags": [
+          "PlaylistMediaFile"
+        ]
+      }
+    },
+    "/api/playlist-media-file/paginated": {
+      "get": {
+        "operationId": "PlaylistMediaFileController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "playlistId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by playlistId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fileId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by fileId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Filter by order",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationPlaylistMediaFileResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated PlaylistMediaFile records",
+        "tags": [
+          "PlaylistMediaFile"
+        ]
+      }
+    },
+    "/api/playlist-media-file/{id}": {
+      "get": {
+        "operationId": "PlaylistMediaFileController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePlaylistMediaFileDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find PlaylistMediaFile by ID",
+        "tags": [
+          "PlaylistMediaFile"
+        ]
+      },
+      "patch": {
+        "operationId": "PlaylistMediaFileController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlaylistMediaFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatePlaylistMediaFileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update PlaylistMediaFile by ID",
+        "tags": [
+          "PlaylistMediaFile"
+        ]
+      },
+      "delete": {
+        "operationId": "PlaylistMediaFileController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete PlaylistMediaFile by ID",
+        "tags": [
+          "PlaylistMediaFile"
+        ]
+      }
+    },
+    "/api/metadata": {
+      "post": {
+        "operationId": "MetadataController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMetadataDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMetadataDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Metadata",
+        "tags": [
+          "Metadata"
+        ]
+      },
+      "get": {
+        "operationId": "MetadataController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Metadata records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateMetadataDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Metadata records",
+        "tags": [
+          "Metadata"
+        ]
+      }
+    },
+    "/api/metadata/paginated": {
+      "get": {
+        "operationId": "MetadataController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "data",
+            "required": false,
+            "in": "query",
+            "description": "Filter by data",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "tags",
+            "required": false,
+            "in": "query",
+            "description": "Filter by tags",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "fileId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by fileId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationMetadataResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Metadata records",
+        "tags": [
+          "Metadata"
+        ]
+      }
+    },
+    "/api/metadata/{id}": {
+      "get": {
+        "operationId": "MetadataController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMetadataDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Metadata by ID",
+        "tags": [
+          "Metadata"
+        ]
+      },
+      "patch": {
+        "operationId": "MetadataController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMetadataDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateMetadataDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Metadata by ID",
+        "tags": [
+          "Metadata"
+        ]
+      },
+      "delete": {
+        "operationId": "MetadataController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Metadata by ID",
+        "tags": [
+          "Metadata"
+        ]
+      }
+    },
+    "/api/genre": {
+      "post": {
+        "operationId": "GenreController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGenreDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGenreDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          }
+        },
+        "summary": "Create a new Genre",
+        "tags": [
+          "Genre"
+        ]
+      },
+      "get": {
+        "operationId": "GenreController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Genre records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateGenreDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          }
+        },
+        "summary": "Retrieve all Genre records",
+        "tags": [
+          "Genre"
+        ]
+      }
+    },
+    "/api/genre/paginated": {
+      "get": {
+        "operationId": "GenreController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Filter by name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "description",
+            "required": false,
+            "in": "query",
+            "description": "Filter by description",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationGenreResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Paginated Genre records",
+        "tags": [
+          "Genre"
+        ]
+      }
+    },
+    "/api/genre/{id}": {
+      "get": {
+        "operationId": "GenreController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGenreDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "summary": "Find Genre by ID",
+        "tags": [
+          "Genre"
+        ]
+      },
+      "patch": {
+        "operationId": "GenreController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGenreDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateGenreDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "summary": "Update Genre by ID",
+        "tags": [
+          "Genre"
+        ]
+      },
+      "delete": {
+        "operationId": "GenreController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "summary": "Delete Genre by ID",
+        "tags": [
+          "Genre"
+        ]
+      }
+    },
+    "/api/favorite-song": {
+      "post": {
+        "operationId": "FavoriteSongController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFavoriteSongDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateFavoriteSongDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new FavoriteSong",
+        "tags": [
+          "FavoriteSong"
+        ]
+      },
+      "get": {
+        "operationId": "FavoriteSongController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of FavoriteSong records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateFavoriteSongDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all FavoriteSong records",
+        "tags": [
+          "FavoriteSong"
+        ]
+      }
+    },
+    "/api/favorite-song/paginated": {
+      "get": {
+        "operationId": "FavoriteSongController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "songId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by songId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationFavoriteSongResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated FavoriteSong records",
+        "tags": [
+          "FavoriteSong"
+        ]
+      }
+    },
+    "/api/favorite-song/{id}": {
+      "get": {
+        "operationId": "FavoriteSongController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateFavoriteSongDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find FavoriteSong by ID",
+        "tags": [
+          "FavoriteSong"
+        ]
+      },
+      "patch": {
+        "operationId": "FavoriteSongController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFavoriteSongDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateFavoriteSongDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update FavoriteSong by ID",
+        "tags": [
+          "FavoriteSong"
+        ]
+      },
+      "delete": {
+        "operationId": "FavoriteSongController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete FavoriteSong by ID",
+        "tags": [
+          "FavoriteSong"
+        ]
+      }
+    },
+    "/api/favorite-video": {
+      "post": {
+        "operationId": "FavoriteVideoController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFavoriteVideoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateFavoriteVideoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new FavoriteVideo",
+        "tags": [
+          "FavoriteVideo"
+        ]
+      },
+      "get": {
+        "operationId": "FavoriteVideoController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of FavoriteVideo records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateFavoriteVideoDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all FavoriteVideo records",
+        "tags": [
+          "FavoriteVideo"
+        ]
+      }
+    },
+    "/api/favorite-video/paginated": {
+      "get": {
+        "operationId": "FavoriteVideoController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "videoId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by videoId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationFavoriteVideoResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated FavoriteVideo records",
+        "tags": [
+          "FavoriteVideo"
+        ]
+      }
+    },
+    "/api/favorite-video/{id}": {
+      "get": {
+        "operationId": "FavoriteVideoController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateFavoriteVideoDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find FavoriteVideo by ID",
+        "tags": [
+          "FavoriteVideo"
+        ]
+      },
+      "patch": {
+        "operationId": "FavoriteVideoController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFavoriteVideoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateFavoriteVideoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update FavoriteVideo by ID",
+        "tags": [
+          "FavoriteVideo"
+        ]
+      },
+      "delete": {
+        "operationId": "FavoriteVideoController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete FavoriteVideo by ID",
+        "tags": [
+          "FavoriteVideo"
+        ]
+      }
+    },
+    "/api/music-history": {
+      "post": {
+        "operationId": "MusicHistoryController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMusicHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMusicHistoryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new MusicHistory",
+        "tags": [
+          "MusicHistory"
+        ]
+      },
+      "get": {
+        "operationId": "MusicHistoryController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of MusicHistory records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateMusicHistoryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all MusicHistory records",
+        "tags": [
+          "MusicHistory"
+        ]
+      }
+    },
+    "/api/music-history/paginated": {
+      "get": {
+        "operationId": "MusicHistoryController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "playedAt",
+            "required": false,
+            "in": "query",
+            "description": "Filter by playedAt",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "progress",
+            "required": false,
+            "in": "query",
+            "description": "Filter by progress",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "songId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by songId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationMusicHistoryResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated MusicHistory records",
+        "tags": [
+          "MusicHistory"
+        ]
+      }
+    },
+    "/api/music-history/{id}": {
+      "get": {
+        "operationId": "MusicHistoryController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMusicHistoryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find MusicHistory by ID",
+        "tags": [
+          "MusicHistory"
+        ]
+      },
+      "patch": {
+        "operationId": "MusicHistoryController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMusicHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateMusicHistoryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update MusicHistory by ID",
+        "tags": [
+          "MusicHistory"
+        ]
+      },
+      "delete": {
+        "operationId": "MusicHistoryController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete MusicHistory by ID",
+        "tags": [
+          "MusicHistory"
+        ]
+      }
+    },
+    "/api/video-history": {
+      "post": {
+        "operationId": "VideoHistoryController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVideoHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateVideoHistoryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new VideoHistory",
+        "tags": [
+          "VideoHistory"
+        ]
+      },
+      "get": {
+        "operationId": "VideoHistoryController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of VideoHistory records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateVideoHistoryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all VideoHistory records",
+        "tags": [
+          "VideoHistory"
+        ]
+      }
+    },
+    "/api/video-history/paginated": {
+      "get": {
+        "operationId": "VideoHistoryController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "playedAt",
+            "required": false,
+            "in": "query",
+            "description": "Filter by playedAt",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "progress",
+            "required": false,
+            "in": "query",
+            "description": "Filter by progress",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "videoId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by videoId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationVideoHistoryResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated VideoHistory records",
+        "tags": [
+          "VideoHistory"
+        ]
+      }
+    },
+    "/api/video-history/{id}": {
+      "get": {
+        "operationId": "VideoHistoryController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateVideoHistoryDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find VideoHistory by ID",
+        "tags": [
+          "VideoHistory"
+        ]
+      },
+      "patch": {
+        "operationId": "VideoHistoryController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVideoHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateVideoHistoryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update VideoHistory by ID",
+        "tags": [
+          "VideoHistory"
+        ]
+      },
+      "delete": {
+        "operationId": "VideoHistoryController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete VideoHistory by ID",
+        "tags": [
+          "VideoHistory"
+        ]
+      }
+    },
+    "/proxy": {
+      "get": {
+        "operationId": "ProxyController_proxy",
+        "parameters": [
+          {
+            "name": "url",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Proxy"
         ]
       }
     }
@@ -14375,6 +18732,22 @@
           "json"
         ]
       },
+      "ValidateYamlDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "ValidateYamlResponseDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "FixYamlDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "FixYamlResponseDto": {
+        "type": "object",
+        "properties": {}
+      },
       "JsonOutputDto": {
         "type": "object",
         "properties": {
@@ -14487,6 +18860,33 @@
           "connectionString",
           "tableName",
           "columns",
+          "dbType"
+        ]
+      },
+      "DropTableDto": {
+        "type": "object",
+        "properties": {
+          "connectionString": {
+            "type": "string",
+            "example": "postgresql://user:pass@localhost:5432/db"
+          },
+          "tableName": {
+            "type": "string",
+            "example": "users"
+          },
+          "dbType": {
+            "type": "string",
+            "example": "postgres",
+            "enum": [
+              "postgres",
+              "mysql",
+              "mongodb"
+            ]
+          }
+        },
+        "required": [
+          "connectionString",
+          "tableName",
           "dbType"
         ]
       },
@@ -15148,7 +19548,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-09-07T15:03:14.298Z",
+            "example": "2025-09-24T09:59:13.423Z",
             "format": "date-time"
           },
           "requestType": {
@@ -15159,12 +19559,22 @@
               "TEXT_WITH_IMAGE",
               "TEXT_WITH_FILE",
               "LLM_GENERATION",
+              "LLM_CODE_ANALYSIS",
+              "LLM_CODE_OPTIMIZATION",
+              "LLM_CODE_REPAIR",
+              "LLM_CODE_DOCUMENTATION",
+              "LLM_ERROR_REPORTING",
               "LIVE_API",
               "RESUME_GENERATION",
               "RESUME_OPTIMIZATION",
               "RESUME_ENHANCEMENT",
               "VIDEO_GENERATION",
-              "IMAGE_GENERATION"
+              "IMAGE_GENERATION",
+              "AUDIO_GENERATION",
+              "TEXT_TO_SPEECH",
+              "SPEECH_TO_TEXT",
+              "VOICE_COMMAND",
+              "AUDIO_TRANSCRIPTION"
             ],
             "example": "TEXT_WITH_IMAGE"
           },
@@ -16059,6 +20469,10 @@
             "type": "string",
             "description": "requestId field"
           },
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
           "responseText": {
             "type": "string",
             "description": "responseText field"
@@ -16074,14 +20488,20 @@
           "tokenCount": {
             "type": "number",
             "description": "tokenCount field"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "projectRoot field"
           }
         },
         "required": [
           "requestId",
+          "title",
           "responseText",
           "finishReason",
           "safetyRatings",
-          "tokenCount"
+          "tokenCount",
+          "projectRoot"
         ]
       },
       "PaginationGeminiResponseResultDto": {
@@ -16121,6 +20541,10 @@
             "type": "string",
             "description": "requestId field"
           },
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
           "responseText": {
             "type": "string",
             "description": "responseText field"
@@ -16136,6 +20560,10 @@
           "tokenCount": {
             "type": "number",
             "description": "tokenCount field"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "projectRoot field"
           }
         }
       },
@@ -17122,12 +21550,22 @@
               "TEXT_WITH_IMAGE",
               "TEXT_WITH_FILE",
               "LLM_GENERATION",
+              "LLM_CODE_ANALYSIS",
+              "LLM_CODE_OPTIMIZATION",
+              "LLM_CODE_REPAIR",
+              "LLM_CODE_DOCUMENTATION",
+              "LLM_ERROR_REPORTING",
               "LIVE_API",
               "RESUME_GENERATION",
               "RESUME_OPTIMIZATION",
               "RESUME_ENHANCEMENT",
               "VIDEO_GENERATION",
-              "IMAGE_GENERATION"
+              "IMAGE_GENERATION",
+              "AUDIO_GENERATION",
+              "TEXT_TO_SPEECH",
+              "SPEECH_TO_TEXT",
+              "VOICE_COMMAND",
+              "AUDIO_TRANSCRIPTION"
             ],
             "example": "LLM_GENERATION"
           }
@@ -17170,6 +21608,70 @@
           "title",
           "summary",
           "changes"
+        ]
+      },
+      "LlmReportErrorContextDto": {
+        "type": "object",
+        "properties": {
+          "originalUserPrompt": {
+            "type": "string",
+            "description": "The original user prompt that led to the failed generation.",
+            "example": "Generate a new feature for user management."
+          },
+          "systemInstruction": {
+            "type": "string",
+            "description": "The system instructions used for the initial generation.",
+            "example": "Return output in JSON format."
+          },
+          "failedChanges": {
+            "description": "The proposed changes that were attempted and subsequently led to the error.",
+            "items": {
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "originalFilePaths": {
+            "description": "Paths of original files that were involved in the failed operation, relative to projectRoot.",
+            "items": {
+              "type": "array"
+            },
+            "type": "array"
+          }
+        }
+      },
+      "LlmReportErrorDto": {
+        "type": "object",
+        "properties": {
+          "errorDetails": {
+            "type": "string",
+            "description": "Detailed error message from the build or test failure.",
+            "example": "TypeScript compilation failed: Cannot find name `foo`."
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "The absolute path to the project root directory where the error occurred.",
+            "example": "/home/user/my-failed-project"
+          },
+          "context": {
+            "description": "Additional context about the error, including previous LLM interactions or failed changes.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LlmReportErrorContextDto"
+              }
+            ]
+          },
+          "scanPaths": {
+            "description": "Optional: An array of specific file paths (relative to projectRoot) to be included for deeper analysis by the LLM, in addition to those from `context.originalFilePaths`.",
+            "items": {
+              "type": "array"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "errorDetails",
+          "projectRoot",
+          "context"
         ]
       },
       "CreateTerminalSessionDto": {
@@ -17499,6 +22001,120 @@
           }
         }
       },
+      "TranscriptionSegmentDto": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "number",
+            "description": "Start time in seconds"
+          },
+          "end": {
+            "type": "number",
+            "description": "End time in seconds"
+          },
+          "text": {
+            "type": "string",
+            "description": "Transcribed text"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Confidence score (0-1)"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "text",
+          "confidence"
+        ]
+      },
+      "TranscriptionResultDto": {
+        "type": "object",
+        "properties": {
+          "segments": {
+            "description": "Segments with timestamps",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranscriptionSegmentDto"
+            }
+          },
+          "fullText": {
+            "type": "string",
+            "description": "Full concatenated text"
+          },
+          "duration": {
+            "type": "number",
+            "description": "Audio duration in seconds"
+          },
+          "language": {
+            "type": "string",
+            "description": "Detected language"
+          },
+          "languageProbability": {
+            "type": "number",
+            "description": "Language detection probability"
+          }
+        },
+        "required": [
+          "segments",
+          "fullText",
+          "duration"
+        ]
+      },
+      "SyncTranscriptionRequestDto": {
+        "type": "object",
+        "properties": {
+          "currentTime": {
+            "type": "number",
+            "description": "Current playback time in seconds"
+          }
+        },
+        "required": [
+          "currentTime"
+        ]
+      },
+      "SyncTranscriptionResponseDto": {
+        "type": "object",
+        "properties": {
+          "currentSegment": {
+            "nullable": true,
+            "description": "Current segment being played",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranscriptionSegmentDto"
+              }
+            ]
+          },
+          "previousSegments": {
+            "description": "Previous segments",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranscriptionSegmentDto"
+            }
+          },
+          "upcomingSegments": {
+            "description": "Upcoming segments",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranscriptionSegmentDto"
+            }
+          },
+          "fullTranscription": {
+            "description": "Full transcription",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TranscriptionResultDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "currentSegment",
+          "previousSegments",
+          "upcomingSegments",
+          "fullTranscription"
+        ]
+      },
       "CreateMediaDto": {
         "type": "object",
         "properties": {
@@ -17561,6 +22177,22 @@
               "IMAGE",
               "DOCUMENT",
               "CODE",
+              "TEXT",
+              "ZIP",
+              "PDF",
+              "MARKDOWN",
+              "YAML",
+              "JSON",
+              "JAVASCRIPT",
+              "TYPESCRIPT",
+              "JSX",
+              "TSX",
+              "CSS",
+              "HTML",
+              "SQL",
+              "PYTHON",
+              "JAVA",
+              "XML",
               "OTHER"
             ],
             "example": "VIDEO"
@@ -17606,6 +22238,16 @@
             "type": "object",
             "description": "The ID of the folder where the file is stored.",
             "nullable": true
+          },
+          "songId": {
+            "type": "object",
+            "description": "The ID of the associated Song, if applicable.",
+            "nullable": true
+          },
+          "videoId": {
+            "type": "object",
+            "description": "The ID of the associated Video, if applicable.",
+            "nullable": true
           }
         },
         "required": [
@@ -17616,6 +22258,48 @@
           "createdAt",
           "updatedAt",
           "createdById"
+        ]
+      },
+      "MediaScanRequestDto": {
+        "type": "object",
+        "properties": {
+          "directoryPath": {
+            "type": "string",
+            "description": "The absolute path to the directory to scan for media files.",
+            "example": "/home/user/music"
+          }
+        },
+        "required": [
+          "directoryPath"
+        ]
+      },
+      "MediaScanResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the scan operation was successful."
+          },
+          "message": {
+            "type": "string",
+            "description": "A message describing the outcome of the scan."
+          },
+          "scannedFilesCount": {
+            "type": "number",
+            "description": "The total number of new media files found and added to the database."
+          },
+          "errors": {
+            "description": "An array of errors encountered during the scan, if any.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "scannedFilesCount"
         ]
       },
       "PaginationMediaResultDto": {
@@ -17652,6 +22336,431 @@
           "pageSize",
           "totalPages"
         ]
+      },
+      "CreatePlaylistDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "description": {
+            "type": "string",
+            "description": "description field"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "description": "isPublic field"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "isPublic"
+        ]
+      },
+      "PaginationPlaylistResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePlaylistDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdatePlaylistDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "description": {
+            "type": "string",
+            "description": "description field"
+          },
+          "isPublic": {
+            "type": "boolean",
+            "description": "isPublic field"
+          }
+        }
+      },
+      "CreateSongDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "duration": {
+            "type": "number",
+            "description": "duration field"
+          },
+          "year": {
+            "type": "number",
+            "description": "year field"
+          },
+          "artistId": {
+            "type": "string",
+            "description": "artistId field"
+          },
+          "albumId": {
+            "type": "string",
+            "description": "albumId field"
+          }
+        },
+        "required": [
+          "title",
+          "duration",
+          "year",
+          "artistId",
+          "albumId"
+        ]
+      },
+      "PaginationSongResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateSongDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateSongDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "duration": {
+            "type": "number",
+            "description": "duration field"
+          },
+          "year": {
+            "type": "number",
+            "description": "year field"
+          },
+          "artistId": {
+            "type": "string",
+            "description": "artistId field"
+          },
+          "albumId": {
+            "type": "string",
+            "description": "albumId field"
+          }
+        }
+      },
+      "CreateVideoDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "description": {
+            "type": "string",
+            "description": "description field"
+          },
+          "duration": {
+            "type": "number",
+            "description": "duration field"
+          },
+          "year": {
+            "type": "number",
+            "description": "year field"
+          },
+          "rating": {
+            "type": "number",
+            "description": "rating field"
+          },
+          "director": {
+            "type": "string",
+            "description": "director field"
+          },
+          "cast": {
+            "description": "cast field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resolution": {
+            "type": "string",
+            "description": "resolution field"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "duration",
+          "year",
+          "rating",
+          "director",
+          "cast",
+          "resolution"
+        ]
+      },
+      "PaginationVideoResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateVideoDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateVideoDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "description": {
+            "type": "string",
+            "description": "description field"
+          },
+          "duration": {
+            "type": "number",
+            "description": "duration field"
+          },
+          "year": {
+            "type": "number",
+            "description": "year field"
+          },
+          "rating": {
+            "type": "number",
+            "description": "rating field"
+          },
+          "director": {
+            "type": "string",
+            "description": "director field"
+          },
+          "cast": {
+            "description": "cast field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resolution": {
+            "type": "string",
+            "description": "resolution field"
+          }
+        }
+      },
+      "CreateArtistDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "bio": {
+            "type": "string",
+            "description": "bio field"
+          },
+          "image": {
+            "type": "string",
+            "description": "image field"
+          }
+        },
+        "required": [
+          "name",
+          "bio",
+          "image"
+        ]
+      },
+      "PaginationArtistResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateArtistDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateArtistDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "bio": {
+            "type": "string",
+            "description": "bio field"
+          },
+          "image": {
+            "type": "string",
+            "description": "image field"
+          }
+        }
+      },
+      "CreateAlbumDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "releaseDate field"
+          },
+          "coverArt": {
+            "type": "string",
+            "description": "coverArt field"
+          },
+          "artistId": {
+            "type": "string",
+            "description": "artistId field"
+          }
+        },
+        "required": [
+          "title",
+          "releaseDate",
+          "coverArt",
+          "artistId"
+        ]
+      },
+      "PaginationAlbumResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateAlbumDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateAlbumDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "releaseDate field"
+          },
+          "coverArt": {
+            "type": "string",
+            "description": "coverArt field"
+          },
+          "artistId": {
+            "type": "string",
+            "description": "artistId field"
+          }
+        }
       },
       "ImportBulkDataDto": {
         "type": "object",
@@ -17712,6 +22821,454 @@
           "format",
           "file"
         ]
+      },
+      "CreatePlaylistMediaFileDto": {
+        "type": "object",
+        "properties": {
+          "playlistId": {
+            "type": "string",
+            "description": "playlistId field"
+          },
+          "fileId": {
+            "type": "string",
+            "description": "fileId field"
+          },
+          "order": {
+            "type": "number",
+            "description": "order field"
+          }
+        },
+        "required": [
+          "playlistId",
+          "fileId",
+          "order"
+        ]
+      },
+      "PaginationPlaylistMediaFileResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePlaylistMediaFileDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdatePlaylistMediaFileDto": {
+        "type": "object",
+        "properties": {
+          "playlistId": {
+            "type": "string",
+            "description": "playlistId field"
+          },
+          "fileId": {
+            "type": "string",
+            "description": "fileId field"
+          },
+          "order": {
+            "type": "number",
+            "description": "order field"
+          }
+        }
+      },
+      "CreateMetadataDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "data field"
+          },
+          "tags": {
+            "description": "tags field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fileId": {
+            "type": "string",
+            "description": "fileId field"
+          }
+        },
+        "required": [
+          "data",
+          "tags",
+          "fileId"
+        ]
+      },
+      "PaginationMetadataResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMetadataDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateMetadataDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "data field"
+          },
+          "tags": {
+            "description": "tags field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fileId": {
+            "type": "string",
+            "description": "fileId field"
+          }
+        }
+      },
+      "CreateGenreDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "description": {
+            "type": "string",
+            "description": "description field"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ]
+      },
+      "PaginationGenreResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateGenreDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateGenreDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "name field"
+          },
+          "description": {
+            "type": "string",
+            "description": "description field"
+          }
+        }
+      },
+      "CreateFavoriteSongDto": {
+        "type": "object",
+        "properties": {
+          "songId": {
+            "type": "string",
+            "description": "songId field"
+          }
+        },
+        "required": [
+          "songId"
+        ]
+      },
+      "PaginationFavoriteSongResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateFavoriteSongDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateFavoriteSongDto": {
+        "type": "object",
+        "properties": {
+          "songId": {
+            "type": "string",
+            "description": "songId field"
+          }
+        }
+      },
+      "CreateFavoriteVideoDto": {
+        "type": "object",
+        "properties": {
+          "videoId": {
+            "type": "string",
+            "description": "videoId field"
+          }
+        },
+        "required": [
+          "videoId"
+        ]
+      },
+      "PaginationFavoriteVideoResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateFavoriteVideoDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateFavoriteVideoDto": {
+        "type": "object",
+        "properties": {
+          "videoId": {
+            "type": "string",
+            "description": "videoId field"
+          }
+        }
+      },
+      "CreateMusicHistoryDto": {
+        "type": "object",
+        "properties": {
+          "playedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "playedAt field"
+          },
+          "progress": {
+            "type": "number",
+            "description": "progress field"
+          },
+          "songId": {
+            "type": "string",
+            "description": "songId field"
+          }
+        },
+        "required": [
+          "playedAt",
+          "progress",
+          "songId"
+        ]
+      },
+      "PaginationMusicHistoryResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMusicHistoryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateMusicHistoryDto": {
+        "type": "object",
+        "properties": {
+          "playedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "playedAt field"
+          },
+          "progress": {
+            "type": "number",
+            "description": "progress field"
+          },
+          "songId": {
+            "type": "string",
+            "description": "songId field"
+          }
+        }
+      },
+      "CreateVideoHistoryDto": {
+        "type": "object",
+        "properties": {
+          "playedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "playedAt field"
+          },
+          "progress": {
+            "type": "number",
+            "description": "progress field"
+          },
+          "videoId": {
+            "type": "string",
+            "description": "videoId field"
+          }
+        },
+        "required": [
+          "playedAt",
+          "progress",
+          "videoId"
+        ]
+      },
+      "PaginationVideoHistoryResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateVideoHistoryDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateVideoHistoryDto": {
+        "type": "object",
+        "properties": {
+          "playedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "playedAt field"
+          },
+          "progress": {
+            "type": "number",
+            "description": "progress field"
+          },
+          "videoId": {
+            "type": "string",
+            "description": "videoId field"
+          }
+        }
       }
     }
   }

@@ -9,13 +9,16 @@ dotenv.config();
 @Injectable()
 export class GoogleTranslatorService {
   private readonly apiKey: string;
-  private readonly apiUrl = 'https://translation.googleapis.com/language/translate/v2';
+  private readonly apiUrl =
+    'https://translation.googleapis.com/language/translate/v2';
   private readonly logger = new Logger(GoogleTranslatorService.name);
 
   constructor(private readonly httpService: HttpService) {
     const apiKey = process.env.GOOGLE_TRANSLATION_API_KEY;
     if (!apiKey) {
-      this.logger.error('GOOGLE_TRANSLATION_API_KEY is not set in environment variables.');
+      this.logger.error(
+        'GOOGLE_TRANSLATION_API_KEY is not set in environment variables.',
+      );
       throw new HttpException(
         'Google Translation API key is missing.',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -25,7 +28,13 @@ export class GoogleTranslatorService {
   }
 
   async translateContent(dto: TranslateContentDto): Promise<string> {
-    const { content, fileData, fileMimeType, targetLanguage, returnInOriginalFormat } = dto;
+    const {
+      content,
+      fileData,
+      fileMimeType,
+      targetLanguage,
+      returnInOriginalFormat,
+    } = dto;
 
     if (!content && !fileData) {
       throw new HttpException(
@@ -46,16 +55,26 @@ export class GoogleTranslatorService {
           `Translating content from file (MIME: ${fileMimeType}, length: ${textToTranslate.length})`,
         );
       } catch (error) {
-        this.logger.error(`Failed to decode base64 file data: ${error.message}`);
-        throw new HttpException('Failed to decode base64 file data.', HttpStatus.BAD_REQUEST);
+        this.logger.error(
+          `Failed to decode base64 file data: ${error.message}`,
+        );
+        throw new HttpException(
+          'Failed to decode base64 file data.',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     } else {
       textToTranslate = content!;
-      this.logger.debug(`Translating provided text content (length: ${textToTranslate.length})`);
+      this.logger.debug(
+        `Translating provided text content (length: ${textToTranslate.length})`,
+      );
     }
 
     if (!textToTranslate.trim()) {
-      throw new HttpException('Content to translate cannot be empty.', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Content to translate cannot be empty.',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     try {
@@ -70,11 +89,19 @@ export class GoogleTranslatorService {
       };
 
       const response = await firstValueFrom(
-        this.httpService.post(`${this.apiUrl}?${params.toString()}`, requestBody),
+        this.httpService.post(
+          `${this.apiUrl}?${params.toString()}`,
+          requestBody,
+        ),
       );
 
-      if (response.data && response.data.data && response.data.data.translations) {
-        const translatedText = response.data.data.translations[0].translatedText;
+      if (
+        response.data &&
+        response.data.data &&
+        response.data.data.translations
+      ) {
+        const translatedText =
+          response.data.data.translations[0].translatedText;
         this.logger.log(`Translation successful to ${targetLanguage}.`);
         // If returnInOriginalFormat is true and it was a file, we might need to re-encode
         // or reconstruct the file. This is a complex task and usually requires specific parsers/generators.
@@ -88,14 +115,20 @@ export class GoogleTranslatorService {
         }
         return translatedText;
       } else {
-        this.logger.error('Invalid response structure from Google Translate API:', response.data);
+        this.logger.error(
+          'Invalid response structure from Google Translate API:',
+          response.data,
+        );
         throw new HttpException(
           'Invalid response from Google Translate API.',
           HttpStatus.BAD_GATEWAY,
         );
       }
     } catch (error) {
-      this.logger.error(`Error during translation: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error during translation: ${error.message}`,
+        error.stack,
+      );
       throw new HttpException(
         `Failed to translate content: ${error.message}`,
         HttpStatus.BAD_GATEWAY,

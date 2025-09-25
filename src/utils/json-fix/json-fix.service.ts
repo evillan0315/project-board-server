@@ -24,7 +24,9 @@ export class JsonFixService {
         try {
           // If schema is a string, parse it. Otherwise, use it directly.
           schemaObj =
-            typeof schema === 'string' ? JSON.parse(schema) : (schema as Record<string, any>);
+            typeof schema === 'string'
+              ? JSON.parse(schema)
+              : (schema as Record<string, any>);
         } catch (e) {
           // If schema itself is invalid JSON, report an error
           return {
@@ -91,7 +93,8 @@ export class JsonFixService {
                 // Attempt to parse stringified JSON value with strict JSON.parse
                 const nestedParsed = JSON.parse(trimmedValue);
                 // Recursively clean the nested structure if successfully parsed
-                const cleanedNested = this.deepCleanAndRemoveInvalidJsonStrings(nestedParsed);
+                const cleanedNested =
+                  this.deepCleanAndRemoveInvalidJsonStrings(nestedParsed);
 
                 // If the cleaned nested structure is not null (i.e., not entirely removed)
                 if (cleanedNested !== null) {
@@ -109,7 +112,8 @@ export class JsonFixService {
             }
           } else {
             // For non-string types (numbers, booleans, null, other objects/arrays), recurse.
-            const cleanedValue = this.deepCleanAndRemoveInvalidJsonStrings(value);
+            const cleanedValue =
+              this.deepCleanAndRemoveInvalidJsonStrings(value);
             // If the recursive call returns null (meaning it was a broken stringified JSON that was removed),
             // then remove this property.
             if (cleanedValue !== null) {
@@ -166,7 +170,9 @@ export class JsonFixService {
       // If all parsing attempts failed to even get a top-level object
       return {
         valid: false,
-        errors: [`Could not repair top-level JSON structure. Errors: ${errors.join('; ')}`],
+        errors: [
+          `Could not repair top-level JSON structure. Errors: ${errors.join('; ')}`,
+        ],
       };
     } else {
       // If a lenient parse succeeded, now deep clean it for broken stringified JSON items

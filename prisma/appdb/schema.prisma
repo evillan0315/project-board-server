@@ -1,224 +1,265 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
-  provider = "prisma-client-js",
-  output   = "../generated/appdb"
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client/appdb"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("APPDB_DATABASE_URL")
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+  GUEST
 }
 
 model User {
-  id                 String               @id @default(uuid())
-  email              String               @unique
-  createdAt          DateTime             @default(now())
-  emailVerified      DateTime?
-  image              String?
-  name               String?
-  phone_number       String?
-  updatedAt          DateTime?            @updatedAt
-  role               String?
-  deletedAt          DateTime?
-  Account            Account[]
-  Chat               Chat[]
-  DatabaseConnection DatabaseConnection[]
-  Documentation      Documentation[]
-  File               File[]
-  Folder             Folder[]
-  FormSchema         FormSchema[]
-  FormSubmission     FormSubmission[]
-  Message            Message[]
-  Organization       Organization[]
-  Password           Password?
-  Project            Project[]
-  Session            Session[]
-  Snippet            Snippet[]
+  id                           String               @id @default(uuid())
+  email                        String               @unique
+  password                     String?
+  firstName                    String?
+  lastName                     String?
+  isEmailVerified              Boolean              @default(false)
+  verificationToken            String?              @unique
+  emailVerificationTokenExpiry DateTime?
+  passwordResetToken           String?              @unique
+  passwordResetTokenExpiry     DateTime?
+  roles                        UserRole[]           @default([USER])
+  googleId                     String?              @unique
+  githubId                     Int?                 @unique
+  createdAt                    DateTime             @default(now())
+  updatedAt                    DateTime             @updatedAt
+  llmRequests                  GeminiRequest[]
+  llmResponses                 GeminiResponse[]
+  TerminalSession              TerminalSession[]
+  TerminalCommand              TerminalCommand[]
+  CommandHistory               CommandHistory[]
+  Organization                 Organization[]
+  Project                      Project[]
+  Account                      Account[]
+  Schema                       Schema[]
+  SchemaSubmission             SchemaSubmission[]
+  Log                          Log[]
+  Media                        Media[]
+  SystemInstruction            SystemInstruction[]
+  Conversation                 Conversation[]
 }
 
-model Password {
-  id        String   @id @default(uuid())
-  hash      String
-  userId    String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Account {
-  id                String   @id @default(uuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  User              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model Session {
-  id           String   @id @default(uuid())
-  sessionToken String   @unique
+model GeminiRequest {
+  id           String    @id @default(uuid())
   userId       String
-  expires      DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id])
+  prompt       String
+  responseId   String?   @unique // To link to a specific GeminiResponse if needed
+  model        String
+  status       String
+  inputTokens  Int       @default(0)
+  outputTokens Int       @default(0)
+  cost         Float     @default(0.0)
+  durationMs   Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  conversationId String? // Added for conversational context
+  requestType  RequestType // Type of LLM request
+
+  @@index([userId])
+  @@index([conversationId])
 }
 
-model Documentation {
-  id          String    @id @default(uuid())
-  name        String
-  content     String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime? @updatedAt
-  createdById String
-  createdBy   User      @relation(fields: [createdById], references: [id])
+model GeminiResponse {
+  id               String        @id @default(uuid())
+  requestId        String        @unique // Link to GeminiRequest
+  request          GeminiRequest @relation(fields: [requestId], references: [id])
+  responseText     String
+  processedAt      DateTime      @default(now())
+  conversationId   String?       // Added for conversational context
+  requestType      RequestType   // Type of LLM request
+
+  @@index([requestId])
+  @@index([conversationId])
 }
 
-model File {
-  id          String    @id @default(uuid())
-  name        String
-  content     String
-  createdAt   DateTime  @default(now())
-  folderId    String?
-  path        String    @unique
-  updatedAt   DateTime? @updatedAt
-  createdById String
-  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  folder      Folder?   @relation(fields: [folderId], references: [id])
+enum RequestType {
+  LLM_GENERATION
+  LLM_CODE_ANALYSIS
+  LLM_CODE_OPTIMIZATION
+  LLM_CODE_REPAIR
+  LLM_CODE_DOCUMENTATION
+  LLM_ERROR_REPORTING // New entry for error reporting
+  TEXT_TO_SPEECH
+  IMAGE_CAPTIONING
+  FILE_CONTENT_ANALYSIS
+  VIDEO_GENERATION
+  RESUME_GENERATION
+  RESUME_OPTIMIZATION
+  RESUME_ENHANCEMENT
+  TRANSLATION
 }
 
-model Folder {
-  id          String    @id @default(uuid())
-  name        String
-  path        String    @unique
-  parentId    String?
-  createdById String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime? @updatedAt
-  files       File[]
-  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  parent      Folder?   @relation("FolderHierarchy", fields: [parentId], references: [id])
-  children    Folder[]  @relation("FolderHierarchy")
+model TerminalSession {
+  id           String      @id @default(uuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  name         String
+  description  String?
+  commands     String[]
+  logs         String[]
+  startedAt    DateTime    @default(now())
+  endedAt      DateTime?
+  isActive     Boolean     @default(true)
+  TerminalCommand TerminalCommand[]
+
+  @@index([userId])
 }
 
-model Project {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
+model TerminalCommand {
+  id              String          @id @default(uuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id])
+  command         String
+  output          String?
+  executedAt      DateTime        @default(now())
+  sessionId       String
+  session         TerminalSession @relation(fields: [sessionId], references: [id])
+  status          String          // "success", "error", "running"
+  executionTimeMs Int?
+
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model CommandHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  command   String
+  timestamp DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Organization {
+  id          String    @id @default(uuid())
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdById String
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  projects    Project[]
+
+  @@index([createdById])
+}
+
+model Project {
+  id             String       @id @default(uuid())
+  createdBy      User         @relation(fields: [createdById], references: [id])
+  createdById    String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name           String
+  description    String?
+  repositoryUrl  String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([createdById])
+  @@index([organizationId])
+}
+
+model Account {
   id          String   @id @default(uuid())
-  name        String
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  balance     Float    @default(0.0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@index([userId])
 }
 
-model ApiUsage {
-  id           String   @id
-  messageId    String
-  inputTokens  Int?
-  outputTokens Int?
-  cost         Float?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime
-  Message      Message  @relation(fields: [messageId], references: [id])
-}
-
-model Chat {
-  id          String    @id
-  title       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime
-  createdById String
-  User        User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  Message     Message[]
-}
-
-model DatabaseConnection {
-  id               String   @id
-  name             String
-  type             String
-  host             String?
-  port             Int?
-  username         String?
-  password         String?
-  databaseName     String?
-  connectionString String?
-  default          Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime
+model Schema {
+  id               String             @id @default(uuid())
+  name             String             @unique
+  description      String?
+  schemaDefinition String             @db.Text // Store JSON schema as a string
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  createdBy        User               @relation(fields: [createdById], references: [id])
   createdById      String
-  User             User     @relation(fields: [createdById], references: [id])
+  submissions      SchemaSubmission[]
+
+  @@index([createdById])
 }
 
-model FormSchema {
-  id             String           @id
-  title          String
-  modelName      String
-  schema         Json
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime
-  createdById    String
-  User           User             @relation(fields: [createdById], references: [id])
-  FormSubmission FormSubmission[]
+model SchemaSubmission {
+  id             String   @id @default(uuid())
+  schemaId       String
+  schema         Schema   @relation(fields: [schemaId], references: [id])
+  submittedBy    User     @relation(fields: [submittedById], references: [id])
+  submittedById  String
+  submissionData String   @db.Text // Store submitted JSON data as a string
+  isValid        Boolean
+  validationErrors String?  @db.Text // Store validation errors as a string
+  submittedAt    DateTime @default(now())
+
+  @@index([schemaId])
+  @@index([submittedById])
 }
 
-model FormSubmission {
-  id          String     @id
-  formId      String
-  data        Json
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime
+model Log {
+  id        String   @id @default(uuid())
+  userId    String?  // Optional, if log is not user-specific
+  user      User?    @relation(fields: [userId], references: [id])
+  level     String   // e.g., "info", "warn", "error"
+  message   String   @db.Text
+  timestamp DateTime @default(now())
+  context   String?
+  stack     String?  @db.Text
+
+  @@index([userId])
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  filename  String
+  path      String   @unique
+  mimetype  String
+  size      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model SystemInstruction {
+  id        String   @id @default(uuid())
+  createdBy User     @relation(fields: [createdById], references: [id])
   createdById String
-  User        User       @relation(fields: [createdById], references: [id])
-  FormSchema  FormSchema @relation(fields: [formId], references: [id])
+  name      String   @unique
+  instruction String @db.Text
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdById])
 }
 
-model Message {
-  id          String     @id
-  chatId      String
-  content     String
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime
-  sender      String
-  createdById String
-  ApiUsage    ApiUsage[]
-  Chat        Chat       @relation(fields: [chatId], references: [id])
-  User        User       @relation(fields: [createdById], references: [id], onDelete: Cascade)
-}
+model Conversation {
+  id            String          @id @default(uuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  title         String
+  startedAt     DateTime        @default(now())
+  lastActivity  DateTime        @updatedAt
+  GeminiRequest GeminiRequest[]
+  GeminiResponse GeminiResponse[]
 
-model Snippet {
-  id          String   @id
-  name        String?
-  code        Json
-  language    String?
-  createdById String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
-  User        User?    @relation(fields: [createdById], references: [id])
-}
-
-enum Sender {
-  USER
-  AI
-  ADMIN
-  SUPERADMIN
-  BOT
+  @@index([userId])
 }

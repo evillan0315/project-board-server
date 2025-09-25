@@ -15,7 +15,8 @@ export class ApplyChangesDto {
   changes: ProposedFileChangeDto[];
 
   @ApiProperty({
-    description: 'The absolute path to the project root directory where changes should be applied.',
+    description:
+      'The absolute path to the project root directory where changes should be applied.',
     example: '/path/to/your/project',
   })
   @IsString()

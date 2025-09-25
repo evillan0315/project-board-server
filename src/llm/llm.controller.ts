@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Query, HttpStatus, UseGuards, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Query,
+  HttpStatus,
+  UseGuards,
+  Get,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,7 +16,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { LlmService } from './llm.service';
-import { LlmInputDto, LlmOutputDto } from './dto';
+import { LlmInputDto, LlmOutputDto, LlmReportErrorDto } from './dto'; // Import LlmReportErrorDto
 
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -28,14 +36,35 @@ export class LlmController {
   @Post('generate-llm')
   @ApiOperation({ summary: 'Generate code and file changes using the LLM' })
   @ApiBody({ type: LlmInputDto })
-  // projectRoot is now part of LlmInputDto, so it's not a query param anymore.
   @ApiResponse({
     status: HttpStatus.OK,
     type: LlmOutputDto,
   })
   async generateContent(@Body() llmInput: LlmInputDto): Promise<LlmOutputDto> {
-    // The projectRoot is now expected within the LlmInputDto body
     return this.llmService.generateContent(llmInput);
+  }
+
+  /**
+   * Endpoint to report an error to the LLM for analysis and potential fixes.
+   */
+  @Post('report-error')
+  @ApiOperation({
+    summary:
+      'Report an error (e.g., build failure) to the LLM for analysis and suggested fixes.',
+    description:
+      'This endpoint sends detailed error information and project context to the LLM, which will analyze the problem and propose changes or an explanation.',
+  })
+  @ApiBody({ type: LlmReportErrorDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: LlmOutputDto,
+    description:
+      'LLM analysis and proposed fixes or explanations for the reported error.',
+  })
+  async reportError(
+    @Body() errorReport: LlmReportErrorDto,
+  ): Promise<LlmOutputDto> {
+    return this.llmService.reportErrorToLlm(errorReport);
   }
 
   /**
@@ -72,7 +101,9 @@ export class LlmController {
     @Query('projectRoot') projectRoot: string,
     @Query('ignorePatterns') ignorePatterns?: string,
   ): Promise<string> {
-    const ignoreList = ignorePatterns ? ignorePatterns.split(',').map((s) => s.trim()) : undefined;
+    const ignoreList = ignorePatterns
+      ? ignorePatterns.split(',').map((s) => s.trim())
+      : undefined;
 
     return this.llmService.generateProjectStructure(projectRoot, ignoreList);
   }

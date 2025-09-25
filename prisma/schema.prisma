@@ -33,15 +33,32 @@ model User {
   Project                Project[]
   Schema                 Schema[]
   Session                Session[]
-  Submission             Submission[]
   geminiRequests         GeminiRequest[]
   Recording              Recording[]
   SchemaSubmission       SchemaSubmission[]
   SystemInstruction      SystemInstruction[]
   terminalCommands       TerminalCommand[]
   commandHistory         CommandHistory[]
+  playlists              Playlist[]
+  terminalSessions       TerminalSession[]
+  PlaylistMediaFile      PlaylistMediaFile[]
 
-  terminalSessions TerminalSession[]
+  // New relationships for music and video
+  favoriteSongs      FavoriteSong[]
+  favoriteVideos     FavoriteVideo[]
+  musicHistories     MusicHistory[]
+  videoHistories     VideoHistory[]
+  Song               Song[]
+  Video              Video[]
+  Artist             Artist[]
+  Album              Album[]
+  Submission         Submission[]
+  Metadata           Metadata[]
+  LlmRequest         LlmRequest[]
+  LlmResponse        LlmResponse[]
+  ProposedFileChange ProposedFileChange[]
+  ExecutionSnapshot  ExecutionSnapshot[]
+  SchemaHistory      SchemaHistory[]
 }
 
 model Password {
@@ -84,13 +101,14 @@ model Session {
 }
 
 model Documentation {
-  id          String    @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
   content     String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime? @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime?     @updatedAt
   createdById String
-  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  LlmResponse LlmResponse[]
 }
 
 model File {
@@ -109,6 +127,88 @@ model File {
   createdById String
   createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
   folder      Folder?   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  metadata           Metadata[] // One file can have many metadata
+  playlistMediaFiles PlaylistMediaFile[]
+
+  song  Song?  @relation("SongFiles", fields: [songId], references: [id], onDelete: Cascade)
+  video Video? @relation("VideoFiles", fields: [videoId], references: [id], onDelete: Cascade)
+
+  songId  String?
+  videoId String?
+}
+
+model Song {
+  id        String         @id @default(uuid())
+  title     String
+  duration  Int
+  year      Int?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  artistId  String
+  artist    Artist         @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  albumId   String?
+  album     Album?         @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  genres    Genre[]        @relation("SongToGenre")
+  favorites FavoriteSong[]
+  histories MusicHistory[]
+  // Add the missing opposite relation field
+  files     File[]         @relation("SongFiles")
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model Video {
+  id          String          @id @default(uuid())
+  title       String
+  description String
+  duration    Int
+  year        Int
+  rating      Float?
+  director    String?
+  cast        String[]
+  resolution  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  genres      Genre[]         @relation("VideoToGenre")
+  favorites   FavoriteVideo[]
+  histories   VideoHistory[]
+  // Add the missing opposite relation field
+  files       File[]          @relation("VideoFiles")
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model PlaylistMediaFile {
+  id          String   @id @default(uuid())
+  playlistId  String
+  fileId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Int      @default(0) // To allow custom ordering of tracks in a playlist
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  playlist    Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, fileId]) // A file can only be in a playlist once
+  @@index([playlistId, order])
+}
+
+model Playlist {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  // Many-to-many relationship with File (MediaFile) through an explicit join table
+  playlistMediaFiles PlaylistMediaFile[]
 }
 
 model Folder {
@@ -184,6 +284,7 @@ model GeminiResponse {
   id            String        @id @default(uuid())
   requestId     String
   request       GeminiRequest @relation(fields: [requestId], references: [id])
+  title         String?
   responseText  String        @db.Text
   finishReason  String?
   safetyRatings Json?
@@ -210,6 +311,7 @@ model SystemInstruction {
 model Organization {
   id          String   @id @default(uuid())
   name        String
+  industry    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   createdById String
@@ -234,15 +336,33 @@ model Database {
 }
 
 model Schema {
-  id          String   @id @default(uuid())
-  name        String
-  schema      Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
+  id            String          @id @default(uuid())
+  name          String
+  schema        Json
+  version       Int             @default(1)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  createdById   String
+  createdBy     User            @relation(fields: [createdById], references: [id])
+  LlmRequest    LlmRequest[]
+  SchemaHistory SchemaHistory[]
 
   @@unique([name, createdById])
+}
+
+model SchemaHistory {
+  id        String   @id @default(uuid())
+  version   Int
+  schema    Json
+  createdAt DateTime @default(now())
+
+  schemaId  String
+  schemaRef Schema @relation(fields: [schemaId], references: [id])
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  @@unique([schemaId, version])
 }
 
 model SchemaSubmission {
@@ -324,12 +444,18 @@ model Logs {
 }
 
 model Metadata {
-  id        String   @id @default(uuid())
-  type      String
+  id        String       @id @default(uuid())
+  type      MetadataType
   data      Json
-  tags      String[] @default([])
-  createdAt DateTime @default(now())
+  tags      String[]     @default([])
+  createdAt DateTime     @default(now())
 
+  fileId      String
+  file        File    @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  @@index([fileId])
   @@index([type])
   @@index([createdAt])
 }
@@ -395,10 +521,203 @@ model CommandHistory {
   @@index([terminalSessionId])
 }
 
+// New models for music and video functionality
+model Artist {
+  id        String   @id @default(uuid())
+  name      String
+  bio       String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  songs  Song[]
+  albums Album[]
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model Album {
+  id          String    @id @default(uuid())
+  title       String
+  releaseDate DateTime?
+  coverArt    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  artistId String
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  songs    Song[]
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model Genre {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  // Relationships
+  songs  Song[]  @relation("SongToGenre")
+  videos Video[] @relation("VideoToGenre")
+}
+
+model FavoriteSong {
+  id        String   @id @default(uuid())
+  songId    String
+  createdAt DateTime @default(now())
+
+  // Relationships
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  song        Song   @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([createdById, songId])
+}
+
+model FavoriteVideo {
+  id String @id @default(uuid())
+
+  videoId   String
+  createdAt DateTime @default(now())
+
+  // Relationships
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  video       Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([createdById, videoId])
+}
+
+model MusicHistory {
+  id          String   @id @default(uuid())
+  playedAt    DateTime @default(now())
+  progress    Int? // in seconds
+  songId      String
+  createdAt   DateTime @default(now())
+  // Relationships
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@index([createdById, playedAt])
+}
+
+model VideoHistory {
+  id       String   @id @default(uuid())
+  playedAt DateTime @default(now())
+  progress Int? // in minutes
+
+  videoId     String
+  createdAt   DateTime @default(now())
+  // Relationships
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  video       Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@index([createdById, playedAt])
+}
+
+model Diff {
+  id           String     @id @default(uuid())
+  llmRequest   LlmRequest @relation(fields: [llmRequestId], references: [id])
+  llmRequestId String
+  filePath     String
+  diff         String // unified diff string
+  createdAt    DateTime   @default(now())
+
+  @@index([llmRequestId])
+}
+
+model LlmRequest {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userPrompt             String
+  projectRoot            String
+  scanPaths              String[]
+  additionalInstructions String
+  expectedOutputFormat   String
+  requestType            RequestType
+
+  schemaId      String?
+  schema        Schema? @relation(fields: [schemaId], references: [id])
+  schemaVersion Int?
+  createdById   String
+  createdBy     User    @relation(fields: [createdById], references: [id])
+
+  // relations
+  response LlmResponse?
+  Diff     Diff[]
+}
+
+model LlmResponse {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title          String
+  summary        String
+  thoughtProcess String?
+
+  requestId String     @unique
+  request   LlmRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  changes ProposedFileChange[]
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  documentationId String
+  documentation   Documentation @relation(fields: [documentationId], references: [id])
+
+  gitInstructions String[]
+}
+
+model ProposedFileChange {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  filePath   String
+  action     FileAction
+  newContent String?
+  reason     String?
+
+  responseId String
+  response   LlmResponse @relation(fields: [responseId], references: [id])
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+}
+
+model ExecutionSnapshot {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  planId  String
+  success Boolean
+  error   String?
+
+  // git commit hash or diff for rollback
+  commitHash String?
+
+  appliedChanges Json?
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+}
+
 enum Role {
   ADMIN
   USER
   MANAGER
+  DEVELOPER
 }
 
 enum Sender {
@@ -407,11 +726,26 @@ enum Sender {
   BOT
 }
 
+enum FileAction {
+  ADD
+  MODIFY
+  DELETE
+  REPAIR
+  ANALYZE
+  INSTALL
+  RUN
+}
+
 enum RequestType {
   TEXT_ONLY
   TEXT_WITH_IMAGE
   TEXT_WITH_FILE
   LLM_GENERATION
+  LLM_CODE_ANALYSIS
+  LLM_CODE_OPTIMIZATION
+  LLM_CODE_REPAIR
+  LLM_CODE_DOCUMENTATION
+  LLM_ERROR_REPORTING
   LIVE_API
   RESUME_GENERATION
   RESUME_OPTIMIZATION
@@ -423,6 +757,9 @@ enum RequestType {
   SPEECH_TO_TEXT
   VOICE_COMMAND
   AUDIO_TRANSCRIPTION
+  ERROR_ANALYSIS
+  REFACTOR
+  OTHER
 }
 
 enum TerminalSessionStatus {
@@ -447,5 +784,51 @@ enum FileType {
   IMAGE
   DOCUMENT
   CODE
+  TEXT
+  ZIP
+  PDF
+  MARKDOWN
+  YAML
+  JSON
+  JAVASCRIPT
+  TYPESCRIPT
+  JSX
+  TSX
+  CSS
+  HTML
+  SQL
+  PYTHON
+  JAVA
+  XML
+  OTHER
+}
+
+enum MetadataType {
+  AUDIO
+  VIDEO
+  IMAGE
+  DOCUMENT
+  CODE
+  TEXT
+  ZIP
+  PDF
+  MARKDOWN
+  YAML
+  JSON
+  JAVASCRIPT
+  TYPESCRIPT
+  JSX
+  TSX
+  CSS
+  HTML
+  SQL
+  PYTHON
+  JAVA
+  XML
+  THUMBNAIL
+  LYRICS
+  TRANSCRIPT
+  SUBTITLES
+  DESCRIPTION
   OTHER
 }

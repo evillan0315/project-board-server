@@ -7,7 +7,13 @@ import {
   UseGuards,
   Logger,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 import { TerminalCommandDto } from './dto/terminal-command.dto';
 import { SshCommandDto } from './dto/ssh-command.dto';
@@ -65,7 +71,8 @@ export class TerminalController {
     status: 200,
     description: 'Command executed successfully',
     schema: {
-      example: '15:42:35 up 2 days,  3:12,  2 users,  load average: 0.15, 0.09, 0.10\n',
+      example:
+        '15:42:35 up 2 days,  3:12,  2 users,  load average: 0.15, 0.09, 0.10\n',
     },
   })
   @ApiResponse({
@@ -109,7 +116,8 @@ export class TerminalController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Execute a terminal command locally',
-    description: 'Runs a local terminal command and returns stdout/stderr/exit code.',
+    description:
+      'Runs a local terminal command and returns stdout/stderr/exit code.',
   })
   @ApiBody({ type: TerminalCommandDto })
   @ApiResponse({
@@ -159,8 +167,13 @@ export class TerminalController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Invalid input or failed to read package.json' })
-  async getPackageScripts(@Body() body: GetPackageScriptsDto): Promise<ProjectScriptsResponse> {
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input or failed to read package.json',
+  })
+  async getPackageScripts(
+    @Body() body: GetPackageScriptsDto,
+  ): Promise<ProjectScriptsResponse> {
     try {
       return await this.terminalService.getPackageScripts(body.projectRoot);
     } catch (error) {
@@ -174,57 +187,4 @@ export class TerminalController {
       );
     }
   }
-
-  /*@Post('ssh')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({
-    summary: 'Execute a remote SSH command',
-    description: 'Runs a command on a remote server over SSH.',
-  })
-  @ApiBody({ type: SshCommandDto })
-  @ApiResponse({
-    status: 200,
-    description: 'SSH command executed successfully',
-    schema: {
-      example: '15:21:00 up 10 days,  3:01,  1 user,  load average: 0.08, 0.10, 0.09',
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'SSH command execution failed',
-  })
-  async runSshCommand(@Body() body: SshCommandDto): Promise<string> {
-    const { host, port, username, password, privateKeyPath, command } = body;
-
-    try {
-      const config: any = {
-        host,
-        port: port || 22,
-        username,
-      };
-
-      if (privateKeyPath) {
-        config.privateKey = readFileSync(privateKeyPath);
-      } else if (password) {
-        config.password = password;
-      } else {
-        throw new Error('SSH requires either a password or private key path');
-      }
-
-
-      return await this.terminalService.runSshCommandOnce({
-	  host,
-	  port,
-	  username,
-	  password,
-	  privateKeyPath,
-	  command,
-	});
-    } catch (error) {
-      throw new HttpException(
-        { message: 'SSH command failed', details: error.message },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }*/
 }

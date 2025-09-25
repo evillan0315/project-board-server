@@ -60,7 +60,8 @@ export class LiveTurnResultDto {
 
   @ApiProperty({
     type: [Object],
-    description: 'Array of raw data contents (may contain audio or inline data).',
+    description:
+      'Array of raw data contents (may contain audio or inline data).',
   })
   @IsArray()
   datas: any[];
@@ -167,14 +168,16 @@ export class LiveAudioInputDto {
   sessionId: string;
 
   @ApiProperty({
-    description: 'Base64 encoded audio chunk. Each request should ideally contain one chunk.',
+    description:
+      'Base64 encoded audio chunk. Each request should ideally contain one chunk.',
     format: 'byte', // Indicates binary string in Swagger
   })
   @IsString()
   audioChunk: string;
 
   @ApiProperty({
-    description: 'MIME type of the audio (e.g., audio/webm, audio/wav, audio/mpeg).',
+    description:
+      'MIME type of the audio (e.g., audio/webm, audio/wav, audio/mpeg).',
   })
   @IsString()
   mimeType: string;

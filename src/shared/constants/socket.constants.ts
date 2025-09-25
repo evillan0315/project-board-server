@@ -48,16 +48,22 @@ const BACKEND_API_ENDPOINTS_KEYS = {
 
 // Helper to convert string to camelCase
 const toCamelCase = (str: string): string => {
-  return str.toLowerCase().replace(/_([a-z])/g, (_, char) => char.toUpperCase());
+  return str
+    .toLowerCase()
+    .replace(/_([a-z])/g, (_, char) => char.toUpperCase());
 };
 
 export const EVENT_PREFIX: { [key: string]: string } = {};
 
 // Populate EVENT_PREFIX based on BACKEND_API_ENDPOINTS_KEYS
 for (const groupKey in BACKEND_API_ENDPOINTS_KEYS) {
-  if (Object.prototype.hasOwnProperty.call(BACKEND_API_ENDPOINTS_KEYS, groupKey)) {
+  if (
+    Object.prototype.hasOwnProperty.call(BACKEND_API_ENDPOINTS_KEYS, groupKey)
+  ) {
     const groupEndpoints =
-      BACKEND_API_ENDPOINTS_KEYS[groupKey as keyof typeof BACKEND_API_ENDPOINTS_KEYS];
+      BACKEND_API_ENDPOINTS_KEYS[
+        groupKey as keyof typeof BACKEND_API_ENDPOINTS_KEYS
+      ];
 
     const baseGroupName = toCamelCase(groupKey.substring(1)); // e.g., "file", "eslint"
 
@@ -67,7 +73,9 @@ for (const groupKey in BACKEND_API_ENDPOINTS_KEYS) {
 
         const endpointCamelCase = toCamelCase(endpointKey);
         const eventPrefixValue =
-          baseGroupName + endpointCamelCase.charAt(0).toUpperCase() + endpointCamelCase.slice(1);
+          baseGroupName +
+          endpointCamelCase.charAt(0).toUpperCase() +
+          endpointCamelCase.slice(1);
 
         EVENT_PREFIX[constantName] = eventPrefixValue;
       }

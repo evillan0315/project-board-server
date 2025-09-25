@@ -77,7 +77,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.password.hash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.password.hash,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -102,7 +105,9 @@ export class AuthService {
     return { access_token, refresh_token, user: payload };
   }
 
-  async register(dto: RegisterDto): Promise<{ access_token: string; user: CreateJwtUserDto }> {
+  async register(
+    dto: RegisterDto,
+  ): Promise<{ access_token: string; user: CreateJwtUserDto }> {
     const hash = await bcrypt.hash(dto.password, 10);
     const createUser = {
       email: dto.email,
@@ -126,7 +131,11 @@ export class AuthService {
     const token = this.generateEmailVerificationToken(user.id);
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
 
-    await this.mailService.sendVerificationEmail(user.email, user.name ?? 'User', verifyUrl);
+    await this.mailService.sendVerificationEmail(
+      user.email,
+      user.name ?? 'User',
+      verifyUrl,
+    );
 
     // Construct JWT user payload
     const payload: CreateJwtUserDto = {
@@ -183,7 +192,11 @@ export class AuthService {
     const token = this.generateEmailVerificationToken(user.id);
     const verifyUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${token}`;
 
-    await this.mailService.sendVerificationEmail(user.email, user.name ?? 'User', verifyUrl);
+    await this.mailService.sendVerificationEmail(
+      user.email,
+      user.name ?? 'User',
+      verifyUrl,
+    );
 
     return { message: 'Verification email sent.' };
   }
@@ -201,13 +214,19 @@ export class AuthService {
     if (!user) {
       // For security, always return a generic success message
       // to avoid exposing whether an email is registered or not.
-      return { message: 'If a matching account was found, a password reset email has been sent.' };
+      return {
+        message:
+          'If a matching account was found, a password reset email has been sent.',
+      };
     }
 
     // Generate a secure, short-lived token (plaintext to be sent in email)
     const plainTextToken = crypto.randomBytes(32).toString('hex');
     // Hash the token for secure storage in the database
-    const dbTokenHash = crypto.createHash('sha256').update(plainTextToken).digest('hex');
+    const dbTokenHash = crypto
+      .createHash('sha256')
+      .update(plainTextToken)
+      .digest('hex');
     // Token expires in 1 hour
     const expiresAt = new Date(Date.now() + 3600 * 1000);
 
@@ -220,9 +239,16 @@ export class AuthService {
     });
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${plainTextToken}`;
-    await this.mailService.sendPasswordResetEmail(user.email, user.name ?? 'User', resetUrl);
+    await this.mailService.sendPasswordResetEmail(
+      user.email,
+      user.name ?? 'User',
+      resetUrl,
+    );
 
-    return { message: 'If a matching account was found, a password reset email has been sent.' };
+    return {
+      message:
+        'If a matching account was found, a password reset email has been sent.',
+    };
   }
 
   /**
@@ -232,9 +258,14 @@ export class AuthService {
    * @returns A promise that resolves with a success message.
    * @throws BadRequestException if the token is invalid, expired, or password criteria not met.
    */
-  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
     if (!newPassword || newPassword.length < 8) {
-      throw new BadRequestException('Password must be at least 8 characters long.');
+      throw new BadRequestException(
+        'Password must be at least 8 characters long.',
+      );
     }
 
     // Hash the incoming plaintext token to compare with the stored hash
@@ -333,7 +364,10 @@ export class AuthService {
       } else if (error instanceof JsonWebTokenError) {
         throw new UnauthorizedException('Invalid token');
       } else {
-        Logger.error(`Unknown error validating token: ${error.message}`, error.stack);
+        Logger.error(
+          `Unknown error validating token: ${error.message}`,
+          error.stack,
+        );
         throw new UnauthorizedException('Token validation failed');
       }
     }

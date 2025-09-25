@@ -17,8 +17,8 @@ import {
   GenerateTextDto,
   GenerateImageBase64Dto,
   // GenerateFileDto, // This DTO seems unused in your current controller, as you're using @Body('prompt') and @UploadedFile
-  GenerateVideoDto,          // <-- NEW: Import for video generation input
-  VideoGenerationResultDto,  // <-- NEW: Import for video generation output
+  GenerateVideoDto, // <-- NEW: Import for video generation input
+  VideoGenerationResultDto, // <-- NEW: Import for video generation output
 } from './dto';
 
 import {
@@ -69,7 +69,8 @@ export class GoogleGeminiFileController {
   @ApiOperation({
     summary: 'Generate text from a prompt with an embedded Base64 image.',
   })
-  @ApiCreatedResponse({ // ApiCreatedResponse is usually for 201, but 200 is also okay if returning direct result
+  @ApiCreatedResponse({
+    // ApiCreatedResponse is usually for 201, but 200 is also okay if returning direct result
     description: 'Generated text content based on the image and text prompt.',
     type: String,
     example:
@@ -117,13 +118,15 @@ export class GoogleGeminiFileController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'The file to attach (e.g., .sql, .txt, .pdf, .csv, .jpg, .png).',
+          description:
+            'The file to attach (e.g., .sql, .txt, .pdf, .csv, .jpg, .png).',
         },
       },
       required: ['prompt', 'file'], // Explicitly list required fields
     },
   })
-  @ApiCreatedResponse({ // ApiCreatedResponse is usually for 201, but 200 is also okay
+  @ApiCreatedResponse({
+    // ApiCreatedResponse is usually for 201, but 200 is also okay
     description: 'Generated text content based on the file and text prompt.',
     type: String,
     example:
@@ -157,21 +160,25 @@ export class GoogleGeminiFileController {
   @Post('generate-video') // <-- NEW ENDPOINT FOR VEO 3.0
   @Roles(UserRole.USER, UserRole.ADMIN, UserRole.MANAGER)
   @HttpCode(HttpStatus.OK) // Or HttpStatus.ACCEPTED (202) if you want to signal it's a long-running process that will complete later.
-                          // Since the service already waits for completion and returns the final URI, OK (200) is fine.
+  // Since the service already waits for completion and returns the final URI, OK (200) is fine.
   @ApiOperation({
-    summary: 'Generate a video using the Veo 3.0 model from a text prompt. This is a long-running operation.',
+    summary:
+      'Generate a video using the Veo 3.0 model from a text prompt. This is a long-running operation.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Video generation successfully completed. Returns the URI of the generated video.',
+    description:
+      'Video generation successfully completed. Returns the URI of the generated video.',
     type: VideoGenerationResultDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid video generation prompt.' })
-  @ApiResponse({ status: 500, description: 'Internal Server Error during video generation or polling.' })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal Server Error during video generation or polling.',
+  })
   async generateVideo(
     @Body() generateVideoDto: GenerateVideoDto,
   ): Promise<VideoGenerationResultDto> {
     return this.googleGeminiFileService.generateVideo(generateVideoDto);
   }
 }
-

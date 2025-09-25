@@ -163,14 +163,13 @@ export class FileGateway
       },
     });
   }
-  
+
   @SubscribeMessage('dynamicFileEvent')
   async handleDynamicFileEvent(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: ApiDataProps,
   ): Promise<WsResponse<any>> {
     try {
-
       const responseEvent = `${data.event}Response`;
 
       const res = await this.handleApiWithProgress(
@@ -201,7 +200,4 @@ export class FileGateway
       return { event: errorEvent, data: error.message };
     }
   }
-
-  
 }
-

@@ -1,8 +1,22 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+
+// full-stack/src/google/google-gemini/google-gemini-file/google-gemini-file.service.ts
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+  Inject,
+  Scope,
+  HttpException,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import * as wav from 'wav';
 import * as fs from 'fs';
 import * as path from 'path';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+import { CreateJwtUserDto } from '../../auth/dto/auth.dto';
 
 interface SpeakerVoiceInput {
   speaker: string;
@@ -12,8 +26,10 @@ interface SpeakerVoiceInput {
 @Injectable()
 export class GoogleGeminiTtsService {
   private readonly ai: GoogleGenAI;
-
-  constructor() {
+  private readonly downloadDir = path.resolve(process.cwd(), 'downloads');
+  
+  constructor(@Inject(REQUEST)
+    private readonly request: Request & { user?: CreateJwtUserDto },) {
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
     if (!apiKey) {
       throw new HttpException(
@@ -23,7 +39,14 @@ export class GoogleGeminiTtsService {
     }
     this.ai = new GoogleGenAI({ apiKey });
   }
-
+  private get userId(): string {
+    if (!this.request.user || !this.request.user.id) {
+      throw new InternalServerErrorException(
+        'User ID not found in request context. Authentication might be missing or misconfigured.',
+      );
+    }
+    return this.request.user.id;
+  }
   private async saveWaveFile(
     filename: string,
     pcmData: Buffer,
@@ -31,7 +54,19 @@ export class GoogleGeminiTtsService {
     rate = 24000,
     sampleWidth = 2,
   ): Promise<void> {
-    const dir = path.join(__dirname, '..', '..', 'tts', 'voice');
+   
+    const baseTypeDirName = 'TTS';
+   
+    const currentUserId = this.userId;
+
+    // Construct the target directory: downloads/<audio|videos>/<provider>/<userId>
+    const dir = path.join(
+      this.downloadDir,
+      baseTypeDirName,
+      'voice',
+      currentUserId,
+    );
+
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -106,7 +141,19 @@ export class GoogleGeminiTtsService {
       const voices = speakers.map((s) => s.voiceName).join('_');
       const filename = `${dateStr}_${voices}_${languageCode}.wav`;
 
-      const dir = path.join(__dirname, '..', '..', 'tts', 'voice');
+
+    const baseTypeDirName = 'TTS';
+   
+    const currentUserId = this.userId;
+
+    // Construct the target directory: downloads/<audio|videos>/<provider>/<userId>
+    const dir = path.join(
+      this.downloadDir,
+      baseTypeDirName,
+      'voice',
+      currentUserId,
+    );
+
       const fullPath = path.join(dir, filename);
       console.log(fullPath, 'fullPath generateSpeech');
       // Save WAV file
