@@ -35,7 +35,7 @@ export class PlannerService {
   chunkPlan(planId: string, size = 3) {
     const p = this.plans.get(planId);
     if (!p) return null;
-    const chunks = [];
+    const chunks: FileChangeDto[][] = [];
     for (let i = 0; i < p.changes.length; i += size) {
       chunks.push(p.changes.slice(i, i + size));
     }
