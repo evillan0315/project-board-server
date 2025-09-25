@@ -12,7 +12,7 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJwtUserDto } from '../auth/dto/auth.dto';
-import { File, FileType, Prisma, MetadataType } from '@prisma/client';
+import { File, FileType, Prisma, Metadata, MetadataType } from '@prisma/client';
 import {
   PaginationMediaQueryDto,
   MediaScanRequestDto,
@@ -66,6 +66,9 @@ const MIME_TYPES_MAP: Record<string, string> = {
   '.webp': 'image/webp',
   '.tiff': 'image/tiff',
 };
+
+// Define a type for File including its Metadata relation
+type FileWithMetadata = File & { metadata: Metadata[] };
 
 @Injectable()
 export class MediaService {
@@ -148,7 +151,8 @@ export class MediaService {
       proc.on('close', (code) => {
         if (code === 0) {
           resolve(output.trim());
-        } else {
+        }
+        else {
           reject(
             new Error(
               `${command} exited with code ${code}. Stderr: ${errorOutput}`,
@@ -232,7 +236,7 @@ export class MediaService {
     onFilePathReady?: (filePath: string) => void,
     provider?: string,
     cookieAccess?: boolean,
-  ): Promise<File> {
+  ): Promise<FileWithMetadata> {
     return new Promise(async (resolve, reject) => {
       const isAudio = ['mp3', 'm4a', 'wav'].includes(format);
       const baseTypeDirName = isAudio ? 'audio' : 'videos';
@@ -423,7 +427,7 @@ export class MediaService {
     userId: string,
     metadataFromYtDlp?: any, // Metadata fetched directly from yt-dlp
     thumbnailUrl?: string | null, // Locally generated thumbnail URL
-  ): Promise<File> {
+  ): Promise<FileWithMetadata> {
     const isAudio = ['mp3', 'm4a', 'wav'].includes(mediaFormat);
     const baseTypeDirName = isAudio ? 'audio' : 'videos';
 
@@ -567,7 +571,7 @@ export class MediaService {
     }
 
     // Basic security check: prevent scanning root or highly sensitive directories
-    const forbiddenPaths = ['/etc', '/boot', '/usr', '/var', '/dev', '/proc', '/sys', '/node_modules',  'C:\\', 'C:\\Windows', 'C:\\Program Files'];
+    const forbiddenPaths = ['/etc', '/boot', '/usr', '/var', '/dev', '/proc', '/sys', '/node_modules'];
     if (forbiddenPaths.some(p => path.normalize(directoryPath).startsWith(path.normalize(p)))) {
         throw new BadRequestException('Scanning of this directory is not allowed for security reasons.');
     }
@@ -595,10 +599,8 @@ export class MediaService {
 
         if (fileType) {
           try {
-            // Generate a unique file ID upfront for scanned files
-            const fileId = uuidv4();
+            // Call _saveScannedMediaFileToPrisma without a pre-generated fileId
             const savedFile = await this._saveScannedMediaFileToPrisma(
-              fileId, // Pass the pre-generated fileId
               filePath,
               fileType,
               userId,
@@ -637,81 +639,146 @@ export class MediaService {
   /**
    * Saves a locally scanned media file and its parent folders to Prisma.
    * This is a more generic version compared to saveMediaFileToPrisma which is YouTube specific.
-   * It also includes a check to prevent duplicate file paths for the same user.
+   * It also includes a check to prevent duplicate file paths for the same user,
+   * but will generate a thumbnail for existing video files if one is missing.
    */
   private async _saveScannedMediaFileToPrisma(
-    fileId: string, // Unique ID for the file, generated upfront
     absoluteFilePath: string,
     fileType: FileType,
     userId: string,
-    baseScanDirectory: string, // The root directory from which the scan started
-    ffmpegAvailable: boolean, // Indicates if ffmpeg is available for thumbnail generation
-  ): Promise<File | null> {
-    // Check if a file with this path already exists for this user
-    const existingFile = await this.prisma.file.findFirst({
+    baseScanDirectory: string,
+    ffmpegAvailable: boolean,
+  ): Promise<FileWithMetadata | null> {
+    // Check if a file with this path already exists for this user, including its metadata
+    const existingFile: FileWithMetadata | null = await this.prisma.file.findFirst({
       where: {
         path: absoluteFilePath,
         createdById: userId,
       },
+      include: { metadata: true },
     });
 
     if (existingFile) {
-      this.logger.debug(`File already exists in DB, skipping: ${absoluteFilePath}`);
-      return null; // Skip if already exists
+      this.logger.debug(`File already exists in DB: ${absoluteFilePath}`);
+
+      // If it's a video and no thumbnail exists in its metadata, generate one
+      if (existingFile.fileType === FileType.VIDEO && ffmpegAvailable) {
+        const existingVideoMetadata = existingFile.metadata.find(
+          (m) => m.type === existingFile.fileType,
+        );
+
+        // Only proceed if existingVideoMetadata is found
+        if (existingVideoMetadata) {
+          const hasThumbnailInMetadata = 
+            typeof existingVideoMetadata.data === 'object' &&
+            existingVideoMetadata.data !== null &&
+            !Array.isArray(existingVideoMetadata.data) && // Ensure it's not an array
+            'thumbnail' in existingVideoMetadata.data &&
+            (existingVideoMetadata.data as Prisma.JsonObject).thumbnail; // Cast for explicit access
+
+          if (!hasThumbnailInMetadata) {
+            this.logger.log(`Generating missing thumbnail for existing video file: ${absoluteFilePath}`);
+            const thumbnailUrl = await this._generateThumbnail(
+              absoluteFilePath,
+              existingFile.id,
+              userId,
+            );
+
+            if (thumbnailUrl) {
+              // Ensure existingVideoMetadata.data is a JsonObject or fallback to empty object
+              const currentMetadataData =
+                typeof existingVideoMetadata.data === 'object' &&
+                existingVideoMetadata.data !== null &&
+                !Array.isArray(existingVideoMetadata.data)
+                  ? (existingVideoMetadata.data as Prisma.JsonObject)
+                  : {};
+
+              // Update the existing video metadata in DB
+              await this.prisma.metadata.update({
+                where: { id: existingVideoMetadata.id },
+                data: {
+                  data: {
+                    ...currentMetadataData, // Preserve existing data
+                    thumbnail: thumbnailUrl,
+                  },
+                },
+              });
+              this.logger.log(`Updated existing file ${existingFile.name} with new thumbnail.`);
+
+              // Manually update metadata in the returned object to reflect the change
+              const updatedMetadataArray = existingFile.metadata.map((m) =>
+                m.id === existingVideoMetadata.id
+                  ? {
+                      ...m,
+                      data: {
+                        ...currentMetadataData,
+                        thumbnail: thumbnailUrl,
+                      } as Prisma.JsonValue, // Cast back to JsonValue for the property type
+                    }
+                  : m,
+              );
+              // Create a new object to ensure immutability and correct type inference for the return
+              return { ...existingFile, metadata: updatedMetadataArray };
+            }
+          }
+        }
+      }
+      return existingFile; // Return existing file, either with existing thumbnail or if it's not a video
     }
 
+    // If file does not exist, proceed with creation logic
     const fileStats = await fs.promises.stat(absoluteFilePath);
     const fileSize = BigInt(fileStats.size);
     const fileNameWithExt = path.basename(absoluteFilePath);
     const fileExtension = path.extname(absoluteFilePath).toLowerCase();
     const mimeType = MIME_TYPES_MAP[fileExtension] || 'application/octet-stream';
 
+    // Generate a new unique file ID for the new file
+    const newFileId = uuidv4();
+
     // Build folder hierarchy in Prisma relative to `baseScanDirectory`
     let currentParentFolderId: string | null = null;
     let currentPathSegment = baseScanDirectory;
 
     // Find or create the baseScanDirectory as a root or child of 'downloads'
+    let downloadsFolder = await this.prisma.folder.findFirst({
+      where: { path: this.downloadDir, createdById: userId, parentId: null },
+    });
+
+    if (!downloadsFolder) {
+      downloadsFolder = await this.prisma.folder.create({
+        data: {
+          name: 'downloads',
+          path: this.downloadDir,
+          createdById: userId,
+          parentId: null,
+        },
+      });
+      this.logger.log(`Created root 'downloads' folder in Prisma: ${downloadsFolder.path}`);
+    }
+
+    const scansDirPath = path.join(this.downloadDir, 'scans');
+    let scansFolder = await this.prisma.folder.findFirst({
+      where: { path: scansDirPath, createdById: userId, parentId: downloadsFolder.id },
+    });
+
+    if (!scansFolder) {
+      scansFolder = await this.prisma.folder.create({
+        data: {
+          name: 'scans',
+          path: scansDirPath,
+          createdById: userId,
+          parentId: downloadsFolder.id,
+        },
+      });
+      this.logger.log(`Created 'scans' sub-folder under 'downloads': ${scansFolder.path}`);
+    }
+
     let rootScanFolder = await this.prisma.folder.findFirst({
-      where: { path: baseScanDirectory, createdById: userId },
+      where: { path: baseScanDirectory, createdById: userId, parentId: scansFolder.id },
     });
 
     if (!rootScanFolder) {
-      // Logic to create a 'scans' root folder under 'downloads' if it doesn't exist
-      // This provides a logical grouping for scanned content, separate from yt-dlp downloads
-      let downloadsFolder = await this.prisma.folder.findFirst({
-        where: { path: this.downloadDir, createdById: userId, parentId: null },
-      });
-
-      if (!downloadsFolder) {
-        downloadsFolder = await this.prisma.folder.create({
-          data: {
-            name: 'downloads',
-            path: this.downloadDir,
-            createdById: userId,
-            parentId: null,
-          },
-        });
-        this.logger.log(`Created root 'downloads' folder in Prisma: ${downloadsFolder.path}`);
-      }
-
-      const scansDirPath = path.join(this.downloadDir, 'scans');
-      let scansFolder = await this.prisma.folder.findFirst({
-        where: { path: scansDirPath, createdById: userId, parentId: downloadsFolder.id },
-      });
-
-      if (!scansFolder) {
-        scansFolder = await this.prisma.folder.create({
-          data: {
-            name: 'scans',
-            path: scansDirPath,
-            createdById: userId,
-            parentId: downloadsFolder.id,
-          },
-        });
-        this.logger.log(`Created 'scans' sub-folder under 'downloads': ${scansFolder.path}`);
-      }
-
-      // Now create the actual baseScanDirectory under 'scans'
       rootScanFolder = await this.prisma.folder.create({
         data: {
           name: path.basename(baseScanDirectory),
@@ -751,12 +818,12 @@ export class MediaService {
 
     let thumbnailUrl: string | null = null;
     if (fileType === FileType.VIDEO && ffmpegAvailable) {
-      thumbnailUrl = await this._generateThumbnail(absoluteFilePath, fileId, userId);
+      thumbnailUrl = await this._generateThumbnail(absoluteFilePath, newFileId, userId);
     }
 
     const file = await this.prisma.file.create({
       data: {
-        id: fileId, // Use the pre-generated fileId
+        id: newFileId, // Use the newFileId for creation
         name: fileNameWithExt,
         path: absoluteFilePath,
         fileType: fileType,
@@ -786,7 +853,7 @@ export class MediaService {
     query: PaginationMediaQueryDto,
     select?: Prisma.FileSelect,
   ): Promise<{
-    items: File[];
+    items: FileWithMetadata[];
     total: number;
     page: number;
     pageSize: number;
@@ -830,7 +897,7 @@ export class MediaService {
     ]);
 
     return {
-      items,
+      items: items as FileWithMetadata[], // Cast to ensure correct type for return
       total,
       page,
       pageSize,
@@ -838,7 +905,7 @@ export class MediaService {
     };
   }
 
-  async findOne(id: string): Promise<File | null> {
+  async findOne(id: string): Promise<FileWithMetadata | null> {
     return this.prisma.file.findUnique({
       where: { id, createdById: this.userId },
       include: { metadata: true }, // Include metadata for consistent response

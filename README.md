@@ -1,4 +1,3 @@
-````markdown
 # Full-Stack Developer Toolkit & Utilities Server
 
 A comprehensive backend application built with **NestJS**, providing robust authentication, extensive file and folder management (local and remote), powerful AI-powered code and content generation (Google Gemini), a suite of developer utilities, and screen recording capabilities. Designed for rapid development and enhanced productivity.
@@ -25,6 +24,7 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 - ✅ **Content Resolution:** Read file content from uploaded files, local paths, or URLs.
 - ✅ **Multiple File Operations:** Upload and read content from multiple files.
 - ✅ **Project Scanning:** Recursively scan directories for relevant code files, useful for AI context building (with intelligent exclusion lists).
+- ✅ **Video Thumbnail Generation:** Automatically generate thumbnails for video files upon extraction from URLs or local scanning.
 - ✅ **Real-time Collaboration (WebSockets):** Open, close, update, create, and delete files with real-time notifications for collaborative editing.
 - ✅ **Remote File Management (SSH/SFTP):**
   - List files and directories on remote servers.
@@ -32,6 +32,7 @@ A comprehensive backend application built with **NestJS**, providing robust auth
   - Download files from remote servers.
   - Execute shell commands on remote servers.
 - ✅ **GitHub Repository Management:** Create, commit, delete, list, and view contents of GitHub repositories.
+- ✅ **Media Library Integration:** Automatically link scanned or extracted audio/video files to existing `Song` or `Video` entities in the media library, or create new ones if they don't exist, enriching the media collection.
 
 ### Generative AI (Google Gemini & Translator)
 
@@ -102,7 +103,6 @@ git clone https://github.com/evillan0315/project-board-server.git
 cd project-board-server
 pnpm install
 ```
-````
 
 ### 2. Environment Configuration
 
@@ -156,8 +156,9 @@ npx prisma migrate dev --name init
 
 ### 4. Install External System Dependencies (if needed)
 
-- **FFmpeg:** Required for screen recording and screenshots. [Download & Install FFmpeg](https://ffmpeg.org/download.html)
+- **FFmpeg:** Required for screen recording, screenshots, **and video thumbnail generation**. [Download & Install FFmpeg](https://ffmpeg.org/download.html)
 - **Pandoc:** Required for converting Markdown/HTML to DOCX. [Download & Install Pandoc](https://pandoc.org/installing.html)
+- **ffprobe-client (npm package):** Required for extracting metadata (e.g., duration) from scanned local media files.
 
 ### 5. Run the Application
 
@@ -214,10 +215,20 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `DELETE` | `/repos/:repoName`          | Delete a GitHub repository                         |
 | `GET`    | `/repos/:repoName/contents` | Get repository files and directory contents        |
 
+### Database Management
+
+| Method   | Endpoint                     | Description                                        |
+| -------- | ---------------------------- | -------------------------------------------------- |
+| `GET`    | `/api/database/tables`       | List all tables/collections with column metadata   |
+| `GET`    | `/api/database/columns`      | Get column details for a specific table            |
+| `POST`   | `/api/database/create-table` | Create a new table or collection                   |
+| `DELETE` | `/api/database/drop-table`   | **Drop a table or collection**                     |
+| `POST`   | `/api/database/execute`      | Execute raw SQL queries                            |
+
 ### Generative AI (Google Gemini & Translator)
 
 | Method | Endpoint                               | Description                             |
-| ------ | -------------------------------------- | --------------------------------------- |
+| ------ | -------------------------------------- | -------- |
 | `POST` | `/api/google-gemini/generate-doc`      | Generate documentation from code        |
 | `POST` | `/api/google-gemini/generate-code`     | Generate code snippets                  |
 | `POST` | `/api/google-gemini-image/caption-url` | Caption image from URL                  |
@@ -232,10 +243,11 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 
 ### LLM Operations
 
-| Method | Endpoint                     | Description                                     |
-| ------ | ---------------------------- | ----------------------------------------------- |
-| `POST` | `/api/llm/generate-llm`      | Generate code/content and proposed file changes |
-| `GET`  | `/api/llm/project-structure` | Generate project structure (directory tree)     |
+| Method | Endpoint                     | Description                                            |
+| ------ | ---------------------------- | ------------------------------------------------------ |
+| `POST` | `/api/llm/generate-llm`      | Generate code/content and proposed file changes        |
+| `POST` | `/api/llm/report-error`      | Report an error to the LLM for analysis and fix suggestions |
+| `GET`  | `/api/llm/project-structure` | Generate project structure (directory tree)            |
 
 ### Conversation Management
 
@@ -291,14 +303,16 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 ```
 src/
 ├── account/            # User account management
+├── album/              # Management of music albums
 ├── app.module.ts       # Root module
+├── artist/             # Management of music artists
 ├── auth/               # User authentication, authorization, OAuth (Google, GitHub)
 ├── aws/                # AWS service integrations (EC2, RDS, S3, DynamoDB, Security Groups, Billing)
 ├── bulk-data/          # Bulk data import/export functionalities
 ├── code-extractor/     # Extracting code from various file formats
 ├── command-history/    # Persistence for terminal command history
 ├── common/             # Common DTOs, services, and helpers
-├── config/             # Application configuration (e.g., feature flags)
+├── config/              # Application configuration (e.g., feature flags)
 ├── conversation/       # Chat conversation history for AI interactions
 ├── database/           # Database management and SQL utilities
 ├── endpoints/          # API endpoint discovery and constants generation
@@ -315,9 +329,11 @@ src/
 ├── log/                # Application logging with persistence
 ├── mail/               # Email sending (e.g., for verification)
 ├── manifest/           # Manifest generation service
-├── media/              # Media file management
+├── media/              # Media file management and transcription
 ├── module-control/     # Toggle modules on/off
 ├── organization/       # Organization management
+├── playlist/           # Management of user-created media playlists
+├── playlist-media-file/# Join table for playlists and media files
 ├── prisma/             # Prisma ORM setup and service
 ├── project/            # Project management (metadata, status, etc.)
 ├── recording/          # Screen recording and screenshot capture
@@ -327,6 +343,7 @@ src/
 ├── schema-submission/  # Handling submissions against defined schemas
 ├── setup/              # Initial application setup and environment configuration
 ├── shared/             # Shared interfaces and constants
+├── song/               # Management of music songs
 ├── subtitle/           # Subtitle processing service
 ├── system-instruction/ # Management of AI system instructions
 ├── terminal/           # Terminal command execution, local and remote SSH shell, session management
@@ -336,6 +353,7 @@ src/
 ├── types/              # Global TypeScript type definitions
 ├── user/               # User management (beyond authentication)
 └── utils/              # General utilities (encoding, markdown, SQL parsing, image conversion, JSON/YAML, transpilation, ESLint)
+└── video/              # Management of video content
 ```
 
 ---
