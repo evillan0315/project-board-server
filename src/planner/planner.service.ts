@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { LlmService } from './llm.service';
 import { ExecutorService } from './executor.service';
-import { PlanDto } from './types';
+import { PlanDto, FileChangeDto } from './types';
 import { validatePlan } from './validator';
 import { v4 as uuidv4 } from 'uuid';
 
