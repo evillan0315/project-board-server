@@ -17717,13 +17717,52 @@
       "post": {
         "operationId": "PlannerController_createPlan",
         "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "description": "The prompt to generate the plan from",
+                    "example": "Implement user authentication with Google OAuth"
+                  }
+                },
+                "required": [
+                  "prompt"
+                ]
+              }
+            }
           }
         },
+        "responses": {
+          "201": {
+            "description": "The plan has been successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "planId": {
+                      "type": "string",
+                      "description": "The ID of the generated plan.",
+                      "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                    },
+                    "plan": {
+                      "type": "object",
+                      "description": "The generated plan object."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a new plan from a prompt",
         "tags": [
-          "Planner"
+          "api/planner"
         ]
       }
     },
@@ -17735,6 +17774,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the plan",
             "schema": {
               "type": "string"
             }
@@ -17742,11 +17782,12 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "The plan details."
           }
         },
+        "summary": "Get a plan by ID",
         "tags": [
-          "Planner"
+          "api/planner"
         ]
       }
     },
@@ -17758,6 +17799,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the plan",
             "schema": {
               "type": "string"
             }
@@ -17765,11 +17807,12 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "The chunks of the plan."
           }
         },
+        "summary": "Get chunks of a plan by ID",
         "tags": [
-          "Planner"
+          "api/planner"
         ]
       }
     },
@@ -17781,6 +17824,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the plan",
             "schema": {
               "type": "string"
             }
@@ -17789,6 +17833,7 @@
             "name": "index",
             "required": true,
             "in": "path",
+            "description": "The index of the chunk to apply",
             "schema": {
               "type": "string"
             }
@@ -17796,11 +17841,12 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "The chunk has been successfully applied."
           }
         },
+        "summary": "Apply a chunk of a plan by ID and index",
         "tags": [
-          "Planner"
+          "api/planner"
         ]
       }
     },
@@ -17808,13 +17854,25 @@
       "post": {
         "operationId": "PlannerController_applyPlan",
         "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
+        "requestBody": {
+          "required": true,
+          "description": "The plan to apply",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlannerDto"
+              }
+            }
           }
         },
+        "responses": {
+          "201": {
+            "description": "The plan has been successfully applied."
+          }
+        },
+        "summary": "Apply a plan",
         "tags": [
-          "Planner"
+          "api/planner"
         ]
       }
     }
@@ -19662,7 +19720,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-09-25T22:38:24.970Z",
+            "example": "2025-09-26T00:02:49.041Z",
             "format": "date-time"
           },
           "requestType": {
@@ -23389,6 +23447,81 @@
             "description": "videoId field"
           }
         }
+      },
+      "FileChangeDto": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "Absolute or relative path of the file to be changed.",
+            "example": "src/components/WelcomeMessage.tsx"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "ADD",
+              "MODIFY",
+              "DELETE",
+              "REPAIR",
+              "ANALYZE",
+              "INSTALL",
+              "RUN"
+            ],
+            "description": "Type of operation to perform on the file.",
+            "example": "ADD"
+          },
+          "diff": {
+            "type": "string",
+            "description": "Optional unified diff to apply instead of providing full newContent.",
+            "example": "--- a/src/old.ts\n+++ b/src/old.ts\n@@ ..."
+          },
+          "newContent": {
+            "type": "string",
+            "description": "New content for ADD, MODIFY, or REPAIR operations when diff is not provided.",
+            "example": "import React from \"react\";\n\nconst WelcomeMessage = () => <div>Hello, AI User!</div>;\n\nexport default WelcomeMessage;"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Brief explanation or justification for this file change.",
+            "example": "New component to display a welcome message."
+          }
+        },
+        "required": [
+          "filePath",
+          "action"
+        ]
+      },
+      "CreatePlannerDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "High-level title for the overall changes or response.",
+            "example": "Implement User Authentication Module"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Concise summary describing the overall changes or solution.",
+            "example": "Implemented a new React component `WelcomeMessage.tsx` to display a greeting message."
+          },
+          "thoughtProcess": {
+            "type": "string",
+            "description": "Detailed reasoning behind the proposed changes.",
+            "example": "The user requested a React component, so I created a functional component in TypeScript and placed it in `src/components`."
+          },
+          "changes": {
+            "description": "List of proposed file changes generated by the LLM.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileChangeDto"
+            }
+          }
+        },
+        "required": [
+          "title",
+          "summary",
+          "changes"
+        ]
       }
     }
   }

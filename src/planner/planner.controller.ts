@@ -1,6 +1,10 @@
+// FilePath: src/modules/planner/planner.controller.ts
+// Title: REST controller for planner endpoints
+// Reason: Expose endpoints to create, retrieve and apply plans and plan chunks
+
 import { Controller, Post, Body, Param, Get } from '@nestjs/common';
 import { PlannerService } from './planner.service';
-import { type PlanDto } from './types';
+import { CreatePlannerDto as PlanDto } from './dto';
 import { ApiOperation, ApiResponse, ApiTags, ApiParam, ApiBody } from '@nestjs/swagger';
 
 @ApiTags('api/planner')
@@ -19,14 +23,7 @@ export class PlannerController {
           example: 'Implement user authentication with Google OAuth',
         },
       },
-      required: []
-    },
-    examples: {
-      examplePrompt: {
-        summary: 'Example Prompt',
-        description: 'A sample prompt for generating a plan.',
-        value: { prompt: 'Implement user authentication with Google OAuth' },
-      },
+      required: ['prompt'],
     },
   })
   @ApiResponse({
@@ -43,91 +40,31 @@ export class PlannerController {
         plan: {
           type: 'object',
           description: 'The generated plan object.',
-          example: {
-            title: 'Implement Google OAuth Authentication',
-            summary: 'Adds Google OAuth login functionality.',
-            changes: [
-              {
-                filePath: 'src/auth/auth.service.ts',
-                action: 'modify',
-                newContent: '// Code changes here',
-                reason: 'Implement Google OAuth logic'
-              }
-            ]
-          }
-        }
-      }
+        },
+      },
     },
   })
   @Post()
-  async createPlan(@Body() body: { prompt?: string }) {
-    const prompt = body.prompt || '';
-    const result = await this.planner.planFromPrompt(prompt);
+  async createPlan(@Body() body: { prompt: string }) {
+    const result = await this.planner.planFromPrompt(body.prompt);
     return result;
   }
 
   @ApiOperation({ summary: 'Get a plan by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the plan' })
-  @ApiResponse({
-    status: 200,
-    description: 'The plan details.',
-    schema: {
-      type: 'object',
-      properties: {
-        plan: {
-          type: 'object',
-          description: 'The requested plan object.',
-          example: {
-            title: 'Implement Google OAuth Authentication',
-            summary: 'Adds Google OAuth login functionality.',
-            changes: [
-              {
-                filePath: 'src/auth/auth.service.ts',
-                action: 'modify',
-                newContent: '// Code changes here',
-                reason: 'Implement Google OAuth logic'
-              }
-            ]
-          }
-        }
-      }
-    },
-  })
+  @ApiResponse({ status: 200, description: 'The plan details.' })
   @Get(':id')
   async getPlan(@Param('id') id: string) {
-    const plan = this.planner.getPlan(id);
+    const plan = await this.planner.getPlan(id);
     return { plan };
   }
 
   @ApiOperation({ summary: 'Get chunks of a plan by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the plan' })
-  @ApiResponse({
-    status: 200,
-    description: 'The chunks of the plan.',
-    schema: {
-      type: 'object',
-      properties: {
-        chunks: {
-          type: 'array',
-          items: {
-            type: 'array',
-            description: 'A chunk of file changes.',
-            example: [
-              {
-                filePath: 'src/auth/auth.service.ts',
-                action: 'modify',
-                newContent: '// Code changes here',
-                reason: 'Implement Google OAuth logic'
-              }
-            ]
-          }
-        }
-      }
-    },
-  })
+  @ApiResponse({ status: 200, description: 'The chunks of the plan.' })
   @Get(':id/chunks')
   async getChunks(@Param('id') id: string) {
-    const chunks = this.planner.chunkPlan(id);
+    const chunks = await this.planner.chunkPlan(id);
     return { chunks };
   }
 
@@ -146,24 +83,6 @@ export class PlannerController {
   @ApiBody({
     type: PlanDto,
     description: 'The plan to apply',
-    examples: {
-      examplePlan: {
-        summary: 'Example Plan',
-        description: 'A sample plan object.',
-        value: {
-          title: 'Implement Google OAuth Authentication',
-          summary: 'Adds Google OAuth login functionality.',
-          changes: [
-            {
-              filePath: 'src/auth/auth.service.ts',
-              action: 'modify',
-              newContent: '// Code changes here',
-              reason: 'Implement Google OAuth logic'
-            }
-          ]
-        }
-      }
-    }
   })
   @ApiResponse({ status: 201, description: 'The plan has been successfully applied.' })
   @Post('apply')
@@ -172,3 +91,4 @@ export class PlannerController {
     return result;
   }
 }
+
