@@ -29,6 +29,7 @@ import { JwtAuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/enums/user-role.enum';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 import { RecordingService } from './recording.service';
 import {
@@ -77,13 +78,16 @@ export class RecordingController {
       },
     },
   })
-  async recordingStatus(@Query('id') id: string): Promise<{
+  async recordingStatus(
+    @CurrentUser('id') userId: string,
+    @Query('id') id: string,
+  ): Promise<{
     id: string;
     recording: boolean;
     file: string | null;
     startedAt: string | null;
   }> {
-    return this.recordingService.getRecordingStatus(id);
+    return this.recordingService.getRecordingStatus(userId, id);
   }
 
   @Get('metadata')
@@ -94,42 +98,26 @@ export class RecordingController {
     description: 'Full path or filename',
   })
   async getMetadata(
+    @CurrentUser('id') userId: string,
     @Query('file') file: string,
   ): Promise<{ size: number; modified: string }> {
-    const filePath = file.includes('/')
-      ? file
-      : join(process.cwd(), 'downloads', 'recordings', file);
-    const stats = await stat(filePath);
-    return { size: stats.size, modified: stats.mtime.toISOString() };
+    return this.recordingService.getMetadata(userId, file);
   }
 
   @Get('list')
   @ApiOperation({ summary: 'List all saved recording files on disk.' })
-  async listRecordings(): Promise<string[]> {
-    const dir = join(process.cwd(), 'downloads', 'recordings');
-    const files = await readdir(dir);
-    return files.map((f) => join(dir, f));
+  async listRecordings(@CurrentUser('id') userId: string): Promise<string[]> {
+    return this.recordingService.listRecordings(userId);
   }
 
   @Delete('recordings/cleanup')
   @ApiOperation({ summary: 'Delete recordings older than N days.' })
   @ApiQuery({ name: 'days', required: false, type: Number, example: 7 })
-  async cleanupOld(@Query('days') days = 7): Promise<{ deleted: string[] }> {
-    const dir = join(process.cwd(), 'downloads', 'recordings');
-    const files = await readdir(dir);
-    const now = Date.now();
-    const deleted: string[] = [];
-
-    for (const file of files) {
-      const filePath = join(dir, file);
-      const stats = await stat(filePath);
-      if (now - stats.mtimeMs > days * 24 * 60 * 60 * 1000) {
-        await unlink(filePath);
-        deleted.push(filePath);
-      }
-    }
-
-    return { deleted };
+  async cleanupOld(
+    @CurrentUser('id') userId: string,
+    @Query('days') days = 7,
+  ): Promise<{ deleted: string[] }> {
+    return this.recordingService.cleanupOld(userId, days);
   }
 
   @Post('capture')
@@ -139,8 +127,8 @@ export class RecordingController {
     description: 'Screen captured.',
     type: StopRecordingResponse,
   })
-  async capture(): Promise<StopRecordingResponse> {
-    return this.recordingService.captureScreen();
+  async capture(@CurrentUser('id') userId: string): Promise<StopRecordingResponse> {
+    return this.recordingService.captureScreen(userId);
   }
 
   @Post('record-start')
@@ -151,8 +139,10 @@ export class RecordingController {
     type: StartRecordingResponseDto,
   })
   @ApiBadRequestResponse({ description: 'Invalid input.' })
-  async start(): Promise<StartRecordingResponseDto> {
-    return this.recordingService.startRecording();
+  async start(
+    @CurrentUser('id') userId: string,
+  ): Promise<StartRecordingResponseDto> {
+    return this.recordingService.startRecording(userId);
   }
 
   @Post('record-stop')
@@ -162,11 +152,14 @@ export class RecordingController {
     description: 'Recording stopped successfully.',
     type: StopRecordingResponse,
   })
-  async stop(@Query('id') id: string): Promise<StopRecordingResponse> {
+  async stop(
+    @CurrentUser('id') userId: string,
+    @Query('id') id: string,
+  ): Promise<StopRecordingResponse> {
     if (!id) {
       throw new BadRequestException('Recording ID is required.');
     }
-    return this.recordingService.stopRecording(id);
+    return this.recordingService.stopRecording(userId, id);
   }
 
   @Post()
@@ -177,7 +170,10 @@ export class RecordingController {
     type: CreateRecordingDto,
   })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
-  create(@Body() dto: CreateRecordingDto) {
+  create(
+    @CurrentUser('id') userId: string,
+    @Body() dto: CreateRecordingDto,
+  ) {
     return this.recordingService.create(dto);
   }
 
@@ -188,8 +184,8 @@ export class RecordingController {
     description: 'List of recordings.',
     type: [CreateRecordingDto],
   })
-  findAll() {
-    return this.recordingService.findAll();
+  findAll(@CurrentUser('id') userId: string) {
+    return this.recordingService.findAll(userId);
   }
 
   @Get('paginated')
@@ -201,9 +197,12 @@ export class RecordingController {
     description: 'Paginated results.',
     type: PaginationRecordingResultDto,
   })
-  findAllPaginated(@Query() query: PaginationRecordingQueryDto) {
+  findAllPaginated(
+    @CurrentUser('id') userId: string,
+    @Query() query: PaginationRecordingQueryDto,
+  ) {
     return this.recordingService.findAllPaginated(
-      undefined,
+      { createdById: userId }, // Filter by current user's recordings
       query.page,
       query.pageSize,
     );
@@ -214,8 +213,11 @@ export class RecordingController {
   @ApiOperation({ summary: 'Find recording by ID.' })
   @ApiOkResponse({ description: 'Record found.', type: CreateRecordingDto })
   @ApiNotFoundResponse({ description: 'Record not found.' })
-  findOne(@Param('id') id: string) {
-    return this.recordingService.findOne(id);
+  findOne(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.recordingService.findOne(id, userId);
   }
 
   @Patch(':id')
@@ -227,8 +229,12 @@ export class RecordingController {
   })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
-  update(@Param('id') id: string, @Body() dto: UpdateRecordingDto) {
-    return this.recordingService.update(id, dto);
+  update(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: UpdateRecordingDto,
+  ) {
+    return this.recordingService.update(id, dto, userId);
   }
 
   @Delete(':id')
@@ -236,7 +242,10 @@ export class RecordingController {
   @ApiOperation({ summary: 'Delete recording by ID.' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
-  remove(@Param('id') id: string) {
-    return this.recordingService.remove(id);
+  remove(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.recordingService.remove(id, userId);
   }
 }

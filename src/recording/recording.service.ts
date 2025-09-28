@@ -52,6 +52,7 @@ interface RecordingData {
   fps?: number;
   capturedAt?: string;
   // Add other potential properties from the `data` JSON field
+  [key: string]: Prisma.InputJsonValue | undefined; // Add index signature for compatibility with Prisma's Json type
 }
 // --- End of new/modified types ---
 
@@ -306,7 +307,7 @@ export class RecordingService {
         pid: '0', // No process ID for a screenshot
         data: {
           capturedAt: new Date().toISOString(),
-        } as RecordingData, // Type assertion for data
+        } as RecordingData,
         createdBy: { connect: { id: userId } },
       },
     });
@@ -358,7 +359,7 @@ export class RecordingService {
         pid: pid,
         data: {
           startedAt: startedAtISO,
-        } as RecordingData, // Type assertion for data
+        } as RecordingData,
         createdBy: { connect: { id: userId } },
       },
     });
@@ -506,7 +507,7 @@ export class RecordingService {
             cameraDevice: dto.cameraDevice,
             resolution: dto.resolution,
             fps: dto.fps,
-          } as RecordingData, // Type assertion for data
+          } as RecordingData,
           createdBy: { connect: { id: userId } },
         },
       });
@@ -621,10 +622,10 @@ export class RecordingService {
           data: {
             status: exitCode === 0 ? 'finished' : 'failed',
             data: {
-              ...(currentRecording.data as RecordingData || {}), // Type assertion for data
+              ...(currentRecording.data as RecordingData || {}),
               stoppedAt: new Date().toISOString(),
               exitCode,
-            }, // Duration and fileSize will be 0 if activeRecord wasn't found
+            },
           },
         });
       }
@@ -665,7 +666,7 @@ export class RecordingService {
         data: {
           status: exitCode === 0 ? 'finished' : 'failed',
           data: {
-            ...(currentRecording.data as RecordingData || {}), // Type assertion for data
+            ...(currentRecording.data as RecordingData || {}),
             stoppedAt: new Date().toISOString(),
             duration,
             fileSize,
