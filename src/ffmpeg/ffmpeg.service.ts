@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 
 @Injectable()
 export class FfmpegService {
+  private readonly logger = new Logger(FfmpegService.name);
+
   transcodeToHLS(
     inputPath: string,
     outputPath: string,
@@ -167,7 +169,7 @@ export class FfmpegService {
         if (match) {
           emitProgress({ time: match[1] });
         }
-        // console.log(`FFmpeg GIF stderr: ${output}`); // Uncomment for verbose FFmpeg output
+        // this.logger.debug(`FFmpeg GIF stderr: ${output}`); // Uncomment for verbose FFmpeg output
       });
 
       ffmpeg.on('close', (code) => {
@@ -182,5 +184,162 @@ export class FfmpegService {
         reject(err);
       });
     });
+  }
+
+  /**
+   * Starts recording from a camera device using FFmpeg.
+   * @param inputDevice The camera device identifier (platform-specific).
+   * @param outputPath The full path where the recorded video will be saved.
+   * @param emitProgress Callback to emit progress updates.
+   * @param options Recording options like resolution and fps.
+   * @returns A promise that resolves with the ChildProcess of FFmpeg, or rejects on error.
+   */
+  startCameraRecording(
+    inputDevice: string,
+    outputPath: string,
+    emitProgress: (progress: { time: string }) => void,
+    options?: { resolution?: string; fps?: number },
+  ): Promise<ChildProcessWithoutNullStreams> {
+    return new Promise((resolve, reject) => {
+      const { resolution = '1280x720', fps = 30 } = options || {};
+
+      const ffmpegArgs = this._getCameraFfmpegArgs(
+        inputDevice,
+        resolution,
+        fps,
+        outputPath,
+      );
+
+      this.logger.log(`Starting camera recording with command: ffmpeg ${ffmpegArgs.join(' ')}`);
+
+      const ffmpegProcess = spawn('ffmpeg', ffmpegArgs);
+
+      ffmpegProcess.stderr.on('data', (data) => {
+        const output = data.toString();
+        const match = output.match(/time=(\d+:\d+:\d+\.\d+)/);
+        if (match) {
+          emitProgress({ time: match[1] });
+        }
+        // this.logger.debug(`FFmpeg Camera stderr: ${output}`); // Uncomment for verbose FFmpeg output
+      });
+
+      ffmpegProcess.on('close', (code) => {
+        if (code !== 0) {
+          reject(
+            new Error(
+              `FFmpeg camera recording process exited with code ${code}`,
+            ),
+          );
+        }
+      });
+
+      ffmpegProcess.on('error', (err) => {
+        reject(new InternalServerErrorException(`Failed to start FFmpeg camera recording: ${err.message}`));
+      });
+
+      // Give ffmpeg a moment to start and ensure it hasn't immediately errored
+      setTimeout(() => {
+        if (ffmpegProcess.pid) {
+          resolve(ffmpegProcess);
+        } else {
+          reject(new InternalServerErrorException('FFmpeg camera recording process did not start.'));
+        }
+      }, 1000); // Wait 1 second to confirm process is running
+    });
+  }
+
+  /**
+   * Internal helper to get platform-specific FFmpeg arguments for camera recording.
+   * @param cameraDevice The camera device identifier.
+   * @param resolution The desired resolution (e.g., '1280x720').
+   * @param fps Frames per second.
+   * @param outputPath The output file path.
+   * @returns An array of FFmpeg arguments.
+   */
+  private _getCameraFfmpegArgs(
+    cameraDevice: string,
+    resolution: string,
+    fps: number,
+    outputPath: string,
+  ): string[] {
+    const commonOutputArgs = [
+      '-c:v',
+      'libx264',
+      '-preset',
+      'ultrafast',
+      '-tune',
+      'zerolatency',
+      '-pix_fmt',
+      'yuv420p',
+      '-b:v',
+      '1M',
+      '-r',
+      fps.toString(),
+      '-c:a',
+      'aac',
+      '-b:a',
+      '128k',
+      '-ar',
+      '44100',
+      '-movflags',
+      '+faststart',
+      '-y',
+      outputPath,
+    ];
+
+    if (process.platform === 'darwin') {
+      // macOS uses avfoundation. '0:0' for default camera and microphone.
+      // '0' refers to the first video input, '0' after ':' refers to the first audio input.
+      return [
+        '-f',
+        'avfoundation',
+        '-framerate',
+        fps.toString(),
+        '-video_size',
+        resolution,
+        '-i',
+        cameraDevice || '0:0',
+        ...commonOutputArgs,
+      ];
+    } else if (process.platform === 'win32') {
+      // Windows uses dshow (DirectShow).
+      // You might need to list devices: ffmpeg -list_devices true -f dshow -i dummy
+      const videoDevice = cameraDevice || 'video=Integrated Camera'; // Example default
+      const audioDevice = 'audio=Microphone (Realtek(R) Audio)'; // Example default, adjust as needed
+
+      return [
+        '-f',
+        'dshow',
+        '-s',
+        resolution,
+        '-i',
+        `${videoDevice}:${audioDevice}`,
+        ...commonOutputArgs,
+      ];
+    } else if (process.platform === 'linux') {
+      // Linux typically uses v4l2 for video and pulse/alsa for audio.
+      // You might need to list devices: ffmpeg -f v4l2 -list_formats all -i /dev/video0
+      // For audio: pactl list sources or arecord -L
+      const videoDevice = cameraDevice || '/dev/video0'; // Default video device
+      const audioDevice = process.env.AUDIO_DEVICE || 'default'; // PulseAudio default or ALSA device
+
+      return [
+        '-f',
+        'v4l2',
+        '-s',
+        resolution,
+        '-i',
+        videoDevice,
+        '-f',
+        'pulse',
+        '-i',
+        audioDevice,
+        ...commonOutputArgs,
+      ];
+    } else {
+      throw new InternalServerErrorException(
+        `Unsupported operating system for camera recording: ${process.platform}`,
+      );
+    }
   }
 }
