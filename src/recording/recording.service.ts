@@ -25,112 +25,138 @@ import { Prisma } from '@prisma/client';
 
 import { CreateJwtUserDto } from '../auth/dto/auth.dto';
 
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
+import { FfmpegService } from '../ffmpeg/ffmpeg.service';
+import {
+  StartCameraRecordingDto,
+  CameraRecordingResponseDto,
+} from '../ffmpeg/dto/camera-recording.dto';
+
+interface ActiveRecording {
+  id: string;
+  process: ChildProcessWithoutNullStreams;
+  outputPath: string;
+  startTime: number;
+  stopTimer: NodeJS.Timeout | null;
+}
 
 @Injectable()
 export class RecordingService {
   private readonly logger = new Logger(RecordingService.name);
-  private recordingProcess: ChildProcessWithoutNullStreams | null = null;
-  private stopTimer: NodeJS.Timeout | null = null;
-  private currentRecordingFile: string | null = null;
-  private recordingStartTime: number | null = null;
-  private recordingFile: string | null = null;
-  private lastRecordingMetadata: Record<string, any> | null = null;
-  private startedAt: Date | null = null;
+  private activeRecordings: Map<string, ActiveRecording> = new Map();
   constructor(
     private prisma: PrismaService,
     private terminal: TerminalService,
-    @Inject(REQUEST)
-    private readonly request: Request & { user?: CreateJwtUserDto },
+    private ffmpegService: FfmpegService,
   ) {}
 
-  private get userId(): string | undefined {
-    return this.request.user?.id;
-  }
-
   /**
-   * Returns the current recording status.
+   * Returns the current recording status for a given user and optional recording ID.
    */
-  async getRecordingStatus(id?: string): Promise<{
+  async getRecordingStatus(
+    userId: string,
+    id?: string,
+  ): Promise<{
     id: string;
     recording: boolean;
     file: string | null;
     startedAt: string | null;
   }> {
-    if (!id) {
-      const recordings = await this.prisma.recording.findFirst({
-        where: { createdById: this.userId, status: 'recording' },
-      });
-      if (!recordings) {
-        return {
-          id: '',
-          recording: false,
-          file: null,
-          startedAt: null,
-        };
-      }
+    let recordingEntity = null;
 
-      return {
-        id: recordings?.id,
-        recording: recordings?.status === 'recording' ? true : false,
-        file: recordings?.path,
-        startedAt: this.startedAt ? this.startedAt.toISOString() : null,
-      };
+    if (id) {
+      // If an ID is provided, check that specific recording for the current user
+      recordingEntity = await this.prisma.recording.findFirst({
+        where: { id: id, createdById: userId },
+      });
     } else {
-      const currentRecording = await this.findOne(id);
-      if (!currentRecording) {
-        throw new NotFoundException(`Recording with ID ${id} not found.`);
-      }
+      // If no ID, find any active recording for the current user
+      recordingEntity = await this.prisma.recording.findFirst({
+        where: { createdById: userId, status: 'recording' },
+        orderBy: { createdAt: 'desc' }, // Get the most recent one if multiple active (shouldn't happen)
+      });
+    }
+
+    if (!recordingEntity) {
       return {
-        id: currentRecording.id,
-        recording: currentRecording.status === 'recording' ? true : false,
-        file: currentRecording.path,
-        startedAt: this.startedAt ? this.startedAt.toISOString() : null,
+        id: '',
+        recording: false,
+        file: null,
+        startedAt: null,
       };
     }
-  }
 
-  /**
-   * Retrieves metadata of a recording file.
-   * @param file Path or filename
-   */
-  async getMetadata(file: string): Promise<{ size: number; modified: string }> {
-    const filePath = file.includes('/')
-      ? file
-      : join(process.cwd(), 'downloads', 'recordings', file);
-    const stats = await stat(filePath);
+    // Check if the process is actually still running in-memory
+    const activeRecord = this.activeRecordings.get(recordingEntity.id);
+    const isRunning = activeRecord && activeRecord.process.pid && !activeRecord.process.killed;
+
     return {
-      size: stats.size,
-      modified: stats.mtime.toISOString(),
+      id: recordingEntity.id,
+      recording: isRunning,
+      file: recordingEntity.path,
+      startedAt: isRunning
+        ? new Date(activeRecord.startTime).toISOString()
+        : recordingEntity.data?.startedAt || null,
     };
   }
 
   /**
-   * Lists all recording files.
+   * Retrieves metadata of a recording file for a specific user.
+   * @param userId The ID of the user.
+   * @param file Path or filename
    */
-  async listRecordings(): Promise<string[]> {
-    const dir = join(
-      process.cwd(),
-      'downloads',
-      'recordings',
-      `${this.userId}`,
-    );
-    const files = await readdir(dir);
-    return files.map((f) => join(dir, f));
+  async getMetadata(
+    userId: string,
+    file: string,
+  ): Promise<{ size: number; modified: string }> {
+    // Ensure the file is within the user's directory for security
+    const baseDir = join(process.cwd(), 'downloads', 'recordings', userId);
+    const filePath = file.includes('/') ? file : join(baseDir, file);
+
+    // Basic path traversal prevention
+    if (!filePath.startsWith(baseDir)) {
+      throw new ForbiddenException('Access to specified file path is denied.');
+    }
+
+    try {
+      const stats = await stat(filePath);
+      return {
+        size: stats.size,
+        modified: stats.mtime.toISOString(),
+      };
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new NotFoundException(`File not found: ${file}`);
+      }
+      this.logger.error(`Error getting metadata for ${filePath}: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Failed to retrieve file metadata: ${error.message}`,
+      );
+    }
   }
 
   /**
-   * Deletes recordings older than N days.
+   * Lists all recording files for a specific user.
+   * @param userId The ID of the user.
+   */
+  async listRecordings(userId: string): Promise<string[]> {
+    const dir = join(process.cwd(), 'downloads', 'recordings', userId);
+    try {
+      await mkdir(dir, { recursive: true }); // Ensure directory exists
+      const files = await readdir(dir);
+      return files.map((f) => join('downloads', 'recordings', userId, f)); // Return relative paths or just filenames
+    } catch (error) {
+      this.logger.error(`Error listing recordings for user ${userId}: ${error.message}`);
+      throw new InternalServerErrorException('Failed to list recordings.');
+    }
+  }
+
+  /**
+   * Deletes recordings older than N days for a specific user.
+   * @param userId The ID of the user.
    * @param days Number of days to use as threshold
    */
-  async cleanupOld(days: number = 7): Promise<{ deleted: string[] }> {
-    const dir = join(
-      process.cwd(),
-      'downloads',
-      'recordings',
-      `${this.userId}`,
-    );
+  async cleanupOld(userId: string, days: number = 7): Promise<{ deleted: string[] }> {
+    const dir = join(process.cwd(), 'downloads', 'recordings', userId);
     const files = await readdir(dir);
     const now = Date.now();
     const deleted: string[] = [];
@@ -146,21 +172,16 @@ export class RecordingService {
 
     return { deleted };
   }
+
   create(data: CreateRecordingDto) {
     const createData: any = { ...data };
-
-    if (this.userId) {
-      createData.createdBy = {
-        connect: { id: this.userId },
-      };
-      delete createData.createdById;
-    }
-
+    // 'createdById' will already be present from DTO if provided directly, otherwise handle it.
+    // In this context, 'createdById' is expected to be provided by the authenticated user in the controller, if not, it should be set.
     return this.prisma.recording.create({ data: createData });
   }
 
   async findAllPaginated(
-    where: Prisma.RecordingWhereInput = { createdById: this.userId },
+    where: Prisma.RecordingWhereInput = {},
     page = 1,
     pageSize = 10,
     select?: Prisma.RecordingSelect,
@@ -188,29 +209,35 @@ export class RecordingService {
     };
   }
 
-  findAll() {
+  findAll(userId: string) {
     return this.prisma.recording.findMany({
-      where: { createdById: this.userId },
+      where: { createdById: userId },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  findOne(id: string) {
-    return this.prisma.recording.findUnique({ where: { id } });
+  async findOne(id: string, userId: string) {
+    const recording = await this.prisma.recording.findUnique({ where: { id } });
+
+    if (!recording || recording.createdById !== userId) {
+      throw new NotFoundException(
+        `Recording with ID ${id} not found for user ${userId}.`,
+      );
+    }
+    return recording;
   }
 
-  update(id: string, data: UpdateRecordingDto) {
+  async update(id: string, data: UpdateRecordingDto, userId: string) {
+    // Ensure the user owns the recording
+    await this.findOne(id, userId);
     return this.prisma.recording.update({
       where: { id },
       data,
     });
   }
 
-  async remove(id: string) {
-    const recording = await this.prisma.recording.findUnique({ where: { id } });
-
-    if (!recording) {
-      throw new NotFoundException(`Recording with ID ${id} not found.`);
-    }
+  async remove(id: string, userId: string) {
+    const recording = await this.findOne(id, userId);
 
     try {
       await unlink(recording.path);
@@ -219,23 +246,22 @@ export class RecordingService {
       this.logger.warn(
         `Failed to delete file: ${recording.path}. Error: ${err.message}`,
       );
+      // Continue with database deletion even if file deletion fails, as the database entry is the primary source of truth.
     }
 
     return this.prisma.recording.delete({ where: { id } });
   }
 
-  async captureScreen(): Promise<{ id: string; status: string; path: string }> {
-    if (!this.userId) {
-      throw new BadRequestException(
-        'User ID is required to capture a screenshot.',
-      );
-    }
-
+  async captureScreen(userId: string): Promise<{
+    id: string;
+    status: string;
+    path: string;
+  }> {
     const outputPath = join(
       process.cwd(),
       'downloads',
       'screenshots',
-      this.userId,
+      userId,
       `captured-${Date.now()}.png`,
     );
 
@@ -255,7 +281,7 @@ export class RecordingService {
         data: {
           capturedAt: new Date().toISOString(),
         },
-        createdBy: { connect: { id: this.userId } },
+        createdBy: { connect: { id: userId } },
       },
     });
 
@@ -266,20 +292,15 @@ export class RecordingService {
     };
   }
 
-  async startRecording(): Promise<StartRecordingResponseDto> {
-    if (!this.userId) {
-      throw new BadRequestException(
-        'User ID is required to start a recording.',
-      );
-    }
-
+  async startRecording(userId: string): Promise<StartRecordingResponseDto> {
     const outputFile = join(
       process.cwd(),
       'downloads',
       'recordings',
-      this.userId,
+      userId,
       `recorded-${Date.now()}.mp4`,
     );
+
     const ffmpegCheck = spawnSync('ffmpeg', ['-version']);
     if (ffmpegCheck.error) {
       throw new InternalServerErrorException(
@@ -288,126 +309,295 @@ export class RecordingService {
     }
     await mkdir(dirname(outputFile), { recursive: true });
 
-    const ffmpegArgs = this.getFfmpegArgs(outputFile);
+    const ffmpegArgs = this._getScreenRecordingFfmpegArgs(outputFile);
     this.logger.log(`Starting screen recording: ${outputFile}`);
 
-    this.recordingProcess = spawn('ffmpeg', ffmpegArgs);
-    this.currentRecordingFile = outputFile;
-    this.recordingStartTime = Date.now();
-    this.lastRecordingMetadata = { startedAt: new Date().toISOString() };
+    const recordingProcess = spawn('ffmpeg', ffmpegArgs);
 
-    if (!this.recordingProcess?.pid) {
+    if (!recordingProcess?.pid) {
       throw new InternalServerErrorException(
-        'Failed to start recording process.',
+        'Failed to start screen recording process.',
       );
     }
 
-    const pid = this.recordingProcess.pid;
+    const pid = String(recordingProcess.pid);
+    const startTime = Date.now();
+    const startedAtISO = new Date(startTime).toISOString();
 
     const recording = await this.prisma.recording.create({
       data: {
         path: outputFile,
         type: 'screenRecord',
         status: 'recording',
-        pid: String(pid),
+        pid: pid,
         data: {
-          startedAt: this.lastRecordingMetadata.startedAt,
+          startedAt: startedAtISO,
         },
-        createdBy: { connect: { id: this.userId } },
+        createdBy: { connect: { id: userId } },
       },
     });
 
-    this.recordingProcess.stderr.on('data', (ffmpegData) => {
-      this.logger.debug(`ffmpeg: ${ffmpegData}`);
+    recordingProcess.stderr.on('data', (ffmpegData) => {
+      this.logger.debug(`ffmpeg (screen): ${ffmpegData}`);
     });
 
-    this.recordingProcess.once('exit', async (code) => {
-      this.logger.log(`Recording process exited with code ${code}`);
-      this.recordingProcess = null;
-      if (this.stopTimer) {
-        clearTimeout(this.stopTimer);
-        this.stopTimer = null;
-      }
+    const stopTimer = setTimeout(() => {
+      this.logger.log(`Auto-stopping screen recording ${recording.id} after 2 hours limit.`);
+      this.stopRecording(userId, recording.id);
+    }, 7200 * 1000); // 2 hours
 
-      let duration = 0;
-      let fileSize = 0;
-      try {
-        if (this.recordingStartTime !== null) {
-          duration = (Date.now() - this.recordingStartTime) / 1000;
-        }
-        const fileStats = await stat(outputFile);
-        fileSize = fileStats.size;
-      } catch (err) {
-        this.logger.warn(`Could not get file stats: ${err.message}`);
-      }
-
-      await this.prisma.recording.update({
-        where: { id: recording.id },
-        data: {
-          status: 'ready',
-          data: {
-            ...(typeof recording.data === 'object' ? recording.data : {}),
-            stoppedAt: new Date().toISOString(),
-            duration,
-            fileSize,
-          },
-        },
-      });
-
-      this.logger.log(
-        `Recording metadata updated: duration=${duration}s, fileSize=${fileSize} bytes`,
-      );
+    this.activeRecordings.set(recording.id, {
+      id: recording.id,
+      process: recordingProcess,
+      outputPath: outputFile,
+      startTime: startTime,
+      stopTimer: stopTimer,
     });
 
-    this.stopTimer = setTimeout(() => {
-      this.logger.log('Auto-stopping recording after 2 hours limit.');
-      this.stopRecording(recording.id);
-    }, 7200 * 1000);
+    recordingProcess.once('exit', async (code) => {
+      this.logger.log(`Screen recording process ${recording.id} exited with code ${code}`);
+      this._handleRecordingExit(userId, recording.id, code, outputFile);
+    });
 
     return { path: outputFile, id: recording.id };
   }
 
   async stopRecording(
+    userId: string,
     id: string,
   ): Promise<{ id: string; status: string; path: string }> {
-    const getRecording = await this.prisma.recording.findUnique({
-      where: { id },
-    });
+    const activeRecord = this.activeRecordings.get(id);
 
-    if (!getRecording) {
-      throw new BadRequestException(
-        `No saved recording in the database with this id: ${id}.`,
-      );
+    if (!activeRecord) {
+      const dbRecording = await this.prisma.recording.findUnique({
+        where: { id, createdById: userId },
+      });
+      if (!dbRecording) {
+        throw new BadRequestException(
+          `No active or saved recording found with ID: ${id}.`,
+        );
+      }
+      // If it's in DB but not active, means it already stopped or was manually killed.
+      return {
+        id: dbRecording.id,
+        status: dbRecording.status,
+        path: dbRecording.path,
+      };
     }
 
-    const pid = Number(getRecording.pid);
-    this.logger.log(`Running command: kill ${pid}`);
-    const runStopped = await this.terminal.runCommandOnce(`kill ${pid}`, './');
-
-    if (!runStopped) {
-      throw new BadRequestException(
-        `Recording did not stop for recording id: ${id}.`,
+    if (activeRecord.process && !activeRecord.process.killed) {
+      this.logger.log(
+        `Sending SIGINT to screen recording process PID: ${activeRecord.process.pid} for ID: ${id}`,
       );
+      activeRecord.process.kill('SIGINT'); // Send interrupt signal to ffmpeg
     }
 
-    await this.prisma.recording.update({
-      where: { id },
-      data: {
-        status: 'finished',
-        data: {
-          ...(typeof getRecording.data === 'object' &&
-          getRecording.data !== null
-            ? getRecording.data
-            : {}),
-          stoppedAt: new Date().toISOString(),
-        },
-      },
+    if (activeRecord.stopTimer) {
+      clearTimeout(activeRecord.stopTimer);
+    }
+
+    // The exit handler will update the DB, so we just remove from active map here.
+    this.activeRecordings.delete(id);
+
+    // Fetch the updated recording from DB after exit handler has run or if it was already stopped.
+    const updatedRecording = await this.prisma.recording.findUnique({
+      where: { id, createdById: userId },
     });
 
-    return { id, status: 'finished', path: getRecording.path };
+    return {
+      id: updatedRecording.id,
+      status: updatedRecording.status,
+      path: updatedRecording.path,
+    };
   }
 
-  private getFfmpegArgs(outputFile: string): string[] {
+  async startCameraRecording(
+    userId: string,
+    dto: StartCameraRecordingDto,
+  ): Promise<CameraRecordingResponseDto> {
+    const cameraOutputDir = join(
+      process.cwd(),
+      'downloads',
+      'recordings',
+      userId,
+      'camera',
+    );
+    await mkdir(cameraOutputDir, { recursive: true });
+
+    const outputFile = join(
+      cameraOutputDir,
+      `recorded-camera-${Date.now()}.mp4`,
+    );
+
+    const ffmpegCheck = spawnSync('ffmpeg', ['-version']);
+    if (ffmpegCheck.error) {
+      throw new InternalServerErrorException(
+        'FFmpeg is not installed or not in PATH.',
+      );
+    }
+
+    this.logger.log(`Attempting to start camera recording for user ${userId} to ${outputFile}`);
+
+    try {
+      const recordingProcess = await this.ffmpegService.startCameraRecording(
+        dto.cameraDevice,
+        outputFile,
+        (progress) => {
+          this.logger.debug(`Camera Recording Progress for ${userId}: ${progress.time}`);
+          // Potentially emit this via WebSocket for real-time client updates
+        },
+        { resolution: dto.resolution, fps: dto.fps },
+      );
+
+      const pid = String(recordingProcess.pid);
+      const startTime = Date.now();
+      const startedAtISO = new Date(startTime).toISOString();
+
+      const recording = await this.prisma.recording.create({
+        data: {
+          path: outputFile,
+          type: 'cameraRecord',
+          status: 'recording',
+          pid: pid,
+          data: {
+            startedAt: startedAtISO,
+            cameraDevice: dto.cameraDevice,
+            resolution: dto.resolution,
+            fps: dto.fps,
+          },
+          createdBy: { connect: { id: userId } },
+        },
+      });
+
+      const durationInMs = (dto.duration || 7200) * 1000; // Default to 2 hours if no duration provided
+      const stopTimer = setTimeout(() => {
+        this.logger.log(
+          `Auto-stopping camera recording ${recording.id} after ${durationInMs / 1000} seconds.`,);
+        this.stopCameraRecording(userId, recording.id);
+      }, durationInMs);
+
+      this.activeRecordings.set(recording.id, {
+        id: recording.id,
+        process: recordingProcess,
+        outputPath: outputFile,
+        startTime: startTime,
+        stopTimer: stopTimer,
+      });
+
+      recordingProcess.once('exit', async (code) => {
+        this.logger.log(`Camera recording process ${recording.id} exited with code ${code}`);
+        this._handleRecordingExit(userId, recording.id, code, outputFile);
+      });
+
+      return {
+        id: recording.id,
+        path: recording.path,
+        message: 'Camera recording started successfully.',
+      };
+    } catch (error) {
+      this.logger.error(`Failed to start camera recording for user ${userId}: ${error.message}`, error.stack);
+      throw new InternalServerErrorException(`Failed to start camera recording: ${error.message}`);
+    }
+  }
+
+  async stopCameraRecording(
+    userId: string,
+    id: string,
+  ): Promise<CameraRecordingResponseDto> {
+    const activeRecord = this.activeRecordings.get(id);
+
+    if (!activeRecord) {
+      const dbRecording = await this.prisma.recording.findUnique({
+        where: { id, createdById: userId },
+      });
+      if (!dbRecording) {
+        throw new BadRequestException(
+          `No active or saved camera recording found with ID: ${id}.`,
+        );
+      }
+      return {
+        id: dbRecording.id,
+        path: dbRecording.path,
+        message: 'Camera recording already stopped or never started.',
+      };
+    }
+
+    if (activeRecord.process && !activeRecord.process.killed) {
+      this.logger.log(
+        `Sending SIGINT to camera recording process PID: ${activeRecord.process.pid} for ID: ${id}`,
+      );
+      activeRecord.process.kill('SIGINT'); // Send interrupt signal to ffmpeg
+    }
+
+    if (activeRecord.stopTimer) {
+      clearTimeout(activeRecord.stopTimer);
+    }
+
+    // Remove from active map immediately, DB update handled by exit listener
+    this.activeRecordings.delete(id);
+
+    // Wait for a moment to allow the exit handler to update the DB
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const updatedRecording = await this.prisma.recording.findUnique({
+      where: { id, createdById: userId },
+    });
+
+    return {
+      id: updatedRecording.id,
+      path: updatedRecording.path,
+      message: 'Camera recording stopped successfully.',
+    };
+  }
+
+  private async _handleRecordingExit(
+    userId: string,
+    recordingId: string,
+    exitCode: number,
+    outputFile: string,
+  ) {
+    this.activeRecordings.delete(recordingId);
+
+    let duration = 0;
+    let fileSize = 0;
+    const activeRecord = this.activeRecordings.get(recordingId);
+    const startTime = activeRecord ? activeRecord.startTime : null;
+
+    try {
+      if (startTime !== null) {
+        duration = (Date.now() - startTime) / 1000;
+      }
+      const fileStats = await stat(outputFile);
+      fileSize = fileStats.size;
+    } catch (err) {
+      this.logger.warn(`Could not get file stats for ${outputFile}: ${err.message}`);
+    }
+
+    const currentRecording = await this.prisma.recording.findUnique({
+      where: { id: recordingId, createdById: userId },
+    });
+
+    if (currentRecording) {
+      await this.prisma.recording.update({
+        where: { id: recordingId },
+        data: {
+          status: exitCode === 0 ? 'finished' : 'failed',
+          data: {
+            ...(typeof currentRecording.data === 'object' ? currentRecording.data : {}),
+            stoppedAt: new Date().toISOString(),
+            duration,
+            fileSize,
+            exitCode,
+          },
+        },
+      });
+      this.logger.log(
+        `Recording ${recordingId} metadata updated: status=${currentRecording.status}, duration=${duration}s, fileSize=${fileSize} bytes`,
+      );
+    }
+  }
+
+  private _getScreenRecordingFfmpegArgs(outputFile: string): string[] {
     const commonOutputArgs = [
       '-c:v',
       'libx264',
@@ -431,6 +621,7 @@ export class RecordingService {
 
       '-movflags',
       '+faststart',
+      '-y', // Overwrite output file without asking
     ];
 
     if (process.platform === 'darwin') {
@@ -440,13 +631,15 @@ export class RecordingService {
         '-framerate',
         '30',
         '-i',
-        '1:0',
+        '1:0', // 1 for desktop, 0 for microphone - adjust if needed
         ...commonOutputArgs,
         outputFile,
       ];
     }
 
     if (process.platform === 'win32') {
+      // For Windows, 'gdigrab' for screen and 'dshow' for audio
+      // Make sure 'virtual-audio-capturer' is an available audio device
       return [
         '-f',
         'gdigrab',
@@ -458,16 +651,17 @@ export class RecordingService {
         '-f',
         'dshow',
         '-i',
-        'audio=virtual-audio-capturer',
+        'audio=virtual-audio-capturer', // Adjust audio device as needed
 
         ...commonOutputArgs,
         outputFile,
       ];
     }
 
+    // Linux (x11grab for screen, pulse/alsa for audio)
     const display = process.env.DISPLAY || ':0.0';
-    const resolution = process.env.RESOLUTION || '1920x1080';
-    const audioDevice = process.env.AUDIO_DEVICE || 'default';
+    const resolution = process.env.RESOLUTION || '1920x1080'; // Or retrieve dynamically
+    const audioDevice = process.env.AUDIO_DEVICE || 'default'; // PulseAudio default or ALSA device
 
     return [
       '-video_size',
@@ -479,10 +673,10 @@ export class RecordingService {
       '-i',
       `${display}`,
 
-      //'-f',
-      //'pulse',
-      //'-i',
-      //audioDevice,
+      '-f',
+      'pulse',
+      '-i',
+      audioDevice,
 
       ...commonOutputArgs,
       outputFile,
