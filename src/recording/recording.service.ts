@@ -31,6 +31,7 @@ import {
   CameraRecordingResponseDto,
 } from '../ffmpeg/dto/camera-recording.dto';
 
+// --- Start of new/modified types ---
 interface ActiveRecording {
   id: string;
   process: ChildProcessWithoutNullStreams;
@@ -38,6 +39,21 @@ interface ActiveRecording {
   startTime: number;
   stopTimer: NodeJS.Timeout | null;
 }
+
+// Interface for the 'data' JSON field in the Recording model
+interface RecordingData {
+  startedAt?: string;
+  stoppedAt?: string;
+  duration?: number;
+  fileSize?: number;
+  exitCode?: number;
+  cameraDevice?: string;
+  resolution?: string;
+  fps?: number;
+  capturedAt?: string;
+  // Add other potential properties from the `data` JSON field
+}
+// --- End of new/modified types ---
 
 @Injectable()
 export class RecordingService {
@@ -92,11 +108,11 @@ export class RecordingService {
 
     return {
       id: recordingEntity.id,
-      recording: isRunning,
+      recording: !!isRunning, // Fix for error 1: Explicitly cast to boolean
       file: recordingEntity.path,
       startedAt: isRunning
         ? new Date(activeRecord.startTime).toISOString()
-        : recordingEntity.data?.startedAt?.toString() || null,
+        : (recordingEntity.data as RecordingData)?.startedAt?.toString() || null, // Fix for error 2: Use RecordingData interface
     };
   }
 
@@ -261,7 +277,8 @@ export class RecordingService {
 
   async captureScreen(
     userId: string,
-  ): Promise<{
+  ):
+    Promise<{
     id: string;
     status: string;
     path: string;
@@ -289,7 +306,7 @@ export class RecordingService {
         pid: '0', // No process ID for a screenshot
         data: {
           capturedAt: new Date().toISOString(),
-        },
+        } as RecordingData, // Type assertion for data
         createdBy: { connect: { id: userId } },
       },
     });
@@ -341,7 +358,7 @@ export class RecordingService {
         pid: pid,
         data: {
           startedAt: startedAtISO,
-        },
+        } as RecordingData, // Type assertion for data
         createdBy: { connect: { id: userId } },
       },
     });
@@ -379,7 +396,11 @@ export class RecordingService {
     userId: string,
     id: string,
   ):
-    Promise<{ id: string; status: string; path: string }> {
+    Promise<{
+    id: string;
+    status: string;
+    path: string;
+  }> {
     const activeRecord = this.activeRecordings.get(id);
 
     if (!activeRecord) {
@@ -485,7 +506,7 @@ export class RecordingService {
             cameraDevice: dto.cameraDevice,
             resolution: dto.resolution,
             fps: dto.fps,
-          },
+          } as RecordingData, // Type assertion for data
           createdBy: { connect: { id: userId } },
         },
       });
@@ -600,9 +621,7 @@ export class RecordingService {
           data: {
             status: exitCode === 0 ? 'finished' : 'failed',
             data: {
-              ...(typeof currentRecording.data === 'object'
-                ? currentRecording.data
-                : {}),
+              ...(currentRecording.data as RecordingData || {}), // Type assertion for data
               stoppedAt: new Date().toISOString(),
               exitCode,
             }, // Duration and fileSize will be 0 if activeRecord wasn't found
@@ -646,9 +665,7 @@ export class RecordingService {
         data: {
           status: exitCode === 0 ? 'finished' : 'failed',
           data: {
-            ...(typeof currentRecording.data === 'object'
-              ? currentRecording.data
-              : {}),
+            ...(currentRecording.data as RecordingData || {}), // Type assertion for data
             stoppedAt: new Date().toISOString(),
             duration,
             fileSize,
@@ -748,5 +765,100 @@ export class RecordingService {
       ...commonOutputArgs,
       outputFile,
     ];
+  }
+
+  /**
+   * Internal helper to get platform-specific FFmpeg arguments for camera recording.
+   * @param cameraDevice The camera device identifier.
+   * @param resolution The desired resolution (e.g., '1280x720').
+   * @param fps Frames per second.
+   * @param outputPath The output file path.
+   * @returns An array of FFmpeg arguments.
+   */
+  private _getCameraFfmpegArgs( // Fix for error 3: cameraDevice accepts string | undefined
+    cameraDevice: string | undefined,
+    resolution: string,
+    fps: number,
+    outputPath: string,
+  ): string[] {
+    const commonOutputArgs = [
+      '-c:v',
+      'libx264',
+      '-preset',
+      'ultrafast',
+      '-tune',
+      'zerolatency',
+      '-pix_fmt',
+      'yuv420p',
+      '-b:v',
+      '1M',
+      '-r',
+      fps.toString(),
+      '-c:a',
+      'aac',
+      '-b:a',
+      '128k',
+      '-ar',
+      '44100',
+      '-movflags',
+      '+faststart',
+      '-y',
+      outputPath,
+    ];
+
+    if (process.platform === 'darwin') {
+      // macOS uses avfoundation. '0:0' for default camera and microphone.
+      // '0' refers to the first video input, '0' after ':' refers to the first audio input.
+      return [
+        '-f',
+        'avfoundation',
+        '-framerate',
+        fps.toString(),
+        '-video_size',
+        resolution,
+        '-i',
+        cameraDevice || '0:0',
+        ...commonOutputArgs,
+      ];
+    } else if (process.platform === 'win32') {
+      // Windows uses dshow (DirectShow).
+      // You might need to list devices: ffmpeg -list_devices true -f dshow -i dummy
+      const videoDevice = cameraDevice || 'video=Integrated Camera'; // Example default
+      const audioDevice = 'audio=Microphone (Realtek(R) Audio)'; // Example default, adjust as needed
+
+      return [
+        '-f',
+        'dshow',
+        '-s',
+        resolution,
+        '-i',
+        `${videoDevice}:${audioDevice}`,
+        ...commonOutputArgs,
+      ];
+    } else if (process.platform === 'linux') {
+      // Linux typically uses v4l2 for video and pulse/alsa for audio.
+      // You might need to list devices: ffmpeg -f v4l2 -list_formats all -i /dev/video0
+      // For audio: pactl list sources or arecord -L
+      const videoDevice = cameraDevice || '/dev/video0'; // Default video device
+      const audioDevice = process.env.AUDIO_DEVICE || 'default'; // PulseAudio default or ALSA device
+
+      return [
+        '-f',
+        'v4l2',
+        '-s',
+        resolution,
+        '-i',
+        videoDevice,
+        '-f',
+        'pulse',
+        '-i',
+        audioDevice,
+        ...commonOutputArgs,
+      ];
+    } else {
+      throw new InternalServerErrorException(
+        `Unsupported operating system for camera recording: ${process.platform}`,
+      );
+    }
   }
 }
