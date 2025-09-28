@@ -195,7 +195,7 @@ export class FfmpegService {
    * @returns A promise that resolves with the ChildProcess of FFmpeg, or rejects on error.
    */
   startCameraRecording(
-    inputDevice: string,
+    inputDevice: string | undefined, // Changed from 'string' to 'string | undefined'
     outputPath: string,
     emitProgress: (progress: { time: string }) => void,
     options?: { resolution?: string; fps?: number },
@@ -204,7 +204,7 @@ export class FfmpegService {
       const { resolution = '1280x720', fps = 30 } = options || {};
 
       const ffmpegArgs = this._getCameraFfmpegArgs(
-        inputDevice,
+        inputDevice, // Now correctly typed as string | undefined
         resolution,
         fps,
         outputPath,
@@ -257,7 +257,7 @@ export class FfmpegService {
    * @returns An array of FFmpeg arguments.
    */
   private _getCameraFfmpegArgs(
-    cameraDevice: string,
+    cameraDevice: string | undefined, // Changed from 'string' to 'string | undefined'
     resolution: string,
     fps: number,
     outputPath: string,

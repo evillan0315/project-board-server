@@ -11,7 +11,7 @@ import {
 export class StartCameraRecordingDto {
   @ApiPropertyOptional({
     description: 'Identifier for the camera device to use (platform-specific).',
-    example: 'default' || '/dev/video0' || 'Integrated Camera',
+    example: ['default', '/dev/video0', 'Integrated Camera'],
     nullable: true,
   })
   @IsString()
