@@ -55,12 +55,13 @@ export class RecordingService {
   async getRecordingStatus(
     userId: string,
     id?: string,
-  ): Promise<{
-    id: string;
-    recording: boolean;
-    file: string | null;
-    startedAt: string | null;
-  }> {
+  ):
+    Promise<{
+      id: string;
+      recording: boolean;
+      file: string | null;
+      startedAt: string | null;
+    }> {
     let recordingEntity = null;
 
     if (id) {
@@ -107,7 +108,8 @@ export class RecordingService {
   async getMetadata(
     userId: string,
     file: string,
-  ): Promise<{ size: number; modified: string }> {
+  ):
+    Promise<{ size: number; modified: string }> {
     // Ensure the file is within the user's directory for security
     const baseDir = join(process.cwd(), 'downloads', 'recordings', userId);
     const filePath = file.includes('/') ? file : join(baseDir, file);
@@ -145,7 +147,9 @@ export class RecordingService {
       const files = await readdir(dir);
       return files.map((f) => join('downloads', 'recordings', userId, f)); // Return relative paths or just filenames
     } catch (error) {
-      this.logger.error(`Error listing recordings for user ${userId}: ${error.message}`);
+      this.logger.error(
+        `Error listing recordings for user ${userId}: ${error.message}`,
+      );
       throw new InternalServerErrorException('Failed to list recordings.');
     }
   }
@@ -155,7 +159,10 @@ export class RecordingService {
    * @param userId The ID of the user.
    * @param days Number of days to use as threshold
    */
-  async cleanupOld(userId: string, days: number = 7): Promise<{ deleted: string[] }> {
+  async cleanupOld(
+    userId: string,
+    days: number = 7,
+  ): Promise<{ deleted: string[] }> {
     const dir = join(process.cwd(), 'downloads', 'recordings', userId);
     const files = await readdir(dir);
     const now = Date.now();
@@ -252,7 +259,9 @@ export class RecordingService {
     return this.prisma.recording.delete({ where: { id } });
   }
 
-  async captureScreen(userId: string): Promise<{
+  async captureScreen(
+    userId: string,
+  ): Promise<{
     id: string;
     status: string;
     path: string;
@@ -342,7 +351,9 @@ export class RecordingService {
     });
 
     const stopTimer = setTimeout(() => {
-      this.logger.log(`Auto-stopping screen recording ${recording.id} after 2 hours limit.`);
+      this.logger.log(
+        `Auto-stopping screen recording ${recording.id} after 2 hours limit.`,
+      );
       this.stopRecording(userId, recording.id);
     }, 7200 * 1000); // 2 hours
 
@@ -355,7 +366,9 @@ export class RecordingService {
     });
 
     recordingProcess.once('exit', async (code) => {
-      this.logger.log(`Screen recording process ${recording.id} exited with code ${code}`);
+      this.logger.log(
+        `Screen recording process ${recording.id} exited with code ${code}`,
+      );
       this._handleRecordingExit(userId, recording.id, code, outputFile);
     });
 
@@ -392,17 +405,20 @@ export class RecordingService {
       activeRecord.process.kill('SIGINT'); // Send interrupt signal to ffmpeg
     }
 
-    if (activeRecord.stopTimer) {
-      clearTimeout(activeRecord.stopTimer);
-    }
+    // The 'exit' event handler (_handleRecordingExit) will be responsible for clearing the timer
+    // and removing the recording from activeRecordings map once the process fully exits.
+    // We do not delete from the map here to ensure _handleRecordingExit has access to activeRecord data.
 
-    // The exit handler will update the DB, so we just remove from active map here.
-    this.activeRecordings.delete(id);
-
-    // Fetch the updated recording from DB after exit handler has run or if it was already stopped.
+    // Fetch the recording from DB to return its current state. Note that this might return
+    // 'recording' status if the async _handleRecordingExit hasn't completed its DB update yet.
     const updatedRecording = await this.prisma.recording.findUnique({
       where: { id, createdById: userId },
     });
+
+    if (!updatedRecording) {
+      // This should ideally not happen if an activeRecord was found, but for type safety and robustness:
+      throw new NotFoundException(`Recording with ID ${id} not found after stopping.`);
+    }
 
     return {
       id: updatedRecording.id,
@@ -436,14 +452,18 @@ export class RecordingService {
       );
     }
 
-    this.logger.log(`Attempting to start camera recording for user ${userId} to ${outputFile}`);
+    this.logger.log(
+      `Attempting to start camera recording for user ${userId} to ${outputFile}`,
+    );
 
     try {
       const recordingProcess = await this.ffmpegService.startCameraRecording(
         dto.cameraDevice,
         outputFile,
         (progress) => {
-          this.logger.debug(`Camera Recording Progress for ${userId}: ${progress.time}`);
+          this.logger.debug(
+            `Camera Recording Progress for ${userId}: ${progress.time}`,
+          );
           // Potentially emit this via WebSocket for real-time client updates
         },
         { resolution: dto.resolution, fps: dto.fps },
@@ -472,7 +492,8 @@ export class RecordingService {
       const durationInMs = (dto.duration || 7200) * 1000; // Default to 2 hours if no duration provided
       const stopTimer = setTimeout(() => {
         this.logger.log(
-          `Auto-stopping camera recording ${recording.id} after ${durationInMs / 1000} seconds.`,);
+          `Auto-stopping camera recording ${recording.id} after ${durationInMs / 1000} seconds.`,
+        );
         this.stopCameraRecording(userId, recording.id);
       }, durationInMs);
 
@@ -485,7 +506,9 @@ export class RecordingService {
       });
 
       recordingProcess.once('exit', async (code) => {
-        this.logger.log(`Camera recording process ${recording.id} exited with code ${code}`);
+        this.logger.log(
+          `Camera recording process ${recording.id} exited with code ${code}`,
+        );
         this._handleRecordingExit(userId, recording.id, code, outputFile);
       });
 
@@ -495,8 +518,13 @@ export class RecordingService {
         message: 'Camera recording started successfully.',
       };
     } catch (error) {
-      this.logger.error(`Failed to start camera recording for user ${userId}: ${error.message}`, error.stack);
-      throw new InternalServerErrorException(`Failed to start camera recording: ${error.message}`);
+      this.logger.error(
+        `Failed to start camera recording for user ${userId}: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        `Failed to start camera recording: ${error.message}`,
+      );
     }
   }
 
@@ -529,19 +557,18 @@ export class RecordingService {
       activeRecord.process.kill('SIGINT'); // Send interrupt signal to ffmpeg
     }
 
-    if (activeRecord.stopTimer) {
-      clearTimeout(activeRecord.stopTimer);
-    }
-
-    // Remove from active map immediately, DB update handled by exit listener
-    this.activeRecordings.delete(id);
-
-    // Wait for a moment to allow the exit handler to update the DB
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // The 'exit' event handler (_handleRecordingExit) will be responsible for clearing the timer
+    // and removing the recording from activeRecordings map once the process fully exits.
+    // We do not delete from the map here to ensure _handleRecordingExit has access to activeRecord data.
 
     const updatedRecording = await this.prisma.recording.findUnique({
       where: { id, createdById: userId },
     });
+
+    if (!updatedRecording) {
+      // This should ideally not happen if an activeRecord was found, but for type safety and robustness:
+      throw new NotFoundException(`Recording with ID ${id} not found after stopping.`);
+    }
 
     return {
       id: updatedRecording.id,
@@ -553,24 +580,59 @@ export class RecordingService {
   private async _handleRecordingExit(
     userId: string,
     recordingId: string,
-    exitCode: number,
+    exitCode: number | null, // Corrected to handle 'null'
     outputFile: string,
   ) {
+    const activeRecord = this.activeRecordings.get(recordingId);
+
+    if (!activeRecord) {
+      this.logger.warn(
+        `_handleRecordingExit called for non-active recording ${recordingId}. It might have been already handled or manually removed.`,
+      );
+      // Attempt to update the DB entry if it exists, even if not in active map
+      const currentRecording = await this.prisma.recording.findUnique({
+        where: { id: recordingId, createdById: userId },
+      });
+      if (currentRecording) {
+        await this.prisma.recording.update({
+          where: { id: recordingId },
+          data: {
+            status: exitCode === 0 ? 'finished' : 'failed',
+            data: {
+              ...(typeof currentRecording.data === 'object'
+                ? currentRecording.data
+                : {}),
+              stoppedAt: new Date().toISOString(),
+              exitCode,
+            }, // Duration and fileSize will be 0 if activeRecord wasn't found
+          },
+        });
+      }
+      return; // Exit as there's no active process to manage
+    }
+
+    // Clear the timeout associated with this recording
+    if (activeRecord.stopTimer) {
+      clearTimeout(activeRecord.stopTimer);
+      activeRecord.stopTimer = null;
+    }
+
+    // Remove the recording from the active map now that its lifecycle is complete.
     this.activeRecordings.delete(recordingId);
 
     let duration = 0;
     let fileSize = 0;
-    const activeRecord = this.activeRecordings.get(recordingId);
-    const startTime = activeRecord ? activeRecord.startTime : null;
 
     try {
-      if (startTime !== null) {
-        duration = (Date.now() - startTime) / 1000;
+      if (activeRecord.startTime !== null) {
+        duration = (Date.now() - activeRecord.startTime) / 1000;
       }
       const fileStats = await stat(outputFile);
       fileSize = fileStats.size;
     } catch (err) {
-      this.logger.warn(`Could not get file stats for ${outputFile}: ${err.message}`);
+      this.logger.warn(
+        `Could not get file stats for ${outputFile} after recording exit: ${err.message}`,
+      );
     }
 
     const currentRecording = await this.prisma.recording.findUnique({
@@ -583,7 +645,9 @@ export class RecordingService {
         data: {
           status: exitCode === 0 ? 'finished' : 'failed',
           data: {
-            ...(typeof currentRecording.data === 'object' ? currentRecording.data : {}),
+            ...(typeof currentRecording.data === 'object'
+              ? currentRecording.data
+              : {}),
             stoppedAt: new Date().toISOString(),
             duration,
             fileSize,
@@ -592,7 +656,9 @@ export class RecordingService {
         },
       });
       this.logger.log(
-        `Recording ${recordingId} metadata updated: status=${currentRecording.status}, duration=${duration}s, fileSize=${fileSize} bytes`,
+        `Recording ${recordingId} metadata updated: status=${
+          exitCode === 0 ? 'finished' : 'failed'
+        }, duration=${duration}s, fileSize=${fileSize} bytes`,
       );
     }
   }
