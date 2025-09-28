@@ -21,14 +21,12 @@ import {
   ApiTags,
   ApiQuery,
 } from '@nestjs/swagger';
-import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Root } from 'mdast';
 import { Response } from 'express';
 import { MarkdownDto } from './dto/markdown.dto';
 import { UploadEnvDto } from './dto/upload-env.dto';
-import { UploadJsonDto } from './dto/upload-json.dto';
 import { JsonBodyDto } from './dto/json-body.dto';
 import { diskStorage } from 'multer';
 import { UtilsService } from './utils.service';
@@ -37,7 +35,9 @@ import { JsonFixService } from './json-fix.service';
 import { UploadImageDto } from './dto/upload-image.dto';
 import { FormatCodeDto } from './dto/format-code.dto';
 import { HtmlDto } from './dto/html.dto';
-import { DetectLanguageDto } from './dto/detect-language.dto'; // <-- NEW: Import DetectLanguageDto
+import { ImportExportDetectorService } from './import-export-detector.service';
+import { DetectImportsExportsDto } from './dto/detect-imports-exports.dto';
+import { DetectedImportExportStatementDto } from './dto/detected-import-export-statement.dto';
 
 class FixJsonDto {
   /** The raw JSON string that may be invalid or broken */
@@ -54,8 +54,36 @@ export class UtilsController {
     private readonly utilsService: UtilsService,
     private readonly jsonFixService: JsonFixService,
     private readonly markdownUtilService: MarkdownUtilService,
+    private readonly importExportDetectorService: ImportExportDetectorService,
   ) {}
 
+  @Post('detect-imports-exports') 
+  @ApiOperation({
+    summary: 'Detect import and export statements in a code string',
+    description: 'Analyzes a given code string (TypeScript, JavaScript, TSX, JSX) ' +
+                 'and returns a list of detected import and export statements, including their type, ' +
+                 'module specifier, and named/default bindings.',
+  })
+  @ApiBody({ type: DetectImportsExportsDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully detected imports and exports.',
+    type: DetectedImportExportStatementDto, // Use the DTO for Swagger
+    isArray: true, // Mark as array for Swagger
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request: Code or language is missing.',
+  })
+  detectImportsExports(
+    @Body() body: DetectImportsExportsDto,
+  ): DetectedImportExportStatementDto[] {
+    const { code, language } = body;
+    if (!code || !language) {
+      throw new BadRequestException('Code and language are required.');
+    }
+    return this.importExportDetectorService.detect(code, language);
+  }
   @Post('json-fix')
   @ApiOperation({ summary: 'Fix malformed or invalid JSON' })
   @ApiBody({ type: FixJsonDto })
@@ -612,15 +640,7 @@ export class UtilsController {
       properties: {
         content: {
           type: 'string',
-          example: `
-/**
- * Adds two numbers
- */
-function add(a: number, b: number): number {
-  // Add them
-  return a + b;
-}
-        `.trim(),
+          example: `\n/**\n * Adds two numbers\n */\nfunction add(a: number, b: number): number {\n  // Add them\n  return a + b;\n}\n        `.trim(),
         },
       },
       required: ['content'],
