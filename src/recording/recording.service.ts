@@ -21,7 +21,7 @@ import { TerminalService } from '../terminal/terminal.service';
 import { CreateRecordingDto } from './dto/create-recording.dto';
 import { UpdateRecordingDto } from './dto/update-recording.dto';
 import { StartRecordingResponseDto } from './dto/start-recording-response.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, Recording } from '@prisma/client';
 
 import { CreateJwtUserDto } from '../auth/dto/auth.dto';
 
@@ -62,7 +62,7 @@ export class RecordingService {
       file: string | null;
       startedAt: string | null;
     }> {
-    let recordingEntity = null;
+    let recordingEntity: Recording | null = null;
 
     if (id) {
       // If an ID is provided, check that specific recording for the current user
@@ -96,7 +96,7 @@ export class RecordingService {
       file: recordingEntity.path,
       startedAt: isRunning
         ? new Date(activeRecord.startTime).toISOString()
-        : recordingEntity.data?.startedAt || null,
+        : recordingEntity.data?.startedAt?.toString() || null,
     };
   }
 
@@ -378,7 +378,8 @@ export class RecordingService {
   async stopRecording(
     userId: string,
     id: string,
-  ): Promise<{ id: string; status: string; path: string }> {
+  ):
+    Promise<{ id: string; status: string; path: string }> {
     const activeRecord = this.activeRecordings.get(id);
 
     if (!activeRecord) {
