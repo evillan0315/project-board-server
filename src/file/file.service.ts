@@ -1187,77 +1187,89 @@ export class FileService implements OnModuleInit {
     return results;
   }
 
- /**
- * Applies a list of proposed file changes (add, modify, delete, repair).
- */
-async applyFileChanges(
-  changes: ProposedFileChangeDto[],
-  projectRoot: string,
-): Promise<{ success: boolean; messages: string[] }> {
-  this.ensureFileModuleEnabled();
-  const messages: string[] = [];
+  /**
+   * Applies a list of proposed file changes (add, modify, delete, repair).
+   */
+  async applyFileChanges(
+    changes: ProposedFileChangeDto[],
+    projectRoot: string,
+  ): Promise<{ success: boolean; messages: string[] }> {
+    this.ensureFileModuleEnabled();
+    const messages: string[] = [];
 
-  for (const change of changes) {
-    const absolutePath = path.resolve(projectRoot, change.filePath);
-    this.logger.log(`Applying change: ${change.action} ${absolutePath}`);
+    for (const change of changes) {
+      const absolutePath = path.resolve(projectRoot, change.filePath);
+      this.logger.log(`Applying change: ${change.action} ${absolutePath}`);
 
-    try {
-      switch (change.action) {
-        case FileAction.ADD:
-          await fs.mkdir(path.dirname(absolutePath), { recursive: true });
-          await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
-          messages.push(`Added file: ${change.filePath}`);
-          break;
-
-        case FileAction.MODIFY:
-          await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
-          messages.push(`Modified file: ${change.filePath}`);
-          break;
-
-        case FileAction.DELETE:
-          if (await fsExtra.pathExists(absolutePath)) {
-            await fs.unlink(absolutePath);
-            messages.push(`Deleted file: ${change.filePath}`);
-          } else {
-            messages.push(`Skipped delete: File not found ${change.filePath}`);
-          }
-          break;
-
-        case FileAction.REPAIR:
-          if (!(await fsExtra.pathExists(absolutePath))) {
-            // If file does not exist, create it
+      try {
+        switch (change.action) {
+          case FileAction.ADD:
             await fs.mkdir(path.dirname(absolutePath), { recursive: true });
             await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
-            messages.push(`Repaired (created missing) file: ${change.filePath}`);
-          } else {
-            // If file exists, optionally overwrite with new content
+            messages.push(`Added file: ${change.filePath}`);
+            break;
+
+          case FileAction.MODIFY:
             await fs.writeFile(absolutePath, change.newContent || '', 'utf-8');
-            messages.push(`Repaired (updated) file: ${change.filePath}`);
-          }
-          break;
+            messages.push(`Modified file: ${change.filePath}`);
+            break;
 
-        default:
-          this.logger.warn(
-            `Unknown file action: ${change.action} for ${change.filePath}`,
-          );
-          messages.push(
-            `Skipped unknown action: ${change.action} for ${change.filePath}`,
-          );
-          break;
+          case FileAction.DELETE:
+            if (await fsExtra.pathExists(absolutePath)) {
+              await fs.unlink(absolutePath);
+              messages.push(`Deleted file: ${change.filePath}`);
+            } else {
+              messages.push(
+                `Skipped delete: File not found ${change.filePath}`,
+              );
+            }
+            break;
+
+          case FileAction.REPAIR:
+            if (!(await fsExtra.pathExists(absolutePath))) {
+              // If file does not exist, create it
+              await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+              await fs.writeFile(
+                absolutePath,
+                change.newContent || '',
+                'utf-8',
+              );
+              messages.push(
+                `Repaired (created missing) file: ${change.filePath}`,
+              );
+            } else {
+              // If file exists, optionally overwrite with new content
+              await fs.writeFile(
+                absolutePath,
+                change.newContent || '',
+                'utf-8',
+              );
+              messages.push(`Repaired (updated) file: ${change.filePath}`);
+            }
+            break;
+
+          default:
+            this.logger.warn(
+              `Unknown file action: ${change.action} for ${change.filePath}`,
+            );
+            messages.push(
+              `Skipped unknown action: ${change.action} for ${change.filePath}`,
+            );
+            break;
+        }
+      } catch (error) {
+        this.logger.error(
+          `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
+          (error as Error).stack,
+        );
+        messages.push(
+          `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
+        );
       }
-    } catch (error) {
-      this.logger.error(
-        `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
-        (error as Error).stack,
-      );
-      messages.push(
-        `Failed to apply change '${change.action}' for '${change.filePath}': ${(error as Error).message}`,
-      );
     }
-  }
 
-  return { success: true, messages };
-}
+    return { success: true, messages };
+  }
 
   /**
    * Generates a git diff for a specific file relative to its current HEAD.

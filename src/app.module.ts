@@ -75,6 +75,8 @@ import { VideoHistoryModule } from './video-history/video-history.module';
 import { ProxyModule } from './proxy/proxy.module';
 import { PlannerModule } from './planner/planner.module';
 import { LogsModule } from './logs/logs.module';
+import { LlmPlaywrightModule } from './llm-playwright/llm-playwright.module';
+import { GitModule } from './git/git.module';
 
 /**
  * The root module of the NestJS application.
@@ -235,6 +237,8 @@ import { LogsModule } from './logs/logs.module';
     ProxyModule,
     PlannerModule,
     LogsModule,
+    LlmPlaywrightModule,
+    GitModule,
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.
