@@ -2,7 +2,14 @@ import { Injectable, Logger, InternalServerErrorException, BadRequestException, 
 import { ConfigService } from '@nestjs/config';
 import * as simpleGit from 'simple-git';
 import * as path from 'path';
-import { GitStatusResult, GitBranch, GitCommit } from './interfaces/git.interface';
+
+
+import { 
+  GitBranchDto, // Import the GitBranchDto class
+  GitCommitDto, // Import the new GitCommitDto class 
+  GitStatusResponseDto
+} from './dto';
+
 
 @Injectable()
 export class GitService {
@@ -31,15 +38,17 @@ export class GitService {
     }
   }
 
-  async getStatus(projectRoot?: string): Promise<GitStatusResult> {
+  async getStatus(projectRoot?: string): Promise<GitStatusResponseDto> {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       const status = await git.status();
-      return status;
+      // Explicitly add is_clean property from simple-git's isClean() method
+      (status as GitStatusResponseDto).is_clean = status.isClean();
+      return status as GitStatusResponseDto;
     } catch (error) {
       this.logger.error(`Failed to get Git status: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Failed to get Git status: ${error.message}`);
@@ -50,7 +59,7 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       await git.add(filePaths);
@@ -65,7 +74,7 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       await git.reset(['--', ...filePaths]);
@@ -80,7 +89,7 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       await git.reset(); // Resets index to HEAD, unstaging all changes
@@ -95,7 +104,7 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       const commitSummary = await git.commit(message);
@@ -106,17 +115,18 @@ export class GitService {
     }
   }
 
-  async getBranches(projectRoot?: string): Promise<GitBranch[]> {
+  async getBranches(projectRoot?: string): Promise<GitBranchDto[]> {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       const branchSummary = await git.branch(['-v', '--all']);
-      const branches: GitBranch[] = [];
+      const branches: GitBranchDto[] = [];
 
-      for (const branchName of [...branchSummary.all, ...branchSummary.remote]) {
+      // Iterate over all branches (local and remote refs) found by simple-git
+      for (const branchName of branchSummary.all) {
         if (branchSummary.branches[branchName]) {
           const branchData = branchSummary.branches[branchName];
           branches.push({
@@ -138,11 +148,11 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       await git.checkoutLocalBranch(newBranchName);
-      return `Branch '${newBranchName}' created and checked out.`;
+      return `Branch \'${newBranchName}\' created and checked out.`;
     } catch (error) {
       this.logger.error(`Failed to create branch: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Failed to create branch: ${error.message}`);
@@ -153,7 +163,7 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       if (remote) {
@@ -169,19 +179,19 @@ export class GitService {
         // Check if local branch already exists
         if (branchSummary.branches[branchName]) {
             await git.checkout(branchName);
-            return `Checked out existing local branch '${branchName}'.`;
+            return `Checked out existing local branch \'${branchName}\'.`;
         } else {
             // Create and checkout new local branch tracking the remote one
             await git.checkout(['-b', branchName, remoteBranchRef]);
-            return `Created and checked out local tracking branch '${branchName}' for 'origin/${branchName}'.`;
+            return `Created and checked out local tracking branch \'${branchName}\' for 'origin/${branchName}'.`;
         }
       } else {
         const branchSummary = await git.branchLocal();
         if (!branchSummary.all.includes(branchName)) {
-          throw new NotFoundException(`Local branch '${branchName}' not found.`);
+          throw new NotFoundException(`Local branch \'${branchName}\' not found.`);
         }
         await git.checkout(branchName);
-        return `Checked out local branch '${branchName}'.`;
+        return `Checked out local branch \'${branchName}\'.`;
       }
     } catch (error) {
       this.logger.error(`Failed to checkout branch: ${error.message}`, error.stack);
@@ -196,11 +206,11 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       await git.deleteLocalBranch(branchName, force);
-      return `Branch '${branchName}' deleted.`;
+      return `Branch \'${branchName}\' deleted.`;
     } catch (error) {
       this.logger.error(`Failed to delete branch: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Failed to delete branch: ${error.message}`);
@@ -211,7 +221,7 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       const log = await git.log({ maxCount: 1 });
@@ -221,7 +231,7 @@ export class GitService {
         if (!latestCommit) {
           throw new NotFoundException('No commits found to revert.');
         }
-        await git.revert([latestCommit]);
+        await git.revert(latestCommit);
         return `Successfully reverted the last commit (${latestCommit}).`;
       } else {
         // Validate if the provided commitHash exists and is valid
@@ -230,7 +240,7 @@ export class GitService {
         } catch (validationError) {
           throw new BadRequestException(`Invalid commit hash: ${commitHash}`);
         }
-        await git.revert([commitHash]);
+        await git.revert(commitHash);
         return `Successfully reverted commit ${commitHash}.`;
       }
     } catch (error) {
@@ -246,11 +256,11 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       await git.checkout(['--', filePath]);
-      return `Changes in '${filePath}' undone.`;
+      return `Changes in \'${filePath}\' undone.`;
     } catch (error) {
       this.logger.error(`Failed to undo changes for file ${filePath}: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Failed to undo changes for file: ${error.message}`);
@@ -261,15 +271,15 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       const tags = await git.tags();
       if (tags.all.includes(snapshotName)) {
-        throw new BadRequestException(`Snapshot (tag) '${snapshotName}' already exists. Delete it first if you want to replace.`);
+        throw new BadRequestException(`Snapshot (tag) \'${snapshotName}\' already exists. Delete it first if you want to replace.`);
       }
       await git.addAnnotatedTag(snapshotName, message || `Snapshot created on ${new Date().toISOString()}`);
-      return `Snapshot '${snapshotName}' created.`;
+      return `Snapshot \'${snapshotName}\' created.`;
     } catch (error) {
       this.logger.error(`Failed to create snapshot: ${error.message}`, error.stack);
       if (error instanceof BadRequestException) {
@@ -283,16 +293,16 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       const tags = await git.tags();
       if (!tags.all.includes(snapshotName)) {
-        throw new NotFoundException(`Snapshot (tag) '${snapshotName}' not found.`);
+        throw new NotFoundException(`Snapshot (tag) \'${snapshotName}\' not found.`);
       }
 
       await git.checkout(snapshotName);
-      return `Restored to snapshot '${snapshotName}'. Repository is now in a detached HEAD state. Consider creating a new branch.`;
+      return `Restored to snapshot \'${snapshotName}\'. Repository is now in a detached HEAD state. Consider creating a new branch.`;
     } catch (error) {
       this.logger.error(`Failed to restore snapshot: ${error.message}`, error.stack);
       if (error instanceof NotFoundException) {
@@ -306,7 +316,7 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       const tags = await git.tags();
@@ -321,22 +331,22 @@ export class GitService {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       await git.tag(['-d', snapshotName]);
-      return `Snapshot '${snapshotName}' deleted.`;
+      return `Snapshot \'${snapshotName}\' deleted.`;
     } catch (error) {
       this.logger.error(`Failed to delete snapshot: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Failed to delete snapshot: ${error.message}`);
     }
   }
 
-  async getCommitLog(projectRoot?: string): Promise<GitCommit[]> {
+  async getCommitLog(projectRoot?: string): Promise<GitCommitDto[]> {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory '${effectiveRoot}' is not a Git repository.`);
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
       const log = await git.log();
