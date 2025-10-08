@@ -13,12 +13,6 @@ export interface GitCommit {
   author_email: string;
 }
 
-export interface GitStatusFile {
-  path: string;
-  index: string;
-  working_dir: string;
-}
-
 export interface GitStatusResult {
   current: string | null;
   detached: boolean;
@@ -34,4 +28,10 @@ export interface GitStatusResult {
   behind: number;
   tracking: string | null;
   is_clean: boolean;
+}
+
+export interface GitStatusFile {
+  path: string;
+  index: string;
+  working_dir: string;
 }

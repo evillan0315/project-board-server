@@ -5,8 +5,8 @@ import * as path from 'path';
 
 
 import { 
-  GitBranchDto, // Import the GitBranchDto class
-  GitCommitDto, // Import the new GitCommitDto class 
+  GitBranchDto, 
+  GitCommitDto, 
   GitStatusResponseDto
 } from './dto';
 
@@ -45,10 +45,29 @@ export class GitService {
       throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
-      const status = await git.status();
-      // Explicitly add is_clean property from simple-git's isClean() method
-      (status as GitStatusResponseDto).is_clean = status.isClean();
-      return status as GitStatusResponseDto;
+      const statusResult = await git.status(); // Renamed to avoid confusion with the DTO
+
+      const responseDto: GitStatusResponseDto = {
+        current: statusResult.current,
+        detached: statusResult.detached,
+        files: statusResult.files.map(file => ({
+          path: file.path,
+          index: file.index,
+          working_dir: file.working_dir,
+        })),
+        not_added: statusResult.not_added,
+        conflicted: statusResult.conflicted,
+        created: statusResult.created,
+        deleted: statusResult.deleted,
+        modified: statusResult.modified,
+        renamed: statusResult.renamed,
+        staged: statusResult.staged,
+        ahead: statusResult.ahead,
+        behind: statusResult.behind,
+        tracking: statusResult.tracking,
+        is_clean: statusResult.isClean(), // Directly call the method here
+      };
+      return responseDto;
     } catch (error) {
       this.logger.error(`Failed to get Git status: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Failed to get Git status: ${error.message}`);
