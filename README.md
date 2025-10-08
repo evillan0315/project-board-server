@@ -109,7 +109,7 @@ pnpm install
 Create a `.env` file in the project root:
 
 ```env
-PORT=5000
+PORT=3000
 DATABASE_URL='postgresql://...' # Your PostgreSQL database connection string
 JWT_SECRET='your_jwt_secret' # Secret for JWT token signing
 
@@ -133,8 +133,14 @@ GOOGLE_TRANSLATION_API_KEY='your_translation_api_key' # NEW: API Key for Google 
 
 # Base URL for API (for email verification links, etc.)
 BASE_URL='http://localhost:3000'
-BACKEND_URL='http://localhost:5000'
-FRONTEND_URL='http://localhost:3001' # Your frontend URL for OAuth redirects
+BACKEND_URL='http://localhost:3000'
+FRONTEND_URL='http://localhost:3001' # Your frontend URL for OAuth redirects and proxy CORS/CSP
+
+# Proxy Service Configuration
+# ALLOWED_PROXY_DOMAINS: Comma-separated list of hostnames/domains the proxy is allowed to fetch content from.
+# Example: ALLOWED_PROXY_DOMAINS='example.com,api.anotherservice.net'
+# If empty, proxying to any external URL is permitted, but a warning will be logged (DANGEROUS IN PROD).
+ALLOWED_PROXY_DOMAINS=''
 
 # SSH Config for Remote File Operations (Update with your server details)
 SSH_HOST='your_remote_server_ip_or_hostname'
@@ -198,7 +204,7 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `POST`   | `/api/file/scan`            | Scan project directories for relevant files        |
 | `GET`    | `/api/file/stream`          | Stream media files with range support              |
 | `GET`    | `/api/file/download`        | Stream a file directly to the client for download  |
-| `GET`    | `/api/file/proxy`           | Proxies an image URL and streams the image content |
+| `GET`    | `/api/proxy`                | Proxies an image URL and streams the image content |
 | `POST`   | `/api/file/write`           | Write content to a file                            |
 | `POST`   | `/api/file/upload`          | Upload a single file                               |
 | `POST`   | `/api/file/upload-multiple` | Upload multiple files                              |
@@ -336,6 +342,7 @@ src/
 ├── playlist-media-file/# Join table for playlists and media files
 ├── prisma/             # Prisma ORM setup and service
 ├── project/            # Project management (metadata, status, etc.)
+├── proxy/              # URL proxy service
 ├── recording/          # Screen recording and screenshot capture
 ├── repos/              # GitHub repository management
 ├── resume/             # Resume parsing and generation services
