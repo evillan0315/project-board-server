@@ -1,0 +1,130 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Change Request Document",
+  "description": "Schema for describing a set of code changes, including a summary, detailed thought process, and file-level modifications, designed for automated code generation and review systems.",
+  "x-layout": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 rounded-lg shadow-md",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "A concise and descriptive title summarizing the overall change request. Should be clear and to the point.",
+      "minLength": 10,
+      "maxLength": 120,
+      "x-order": 10,
+      "x-classNames": "col-span-full mb-4",
+      "x-helper": "Provide a clear and concise title, e.g., 'Implement User Authentication Flow' or 'Refactor Data Layer for Performance'."
+    },
+    "summary": {
+      "type": "string",
+      "description": "A high-level explanation of the overall change request, its primary purpose, and the problem it solves or the feature it implements.",
+      "minLength": 50,
+      "maxLength": 1000,
+      "x-order": 20,
+      "x-classNames": "col-span-full md:col-span-1 mb-4",
+      "x-helper": "Briefly explain the 'what' and 'why' of this change. For instance, 'This change introduces a new user profile management system to allow users to update their personal information securely. It addresses a critical user feedback point regarding profile customisation.'"
+    },
+    "thoughtProcess": {
+      "type": "string",
+      "description": "Detailed reasoning behind the changes, the approach taken, design decisions, and any alternatives considered. Explain 'why' certain choices were made.",
+      "minLength": 100,
+      "rows": 2,
+      "x-order": 30,
+      "x-classNames": "col-span-full md:col-span-1 mb-4",
+      "x-helper": "Elaborate on the technical decisions, challenges, and architectural considerations. Explain 'why' a particular solution was chosen over others. E.g., 'We opted for a serverless function for image processing due to scalability and cost-efficiency, after considering an in-house microservice, which was deemed overkill for current needs.'"
+    },
+    "documentation": {
+      "type": "string",
+      "description": "Optional extended notes in Markdown format. May include in-depth design decisions, complex implementation details, usage instructions, or future recommendations/considerations. Useful for persistent documentation.",
+      "minLength": 50,
+      "x-order": 40,
+      "x-classNames": "col-span-full mb-4",
+      "x-helper": "Use Markdown to provide any supplementary documentation that goes beyond the thought process, such as API usage, setup guides, or future development notes. This is ideal for detailed explanations of complex features."
+    },
+    "buildScripts": {
+      "type": "object",
+      "description": "A mapping of script labels (e.g., 'install', 'build', 'test') to their respective shell commands. Provide this when new dependencies are introduced, or when existing build/run/test scripts need to be updated or added.",
+      "x-order": 50,
+      "x-classNames": "col-span-full md:col-span-1 mb-4",
+      "x-helper": "Define any new or modified build/run/test scripts. For example: `{'install': 'npm install', 'build': 'webpack --mode production', 'test': 'jest'}`. The values should be valid shell commands.",
+      "additionalProperties": {
+        "type": "string",
+        "description": "The shell command for the script.",
+        "minLength": 1
+      }
+    },
+    "changes": {
+      "type": "array",
+      "description": "A list of individual file modifications, additions, or deletions to be applied to the project.",
+      "x-order": 60,
+      "x-classNames": "col-span-full mb-4",
+      "x-helper": "List each file change as a separate object. Each object must specify `filePath`, `action`, and optionally `newContent` or `reason`. Be as precise as possible.",
+      "items": {
+        "type": "object",
+        "x-layout": "grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-md bg-white shadow-sm",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The path to the file relative to the project root (e.g., 'src/utils/helpers.js' or 'public/index.html').",
+            "minLength": 3,
+            "x-order": 10,
+            "x-classNames": "font-mono text-blue-700",
+            "x-helper": "Specify the full path from the project root. Example: 'src/components/Button.jsx' or 'config/webpack.config.js'."
+          },
+          "action": {
+            "type": "string",
+            "description": "The type of operation to be performed on the file. 'analyze' implies reviewing content without making direct modifications in this step.",
+            "enum": [
+              "add",
+              "modify",
+              "delete",
+              "repair",
+              "analyze"
+            ],
+            "x-order": 20,
+            "x-classNames": "uppercase text-xs font-bold text-gray-600",
+            "x-helper": "Choose one of 'add' (new file), 'modify' (update existing), 'delete' (remove file), 'repair' (fix content of existing), or 'analyze' (review only without making direct changes)."
+          },
+          "newContent": {
+            "type": "string",
+            "description": "The full content of the file after the 'add', 'modify', or 'repair' action. This string must be correctly JSON-escaped.",
+            "minLength": 1,
+            "x-order": 30,
+            "x-classNames": "col-span-full font-mono text-sm bg-gray-50 p-3 rounded-md overflow-auto",
+            "x-helper": "Provide the complete, final content of the file. Required for 'add', 'modify', or 'repair' actions. Ensure special characters are properly JSON-escaped. For deletion, this property should be omitted."
+          },
+          "reason": {
+            "type": "string",
+            "description": "An optional explanation in Markdown for why this specific file change was made, detailing its local impact or purpose.",
+            "minLength": 20,
+            "x-order": 40,
+            "x-classNames": "col-span-full italic text-gray-700",
+            "x-helper": "Explain the specific impact or necessity of *this particular file change* in Markdown. For example: 'Updated `Button.jsx` to support a new `variant` prop for styling flexibility, improving UI consistency.'"
+          }
+        },
+        "required": [
+          "filePath",
+          "action"
+        ]
+      }
+    },
+    "gitInstructions": {
+      "type": "array",
+      "description": "Optional list of specific git commands (e.g., 'git add .', 'git commit -m \"Refactor code\"', 'git push origin feature-branch') to execute after applying the changes. Useful for automated workflows.",
+      "x-order": 70,
+      "x-classNames": "col-span-full md:col-span-1 mb-4",
+      "x-helper": "List git commands to be executed sequentially after all file changes are applied. Example: `['git add .', 'git commit -m \"feat: new user profile\"', 'git push origin main']`. Ensure commands are valid and ordered correctly.",
+      "items": {
+        "type": "string",
+        "minLength": 5,
+        "x-helper": "A single git command string, e.g., 'git add src/App.js' or 'git checkout -b feature/new-profile'."
+      }
+    }
+  },
+  "required": [
+    "title",
+    "summary",
+    "thoughtProcess",
+    "changes"
+  ]
+
+}

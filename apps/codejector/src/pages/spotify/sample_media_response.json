@@ -1,0 +1,190 @@
+{
+  "items": [
+    {
+      "id": "7c4fdfec-db40-4423-bd70-6b75797fe6f0",
+      "name": "7c4fdfec-db40-4423-bd70-6b75797fe6f0.mp3",
+      "path": "/media/eddie/Data/projects/nestJS/nest-modules/project-board-server/downloads/audio/youtube/550acedf-2d16-4d84-9abf-2171840930ac/7c4fdfec-db40-4423-bd70-6b75797fe6f0.mp3",
+      "fileType": "AUDIO",
+      "mimeType": "audio/mpeg",
+      "size": "86947077",
+      "provider": "local",
+      "url": null,
+      "createdAt": "2025-09-15T15:51:49.483Z",
+      "updatedAt": "2025-09-15T15:51:49.483Z",
+      "songId": "417b5a10-9068-4cb0-8a91-2a6de3c47721",
+      "videoId": null,
+      "metadata": [
+        {
+          "id": "b36b52f0-4998-4358-81ed-2f8eda0ea51a",
+          "type": "AUDIO",
+          "data": {
+            "title": "The Best of Bugoy Drilon, Daryl Ong & Michael Pangilinan OPM Songs 2022 | Non-Stop",
+            "duration": "5490.864000",
+            "thumbnail": null
+          },
+          "tags": [
+            "local",
+            "scanned"
+          ],
+          "createdAt": "2025-09-15T15:51:49.483Z",
+          "fileId": "7c4fdfec-db40-4423-bd70-6b75797fe6f0",
+          "createdById": null
+        }
+      ],
+      "song": {
+        "id": "417b5a10-9068-4cb0-8a91-2a6de3c47721",
+        "title": "The Best of Bugoy Drilon, Daryl Ong & Michael Pangilinan OPM Songs 2022 | Non-Stop",
+        "duration": 5491,
+        "year": null,
+        "createdAt": "2025-09-15T15:51:49.415Z",
+        "updatedAt": "2025-09-15T15:51:49.415Z",
+        "artistId": "622d2d0c-0a87-4fab-945b-87c8470b83d8",
+        "albumId": "f8a1cc2e-880b-475f-a88d-8131b3453af2",
+        "createdById": "550acedf-2d16-4d84-9abf-2171840930ac"
+      },
+      "video": null
+    },
+    {
+      "id": "44a8a71a-42b9-4716-aeea-f94d6be5777e",
+      "name": "44a8a71a-42b9-4716-aeea-f94d6be5777e.mp3",
+      "path": "/media/eddie/Data/projects/nestJS/nest-modules/project-board-server/downloads/audio/youtube/550acedf-2d16-4d84-9abf-2171840930ac/44a8a71a-42b9-4716-aeea-f94d6be5777e.mp3",
+      "fileType": "AUDIO",
+      "mimeType": "audio/mpeg",
+      "size": "4375653",
+      "provider": "local",
+      "url": null,
+      "createdAt": "2025-09-15T15:41:33.944Z",
+      "updatedAt": "2025-09-15T15:41:33.944Z",
+      "songId": "5d93ec67-89a9-4602-af7e-b8437ad1f594",
+      "videoId": null,
+      "metadata": [
+        {
+          "id": "5b41af57-c920-429a-8477-e814d99fd74f",
+          "type": "AUDIO",
+          "data": {
+            "title": "Paano Na Kaya - Bugoy Drilon  (Lyrics)",
+            "duration": "275.904000",
+            "thumbnail": null
+          },
+          "tags": [
+            "local",
+            "scanned"
+          ],
+          "createdAt": "2025-09-15T15:41:33.944Z",
+          "fileId": "44a8a71a-42b9-4716-aeea-f94d6be5777e",
+          "createdById": null
+        }
+      ],
+      "song": {
+        "id": "5d93ec67-89a9-4602-af7e-b8437ad1f594",
+        "title": "Paano Na Kaya - Bugoy Drilon  (Lyrics)",
+        "duration": 276,
+        "year": null,
+        "createdAt": "2025-09-15T15:41:33.805Z",
+        "updatedAt": "2025-09-15T15:41:33.805Z",
+        "artistId": "622d2d0c-0a87-4fab-945b-87c8470b83d8",
+        "albumId": "f8a1cc2e-880b-475f-a88d-8131b3453af2",
+        "createdById": "550acedf-2d16-4d84-9abf-2171840930ac"
+      },
+      "video": null
+    },
+    {
+      "id": "1029ad89-3309-418e-9e5c-ccd60d77f063",
+      "name": "Paano Na Kaya - Bugoy Drilon  (Lyrics).f251.webm",
+      "path": "/media/eddie/Data/projects/nestJS/nest-modules/full-stack/downloads/audio/Paano Na Kaya - Bugoy Drilon  (Lyrics).f251.webm",
+      "fileType": "VIDEO",
+      "mimeType": "video/webm",
+      "size": "4615888",
+      "provider": "local",
+      "url": null,
+      "createdAt": "2025-09-14T08:35:44.880Z",
+      "updatedAt": "2025-09-14T08:35:44.880Z",
+      "songId": null,
+      "videoId": "086c1bc6-13cc-49a8-a4ec-e48abe86f32a",
+      "metadata": [
+        {
+          "id": "3ab0cb81-447e-47a4-bf9a-b8a76ffa1606",
+          "type": "VIDEO",
+          "data": {
+            "title": "Paano Na Kaya - Bugoy Drilon  (Lyrics).f251",
+            "duration": "275.901000",
+            "thumbnail": null
+          },
+          "tags": [
+            "local",
+            "scanned"
+          ],
+          "createdAt": "2025-09-14T08:35:44.880Z",
+          "fileId": "1029ad89-3309-418e-9e5c-ccd60d77f063",
+          "createdById": null
+        }
+      ],
+      "song": null,
+      "video": {
+        "id": "086c1bc6-13cc-49a8-a4ec-e48abe86f32a",
+        "title": "Paano Na Kaya - Bugoy Drilon  (Lyrics).f251",
+        "description": "No description available.",
+        "duration": 276,
+        "year": 1900,
+        "rating": null,
+        "director": null,
+        "cast": [],
+        "resolution": null,
+        "createdAt": "2025-09-14T03:58:28.415Z",
+        "updatedAt": "2025-09-14T08:35:44.803Z",
+        "createdById": "550acedf-2d16-4d84-9abf-2171840930ac"
+      }
+    },
+    {
+      "id": "b21eb97c-6ef5-4aca-8b91-de8412476f1f",
+      "name": "Mark Carpio - Kay Tagal (Official Music Video).f251.webm",
+      "path": "/media/eddie/Data/projects/nestJS/nest-modules/full-stack/downloads/audio/Mark Carpio - Kay Tagal (Official Music Video).f251.webm",
+      "fileType": "VIDEO",
+      "mimeType": "video/webm",
+      "size": "3881251",
+      "provider": "local",
+      "url": null,
+      "createdAt": "2025-09-14T08:35:43.861Z",
+      "updatedAt": "2025-09-14T08:35:43.861Z",
+      "songId": null,
+      "videoId": "82c5fcf7-5f2d-4e32-b613-ffa976eca285",
+      "metadata": [
+        {
+          "id": "6b5baa04-4a71-4659-88ea-b7d169f32a35",
+          "type": "VIDEO",
+          "data": {
+            "title": "Mark Carpio - Kay Tagal (Official Music Video).f251",
+            "duration": "221.761000",
+            "thumbnail": null
+          },
+          "tags": [
+            "local",
+            "scanned"
+          ],
+          "createdAt": "2025-09-14T08:35:43.861Z",
+          "fileId": "b21eb97c-6ef5-4aca-8b91-de8412476f1f",
+          "createdById": null
+        }
+      ],
+      "song": null,
+      "video": {
+        "id": "82c5fcf7-5f2d-4e32-b613-ffa976eca285",
+        "title": "Mark Carpio - Kay Tagal (Official Music Video).f251",
+        "description": "No description available.",
+        "duration": 222,
+        "year": 1900,
+        "rating": null,
+        "director": null,
+        "cast": [],
+        "resolution": null,
+        "createdAt": "2025-09-14T03:58:28.157Z",
+        "updatedAt": "2025-09-14T08:35:43.779Z",
+        "createdById": "550acedf-2d16-4d84-9abf-2171840930ac"
+      }
+    }
+  ],
+  "total": 131,
+  "page": "1",
+  "pageSize": 2,
+  "totalPages": 66
+}

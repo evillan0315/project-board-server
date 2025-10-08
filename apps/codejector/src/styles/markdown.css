@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+.group:hover button {
+  opacity: 1;
+}
+.markdown-body {
+  font-weight: normal;
+  color: var(--color-text);
+}
+.transition-opacity {
+  transition-property: opacity;
+}
+
+.markdown-code-wrapper .cm-scroller {
+
+  @apply overflow-auto max-h-[400px];
+  @apply border rounded-b-md;
+  border-color: var(--color-border);
+}
+.markdown-code-wrapper .cm-content {
+  @apply space-y-0;
+}
+
+.cm-editor .cm-gutters.cm-gutters-before {
+  background-color: var(--color-bg);
+}
+
+.markdown-body pre > div {
+  background-color: #000000;
+}
+.language-btn {
+  @apply bg-sky-500;
+}
+.prose p {
+  font-size: 1.1em;
+}
+.markdown-body h1 {
+  margin-bottom: 20px;
+}
+.markdown-body h2 {
+  margin-bottom: 16px;
+  margin-top: 16px;
+}
+.markdown-body h3 {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+.markdown-body h4 {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+.markdown-body h5 {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+.markdown-body h2 > code {
+}
+.markdown-body h3 > code {
+}
+.markdown-body p {
+  margin-bottom: 0.5rem;
+}
+.markdown-body ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.markdown-body ul li {
+  margin-bottom: 0.5rem;
+}
+.markdown-body ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.markdown-body ol li {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-body {
+  @apply leading-relaxed tracking-normal;
+}
+
+.markdown-body h1 {
+  @apply text-3xl font-bold mt-8 mb-4 pb-2;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.markdown-body h2 {
+  @apply text-2xl font-semibold mt-6 mb-3 pb-1;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.markdown-body h3 {
+  @apply text-xl font-medium mt-4 mb-2;
+}
+
+.markdown-body p {
+  @apply mb-4;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  @apply pl-6 mb-4;
+  list-style-type: disc;
+}
+
+.markdown-body ol {
+  list-style-type: decimal;
+}
+
+.markdown-body blockquote {
+  border-left: 4px solid var(--color-border);
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  @apply pl-4 italic py-2 rounded;
+}
+
+.markdown-body a {
+  color: var(--btn-hover-text);
+  @apply underline transition-colors;
+}
+
+.markdown-body a:hover {
+  color: var(--btn-icon-hover);
+}
+
+.markdown-body hr {
+  border-color: var(--color-border);
+}
+
+.markdown-body table {
+  @apply w-full table-auto border-collapse text-sm my-4;
+}
+
+.markdown-body th {
+  border: 1px solid var(--color-border);
+  background-color: var(--color-hover);
+  color: var(--color-text);
+  @apply font-semibold px-2 py-1;
+}
+
+.markdown-body td {
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  @apply px-2 py-1;
+}
+
+.markdown-body hr {
+  border-color: var(--color-border);
+  @apply my-6;
+}
+
+.markdown-body img {
+  @apply max-w-full rounded shadow;
+}
+
+.markdown-body pre.language-typescript > code {
+  color: var(--color-sky-400);
+}
+.token.string {
+  color: var(--color-text);
+}
+.token.regex {
+  color: var(--color-gray-500);
+}
+.token.variable {
+  color: var(--color-text);
+}
+.token.keyword {
+  color: var(--color-warning);
+}
+.token.punctuation {
+  color: var(--color-text);
+}
+.token.comment {
+  color: var(--color-muted);
+}
+.token.char {
+  color: var(--color-sky-400);
+}
+.token.builtin {
+  color: var(--color-success);
+}
+.token.boolean {
+  color: var(--color-maroon-400);
+}
+
+.token.generic-function {
+  color: var(--color-indigo-400);
+}
+
+.token.operator {
+  color: var(--color-red-500);
+}
+.token.constant {
+  color: var(--color-burn);
+}
+.token.class-name {
+  color: var(--color-error);
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+.typewriter-cursor {
+  animation: blink 0.8s infinite steps(1);
+  margin-left: 2px;
+  font-weight: bold;
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.25em;
+}
+.prose li {
+  margin-bottom: 0.25em;
+}
+.markdown-code-wrapper > .cm-editor {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  overflow: auto;
+
+  @apply shadow-lg;
+  @apply space-y-0;
+  overflow-wrap: anywhere;
+}

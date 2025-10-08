@@ -20,9 +20,7 @@ import {
   ApiConsumes,
   ApiQuery,
   ApiExtraModels,
-  ApiProperty, // ApiProperty for ImportFileDto, still needed
-  // getModelSchemaRef, // <-- REMOVED THIS IMPORT!
-  // ApiOkResponse, // Removed, as it was not used directly
+  ApiProperty,
 } from '@nestjs/swagger';
 
 import { BulkDataService } from './bulk-data.service';
@@ -40,6 +38,13 @@ class ImportFileDto {
 
   @ApiProperty({
     type: 'string',
+    example: 'User', // Added modelName to examples
+    description: 'The name of the Prisma model/database table to import data into.',
+  })
+  modelName: string;
+
+  @ApiProperty({
+    type: 'string',
     format: 'binary',
     description: 'The file containing the bulk data.',
   })
@@ -48,8 +53,6 @@ class ImportFileDto {
 
 @ApiTags('Bulk Data Operations')
 @Controller('bulk-data')
-// ApiExtraModels is still useful for Swagger to list these DTOs in "Schemas" section,
-// even if we define their structure inline in this specific @ApiBody.
 @ApiExtraModels(ImportBulkDataDto, ImportFileDto)
 export class BulkDataController {
   constructor(private readonly bulkDataService: BulkDataService) {}
@@ -60,10 +63,10 @@ export class BulkDataController {
     description:
       'Imports data from JSON, SQL, or CSV format. Can receive data either directly in the request body or as an uploaded file.',
   })
-  @ApiConsumes('multipart/form-data', 'application/json', 'text/plain') // Allow file upload, JSON, or plain text
+  @ApiConsumes('multipart/form-data', 'application/json', 'text/plain')
   @ApiBody({
     description:
-      'Data to import. If uploading a file, specify format as a form field. If providing data in body, use application/json or text/plain.',
+      'Data to import. If uploading a file, specify format and modelName as form fields. If providing data in body, use application/json or text/plain.',
     examples: {
       jsonBody: {
         summary: 'Import JSON data via Request Body',
@@ -71,6 +74,7 @@ export class BulkDataController {
           'Set Content-Type: application/json. Format is inferred from the DTO structure.',
         value: {
           format: ImportFormat.JSON,
+          modelName: 'User', // Added modelName to JSON body example
           data: JSON.stringify(
             [
               { name: 'Example User 1', email: 'user1@example.com', age: 22 },
@@ -84,26 +88,30 @@ export class BulkDataController {
       csvFile: {
         summary: 'Import CSV data via File Upload',
         description:
-          'Set Content-Type: multipart/form-data. File field name must be `file`.',
+          'Set Content-Type: multipart/form-data. File field name must be `file`. Other fields are form fields.',
         value: {
           format: ImportFormat.CSV,
+          modelName: 'User', // Added modelName to CSV file example
           file: 'CSV content here', // This hints at the file content in the example.
         } satisfies ImportFileDto as any,
       },
     },
-    // Manual inline schema definition since getModelSchemaRef is removed
     schema: {
       oneOf: [
-        // Option 1: ImportBulkDataDto structure for application/json or text/plain
         {
           type: 'object',
           properties: {
             format: {
               type: 'string',
-              enum: Object.values(ImportFormat), // Use enum values for Swagger
+              enum: Object.values(ImportFormat),
               example: ImportFormat.JSON,
               description:
                 'The format of the data to be imported (JSON, SQL, or CSV string).',
+            },
+            modelName: {
+              type: 'string',
+              example: 'User',
+              description: 'The name of the Prisma model/database table to import data into.',
             },
             data: {
               type: 'string',
@@ -111,17 +119,21 @@ export class BulkDataController {
                 'The data string to be imported. Required if no file is uploaded.',
             },
           },
-          required: ['format'],
+          required: ['format', 'modelName'],
         },
-        // Option 2: Multipart/form-data structure (represented conceptually by ImportFileDto)
         {
           type: 'object',
           properties: {
             format: {
               type: 'string',
-              enum: Object.values(ImportFormat), // Use enum values for Swagger
+              enum: Object.values(ImportFormat),
               example: ImportFormat.CSV,
               description: 'The format of the data in the uploaded file.',
+            },
+            modelName: {
+              type: 'string',
+              example: 'User',
+              description: 'The name of the Prisma model/database table to import data into.',
             },
             file: {
               type: 'string',
@@ -129,7 +141,7 @@ export class BulkDataController {
               description: 'The file containing the bulk data.',
             },
           },
-          required: ['format', 'file'],
+          required: ['format', 'modelName', 'file'],
         },
       ],
     },
@@ -139,26 +151,28 @@ export class BulkDataController {
     status: 400,
     description: 'Invalid data or unsupported format.',
   })
-  @UseInterceptors(FileInterceptor('file')) // 'file' is the name of the field in the form data
+  @UseInterceptors(FileInterceptor('file'))
   async import(
-    @Body() importDto: ImportBulkDataDto, // Body can contain format and data string
-    @UploadedFile() file?: Express.Multer.File, // Or file can be uploaded
+    @Body() importDto: ImportBulkDataDto,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<{ message: string }> {
     if (!importDto.format) {
       throw new BadRequestException('Format is required.');
     }
+    if (!importDto.modelName) {
+      throw new BadRequestException('Model name is required.');
+    }
 
     let dataToImport = importDto.data;
 
-    // If a file is uploaded, prioritize its content
     if (file) {
       if (file.size === 0) {
         throw new BadRequestException('Uploaded file is empty.');
       }
-      dataToImport = file.buffer.toString('utf8'); // Assuming UTF-8 encoding
+      dataToImport = file.buffer.toString('utf8');
     }
 
-    if (!dataToImport) {
+    if (!dataToImport && importDto.format !== ImportFormat.SQL) { // SQL can be just schema changes without 'data'
       throw new BadRequestException(
         'No data provided for import. Provide data in the body or upload a file.',
       );
@@ -166,6 +180,7 @@ export class BulkDataController {
 
     return this.bulkDataService.importData({
       format: importDto.format,
+      modelName: importDto.modelName, // Pass modelName to service
       data: dataToImport,
     });
   }
@@ -176,11 +191,18 @@ export class BulkDataController {
     description:
       'Exports all data for the configured model (e.g., User) in the specified format.',
   })
+  @ApiConsumes('multipart/form-data', 'application/json', 'text/plain')
   @ApiQuery({
     name: 'format',
     enum: ExportFormat,
     example: ExportFormat.JSON,
     description: 'The desired export format.',
+  })
+  @ApiQuery({
+    name: 'modelName',
+    type: 'string',
+    example: 'User', // Added modelName to export query
+    description: 'The name of the Prisma model/database table to export data from.',
   })
   @ApiResponse({
     status: 200,
@@ -228,22 +250,22 @@ export class BulkDataController {
     switch (dto.format) {
       case ExportFormat.JSON:
         contentType = 'application/json';
-        filename = 'export.json';
+        filename = `${dto.modelName.toLowerCase()}.json`; // Dynamic filename
         break;
       case ExportFormat.SQL:
-        contentType = 'text/plain'; // Or application/sql if you have it
-        filename = 'export.sql';
+        contentType = 'text/plain';
+        filename = `${dto.modelName.toLowerCase()}.sql`; // Dynamic filename
         break;
       case ExportFormat.CSV:
         contentType = 'text/csv';
-        filename = 'export.csv';
+        filename = `${dto.modelName.toLowerCase()}.csv`; // Dynamic filename
         break;
       default:
         throw new BadRequestException('Unsupported format');
     }
 
     res.header('Content-Type', contentType);
-    res.attachment(filename); // Suggests filename for download
+    res.attachment(filename);
     res.status(HttpStatus.OK).send(data);
   }
 }

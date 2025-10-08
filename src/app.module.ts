@@ -74,6 +74,7 @@ import { MusicHistoryModule } from './music-history/music-history.module';
 import { VideoHistoryModule } from './video-history/video-history.module';
 import { ProxyModule } from './proxy/proxy.module';
 import { PlannerModule } from './planner/planner.module';
+import { LogsModule } from './logs/logs.module';
 
 /**
  * The root module of the NestJS application.
@@ -233,6 +234,7 @@ import { PlannerModule } from './planner/planner.module';
     VideoHistoryModule,
     ProxyModule,
     PlannerModule,
+    LogsModule,
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.

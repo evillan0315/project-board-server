@@ -1,0 +1,272 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project Management Schema",
+  "description": "Schema for representing project management data.",
+  "type": "object",
+  "properties": {
+    "projectId": {
+      "type": "string",
+      "description": "Unique identifier for the project.  Consider using UUID.",
+      "pattern": "^[a-fA-F0-9\\-]{36}$"
+    },
+    "projectName": {
+      "type": "string",
+      "description": "Name of the project."
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the project."
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Project start date (YYYY-MM-DD)."
+    },
+    "endDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Project end date (YYYY-MM-DD)."
+    },
+    "status": {
+      "type": "string",
+      "description": "Current status of the project.",
+      "enum": [
+        "Planning",
+        "In Progress",
+        "On Hold",
+        "Completed",
+        "Cancelled"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "description": "Priority of the project.",
+      "enum": [
+        "High",
+        "Medium",
+        "Low"
+      ]
+    },
+    "budget": {
+      "type": "number",
+      "description": "Budget allocated to the project.",
+      "minimum": 0
+    },
+    "currency": {
+      "type": "string",
+      "description": "Currency of the budget (e.g., USD, EUR, GBP).",
+      "minLength": 3,
+      "maxLength": 3
+    },
+    "teamMembers": {
+      "type": "array",
+      "description": "List of team members assigned to the project.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "description": "Unique identifier for the team member. Consider using UUID.",
+            "pattern": "^[a-fA-F0-9\\-]{36}$"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the team member."
+          },
+          "role": {
+            "type": "string",
+            "description": "Role of the team member in the project."
+          }
+        },
+        "required": [
+          "memberId",
+          "name",
+          "role"
+        ]
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "description": "List of tasks associated with the project.",
+      "items": {
+        "$ref": "#/definitions/task"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "description": "List of project dependencies (links to other projects).",
+      "items": {
+        "type": "string",
+        "description": "Project ID of the dependent project.",
+        "pattern": "^[a-fA-F0-9\\-]{36}$"
+      }
+    },
+    "projectManager": {
+      "type": "object",
+      "properties": {
+        "managerId": {
+          "type": "string",
+          "description": "Unique identifier of the project manager. Consider using UUID.",
+          "pattern": "^[a-fA-F0-9\\-]{36}$"
+        },
+        "managerName": {
+          "type": "string",
+          "description": "Name of the project manager."
+        },
+        "managerEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Email of the project manager."
+        }
+      },
+      "required": [
+        "managerId",
+        "managerName",
+        "managerEmail"
+      ]
+    },
+    "risks": {
+      "type": "array",
+      "description": "List of potential risks associated with the project.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "riskId": {
+            "type": "string",
+            "description": "Unique identifier for the risk. Consider using UUID.",
+            "pattern": "^[a-fA-F0-9\\-]{36}$"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the potential risk."
+          },
+          "probability": {
+            "type": "number",
+            "description": "Probability of the risk occurring (0-1).",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "impact": {
+            "type": "string",
+            "description": "Potential impact of the risk.",
+            "enum": [
+              "Low",
+              "Medium",
+              "High"
+            ]
+          },
+          "mitigationPlan": {
+            "type": "string",
+            "description": "Plan to mitigate the risk."
+          }
+        },
+        "required": [
+          "riskId",
+          "description",
+          "probability",
+          "impact",
+          "mitigationPlan"
+        ]
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date and time when the project was created."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date and time when the project was last updated."
+    }
+  },
+  "required": [
+    "projectId",
+    "projectName",
+    "startDate",
+    "endDate",
+    "status",
+    "priority"
+  ],
+  "definitions": {
+    "task": {
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "description": "Unique identifier for the task. Consider using UUID.",
+          "pattern": "^[a-fA-F0-9\\-]{36}$"
+        },
+        "taskName": {
+          "type": "string",
+          "description": "Name of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the task."
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Task start date (YYYY-MM-DD)."
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Task end date (YYYY-MM-DD)."
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the task.",
+          "enum": [
+            "To Do",
+            "In Progress",
+            "Blocked",
+            "Completed"
+          ]
+        },
+        "assignedTo": {
+          "type": "string",
+          "description": "ID of the team member assigned to the task.  Should reference a teamMember.memberId",
+          "pattern": "^[a-fA-F0-9\\-]{36}$"
+        },
+        "priority": {
+          "type": "string",
+          "description": "Priority of the task.",
+          "enum": [
+            "High",
+            "Medium",
+            "Low"
+          ]
+        },
+        "dependencies": {
+          "type": "array",
+          "description": "List of task dependencies (links to other tasks).",
+          "items": {
+            "type": "string",
+            "description": "Task ID of the dependent task.",
+            "pattern": "^[a-fA-F0-9\\-]{36}$"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date and time when the task was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date and time when the task was last updated."
+        }
+      },
+      "required": [
+        "taskId",
+        "taskName",
+        "startDate",
+        "endDate",
+        "status",
+        "priority"
+      ]
+    }
+  }
+}

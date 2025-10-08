@@ -1,0 +1,168 @@
+{
+  "type": "object",
+  "properties": {
+    "projectName": {
+      "type": "string",
+      "description": "The official and descriptive name of the software project.",
+      "minLength": 3,
+      "maxLength": 100,
+      "default": "My Awesome Project",
+      "pattern": "^[A-Za-z0-9\\s_-]+$",
+      "x-multiline": true
+    },
+    "version": {
+      "type": "string",
+      "description": "The current version of the project, typically following Semantic Versioning (e.g., 1.0.0).",
+      "default": "1.0.0",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "isPublic": {
+      "type": "boolean",
+      "description": "Indicates if the project's source code or access is publicly available.",
+      "default": false
+    },
+    "teamSize": {
+      "type": "integer",
+      "description": "The total number of individuals actively working on this project.",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 5
+    },
+    "technologies": {
+      "type": "array",
+      "description": "A list of primary programming languages, frameworks, or significant tools utilized in the project.",
+      "default": [
+        "React",
+        "TypeScript",
+        "NestJS"
+      ],
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 50
+      }
+    },
+    "manager": {
+      "type": "object",
+      "description": "Information about the primary individual responsible for project oversight.",
+      "x-order": [
+        "name",
+        "email",
+        "contact"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 70,
+          "default": "John Doe"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "contact": {
+          "type": "object",
+          "description": "Alternative ways to reach the project manager.",
+          "x-order": [
+            "phone",
+            "slackId"
+          ],
+          "properties": {
+            "phone": {
+              "type": "string",
+              "pattern": "^\\+?[1-9]\\d{1,14}$"
+            },
+            "slackId": {
+              "type": "string",
+              "pattern": "^@[a-z0-9.-]+$"
+            }
+          }
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "startDate": {
+      "type": "string",
+      "description": "The official commencement date of the project.",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "description": "The current phase or state of the project lifecycle.",
+      "enum": [
+        "Planning",
+        "In Progress",
+        "Completed",
+        "On Hold",
+        "Cancelled"
+      ],
+      "default": "Planning"
+    },
+    "projects": {
+      "type": "array",
+      "description": "A list of interconnected sub-projects or distinct modules within this larger project.",
+      "items": {
+        "type": "object",
+        "description": "Detailed information for a specific sub-project or module.",
+        "x-order": [
+          "id",
+          "name",
+          "lead",
+          "budget",
+          "tasks"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A unique identifier for the sub-project, often automatically generated.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 100
+          },
+          "budget": {
+            "type": "number",
+            "description": "The allocated financial budget for this sub-project in US Dollars.",
+            "minimum": 0,
+            "maximum": 1000000,
+            "default": 0
+          },
+          "lead": {
+            "type": "string",
+            "description": "The name of the individual leading this specific sub-project.",
+            "minLength": 3,
+            "maxLength": 70
+          },
+          "tasks": {
+            "type": "array",
+            "description": "Important tasks or milestones for this sub-project.",
+            "items": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 200
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      }
+    }
+  },
+  "required": [
+    "projectName",
+    "teamSize",
+    "manager"
+  ],
+  "$id": "https://example.com/project-metadata.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Software Project Metadata",
+  "description": "Comprehensive metadata for managing a software project, designed for a user-friendly interface.",
+  "x-layout": "tabs"
+}

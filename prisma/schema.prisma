@@ -265,6 +265,8 @@ model GeminiRequest {
   conversationId    String?
   modelUsed         String
   prompt            String?
+  projectStructure  String?
+  
   systemInstruction String?
   requestType       RequestType
   imageUrl          String?

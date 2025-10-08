@@ -10,13 +10,22 @@ import {
 
 export class StartCameraRecordingDto {
   @ApiPropertyOptional({
-    description: 'Identifier for the camera device to use (platform-specific).',
+    description: 'Identifier for the camera device to use (platform-specific). On Linux, this is typically /dev/videoX. On macOS, 0 for default iSight. On Windows, the name of the camera.',
     example: ['default', '/dev/video0', 'Integrated Camera'],
     nullable: true,
   })
   @IsString()
   @IsOptional()
   cameraDevice?: string;
+
+  @ApiPropertyOptional({
+    description: 'Identifier for the audio input device to use (platform-specific). On Linux, this might be a PulseAudio source like `alsa_input.pci-0000_00_1b.0.analog-stereo`. On macOS, 0 for default microphone. On Windows, the name of the microphone.',
+    example: ['default', 'alsa_input.pci-0000_00_1b.0.analog-stereo', 'Microphone (Realtek(R) Audio)'],
+    nullable: true,
+  })
+  @IsString()
+  @IsOptional()
+  audioDevice?: string;
 
   @ApiPropertyOptional({
     description: 'Resolution for the camera recording, e.g., "1280x720".',

@@ -109,11 +109,11 @@ export class RecordingService {
 
     return {
       id: recordingEntity.id,
-      recording: !!isRunning, // Fix for error 1: Explicitly cast to boolean
+      recording: !!isRunning, // Explicitly cast to boolean
       file: recordingEntity.path,
       startedAt: isRunning
         ? new Date(activeRecord.startTime).toISOString()
-        : (recordingEntity.data as RecordingData)?.startedAt?.toString() || null, // Fix for error 2: Use RecordingData interface
+        : (recordingEntity.data as RecordingData)?.startedAt?.toString() || null,
     };
   }
 
@@ -620,7 +620,7 @@ export class RecordingService {
         await this.prisma.recording.update({
           where: { id: recordingId },
           data: {
-            status: exitCode === 0 ? 'finished' : 'failed',
+            status: exitCode === 0 || exitCode === 255 ? 'finished' : 'failed',
             data: {
               ...(currentRecording.data as RecordingData || {}),
               stoppedAt: new Date().toISOString(),
@@ -671,6 +671,7 @@ export class RecordingService {
             duration,
             fileSize,
             exitCode,
+            resolution: process.env.RESOLUTION || '1920x1080'
           },
         },
       });
@@ -682,184 +683,83 @@ export class RecordingService {
     }
   }
 
-  private _getScreenRecordingFfmpegArgs(outputFile: string): string[] {
-    const commonOutputArgs = [
-      '-c:v',
-      'libx264',
-      '-preset',
-      'ultrafast',
-      '-tune',
-      'zerolatency',
-      '-pix_fmt',
-      'yuv420p',
-      '-b:v',
-      '1M',
-      '-r',
-      '30',
+  /**
+ * FilePath: src/recording/recording.service.ts
+ * Title: FFmpeg Fullscreen Capture Configuration
+ * Reason: Ensure screen recording captures full display dynamically across OS platforms.
+ */
+private _getScreenRecordingFfmpegArgs(outputFile: string): string[] {
+  const platform = process.platform;
+  const commonOutputArgs = [
+    '-c:v', 'libx264',
+    '-preset', 'ultrafast',
+    '-tune', 'zerolatency',
+    '-pix_fmt', 'yuv420p',
+    '-b:v', '1M',
+    '-r', '30',
+    '-c:a', 'aac',
+    '-b:a', '128k',
+    '-ar', '44100',
+    '-movflags', '+faststart',
+    '-y', // Overwrite output file
+  ];
 
-      '-c:a',
-      'aac',
-      '-b:a',
-      '128k',
-      '-ar',
-      '44100',
-
-      '-movflags',
-      '+faststart',
-      '-y', // Overwrite output file without asking
-    ];
-
-    if (process.platform === 'darwin') {
-      return [
-        '-f',
-        'avfoundation',
-        '-framerate',
-        '30',
-        '-i',
-        '1:0', // 1 for desktop, 0 for microphone - adjust if needed
-        ...commonOutputArgs,
-        outputFile,
-      ];
-    }
-
-    if (process.platform === 'win32') {
-      // For Windows, 'gdigrab' for screen and 'dshow' for audio
-      // Make sure 'virtual-audio-capturer' is an available audio device
-      return [
-        '-f',
-        'gdigrab',
-        '-framerate',
-        '30',
-        '-i',
-        'desktop',
-
-        '-f',
-        'dshow',
-        '-i',
-        'audio=virtual-audio-capturer', // Adjust audio device as needed
-
-        ...commonOutputArgs,
-        outputFile,
-      ];
-    }
-
-    // Linux (x11grab for screen, pulse/alsa for audio)
-    const display = process.env.DISPLAY || ':0.0';
-    const resolution = process.env.RESOLUTION || '1920x1080'; // Or retrieve dynamically
-    const audioDevice = process.env.AUDIO_DEVICE || 'default'; // PulseAudio default or ALSA device
-
+  if (platform === 'darwin') {
+    // macOS - Capture fullscreen from primary display
     return [
-      '-video_size',
-      resolution,
-      '-framerate',
-      '30',
-      '-f',
-      'x11grab',
-      '-i',
-      `${display}`,
-
-      '-f',
-      'pulse',
-      '-i',
-      audioDevice,
-
+      '-f', 'avfoundation',
+      '-framerate', '30',
+      '-i', '1:0', // Video device 1 (display), audio device 0 (mic)
       ...commonOutputArgs,
       outputFile,
     ];
   }
 
-  /**
-   * Internal helper to get platform-specific FFmpeg arguments for camera recording.
-   * @param cameraDevice The camera device identifier.
-   * @param resolution The desired resolution (e.g., '1280x720').
-   * @param fps Frames per second.
-   * @param outputPath The output file path.
-   * @returns An array of FFmpeg arguments.
-   */
-  private _getCameraFfmpegArgs( // Fix for error 3: cameraDevice accepts string | undefined
-    cameraDevice: string | undefined,
-    resolution: string,
-    fps: number,
-    outputPath: string,
-  ): string[] {
-    const commonOutputArgs = [
-      '-c:v',
-      'libx264',
-      '-preset',
-      'ultrafast',
-      '-tune',
-      'zerolatency',
-      '-pix_fmt',
-      'yuv420p',
-      '-b:v',
-      '1M',
-      '-r',
-      fps.toString(),
-      '-c:a',
-      'aac',
-      '-b:a',
-      '128k',
-      '-ar',
-      '44100',
-      '-movflags',
-      '+faststart',
-      '-y',
-      outputPath,
+  if (platform === 'win32') {
+    // Windows - Capture entire desktop
+    return [
+      '-f', 'gdigrab',
+      '-framerate', '30',
+      '-i', 'desktop',
+      '-f', 'dshow',
+      '-i', 'audio=virtual-audio-capturer', // Requires virtual audio device
+      ...commonOutputArgs,
+      outputFile,
     ];
-
-    if (process.platform === 'darwin') {
-      // macOS uses avfoundation. '0:0' for default camera and microphone.
-      // '0' refers to the first video input, '0' after ':' refers to the first audio input.
-      return [
-        '-f',
-        'avfoundation',
-        '-framerate',
-        fps.toString(),
-        '-video_size',
-        resolution,
-        '-i',
-        cameraDevice || '0:0',
-        ...commonOutputArgs,
-      ];
-    } else if (process.platform === 'win32') {
-      // Windows uses dshow (DirectShow).
-      // You might need to list devices: ffmpeg -list_devices true -f dshow -i dummy
-      const videoDevice = cameraDevice || 'video=Integrated Camera'; // Example default
-      const audioDevice = 'audio=Microphone (Realtek(R) Audio)'; // Example default, adjust as needed
-
-      return [
-        '-f',
-        'dshow',
-        '-s',
-        resolution,
-        '-i',
-        `${videoDevice}:${audioDevice}`,
-        ...commonOutputArgs,
-      ];
-    } else if (process.platform === 'linux') {
-      // Linux typically uses v4l2 for video and pulse/alsa for audio.
-      // You might need to list devices: ffmpeg -f v4l2 -list_formats all -i /dev/video0
-      // For audio: pactl list sources or arecord -L
-      const videoDevice = cameraDevice || '/dev/video0'; // Default video device
-      const audioDevice = process.env.AUDIO_DEVICE || 'default'; // PulseAudio default or ALSA device
-
-      return [
-        '-f',
-        'v4l2',
-        '-s',
-        resolution,
-        '-i',
-        videoDevice,
-        '-f',
-        'pulse',
-        '-i',
-        audioDevice,
-        ...commonOutputArgs,
-      ];
-    } else {
-      throw new InternalServerErrorException(
-        `Unsupported operating system for camera recording: ${process.platform}`,
-      );
-    }
   }
+
+  // Linux (auto-detect full screen via xrandr)
+  try {
+    const { execSync } = require('child_process');
+    const xrandrOutput = execSync('xrandr | grep "\\*" | cut -d" " -f4').toString().trim();
+    const fullResolution = xrandrOutput || '1920x1080';
+    const display = process.env.DISPLAY || ':0.0';
+    const audioDevice = process.env.AUDIO_DEVICE || 'default';
+
+    return [
+      '-video_size', fullResolution,
+      '-framerate', '30',
+      '-f', 'x11grab',
+      '-i', `${display}.0`,
+      '-f', 'pulse',
+      '-i', audioDevice,
+      ...commonOutputArgs,
+      outputFile,
+    ];
+  } catch {
+    // Fallback if xrandr fails
+    return [
+      '-f', 'x11grab',
+      '-framerate', '30',
+      '-i', ':0.0',
+      '-f', 'pulse',
+      '-i', 'default',
+      ...commonOutputArgs,
+      outputFile,
+    ];
+  }
+}
+
+
+  // The _getCameraFfmpegArgs method is removed from here as it's correctly located in FfmpegService
 }

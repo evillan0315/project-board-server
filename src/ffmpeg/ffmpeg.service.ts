@@ -191,20 +191,21 @@ export class FfmpegService {
    * @param inputDevice The camera device identifier (platform-specific).
    * @param outputPath The full path where the recorded video will be saved.
    * @param emitProgress Callback to emit progress updates.
-   * @param options Recording options like resolution and fps.
+   * @param options Recording options like resolution, fps, and audio device.
    * @returns A promise that resolves with the ChildProcess of FFmpeg, or rejects on error.
    */
   startCameraRecording(
-    inputDevice: string | undefined, // Changed from 'string' to 'string | undefined'
+    inputDevice: string | undefined,
     outputPath: string,
     emitProgress: (progress: { time: string }) => void,
-    options?: { resolution?: string; fps?: number },
+    options?: { resolution?: string; fps?: number; audioDevice?: string }, // Added audioDevice
   ): Promise<ChildProcessWithoutNullStreams> {
     return new Promise((resolve, reject) => {
-      const { resolution = '1280x720', fps = 30 } = options || {};
+      const { resolution = '1280x720', fps = 30, audioDevice } = options || {}; // Destructure audioDevice
 
       const ffmpegArgs = this._getCameraFfmpegArgs(
-        inputDevice, // Now correctly typed as string | undefined
+        inputDevice,
+        audioDevice, // Pass new audioDevice parameter
         resolution,
         fps,
         outputPath,
@@ -251,13 +252,15 @@ export class FfmpegService {
   /**
    * Internal helper to get platform-specific FFmpeg arguments for camera recording.
    * @param cameraDevice The camera device identifier.
+   * @param audioInputDevice The specific audio input device (e.g., 'alsa_input.pci-0000_00_1b.0.analog-stereo').
    * @param resolution The desired resolution (e.g., '1280x720').
    * @param fps Frames per second.
    * @param outputPath The output file path.
    * @returns An array of FFmpeg arguments.
    */
   private _getCameraFfmpegArgs(
-    cameraDevice: string | undefined, // Changed from 'string' to 'string | undefined'
+    cameraDevice: string | undefined,
+    audioInputDevice: string | undefined, // New parameter
     resolution: string,
     fps: number,
     outputPath: string,
@@ -266,25 +269,16 @@ export class FfmpegService {
       '-c:v',
       'libx264',
       '-preset',
-      'ultrafast',
-      '-tune',
-      'zerolatency',
-      '-pix_fmt',
-      'yuv420p',
-      '-b:v',
-      '1M',
-      '-r',
-      fps.toString(),
+      'veryfast', // Changed from 'ultrafast'
+      '-crf',     // Added Constant Rate Factor for quality
+      '23',       // CRF value as per request
       '-c:a',
       'aac',
-      '-b:a',
-      '128k',
-      '-ar',
-      '44100',
+      // Removed: '-tune', 'zerolatency', '-pix_fmt', 'yuv420p', '-b:v', '1M', '-b:a', '128k', '-ar', '44100'
+      // to align with the user's simpler request and rely on FFmpeg defaults for audio encoding parameters.
       '-movflags',
       '+faststart',
       '-y',
-      outputPath,
     ];
 
     if (process.platform === 'darwin') {
@@ -300,12 +294,13 @@ export class FfmpegService {
         '-i',
         cameraDevice || '0:0',
         ...commonOutputArgs,
+        outputPath,
       ];
     } else if (process.platform === 'win32') {
       // Windows uses dshow (DirectShow).
       // You might need to list devices: ffmpeg -list_devices true -f dshow -i dummy
       const videoDevice = cameraDevice || 'video=Integrated Camera'; // Example default
-      const audioDevice = 'audio=Microphone (Realtek(R) Audio)'; // Example default, adjust as needed
+      const audioDevice = audioInputDevice || 'audio=Microphone (Realtek(R) Audio)'; // Use new param or example default
 
       return [
         '-f',
@@ -315,26 +310,31 @@ export class FfmpegService {
         '-i',
         `${videoDevice}:${audioDevice}`,
         ...commonOutputArgs,
+        outputPath,
       ];
     } else if (process.platform === 'linux') {
       // Linux typically uses v4l2 for video and pulse/alsa for audio.
       // You might need to list devices: ffmpeg -f v4l2 -list_formats all -i /dev/video0
       // For audio: pactl list sources or arecord -L
       const videoDevice = cameraDevice || '/dev/video0'; // Default video device
-      const audioDevice = process.env.AUDIO_DEVICE || 'default'; // PulseAudio default or ALSA device
+      // Prioritize explicit audioInputDevice from DTO, then environment variable, then 'default'
+      const linuxAudioDevice = audioInputDevice || process.env.AUDIO_DEVICE || 'default';
 
       return [
         '-f',
         'v4l2',
-        '-s',
+        '-framerate', // Added for input
+        fps.toString(),
+        '-video_size', // Changed from '-s'
         resolution,
         '-i',
         videoDevice,
         '-f',
         'pulse',
         '-i',
-        audioDevice,
+        linuxAudioDevice, // Use the determined audio device
         ...commonOutputArgs,
+        outputPath,
       ];
     } else {
       throw new InternalServerErrorException(

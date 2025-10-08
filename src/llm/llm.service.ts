@@ -69,7 +69,11 @@ export class LlmService implements OnModuleInit {
         filePath = `${llmInput.projectRoot}/${file.relativePath}`;
       }
       // No need for 'await' here, as the string interpolation is synchronous
-      return `// File: ${filePath}\n${file.content}`;
+      return `
+      \`\`\`${this.utilsService.detectLanguage(file.relativePath)}
+      // File: ${filePath}\n${file.content}
+      \`\`\`
+      `;
     });
 
     // Wait for all promises to resolve, then join the resulting array of strings
@@ -78,12 +82,12 @@ export class LlmService implements OnModuleInit {
     ).join('\n\n');
 
     const prompt = `
-# AI Code Generation Request
+
+# ${this.utilsService.truncateText(llmInput.userPrompt, 50)} - AI Code Generation Request
 
 ## User Request
 
 ${llmInput.userPrompt}\n\n
-
 
 ## Project Context
 ${projectStructure}\n\n

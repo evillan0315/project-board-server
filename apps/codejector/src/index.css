@@ -1,0 +1,65 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+/* Optional: Basic global styles or font settings */
+
+
+body {
+  font-family: 'Roboto', 'Helvetica', 'Arial', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+  padding: 0;
+    box-sizing: border-box;
+}
+.markdown-body {
+  /* apply the GitHub dark theme */
+  background: none !important;
+}
+.cm-theme-light, .cm-theme-dark {
+  height: 100% !important;
+}
+.cm-editor {
+  height: 100%;
+  background-color: #1d1d1d  !important;
+}
+.cm-scroller {
+  height: 100% !important;
+}
+
+
+
+code {
+  font-family: source-code-pro,
+    Menlo,
+    Monaco,
+    Consolas,
+    'Courier New',
+    monospace;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px; /* For horizontal scrollbars */
+}
+
+::-webkit-scrollbar-track {
+  background: var(--mui-palette-background-default);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mui-palette-primary-light);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mui-palette-primary-main);
+}
+
+/* Global box-sizing */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

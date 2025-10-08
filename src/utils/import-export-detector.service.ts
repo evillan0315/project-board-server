@@ -85,8 +85,10 @@ export class ImportExportDetectorService {
 
       const namedExports = exportDeclaration.getNamedExports();
       for (const namedExport of namedExports) {
-        // For `export { original as alias }`, getAlias() returns 'alias', getName() returns 'original'
-        namedBindings.push(namedExport.getAlias() || namedExport.getName());
+        // For `export { original as alias }`, getAliasNode() returns 'alias', getName() returns 'original'
+        // Using getAliasNode()?.getText() as a workaround for a potential ts-morph type definition issue
+        // where getAlias() is reported as non-existent.
+        namedBindings.push(namedExport.getAliasNode()?.getText() || namedExport.getName());
       }
 
       // Handle `export * from './module'`

@@ -1,8 +1,3 @@
-/**
-FilePath: src/builder.ts
-Title: API builder that registers routes from schema
-Reason: Central logic to convert route schema into Express routes, including validation hooks
-*/
 import { Application, Request, Response, NextFunction } from "express";
 import Ajv, { JSONSchemaType } from "ajv";
 import addFormats from "ajv-formats"; // 👈 add this
@@ -24,7 +19,8 @@ export type ApiSchema = {
   routes: RouteDefinition[];
 };
 
-const ajv = new Ajv();
+// Configure Ajv to not enforce strict mode for unknown keywords like 'x-multiline' or 'x-order'
+const ajv = new Ajv({ strict: false }); // <--- Modified here
 addFormats(ajv); 
 /**
  * Helper: wraps a JSON schema as an Express middleware validator

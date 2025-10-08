@@ -38,11 +38,14 @@ import {
   PaginationRecordingQueryDto,
 } from './dto/create-recording.dto';
 import { UpdateRecordingDto } from './dto/update-recording.dto';
-import { StartRecordingDto } from './dto/start-recording.dto';
 import { StartRecordingResponseDto } from './dto/start-recording-response.dto';
 import { FfmpegService } from '../ffmpeg/ffmpeg.service';
 import { join } from 'path';
 import { stat, readdir, unlink } from 'fs/promises';
+import {
+  StartCameraRecordingDto,
+  CameraRecordingResponseDto,
+} from '../ffmpeg/dto/camera-recording.dto';
 
 class StopRecordingResponse {
   id: string;
@@ -127,7 +130,9 @@ export class RecordingController {
     description: 'Screen captured.',
     type: StopRecordingResponse,
   })
-  async capture(@CurrentUser('id') userId: string): Promise<StopRecordingResponse> {
+  async capture(
+    @CurrentUser('id') userId: string,
+  ): Promise<StopRecordingResponse> {
     return this.recordingService.captureScreen(userId);
   }
 
@@ -160,6 +165,52 @@ export class RecordingController {
       throw new BadRequestException('Recording ID is required.');
     }
     return this.recordingService.stopRecording(userId, id);
+  }
+
+  @Post('camera-record-start')
+  @Roles(UserRole.ADMIN, UserRole.USER)
+  @ApiOperation({
+    summary: 'Start camera recording.',
+    description: 'Initiates a camera recording session. Specify camera device, resolution, and FPS. Records indefinitely until stopped or for a specified duration.',
+  })
+  @ApiCreatedResponse({
+    description: 'Camera recording started successfully.',
+    type: CameraRecordingResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid recording parameters.' })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to start camera recording.',
+  })
+  async startCameraRecording(
+    @CurrentUser('id') userId: string,
+    @Body() dto: StartCameraRecordingDto,
+  ): Promise<CameraRecordingResponseDto> {
+    return this.recordingService.startCameraRecording(userId, dto);
+  }
+
+  @Post('camera-record-stop')
+  @Roles(UserRole.ADMIN, UserRole.USER)
+  @ApiOperation({
+    summary: 'Stop camera recording.',
+    description: 'Stops an active camera recording session identified by its ID.',
+  })
+  @ApiOkResponse({
+    description: 'Camera recording stopped successfully.',
+    type: CameraRecordingResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Recording ID is required or no active recording found.',
+  })
+  @ApiNotFoundResponse({ description: 'Recording not found.' })
+  async stopCameraRecording(
+    @CurrentUser('id') userId: string,
+    @Query('id') id: string,
+  ): Promise<CameraRecordingResponseDto> {
+    if (!id) {
+      throw new BadRequestException('Recording ID is required.');
+    }
+    return this.recordingService.stopCameraRecording(userId, id);
   }
 
   @Post()

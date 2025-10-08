@@ -15,4 +15,12 @@ export class ExportBulkDataDto {
   })
   @IsEnum(ExportFormat)
   format: ExportFormat;
+
+  @ApiProperty({
+    type: 'string',
+    example: 'User', // Added modelName to DTO
+    description: 'The name of the Prisma model/database table to export data from.',
+  })
+  @IsString()
+  modelName: string;
 }
