@@ -13,12 +13,6 @@ export interface GitCommit {
   author_email: string;
 }
 
-export interface GitStatusFile {
-  path: string;
-  index: string;
-  working_dir: string;
-}
-
 export interface GitStatusResult {
   current: string | null;
   detached: boolean;
@@ -28,10 +22,25 @@ export interface GitStatusResult {
   created: string[];
   deleted: string[];
   modified: string[];
-  renamed: string[];
+  renamed: GitStatusRenamed[]; // Updated to the correct type
   staged: string[];
   ahead: number;
   behind: number;
   tracking: string | null;
   is_clean: boolean;
+}
+
+export interface GitStatusFile {
+  path: string;
+  index: string;
+  working_dir: string;
+}
+
+export interface GitStatusRenamed {
+  from: string;
+  to: string;
+}
+
+export interface GitDiffResponseDto {
+  diff: string;
 }
