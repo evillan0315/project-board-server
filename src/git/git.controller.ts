@@ -22,8 +22,9 @@ import {
   GitBranchDto,
   GitCommitDto,
   GitStatusResponseDto,
-  GitDiffDto, // Import the new DTO
-  GitDiffResponseDto, // Import the new DTO
+  GitDiffDto,
+  GitDiffResponseDto,
+  GitResetHardDto,
 } from './dto';
 
 
@@ -69,6 +70,14 @@ export class GitController {
         const message = await this.gitService.resetStagedChanges(dto.projectRoot);
         return { message };
     }
+  }
+
+  @Post('reset-hard')
+  @ApiOperation({ summary: 'Perform a hard reset to a specific commit or HEAD. WARNING: This discards all uncommitted changes.' })
+  @ApiResponse({ status: 200, description: 'Hard reset performed successfully' })
+  async resetHard(@Body() dto: GitResetHardDto): Promise<{ message: string }> {
+    const message = await this.gitService.resetHard(dto.commitHash, dto.projectRoot);
+    return { message };
   }
 
   @Post('commit')
@@ -143,7 +152,7 @@ export class GitController {
   }
 
   @Get('snapshots')
-  @ApiOperation({ summary: 'List all available snapshots (Git tags)' })
+  @ApiOperation({ summary: 'List all available snapshots (Git tags)' } })
   @ApiResponse({ status: 200, type: ListSnapshotsResponseDto })
   async listSnapshots(@Query('projectRoot') projectRoot?: string): Promise<ListSnapshotsResponseDto> {
     const tags = await this.gitService.listSnapshots(projectRoot);
