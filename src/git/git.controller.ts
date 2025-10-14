@@ -6,7 +6,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/enums/user-role.enum';
 import {
-  GitStatusResponseDto,
   CommitDto,
   CommitResponseDto,
   CreateBranchDto,
@@ -20,8 +19,13 @@ import {
   RestoreSnapshotDto,
   ListSnapshotsResponseDto,
   DeleteSnapshotDto,
+  GitBranchDto,
+  GitCommitDto,
+  GitStatusResponseDto,
+  GitDiffDto, // Import the new DTO
+  GitDiffResponseDto, // Import the new DTO
 } from './dto';
-import type { GitBranch, GitCommit, GitStatusResult } from './interfaces/git.interface';
+
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -34,7 +38,7 @@ export class GitController {
   @Get('status')
   @ApiOperation({ summary: 'Get current Git repository status' })
   @ApiResponse({ status: 200, type: GitStatusResponseDto })
-  async getStatus(@Query('projectRoot') projectRoot?: string): Promise<GitStatusResult> {
+  async getStatus(@Query('projectRoot') projectRoot?: string): Promise<GitStatusResponseDto> {
     return this.gitService.getStatus(projectRoot);
   }
 
@@ -93,8 +97,8 @@ export class GitController {
 
   @Get('branches')
   @ApiOperation({ summary: 'List all local and remote branches' })
-  @ApiResponse({ status: 200, type: [GitBranch] })
-  async getBranches(@Query('projectRoot') projectRoot?: string): Promise<GitBranch[]> {
+  @ApiResponse({ status: 200, type: [GitBranchDto] })
+  async getBranches(@Query('projectRoot') projectRoot?: string): Promise<GitBranchDto[]> {
     return this.gitService.getBranches(projectRoot);
   }
 
@@ -159,8 +163,16 @@ export class GitController {
 
   @Get('commits')
   @ApiOperation({ summary: 'Get the commit log for the repository' })
-  @ApiResponse({ status: 200, type: [GitCommit })
-  async getCommitLog(@Query('projectRoot') projectRoot?: string): Promise<GitCommit[]> {
+  @ApiResponse({ status: 200, type: [GitCommitDto] })
+  async getCommitLog(@Query('projectRoot') projectRoot?: string): Promise<GitCommitDto[]> {
     return this.gitService.getCommitLog(projectRoot);
+  }
+
+  @Post('diff')
+  @ApiOperation({ summary: 'Get the Git diff for a specific file' })
+  @ApiResponse({ status: 200, type: GitDiffResponseDto })
+  async getDiff(@Body() dto: GitDiffDto): Promise<GitDiffResponseDto> {
+    const diff = await this.gitService.getDiff(dto.filePath, dto.projectRoot);
+    return { diff };
   }
 }

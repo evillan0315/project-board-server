@@ -4,10 +4,11 @@ import * as simpleGit from 'simple-git';
 import * as path from 'path';
 
 
-import { 
-  GitBranchDto, 
-  GitCommitDto, 
-  GitStatusResponseDto
+import {
+  GitBranchDto,
+  GitCommitDto,
+  GitStatusResponseDto,
+  GitStatusRenamedDto,
 } from './dto';
 
 
@@ -45,7 +46,7 @@ export class GitService {
       throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
     }
     try {
-      const statusResult = await git.status(); // Renamed to avoid confusion with the DTO
+      const statusResult = await git.status();
 
       const responseDto: GitStatusResponseDto = {
         current: statusResult.current,
@@ -60,12 +61,15 @@ export class GitService {
         created: statusResult.created,
         deleted: statusResult.deleted,
         modified: statusResult.modified,
-        renamed: statusResult.renamed,
+        renamed: statusResult.renamed.map(r => ({
+          from: r.from,
+          to: r.to,
+        })), // Map to GitStatusRenamedDto
         staged: statusResult.staged,
         ahead: statusResult.ahead,
         behind: statusResult.behind,
         tracking: statusResult.tracking,
-        is_clean: statusResult.isClean(), // Directly call the method here
+        is_clean: statusResult.isClean(),
       };
       return responseDto;
     } catch (error) {
@@ -134,6 +138,23 @@ export class GitService {
     }
   }
 
+  async getDiff(filePath: string, projectRoot?: string): Promise<string> {
+    const git = this.getGit(projectRoot);
+    const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
+    if (!(await this.isGitRepository(git, effectiveRoot))) {
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
+    }
+    try {
+      // Get the diff for the specified file in the working directory against the index/HEAD.
+      // 'full-path' ensures git treats the path relative to the root if not ambiguous.
+      const diff = await git.diff(['--', filePath]);
+      return diff;
+    } catch (error) {
+      this.logger.error(`Failed to get Git diff for file ${filePath}: ${error.message}`, error.stack);
+      throw new InternalServerErrorException(`Failed to get Git diff for file: ${error.message}`);
+    }
+  }
+
   async getBranches(projectRoot?: string): Promise<GitBranchDto[]> {
     const git = this.getGit(projectRoot);
     const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
@@ -198,7 +219,7 @@ export class GitService {
         // Check if local branch already exists
         if (branchSummary.branches[branchName]) {
             await git.checkout(branchName);
-            return `Checked out existing local branch \'${branchName}\'.`;
+            return `Checked out existing local branch \'${branchName}\'`;
         } else {
             // Create and checkout new local branch tracking the remote one
             await git.checkout(['-b', branchName, remoteBranchRef]);
@@ -210,7 +231,7 @@ export class GitService {
           throw new NotFoundException(`Local branch \'${branchName}\' not found.`);
         }
         await git.checkout(branchName);
-        return `Checked out local branch \'${branchName}\'.`;
+        return `Checked out local branch \'${branchName}\'`;
       }
     } catch (error) {
       this.logger.error(`Failed to checkout branch: ${error.message}`, error.stack);
@@ -321,7 +342,7 @@ export class GitService {
       }
 
       await git.checkout(snapshotName);
-      return `Restored to snapshot \'${snapshotName}\'. Repository is now in a detached HEAD state. Consider creating a new branch.`;
+      return `Restored to snapshot \'${snapshotName}\' Repository is now in a detached HEAD state. Consider creating a new branch.`;
     } catch (error) {
       this.logger.error(`Failed to restore snapshot: ${error.message}`, error.stack);
       if (error instanceof NotFoundException) {
