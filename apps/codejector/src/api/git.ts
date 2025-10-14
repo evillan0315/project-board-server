@@ -1,5 +1,5 @@
 import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api';
-import { GitBranch, GitStatusResult, GitCommit, GitDiffResponseDto } from '@/types/git';
+import { GitBranch, GitStatusResult, GitCommit, GitDiffResponseDto, GitResetHardDto } from '@/types/git';
 
 export const getGitStatus = async (projectRoot?: string): Promise<GitStatusResult> => {
   try {
@@ -61,6 +61,19 @@ export const gitResetStagedChanges = async (filePath?: string, projectRoot?: str
     return await handleResponse(response);
   } catch (error) {
     console.error('Error resetting staged changes', error);
+    throw error;
+  }
+};
+
+export const gitResetHard = async (dto: GitResetHardDto) => {
+  try {
+    const response = await fetchWithAuth(`${API_BASE_URL}/git/reset-hard`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+    return await handleResponse(response);
+  } catch (error) {
+    console.error(`Error performing hard reset to ${dto.commitHash}`, error);
     throw error;
   }
 };
