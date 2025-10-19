@@ -1,55 +1,26 @@
-// src/stores/conversationStore.ts
+/**
+ * @file Nanostore for managing the active conversation ID.
+ */
 
-import { map } from 'nanostores';
-import { getConversations } from '@/api/conversation';
-import { ConversationSummaryDto } from '@/types/conversation';
-
-interface ConversationState {
-  conversations: ConversationSummaryDto[];
-  isLoading: boolean;
-  error: string | null;
-  selectedConversationId: string | null;
-}
-
-export const conversationStore = map<ConversationState>({
-  conversations: [],
-  isLoading: false,
-  error: null,
-  selectedConversationId: null,
-});
+import { atom } from 'nanostores';
 
 /**
- * Loads conversations from the API and updates the store.
+ * An atom that holds the currently active conversation ID (UUID string).
+ * If null, no conversation is active or one needs to be created.
  */
-export async function loadConversations() {
-  conversationStore.set({
-    ...conversationStore.get(),
-    isLoading: true,
-    error: null,
-  });
-  try {
-    // You can pass paginationDto here if needed, e.g., { page: 1, limit: 100 }
-    const response = await getConversations({ page: 1, limit: 50 });
-    conversationStore.set({
-      ...conversationStore.get(),
-      conversations: response.data,
-      isLoading: false,
-    });
-  } catch (error) {
-    console.error('Failed to load conversations:', error);
-    conversationStore.set({
-      ...conversationStore.get(),
-      error:
-        error instanceof Error ? error.message : 'An unknown error occurred',
-      isLoading: false,
-    });
-  }
+export const activeConversationId = atom<string | null>(null);
+
+/**
+ * Sets the active conversation ID.
+ * @param id The UUID of the conversation.
+ */
+export function setActiveConversationId(id: string | null) {
+  activeConversationId.set(id);
 }
 
 /**
- * Selects a conversation by its ID.
- * @param conversationId The ID of the conversation to select.
+ * Clears the active conversation ID.
  */
-export function selectConversation(conversationId: string | null) {
-  conversationStore.setKey('selectedConversationId', conversationId);
+export function clearActiveConversationId() {
+  activeConversationId.set(null);
 }

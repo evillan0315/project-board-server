@@ -2,9 +2,6 @@
  * @file Defines shared types and interfaces for the chat components.
  */
 
-import { Socket } from 'socket.io-client';
-import React from 'react';
-
 /**
  * Represents a single message in the chat.
  */
@@ -38,15 +35,54 @@ export interface MessageInputProps {
   onSendMessage: (text: string, userId?: string) => void;
 }
 
-// =========================================================================
-// Video Chat Types
-// =========================================================================
-
-export interface PeerInfo {
-  socketId: string;
-  userId?: string;
+/**
+ * Props for the VideoChatComponent.
+ */
+export interface VideoChatComponentProps {
+  roomId: string;
+  onClose?: () => void;
 }
 
+/**
+ * DTO for sending a chat message to the WebSocket server.
+ */
+export interface SendMessageDto {
+  conversationId: string;
+  userId: string; // Changed from senderId to userId to match backend DTO
+  content: string;
+  sender?: 'USER' | 'BOT' | 'AI';
+}
+
+/**
+ * DTO for requesting conversation history from the WebSocket server.
+ */
+export interface GetHistoryDto {
+  conversationId: string;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * DTO for joining a video room via WebSocket signaling.
+ */
+export interface JoinVideoRoomDto {
+  roomId: string;
+  userId: string;
+}
+
+/**
+ * DTO for sending WebRTC signaling payloads (offers, answers, ICE candidates).
+ */
+export interface SignalingPayloadDto {
+  roomId: string;
+  targetUserId: string; // The peer who should receive this signaling message
+  payload: RTCSessionDescriptionInit | RTCIceCandidate;
+  // senderUserId is implicitly handled by the socket.io server from the authenticated user
+}
+
+/**
+ * Represents the state of a single peer connection managed by useWebRTC hook.
+ */
 export interface PeerConnectionState {
   peerId: string;
   connection: RTCPeerConnection;
@@ -55,34 +91,25 @@ export interface PeerConnectionState {
   remoteVideoTrack: MediaStreamTrack | null;
 }
 
-export interface MediaStreamState {
-  localStream: MediaStream | null;
-  localAudioTrack: MediaStreamTrack | null;
-  localVideoTrack: MediaStreamTrack | null;
-  isAudioMuted: boolean;
-  isVideoMuted: boolean;
-}
-
+/**
+ * Represents a remote video feed to be displayed in the UI.
+ */
 export interface RemoteVideoFeed {
   peerId: string;
   stream: MediaStream;
 }
 
-export interface VideoFeedProps {
-  stream: MediaStream | null;
-  muted?: boolean;
-  peerId?: string;
-  isLocal?: boolean;
+/**
+ * Represents information about a peer, typically received when a user joins a room.
+ */
+export interface PeerInfo {
+  socketId: string;
+  userId?: string; // Optional, might be available depending on backend payload
 }
 
-export interface VideoControlsProps {
-  isAudioMuted: boolean;
-  isVideoMuted: boolean;
-  onToggleAudio: () => void;
-  onToggleVideo: () => void;
-  onHangUp: () => void;
-}
-
+/**
+ * Result type for the useWebRTC custom hook.
+ */
 export interface UseWebRTCHooksResult {
   localStream: MediaStream | null;
   remoteStreams: RemoteVideoFeed[];
@@ -94,9 +121,4 @@ export interface UseWebRTCHooksResult {
   disconnect: () => void;
   toggleAudio: () => void;
   toggleVideo: () => void;
-}
-
-export interface VideoChatComponentProps {
-  roomId: string;
-  onClose?: () => void;
 }
