@@ -10,8 +10,8 @@ import { atom } from 'nanostores';
 import { SendMessageDto, GetHistoryDto, JoinVideoRoomDto, SignalingPayloadDto, Message } from './types';
 
 // WebSocket URL, using relative path for Vite proxy consistency
-const WS_BASE_URL = import.meta.env.VITE_WS_URL || '/ws'; 
-const CHAT_WS_NAMESPACE = '/ws'; // Matches NestJS ChatGateway path
+const WS_BASE_URL = import.meta.env.VITE_WS_URL || '/api'; 
+const CHAT_WS_NAMESPACE = '/chat'; // Matches NestJS ChatGateway path
 
 /**
  * A Nanostore to hold the connection status of the chat WebSocket.
@@ -24,6 +24,16 @@ export const isChatSocketConnected = atom(false);
 interface AuthenticatedSocket extends Socket {
   userId?: string;
 }
+
+/**
+ * Helper function to deserialize message timestamps from ISO strings to Date objects.
+ */
+const deserializeMessage = (rawMessage: any): Message => {
+  return {
+    ...rawMessage,
+    timestamp: new Date(rawMessage.timestamp), // Convert ISO string to Date object
+  };
+};
 
 class ChatSocketService {
   private socket: AuthenticatedSocket | null = null;
@@ -55,7 +65,7 @@ class ChatSocketService {
           token: `Bearer ${authToken}`,
         },
       });
-
+      console.log(authToken, this.socket);
       this.socket.on('connect', () => {
         console.log('Chat WebSocket connected:', this.socket?.id);
         isChatSocketConnected.set(true);
@@ -81,7 +91,9 @@ class ChatSocketService {
 
       // Re-register all stored listeners after connection
       this.listeners.forEach((callback, event) => {
-        this.socket?.on(event, callback);
+        if (this.socket) {
+          this.socket.on(event, callback);
+        }
       });
     });
   }
@@ -118,9 +130,20 @@ class ChatSocketService {
    * @param callback The callback function to execute when the event is received.
    */
   public on<T>(event: string, callback: (data: T) => void): void {
-    this.listeners.set(event, callback); // Store listener for re-registration on reconnect
+    // Wrap the callback for message-related events to deserialize timestamps
+    const wrappedCallback = (data: any) => {
+      if (event === 'receive_message') {
+        callback(deserializeMessage(data) as T);
+      } else if (event === 'conversation_history') {
+        callback((data as any[]).map(deserializeMessage) as T);
+      } else {
+        callback(data as T);
+      }
+    };
+
+    this.listeners.set(event, wrappedCallback); // Store wrapped listener
     if (this.socket) {
-      this.socket.on(event, callback);
+      this.socket.on(event, wrappedCallback);
     }
   }
 
