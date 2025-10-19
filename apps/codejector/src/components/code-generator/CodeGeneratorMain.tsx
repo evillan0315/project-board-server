@@ -34,7 +34,7 @@ export interface CodeGeneratorData {
   summary: string;
   thoughtProcess: string;
   documentation: string;
-  gitInstructions: string[]; // ← change from string to string[]
+  gitInstructions: string[];
   changes: FileChange[];
 }
 
@@ -48,10 +48,10 @@ const AIToolsView: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Grid container spacing={3} justifyContent="center">
+    <Grid container spacing={3} justifyContent="center" alignItems="stretch"> {/* Added alignItems="stretch" */}
       {aiTools.map((tool: AppDefinition) => (
         <Grid item key={tool.id} xs={12} sm={6} md={6} lg={6}>
-          <CardActionArea onClick={() => navigate(tool.link)}>
+          <CardActionArea onClick={() => navigate(tool.link)} sx={{ height: '100%' }}> {/* Ensure CardActionArea takes full height */}
             <Card
               variant="outlined"
               sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
