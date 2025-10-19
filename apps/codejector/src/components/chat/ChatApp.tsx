@@ -17,7 +17,7 @@ import MessageInput from './MessageInput';
 import VideoChatComponent from './VideoChatComponent';
 import { conversationApi } from '@/api/conversation'; // Import the new API service
 
-// Bot User ID (remains constant)
+// Bot User ID (remains constant for client-side display)
 const BOT_USER_ID = 'user-bot';
 
 /**
@@ -45,6 +45,7 @@ const ChatApp: React.FC = () => {
   // Effect to create or retrieve a conversation ID on component mount
   useEffect(() => {
     const initializeConversation = async () => {
+      // Only initialize if logged in, user ID is available, and no active conversation is set
       if ($auth.isLoggedIn && $user?.id && !$activeConversationId) {
         setConversationLoading(true);
         setConversationError(null);
@@ -76,7 +77,7 @@ const ChatApp: React.FC = () => {
   // Callback to handle incoming messages from WebSocket (for both new messages and history)
   const handleReceiveMessage = useCallback((receivedMessage: Message) => {
     setMessages((prev) => {
-      // Prevent duplicates if the server echoes the sender's message
+      // Prevent duplicates if the server echoes the sender's message (by comparing unique IDs)
       if (prev.some(msg => msg.id === receivedMessage.id)) {
         return prev;
       }
@@ -90,6 +91,7 @@ const ChatApp: React.FC = () => {
       setIsHistoryLoading(true);
       setHistoryError(null);
 
+      // Attempt to connect to the chat socket
       chatSocketService.connect($auth.token)
         .then(() => {
           console.log('Chat socket connected for messages.');
@@ -104,15 +106,12 @@ const ChatApp: React.FC = () => {
 
             // Add initial bot welcome message if history is empty
             if (history.length === 0) {
-              setMessages(prev => [
-                ...prev,
-                {
-                  id: '0',
-                  userId: BOT_USER_ID,
-                  text: 'Hello! I am your friendly AI chat assistant. What can I help you with today?',
-                  timestamp: new Date(),
-                },
-              ]);
+              // We use onSendMessage here so that this initial bot message is also persisted.
+              // The handleSendMessage logic will ensure it's marked as 'BOT' but uses the actual user's ID for persistence.
+              handleSendMessage(
+                'Hello! I am your friendly AI chat assistant. What can I help you with today?',
+                BOT_USER_ID
+              );
             }
             chatSocketService.off('conversation_history'); // Remove listener after receiving history
           });
@@ -135,6 +134,12 @@ const ChatApp: React.FC = () => {
     };
   }, [$auth.isLoggedIn, $auth.token, $user?.id, $activeConversationId, handleReceiveMessage]);
 
+  /**
+   * Handles sending a message, either from the user or the simulated bot.
+   * Messages are first added to local state for immediate display.
+   * Then, if connected, they are sent to the backend via WebSocket for persistence.
+   * Bot messages use the actual user's ID for backend persistence but are marked with sender: 'BOT'.
+   */
   const handleSendMessage = (text: string, userId: string = currentUserActualId) => {
     if (!$activeConversationId) {
       console.warn('Cannot send message: No active conversation ID.');
@@ -144,27 +149,39 @@ const ChatApp: React.FC = () => {
 
     const newMessage: Message = {
       id: crypto.randomUUID(), // Ensure message has a unique ID for deduplication
-      userId,
-      text,
+      userId: userId, // This is the identifier for local display, can be 'user-bot' or actual user ID
+      text: text,
       timestamp: new Date(),
     };
 
     // Always add message to local state first for immediate display
     setMessages((prev) => [...prev, newMessage]);
 
-    // If it's the actual user sending the message, also send via WebSocket
-    if (userId === currentUserActualId && chatSocketService.isConnected()) {
+    // Determine the actual userId to send to backend and the sender type
+    // For persistence, all messages will be associated with the current authenticated user's ID.
+    // The 'sender' field will distinguish between user-sent and bot-generated content.
+    const backendUserId = currentUserActualId; // Use the authenticated user's actual ID
+    let senderType: SendMessageDto['sender'];
+
+    if (userId === BOT_USER_ID) {
+      senderType = 'BOT'; // This message originated from the bot logic
+    } else {
+      senderType = 'USER'; // This message originated from the actual user
+    }
+
+    // Only send via WebSocket if connected
+    if (chatSocketService.isConnected()) {
       const sendMessageDto: SendMessageDto = {
-        conversationId: $activeConversationId, // Use the backend-provided conversation ID
-        userId, // Matches the updated SendMessageDto type
+        conversationId: $activeConversationId,
+        userId: backendUserId, // Use the authenticated user's ID for persistence
         content: newMessage.text,
-        sender: 'USER'
+        sender: senderType, // Explicitly set sender type
       };
       chatSocketService.sendMessage(sendMessageDto);
       console.log('Message sent via WebSocket:', sendMessageDto);
+    } else {
+      console.warn('Chat socket not connected, message not sent to backend.');
     }
-    // Note: If userId is BOT_USER_ID, it's a client-side simulated message
-    // and should not be re-sent to the server via WebSocket unless intended.
   };
 
   const toggleVideoChat = () => {

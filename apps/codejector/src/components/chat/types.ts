@@ -50,7 +50,7 @@ export interface SendMessageDto {
   conversationId: string;
   userId: string; // Changed from senderId to userId to match backend DTO
   content: string;
-  sender?: 'USER' | 'BOT' | 'AI';
+  sender: 'USER' | 'BOT' | 'AI'; // Made non-optional to match backend DTO
 }
 
 /**
