@@ -32,18 +32,15 @@ const ChatApp: React.FC = () => {
 
   const currentUserActualId = $user?.id || 'guest-user';
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '0',
-      userId: BOT_USER_ID,
-      text: 'Hello! I am your friendly AI chat assistant. What can I help you with today?',
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(
+    []
+  ); // messages now fully managed here, including history
   const [showVideoChat, setShowVideoChat] = useState(false);
   const [videoChatRoomId] = useState(() => crypto.randomUUID()); // Use UUID for video room ID
   const [conversationLoading, setConversationLoading] = useState(false);
   const [conversationError, setConversationError] = useState<string | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true); // New state for history loading
+  const [historyError, setHistoryError] = useState<string | null>(null); // New state for history error
 
   // Effect to create or retrieve a conversation ID on component mount
   useEffect(() => {
@@ -74,13 +71,9 @@ const ChatApp: React.FC = () => {
     };
 
     initializeConversation();
+  }, [$auth.isLoggedIn, $user?.id, $activeConversationId]);
 
-    // Cleanup function - consider clearing activeConversationId on unmount if chat is truly ephemeral
-    // For now, it stays active in the store until explicitly cleared or another is set.
-    // return () => clearActiveConversationId();
-  }, [$auth.isLoggedIn, $user?.id, $activeConversationId]); // Depend on relevant auth/conversation state
-
-  // Callback to handle incoming messages from WebSocket
+  // Callback to handle incoming messages from WebSocket (for both new messages and history)
   const handleReceiveMessage = useCallback((receivedMessage: Message) => {
     setMessages((prev) => {
       // Prevent duplicates if the server echoes the sender's message
@@ -91,22 +84,52 @@ const ChatApp: React.FC = () => {
     });
   }, []);
 
-  // Effect to connect/disconnect chat socket and listen for messages
+  // Effect to connect/disconnect chat socket and listen for messages and history
   useEffect(() => {
     if ($auth.isLoggedIn && $user?.id && $activeConversationId) {
+      setIsHistoryLoading(true);
+      setHistoryError(null);
+
       chatSocketService.connect($auth.token)
         .then(() => {
           console.log('Chat socket connected for messages.');
           // Listen for incoming chat messages
           chatSocketService.on('receive_message', handleReceiveMessage);
-          // Optionally request history here, e.g., on initial connection or when conversationId changes:
-          // chatSocketService.getHistory({ conversationId: $activeConversationId });
+
+          // Listen for conversation history once and populate messages
+          chatSocketService.on('conversation_history', (history: Message[]) => {
+            console.log('Conversation history received:', history);
+            setMessages(history);
+            setIsHistoryLoading(false);
+
+            // Add initial bot welcome message if history is empty
+            if (history.length === 0) {
+              setMessages(prev => [
+                ...prev,
+                {
+                  id: '0',
+                  userId: BOT_USER_ID,
+                  text: 'Hello! I am your friendly AI chat assistant. What can I help you with today?',
+                  timestamp: new Date(),
+                },
+              ]);
+            }
+            chatSocketService.off('conversation_history'); // Remove listener after receiving history
+          });
+
+          // Request history after connecting
+          chatSocketService.getHistory({ conversationId: $activeConversationId });
         })
-        .catch(err => console.error('Failed to connect chat socket:', err));
+        .catch(err => {
+          console.error('Failed to connect chat socket or fetch history:', err);
+          setHistoryError(err instanceof Error ? err.message : 'Failed to connect or load history.');
+          setIsHistoryLoading(false);
+        });
     }
 
     return () => {
       chatSocketService.off('receive_message');
+      chatSocketService.off('conversation_history');
       chatSocketService.disconnect();
       console.log('Chat socket disconnected.');
     };
@@ -148,13 +171,13 @@ const ChatApp: React.FC = () => {
     setShowVideoChat(prev => !prev);
   };
 
-  // Show loading indicator while authentication status or conversation is being determined
-  if ($auth.loading || conversationLoading) {
+  // Show loading indicator while authentication status, conversation, or history is being determined
+  if ($auth.loading || conversationLoading || isHistoryLoading) {
     return (
       <Box className="flex items-center justify-center h-full">
         <CircularProgress />
         <Typography variant="h6" ml={2}>
-          {conversationLoading ? 'Starting conversation...' : 'Loading user data...'}
+          {isHistoryLoading ? 'Loading conversation history...' : (conversationLoading ? 'Starting conversation...' : 'Loading user data...')}
         </Typography>
       </Box>
     );
@@ -173,12 +196,12 @@ const ChatApp: React.FC = () => {
     );
   }
 
-  // Display authentication or conversation creation error if one exists
-  if ($auth.error || conversationError) {
+  // Display authentication, conversation creation, or history error if one exists
+  if ($auth.error || conversationError || historyError) {
     return (
       <Box className="flex items-center justify-center h-full p-4">
         <Typography variant="h6" color="error">
-          Error: {$auth.error || conversationError}
+          Error: {$auth.error || conversationError || historyError}
         </Typography>
       </Box>
     );
