@@ -1,50 +1,55 @@
-/**
- * @file API service for managing chat conversations.
- */
-
-import axios from 'axios';
-
-// Assuming your backend API base URL is configured in vite.config.ts or .env
-// If not, explicitly define it here, e.g., 'http://localhost:3000'
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
-interface CreateConversationDto {
-  title: string;
-  createdById: string;
-}
-
-interface ConversationResponse {
-  id: string;
-  title: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  createdById: string;
-}
+// src/api/conversation.ts
+import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api';
+const API_URL = `${API_BASE_URL}`;
+import {
+  ConversationSummaryDto,
+  PaginatedResponseDto,
+  PaginationDto,
+} from '@/types/conversation';
 
 /**
- * Service for interacting with the chat conversation API.
+ * Fetches a paginated list of conversation summaries from the backend.
+ * @param paginationDto - Pagination, search, and filter parameters.
+ * @returns A promise that resolves to a paginated response of ConversationSummaryDto.
  */
-export const conversationApi = {
-  /**
-   * Creates a new conversation on the backend.
-   * @param data The conversation creation data.
-   * @param token The JWT token for authentication.
-   * @returns A Promise resolving to the created conversation.
-   */
-  createConversation: async (data: CreateConversationDto, token: string): Promise<ConversationResponse> => {
-    const response = await axios.post<ConversationResponse>(
-      `${API_BASE_URL}/chat/conversations`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    return response.data;
-  },
+export async function getConversations(
+  paginationDto: PaginationDto = {},
+): Promise<PaginatedResponseDto<ConversationSummaryDto>> {
+  const queryParams = new URLSearchParams();
+  if (paginationDto.page)
+    queryParams.append('page', paginationDto.page.toString());
+  if (paginationDto.limit)
+    queryParams.append('limit', paginationDto.limit.toString());
+  if (paginationDto.search) queryParams.append('search', paginationDto.search);
+  if (paginationDto.requestType)
+    queryParams.append('requestType', paginationDto.requestType);
 
-  // Add other conversation-related API calls here (e.g., getConversationHistory, updateConversation)
-};
+  const response = await fetch(
+    `${API_URL}/conversations?${queryParams.toString()}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`, // Assuming token is stored in localStorage
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to fetch conversations');
+  }
+
+  const data: PaginatedResponseDto<ConversationSummaryDto> =
+    await response.json();
+
+  // Convert date strings to Date objects for client-side usage if necessary
+  // In this case, lastUpdatedAt is already a string in the DTO, so no conversion needed here
+  // If it were a Date object, the conversion would happen here:
+  // data.data = data.data.map(conv => ({
+  //   ...conv,
+  //   lastUpdatedAt: new Date(conv.lastUpdatedAt),
+  // }));
+
+  return data;
+}
