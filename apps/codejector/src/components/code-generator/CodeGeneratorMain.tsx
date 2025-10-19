@@ -13,6 +13,7 @@ import {
   Box,
   Grid,
   CardActionArea,
+  Tooltip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
@@ -59,9 +60,11 @@ const AIToolsView: React.FC = () => {
               <CardContent sx={{ flexGrow: 1 }}>
                 <Box display="flex" alignItems="center" gap={1}>
                   <tool.icon color="primary" />
-                  <Typography variant="h6" component="div">
-                    {tool.title}
-                  </Typography>
+                  <Tooltip title={tool.description} arrow>
+                    <Typography variant="h6" component="div" className='truncate'>
+                      {tool.title}
+                    </Typography>
+                  </Tooltip>
                 </Box>
                 <Typography color="text.secondary">
                   {tool.description}
