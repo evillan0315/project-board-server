@@ -18,8 +18,7 @@ interface ActiveRecordingSession {
   page: Page;
   video: Video; // Playwright's Video object
   outputPathPromise: Promise<string>; // Promise that resolves to the final video path
-  initialOutputFilePath?: string; // The initial path provided by Playwright
-  finalOutputFilePath?: string; // The path after renaming/cleanup
+  outputFileName?: string; // Desired output file name from user
   timeoutId?: NodeJS.Timeout; // For auto-stopping
 }
 
@@ -52,8 +51,8 @@ export class LlmPlaywrightService implements OnModuleInit {
       await fs.mkdir(this.RECORDINGS_DIR, { recursive: true });
       this.logger.log(`Ensured recording directory exists: ${this.RECORDINGS_DIR}`);
     } catch (error) {
-      this.logger.error(`Failed to create recording directory: ${this.RECORDINGS_DIR}, Error: ${error.message}`);
-      throw new InternalServerErrorException(`Failed to prepare recording directory: ${error.message}`);
+      this.logger.error(`Failed to create recording directory: ${this.RECORDINGS_DIR}, Error: ${(error as Error).message}`);
+      throw new InternalServerErrorException(`Failed to prepare recording directory: ${(error as Error).message}`);
     }
   }
 
@@ -65,23 +64,12 @@ export class LlmPlaywrightService implements OnModuleInit {
     }
   }
 
-  private async getBrowserInstance(options?: {
-    recordVideoDir?: string;
-    viewport?: { width: number; height: number };
-  }): Promise<Browser> {
+  private async getBrowserInstance(): Promise<Browser> {
     const browserType = this.configService.get<string>('PLAYWRIGHT_BROWSER_TYPE', 'chromium');
     const headless = this.configService.get<string>('PLAYWRIGHT_HEADLESS', 'true') === 'true';
 
     let browser: Browser;
     const launchOptions = { headless };
-
-    let browserContextOptions: any = {};
-    if (options?.recordVideoDir) {
-      browserContextOptions.recordVideo = { dir: options.recordVideoDir };
-    }
-    if (options?.viewport) {
-      browserContextOptions.viewport = options.viewport;
-    }
 
     switch (browserType) {
       case 'firefox':
@@ -95,8 +83,6 @@ export class LlmPlaywrightService implements OnModuleInit {
         browser = await chromium.launch(launchOptions);
         break;
     }
-
-    // Directly return the browser for usage with newContext later
     return browser;
   }
 
@@ -131,10 +117,10 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       if (takeScreenshot) {
         const screenshotBuffer = await page.screenshot({ fullPage: true });
-        screenshotBase64 = screenshotBuffer.toString('base64');
+        screenshotBase66 = screenshotBuffer.toString('base64');
       }
 
-      if (geminiPrompt && (scrapedText || screenshotBase64)) {
+      if (geminiPrompt && (scrapedText || screenshotBase66)) {
         if (scrapedText) {
           const payload: GenerateTextDto = {
             prompt: geminiPrompt,
@@ -146,9 +132,9 @@ export class LlmPlaywrightService implements OnModuleInit {
           };
           geminiAnalysis = await this.googleGeminiFileService.generateText(payload, RequestType.WEB_SCRAPE_ANALYSIS);
         }
-        if (screenshotBase64) {
+        if (screenshotBase66) {
           const imagePayload: ImageCaptionDto = {
-            image: screenshotBase64,
+            image: screenshotBase66,
             prompt: geminiPrompt,
           };
           // Overwrite text analysis if image analysis is more relevant or combine them
@@ -167,12 +153,12 @@ export class LlmPlaywrightService implements OnModuleInit {
         success: true,
         scrapedText: scrapedText || undefined,
         scrapedHtml: scrapedHtml || undefined,
-        screenshotBase64: screenshotBase64 || undefined,
+        screenshotBase64: screenshotBase66 || undefined,
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
-      this.logger.error(`Failed to scrape URL ${url}: ${error.message}`, error.stack);
-      throw new InternalServerErrorException(`Failed to scrape URL: ${error.message}`);
+      this.logger.error(`Failed to scrape URL ${url}: ${(error as Error).message}`, (error as Error).stack);
+      throw new InternalServerErrorException(`Failed to scrape URL: ${(error as Error).message}`);
     } finally {
       if (page) await page.close();
       if (browser) await browser.close();
@@ -185,7 +171,7 @@ export class LlmPlaywrightService implements OnModuleInit {
     const { url, fullPage = true, selector, geminiPrompt } = screenshotUrlDto;
     let browser: Browser | null = null;
     let page: Page | null = null;
-    let screenshotBase64: string | null = null;
+    let screenshotBase66: string | null = null;
     let geminiAnalysis: any = null;
 
     try {
@@ -200,11 +186,11 @@ export class LlmPlaywrightService implements OnModuleInit {
       } else {
         screenshotBuffer = await page.screenshot({ fullPage });
       }
-      screenshotBase64 = screenshotBuffer.toString('base64');
+      screenshotBase66 = screenshotBuffer.toString('base64');
 
-      if (geminiPrompt && screenshotBase64) {
+      if (geminiPrompt && screenshotBase66) {
         const payload: ImageCaptionDto = {
-          image: screenshotBase64,
+          image: screenshotBase66,
           prompt: geminiPrompt,
         };
         geminiAnalysis = await this.googleGeminiImageService.imageCaptioning(payload, RequestType.SCREENSHOT_ANALYSIS);
@@ -212,12 +198,12 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       return {
         success: true,
-        screenshotBase64,
+        screenshotBase64: screenshotBase66,
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
-      this.logger.error(`Failed to take screenshot of URL ${url}: ${error.message}`, error.stack);
-      throw new InternalServerErrorException(`Failed to take screenshot: ${error.message}`);
+      this.logger.error(`Failed to take screenshot of URL ${url}: ${(error as Error).message}`, (error as Error).stack);
+      throw new InternalServerErrorException(`Failed to take screenshot: ${(error as Error).message}`);
     } finally {
       if (page) await page.close();
       if (browser) await browser.close();
@@ -265,6 +251,7 @@ export class LlmPlaywrightService implements OnModuleInit {
         page,
         video,
         outputPathPromise,
+        outputFileName, // Store the desired output file name
       };
 
       if (duration && duration > 0) {
@@ -274,7 +261,7 @@ export class LlmPlaywrightService implements OnModuleInit {
           try {
             await this.stopScreenRecording();
           } catch (autoStopError) {
-            this.logger.error(`Error during auto-stop recording: ${autoStopError.message}`);
+            this.logger.error(`Error during auto-stop recording: ${(autoStopError as Error).message}`);
           }
         }, duration * 1000);
         this.activeRecordingSession.timeoutId = timeoutId;
@@ -287,13 +274,13 @@ export class LlmPlaywrightService implements OnModuleInit {
         // The actual file path is not available until after recording stops.
       };
     } catch (error) {
-      this.logger.error(`Failed to start screen recording for URL ${url}: ${error.message}`, error.stack);
+      this.logger.error(`Failed to start screen recording for URL ${url}: ${(error as Error).message}`, (error as Error).stack);
       if (timeoutId) clearTimeout(timeoutId);
       if (page) await page.close();
       if (context) await context.close();
       if (browser) await browser.close();
       this.activeRecordingSession = null;
-      throw new InternalServerErrorException(`Failed to start screen recording: ${error.message}`);
+      throw new InternalServerErrorException(`Failed to start screen recording: ${(error as Error).message}`);
     }
   }
 
@@ -304,7 +291,7 @@ export class LlmPlaywrightService implements OnModuleInit {
       throw new BadRequestException('No active screen recording session to stop.');
     }
 
-    const { browser, context, page, outputPathPromise, timeoutId } = this.activeRecordingSession;
+    const { browser, context, page, outputPathPromise, timeoutId, outputFileName: initialRequestedFileName } = this.activeRecordingSession;
 
     try {
       if (timeoutId) {
@@ -314,41 +301,38 @@ export class LlmPlaywrightService implements OnModuleInit {
       await context.close(); // Closing the context ensures all resources are released
       await browser.close(); // Close the browser
 
-      const initialVideoPath = await outputPathPromise; // Get the Playwright generated path
-      let finalVideoPath = initialVideoPath; // Default to Playwright's path
+      const initialVideoPath = await outputPathPromise; // Get the Playwright generated path, e.g., /tmp/some-random-id.webm
+      const originalExt = path.extname(initialVideoPath); // e.g., .webm
 
-      const requestedFileName = this.activeRecordingSession.finalOutputFilePath; // Check if user specified a name earlier
-
-      if (requestedFileName) {
-        const originalFileName = path.basename(initialVideoPath);
-        const originalExt = path.extname(originalFileName);
-        const desiredFileNameWithoutExt = path.basename(requestedFileName, originalExt);
-        const newDesiredFilePath = path.join(this.RECORDINGS_DIR, `${desiredFileNameWithoutExt}_${uuidv4().substring(0, 8)}${originalExt}`);
-        
-        // Rename the file
-        await fs.rename(initialVideoPath, newDesiredFilePath);
-        finalVideoPath = newDesiredFilePath; // Update to the new path
-        this.logger.log(`Renamed recording from ${path.basename(initialVideoPath)} to ${path.basename(finalVideoPath)}`);
+      let finalVideoName: string;
+      if (initialRequestedFileName) {
+        // Use the provided outputFileName, ensuring it ends with the correct extension
+        const baseName = path.basename(initialRequestedFileName, path.extname(initialRequestedFileName)); // Remove any existing extension
+        finalVideoName = `${baseName}${originalExt}`;
       } else {
-        // If no custom name, just ensure a unique timestamped name
-        const uniqueFileName = `recorded-${Date.now()}${path.extname(initialVideoPath)}`;
-        const newUniqueFilePath = path.join(this.RECORDINGS_DIR, uniqueFileName);
-        await fs.rename(initialVideoPath, newUniqueFilePath);
-        finalVideoPath = newUniqueFilePath;
+        // Fallback to a timestamped name if no custom name was provided
+        finalVideoName = `recorded-${Date.now()}${originalExt}`;
       }
 
-      this.logger.log(`Screen recording stopped. Video saved to: ${finalVideoPath}`);
+      // Ensure uniqueness: add a UUID suffix just before saving to prevent overwrites
+      const uniqueSuffix = uuidv4().substring(0, 8);
+      const finalUniqueVideoName = `${path.basename(finalVideoName, originalExt)}-${uniqueSuffix}${originalExt}`;
+      const finalUniqueVideoPath = path.join(this.RECORDINGS_DIR, finalUniqueVideoName);
+
+      // Rename the file from Playwright's temporary path to our desired final path
+      await fs.rename(initialVideoPath, finalUniqueVideoPath);
+      this.logger.log(`Screen recording stopped. Video saved to: ${finalUniqueVideoPath}`);
 
       this.activeRecordingSession = null;
       return {
         success: true,
-        recordedVideoPath: path.relative(process.cwd(), finalVideoPath), // Return relative path
-        scrapedText: `Screen recording saved to: ${path.relative(process.cwd(), finalVideoPath)}`,
+        recordedVideoPath: path.relative(process.cwd(), finalUniqueVideoPath), // Return relative path
+        scrapedText: `Screen recording saved to: ${path.relative(process.cwd(), finalUniqueVideoPath)}`,
       };
     } catch (error) {
-      this.logger.error(`Failed to stop screen recording: ${error.message}`, error.stack);
+      this.logger.error(`Failed to stop screen recording: ${(error as Error).message}`, (error as Error).stack);
       this.activeRecordingSession = null;
-      throw new InternalServerErrorException(`Failed to stop screen recording: ${error.message}`);
+      throw new InternalServerErrorException(`Failed to stop screen recording: ${(error as Error).message}`);
     }
   }
 }

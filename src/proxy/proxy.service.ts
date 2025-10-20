@@ -15,7 +15,7 @@ import { URL } from 'url';
 export class ProxyService {
   private readonly logger = new Logger(ProxyService.name);
   private readonly allowedProxyDomains: string[];
-  private readonly frontendUrl: string;
+  private readonly frontendUrl: string | undefined;
 
   constructor(
     private readonly httpService: HttpService,
@@ -51,7 +51,7 @@ export class ProxyService {
         return targetHostname === allowedDomain || targetHostname.endsWith(`.${allowedDomain}`);
       });
     } catch (e) {
-      this.logger.error(`Failed to parse target URL for domain check: ${targetUrl}. Error: ${e.message}`);
+      this.logger.error(`Failed to parse target URL for domain check: ${targetUrl}. Error: ${(e as Error).message}`);
       return false;
     }
   }
@@ -65,7 +65,7 @@ export class ProxyService {
   async proxyUrl(target: string, req: Request, res: Response): Promise<void> {
     this.logger.debug(`Incoming proxy request for URL: ${target} from origin: ${req.headers.origin}`);
 
-    if (!target || !/^https?:\/\//i.test(target)) {
+    if (!target || !/^https?:///i.test(target)) {
       throw new BadRequestException('Invalid or missing target URL format. Must be http(s).');
     }
 
@@ -89,8 +89,9 @@ export class ProxyService {
       ];
 
       for (const key in req.headers) {
-        if (req.headers.hasOwnProperty(key) && !sensitiveHeaders.includes(key.toLowerCase())) {
-          headersToForward[key] = req.headers[key];
+        const headerValue = req.headers[key];
+        if (req.headers.hasOwnProperty(key) && !sensitiveHeaders.includes(key.toLowerCase()) && headerValue !== undefined) {
+          headersToForward[key] = headerValue;
         }
       }
       this.logger.debug(`Forwarding headers: ${JSON.stringify(Object.keys(headersToForward))}`);
@@ -105,7 +106,7 @@ export class ProxyService {
         }),
       );
 
-      // --- Security Headers Modification for Client Response --- 
+      // --- Security Headers Modification for Client Response ---
       // Remove upstream X-Frame-Options and Content-Security-Policy to apply our own.
       res.removeHeader('X-Frame-Options');
       res.removeHeader('Content-Security-Policy');
@@ -115,14 +116,14 @@ export class ProxyService {
       if (this.frontendUrl) {
         corsOrigin = this.frontendUrl; // Prioritize configured frontend URL
       } else if (req.headers.origin) {
-        corsOrigin = req.headers.origin; // If not configured, use the requesting origin
+        corsOrigin = req.headers.origin;
         this.logger.warn(`FRONTEND_URL not set. Using dynamic Access-Control-Allow-Origin: ${corsOrigin}. For better security, consider setting FRONTEND_URL explicitly.`);
       }
       res.setHeader('Access-Control-Allow-Origin', corsOrigin);
       res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
       res.setHeader('Access-Control-Allow-Credentials', 'true');
-      
+
       // Determine Content-Security-Policy: frame-ancestors directive
       let frameAncestors: string = `'*'`; // Default to allow all for embedding if no explicit FRONTEND_URL
       if (this.frontendUrl) {
@@ -167,7 +168,7 @@ export class ProxyService {
           throw new InternalServerErrorException(`Network error while trying to reach ${target}: ${error.message}`);
         }
       } else {
-        this.logger.error(`Unexpected server error during proxy for ${target}: ${error.message}`, error.stack);
+        this.logger.error(`Unexpected server error during proxy for ${target}: ${(error as Error).message}`, (error as Error).stack);
         throw new InternalServerErrorException(`An unexpected server error occurred while processing the proxy request for ${target}.`);
       }
     }
