@@ -1,7 +1,6 @@
 import React, {
   useState,
   useCallback,
-  useRef,
   useMemo,
   useEffect,
 } from 'react';
@@ -13,15 +12,10 @@ import {
   IconButton,
   CircularProgress,
   Tooltip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   useTheme,
-  Alert
 } from '@mui/material';
 import {
   Send as SendIcon,
-  ExpandMore as ExpandMoreIcon
 } from '@mui/icons-material';
 import { setError, errorStore } from '@/stores/errorStore';
 import { aiEditorStore, showGlobalSnackbar } from '@/stores/aiEditorStore';
@@ -55,10 +49,11 @@ import {
 import { generateCode, applyProposedChanges } from '@/api/llm';
 import PromptGeneratorSettings from '@/components/Drawer/PromptGeneratorSettings';
 import { LlmOutputFormat, LlmGeneratePayload, ModelResponse } from '@/types';
-import { CodeGeneratorData } from './CodeGeneratorMain';
 import CustomDrawer from '@/components/Drawer/CustomDrawer';
 import BottomToolbar from './BottomToolbar';
 import { debounce } from '@/utils/debounce';
+
+
 
 interface PromptGeneratorProps {}
 
@@ -72,7 +67,7 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = () => {
   const { message } = useStore(errorStore);
 
   const { uploadedFileData, uploadedFileMimeType } = useStore(llmStore);
-  const { 
+  const {
     instruction, // This comes from the global store
     aiInstruction,
     expectedOutputInstruction,
@@ -83,7 +78,12 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = () => {
 
   // ---- local state for input to improve typing performance ----
   const [localInstruction, setLocalInstruction] = useState(instruction);
-
+  // Define styles for the TextField to remove borders
+const promptTextFieldStyles = {
+  // Target the MuiInputBase-root, which is the direct parent of the input element
+  // and contains pseudo-elements for the underline in 'standard' variant.
+  
+};
   // Synchronize localInstruction with global instruction when global state changes from other sources
   useEffect(() => {
     setLocalInstruction(instruction);
@@ -266,10 +266,6 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = () => {
             addLog('Prompt Generator', applyErr, 'error');
           }
         }
-      } else {
-        setError(errorMessage);
-        addLog('Prompt Generator', errorMessage, 'error');
-        showGlobalSnackbar(errorMessage, 'error');
       }
     } catch (err) {
       const msg = `Failed to generate code: ${err instanceof Error ? err.message : String(err)}`;
@@ -303,13 +299,8 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = () => {
      
       <Box
         position="relative"
-        className="mt-2 px-2 pr-12 overflow-auto max-h-[80px] items-end h-full"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            handleGenerateCode();
-          }
-        }}
+        className="mt-2 px-2 pr-14 overflow-auto max-h-[80px] items-end h-full"
+        // Removed onKeyDown from here
       >
         <Box className="mb-0">
           <TextField
@@ -321,20 +312,24 @@ const PromptGenerator: React.FC<PromptGeneratorProps> = () => {
               setLocalInstruction(e.target.value); // Update local state immediately
               debouncedSetInstruction(e.target.value); // Debounce update to global store
             }}
-            variant="standard"
-            InputProps={{ disableUnderline: true }}
-            className="mb-2 border-0"
-            sx={{
-              p: 0,
-              '& .css-1asjr57-MuiFormControl-root-MuiTextField-root': {
-                backgroundColor: `${theme.palette.background.default}  !important`,
-              },
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleGenerateCode();
+              }
+              // If Shift + Enter, do nothing, allow default browser behavior (insert newline)
             }}
+            variant="standard"
+            InputProps={{
+              disableUnderline: true, // Crucial for standard variant to remove default underline
+              sx: promptTextFieldStyles, // Apply custom styles for border removal
+            }}
+            className="mb-2 rounded-full pr-10 border-none ring-0" 
           />
         </Box>
       </Box>
       <Box
-        className="absolute top-2 right-0 flex items-center"
+        className="absolute top-2 right-2 flex items-center"
         sx={{ paddingRight: theme.spacing(1) }}
       >
         <Tooltip title="Generate/Modify Code">

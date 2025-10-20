@@ -1,4 +1,3 @@
-// src/appDefinitions.ts
 import { AppDefinition } from '@/types';
 import AppsIcon from '@mui/icons-material/Apps';
 import TerminalIcon from '@mui/icons-material/Terminal';
@@ -15,6 +14,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import GitHubIcon from '@mui/icons-material/GitHub'; // for Simple Git
 import ForumIcon from '@mui/icons-material/Forum';
 import DataObjectIcon from '@mui/icons-material/DataObject'; // For Schema Generator
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'; // NEW: For ChatApp (Direct)
 
 export const appDefinitions: AppDefinition[] = [
   {
@@ -35,6 +35,16 @@ export const appDefinitions: AppDefinition[] = [
     icon: ForumIcon,
     category: 'AI Tools',
   },
+  // NEW: App Definition for direct ChatApp component
+  {
+    id: 'chat-component',
+    title: 'Chat App (Direct)',
+    description: 'Direct access to the ChatApp component for testing or specific use.',
+    link: '/apps/chat-component',
+    linkText: 'Open Direct Chat',
+    icon: ChatBubbleOutlineIcon,
+    category: 'Development',
+  },
   {
     id: 'schema-generator',
     title: 'AI Schema Generator',
@@ -54,15 +64,6 @@ export const appDefinitions: AppDefinition[] = [
     category: 'Management',
   },
   {
-    id: 'resume-builder',
-    title: 'Resume Builder',
-    description: 'Create professional resumes with AI assistance.',
-    link: '/apps/resume-builder',
-    linkText: 'Open Resume Builder',
-    icon: DescriptionIcon,
-    category: 'AI Tools',
-  },
-  {
     id: 'media-player',
     title: 'Media Player',
     description: 'Explore and enjoy a simulated music streaming experience.',
@@ -70,16 +71,6 @@ export const appDefinitions: AppDefinition[] = [
     linkText: 'Open Music Player',
     icon: LibraryMusicIcon,
     category: 'Entertainment',
-  },
-  {
-    id: 'translator',
-    title: 'AI Translator',
-    description:
-      'Translate text content or uploaded files into any language using AI.',
-    link: '/apps/translator',
-    linkText: 'Open Translator',
-    icon: TranslateIcon,
-    category: 'AI Tools',
   },
   {
     id: 'terminal',

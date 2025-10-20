@@ -2,14 +2,24 @@
  * @file Defines shared types and interfaces for the chat components.
  */
 
+// Define Sender enum for consistency with backend
+export enum Sender {
+  USER = 'USER',
+  BOT = 'BOT',
+  AI = 'AI'
+}
+
 /**
  * Represents a single message in the chat.
  */
 export interface Message {
   id: string;
+  conversationId?: string;
   userId: string;
-  text: string;
-  timestamp: Date;
+  content: string; // Changed from 'text' to 'content' for consistency
+  createdAt: Date;
+  sender: Sender; // Added sender to Message interface
+  createdById?: string;
 }
 
 /**
@@ -48,9 +58,9 @@ export interface VideoChatComponentProps {
  */
 export interface SendMessageDto {
   conversationId: string;
-  userId: string; // Changed from senderId to userId to match backend DTO
+  userId: string;
   content: string;
-  sender: 'USER' | 'BOT' | 'AI'; // Made non-optional to match backend DTO
+  sender: Sender;
 }
 
 /**
@@ -81,7 +91,7 @@ export interface SignalingPayloadDto {
 }
 
 /**
- * Represents the state of a single peer connection managed by useWebRTC hook.
+ * Represents the state of a single peer connection managed by the WebRtcStore.
  */
 export interface PeerConnectionState {
   peerId: string;
@@ -105,20 +115,4 @@ export interface RemoteVideoFeed {
 export interface PeerInfo {
   socketId: string;
   userId?: string; // Optional, might be available depending on backend payload
-}
-
-/**
- * Result type for the useWebRTC custom hook.
- */
-export interface UseWebRTCHooksResult {
-  localStream: MediaStream | null;
-  remoteStreams: RemoteVideoFeed[];
-  isAudioMuted: boolean;
-  isVideoMuted: boolean;
-  error: string | null;
-  isLoading: boolean;
-  connect: (roomId: string, token: string) => Promise<void>;
-  disconnect: () => void;
-  toggleAudio: () => void;
-  toggleVideo: () => void;
 }

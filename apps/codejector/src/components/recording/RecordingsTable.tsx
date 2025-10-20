@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -11,26 +11,43 @@ import {
   Box,
   SxProps,
   Theme,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InfoIcon from '@mui/icons-material/Info';
 import GifIcon from '@mui/icons-material/Gif';
+import StopCircle from '@mui/icons-material/StopCircle'; // New import
 
-import { RecordingItem } from './Recording'; // Re-exporting RecordingItem as RecordingItem
+import VideocamIcon from '@mui/icons-material/Videocam';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import ImageIcon from '@mui/icons-material/Image';
+
+import { RecordingItem, SortField, SortOrder, RecordingType } from './types/recording';
+import { useStore } from '@nanostores/react';
+import {
+  recordingsListStore,
+  recordingsSortByStore,
+  recordingsSortOrderStore,
+  setRecordingsSortBy,
+  setRecordingsSortOrder,
+  setRecordingsPage,
+} from './stores/recordingStore';
 
 interface RecordingsTableProps {
-  recordings: RecordingItem[];
   onPlay: (recording: RecordingItem) => void;
-  onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onView: (recording: RecordingItem) => void;
-  onSort: (field: keyof RecordingItem) => void;
-  sortBy: keyof RecordingItem;
-  sortOrder: 'asc' | 'desc';
-  onConvertToGif: (recording: RecordingItem) => void; // New prop
+  onConvertToGif: (recording: RecordingItem) => void;
+  onStopRecording: (id: string, type: RecordingType) => void; // New prop
 }
 
 const tableContainerSx: SxProps<Theme> = (theme) => ({
@@ -68,18 +85,93 @@ const tableBodyCellSx: SxProps<Theme> = (theme) => ({
   textOverflow: 'ellipsis',
 });
 
+const dialogTitleSx: SxProps<Theme> = (theme) => ({
+  backgroundColor: theme.palette.error.main,
+  color: theme.palette.error.contrastText,
+});
+
+// Styles for the stop recording icon, matching color of RecordingControls stop button
+const errorIconColorSx: SxProps<Theme> = (theme) => ({
+  color: theme.palette.error.main,
+});
+
+const stopRecordingIconSx: SxProps<Theme> = (theme) => ({
+  ...errorIconColorSx(theme),
+  fontSize: '1.5rem', // Slightly larger for emphasis, fits table cell
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  padding: 0,
+  cursor: 'pointer',
+});
+
+// Refactored function to get the display for the recording type column
+const getRecordingTypeDisplay = (
+  recording: RecordingItem,
+  onStopRecording: (id: string, type: RecordingType) => void,
+  theme: Theme,
+) => {
+  if (recording.status === 'recording') {
+    return (
+      <Box className="flex items-center justify-start gap-1">
+      <Tooltip title={`Stop ${recording.type === 'screenRecord' ? 'Screen' : 'Camera'} Recording`}>
+        <IconButton
+          aria-label={`stop ${recording.type} recording`}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent row click from firing
+            onStopRecording(recording.id, recording.type);
+          }}
+          sx={stopRecordingIconSx(theme)}
+        >
+          <StopCircle fontSize="inherit" />
+        </IconButton>
+      </Tooltip>
+        </Box>
+    );
+  }
+
+  let icon = null;
+  let tooltipText = '';
+  switch (recording.type) {
+    case 'screenRecord':
+      icon = <VideocamIcon fontSize="small" />;
+      tooltipText = 'Screen Recording';
+      break;
+    case 'cameraRecord':
+      icon = <CameraAltIcon fontSize="small" />;
+      tooltipText = 'Camera Recording';
+      break;
+    case 'screenShot':
+      icon = <ImageIcon fontSize="small" />;
+      tooltipText = 'Screenshot';
+      break;
+    default:
+      icon = null;
+      tooltipText = '';
+  }
+
+  return (
+    <Box className="flex items-center gap-1">
+      {icon && <Tooltip title={tooltipText}>{icon}</Tooltip>}
+    </Box>
+  );
+};
+
 const RecordingsTable: React.FC<RecordingsTableProps> = ({
-  recordings,
   onPlay,
-  onEdit,
   onDelete,
   onView,
-  onSort,
-  sortBy,
-  sortOrder,
   onConvertToGif,
+  onStopRecording, // Destructure new prop
 }) => {
   const theme = useTheme();
+  const recordings = useStore(recordingsListStore);
+  const sortBy = useStore(recordingsSortByStore);
+  const sortOrder = useStore(recordingsSortOrderStore);
+
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [recordingToDelete, setRecordingToDelete] = useState<string | null>(null);
+  const [recordingNameToDelete, setRecordingNameToDelete] = useState<string | null>(null);
 
   const formatBytes = (bytes: number, decimals = 2) => {
     if (!+bytes) return '0 Bytes';
@@ -90,6 +182,37 @@ const RecordingsTable: React.FC<RecordingsTableProps> = ({
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
   };
 
+  const handleSort = (field: SortField) => {
+    if (sortBy === field) {
+      setRecordingsSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setRecordingsSortBy(field);
+      setRecordingsSortOrder('desc');
+    }
+    setRecordingsPage(0);
+  };
+
+  const handleDeleteClick = (id: string, name: string) => {
+    setRecordingToDelete(id);
+    setRecordingNameToDelete(name);
+    setOpenConfirmDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (recordingToDelete) {
+      onDelete(recordingToDelete);
+    }
+    setOpenConfirmDialog(false);
+    setRecordingToDelete(null);
+    setRecordingNameToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setOpenConfirmDialog(false);
+    setRecordingToDelete(null);
+    setRecordingNameToDelete(null);
+  };
+
   return (
     <TableContainer component={Paper} sx={tableContainerSx(theme)}>
       <Table className="min-w-full">
@@ -97,31 +220,25 @@ const RecordingsTable: React.FC<RecordingsTableProps> = ({
           <TableRow>
             <TableCell
               sx={tableHeaderCellSx(theme)}
-              onClick={() => onSort('name')}
+              onClick={() => handleSort('name')}
             >
               Name {sortBy === 'name' && (sortOrder === 'asc' ? '▲' : '▼')}
             </TableCell>
             <TableCell
               sx={tableHeaderCellSx(theme)}
-              onClick={() => onSort('type')}
+              onClick={() => handleSort('type')}
             >
               Type {sortBy === 'type' && (sortOrder === 'asc' ? '▲' : '▼')}
             </TableCell>
             <TableCell
               sx={tableHeaderCellSx(theme)}
-              onClick={() => onSort('status')}
-            >
-              Status {sortBy === 'status' && (sortOrder === 'asc' ? '▲' : '▼')}
-            </TableCell>
-            <TableCell
-              sx={tableHeaderCellSx(theme)}
-              onClick={() => onSort('sizeBytes')}
+              onClick={() => handleSort('sizeBytes')}
             >
               Size {sortBy === 'sizeBytes' && (sortOrder === 'asc' ? '▲' : '▼')}
             </TableCell>
             <TableCell
               sx={tableHeaderCellSx(theme)}
-              onClick={() => onSort('createdAt')}
+              onClick={() => handleSort('createdAt')}
             >
               Created At{' '}
               {sortBy === 'createdAt' && (sortOrder === 'asc' ? '▲' : '▼')}
@@ -138,10 +255,7 @@ const RecordingsTable: React.FC<RecordingsTableProps> = ({
                 {recording.name}
               </TableCell>
               <TableCell sx={tableBodyCellSx(theme)}>
-                {recording.type}
-              </TableCell>
-              <TableCell sx={tableBodyCellSx(theme)}>
-                {recording.status}
+                {getRecordingTypeDisplay(recording, onStopRecording, theme)}
               </TableCell>
               <TableCell sx={tableBodyCellSx(theme)}>
                 {formatBytes(recording.sizeBytes)}
@@ -177,11 +291,10 @@ const RecordingsTable: React.FC<RecordingsTableProps> = ({
                       color="primary"
                       title="View Screenshot"
                     >
-                      <PlayArrowIcon />{' '}
-                      {/* Re-using PlayArrow for consistency, but means 'view' */}
+                      <PlayArrowIcon />
                     </IconButton>
                   )}
-                  {recording.data?.animatedGif && ( // MODIFIED: Simplified onPlay call for GIF
+                  {recording.data?.animatedGif && (
                     <IconButton
                       onClick={() => onPlay(recording)}
                       color="primary"
@@ -198,14 +311,7 @@ const RecordingsTable: React.FC<RecordingsTableProps> = ({
                     <InfoIcon />
                   </IconButton>
                   <IconButton
-                    onClick={() => onEdit(recording.id)}
-                    color="secondary"
-                    title="Edit"
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => onDelete(recording.id)}
+                    onClick={() => handleDeleteClick(recording.id, recording.name)}
                     color="error"
                     title="Delete"
                   >
@@ -217,6 +323,30 @@ const RecordingsTable: React.FC<RecordingsTableProps> = ({
           ))}
         </TableBody>
       </Table>
+
+      <Dialog
+        open={openConfirmDialog}
+        onClose={handleCancelDelete}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title" sx={dialogTitleSx(theme)}>
+          Confirm Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete the recording "{recordingNameToDelete}"? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete} variant="outlined">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmDelete} variant="contained" color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </TableContainer>
   );
 };

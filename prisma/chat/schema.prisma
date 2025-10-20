@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+model Conversation {
+  id            String             @id @default(uuid())
+  title         String             // A user-friendly title for the conversation
+  status        ConversationStatus @default(ACTIVE)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  createdById   String
+  createdBy     User               @relation(fields: [createdById], references: [id])
+  metadata      Json?              // For storing system instructions, model parameters, etc.
+
+  // Relation to Message (One-to-Many)
+  messages      Message[]
+
+  @@index([createdById])
+  @@index([status])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  sender         Sender       // Uses the existing Sender enum (USER, AI, BOT)
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime?    @updatedAt
+  createdById    String
+  createdBy      User         @relation(fields: [createdById], references: [id])
+  metadata       Json?        // For source links, file references, etc.
+
+  // Relation back to Conversation
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdById])
+}
+
+enum Sender {
+  USER
+  AI
+  BOT
+}

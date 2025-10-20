@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -8,48 +8,71 @@ import {
   Divider,
 } from '@mui/material';
 import CustomDrawer from '../Drawer/CustomDrawer';
-import { RecordingItem } from './RecordingsTable';
+import { RecordingItem, RecordingType } from './types/recording';
+import { useStore } from '@nanostores/react';
+import {
+  editableRecordingStore,
+  selectedRecordingStore,
+  recordingDrawerOpenStore,
+  setEditableRecording,
+  setRecordingDrawerOpen,
+  setSelectedRecording,
+} from './stores/recordingStore';
 
 interface RecordingInfoDrawerProps {
-  open: boolean;
+  open: boolean; // This prop is still needed for CustomDrawer's own state management
   onClose: () => void;
   recording: RecordingItem | null;
-  onUpdate: (updated: Partial<RecordingItem>) => void;
+  onUpdate: () => void; // No longer takes an argument, reads from store
 }
 
-const RECORDING_TYPES = ['screenRecord', 'screenShot', 'cameraRecord']; // Added 'cameraRecord'
+const RECORDING_TYPES: RecordingType[] = ['screenRecord', 'screenShot', 'cameraRecord'];
 
 export const RecordingInfoDrawer: React.FC<RecordingInfoDrawerProps> = ({
-  open,
+  open, // Keep for CustomDrawer
   onClose,
-  recording,
+  recording: recordingProp, // Rename prop to avoid conflict with store value
   onUpdate,
 }) => {
-  const [editable, setEditable] = useState<Partial<RecordingItem>>({
-    name: recording?.name,
-    type: recording?.type,
-  });
+  const selectedRecording = useStore(selectedRecordingStore); // Use store
+  const editableRecording = useStore(editableRecordingStore); // Use store
+  const isDrawerOpen = useStore(recordingDrawerOpenStore); // Use store
 
-  React.useEffect(() => {
-    setEditable({ name: recording?.name, type: recording?.type });
-  }, [recording]);
+  useEffect(() => {
+    // Initialize editable state from selectedRecording when drawer opens or selectedRecording changes
+    if (selectedRecording) {
+      setEditableRecording({
+        name: selectedRecording.name,
+        type: selectedRecording.type,
+      });
+    } else {
+      setEditableRecording({});
+    }
+  }, [selectedRecording]);
 
-  if (!recording) return null;
+  if (!selectedRecording) return null;
+
+  const handleClose = () => {
+    setRecordingDrawerOpen(false);
+    setSelectedRecording(null);
+    setEditableRecording({}); // Clear editable state on close
+    onClose(); // Call the prop-provided onClose to allow parent to react if needed
+  };
 
   const handleSave = () => {
-    onUpdate(editable);
+    onUpdate(); // Parent component will read editableRecording from store
   };
 
   return (
     <CustomDrawer
-      open={open}
-      onClose={onClose}
+      open={isDrawerOpen} // Use store state for drawer visibility
+      onClose={handleClose}
       position="right"
       size="medium"
-      title={recording.name}
+      title={selectedRecording.name}
       stickyFooter={
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-          <Button variant="outlined" onClick={onClose}>
+          <Button variant="outlined" onClick={handleClose}>
             Cancel
           </Button>
           <Button variant="contained" onClick={handleSave}>
@@ -59,18 +82,23 @@ export const RecordingInfoDrawer: React.FC<RecordingInfoDrawerProps> = ({
       }
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {/* Editable fields */}
         <TextField
           label="Name"
-          value={editable.name || ''}
-          onChange={(e) => setEditable({ ...editable, name: e.target.value })}
+          value={editableRecording.name || ''}
+          onChange={(e) =>
+            setEditableRecording({ ...editableRecording, name: e.target.value })
+          }
+          fullWidth
           size="small"
         />
         <TextField
           label="Type"
           select
-          value={editable.type || ''}
-          onChange={(e) => setEditable({ ...editable, type: e.target.value })}
+          value={editableRecording.type || ''}
+          onChange={(e) =>
+            setEditableRecording({ ...editableRecording, type: e.target.value as RecordingType })
+          }
+          fullWidth
           size="small"
         >
           {RECORDING_TYPES.map((t) => (
@@ -82,12 +110,11 @@ export const RecordingInfoDrawer: React.FC<RecordingInfoDrawerProps> = ({
 
         <Divider />
 
-        {/* Read-only fields */}
         <Box>
           <Typography variant="body2" fontWeight="bold">
             Status:
           </Typography>
-          <Typography variant="body2">{recording.status}</Typography>
+          <Typography variant="body2">{selectedRecording.status}</Typography>
         </Box>
 
         <Box>
@@ -95,7 +122,7 @@ export const RecordingInfoDrawer: React.FC<RecordingInfoDrawerProps> = ({
             Path:
           </Typography>
           <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-            {recording.path}
+            {selectedRecording.path}
           </Typography>
         </Box>
 
@@ -103,7 +130,7 @@ export const RecordingInfoDrawer: React.FC<RecordingInfoDrawerProps> = ({
           <Typography variant="body2" fontWeight="bold">
             Created By:
           </Typography>
-          <Typography variant="body2">{recording.createdById}</Typography>
+          <Typography variant="body2">{selectedRecording.createdById}</Typography>
         </Box>
 
         <Box>
@@ -123,7 +150,7 @@ export const RecordingInfoDrawer: React.FC<RecordingInfoDrawerProps> = ({
             }}
           >
             <pre style={{ margin: 0 }}>
-              {JSON.stringify(recording.data, null, 2)}
+              {JSON.stringify(selectedRecording.data, null, 2)}
             </pre>
           </Box>
         </Box>

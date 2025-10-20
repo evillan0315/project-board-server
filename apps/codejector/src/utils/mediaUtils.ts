@@ -1,4 +1,4 @@
-import { MediaFileResponseDto, Track, FileType } from '@/types';
+import { MediaFileResponseDto, Track, FileType } from '@/types/refactored/media';
 import { getFileStreamUrl } from '@/api/media';
 
 /**

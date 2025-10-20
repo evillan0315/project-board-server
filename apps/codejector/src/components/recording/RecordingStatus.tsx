@@ -5,7 +5,7 @@ import {
   currentRecordingIdStore,
   isCameraRecordingStore,
   currentCameraRecordingIdStore,
-} from '@/stores/recordingStore';
+} from './stores/recordingStore';
 
 export function RecordingStatus() {
   const isScreenRecording = useStore(isScreenRecordingStore);

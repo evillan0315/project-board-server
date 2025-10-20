@@ -13,7 +13,8 @@ import {
   Videocam,
   CameraAlt,
   StopCircle,
-  ScreenshotMonitor, // Changed from PhotoCamera
+  ScreenshotMonitor,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 
 export interface RecordingControlsProps {
@@ -25,13 +26,13 @@ export interface RecordingControlsProps {
   onStartCameraRecording: () => void;
   onStopCameraRecording: () => void;
   onCapture: () => void;
+  onOpenSettings: () => void;
 }
 
-// Define SX styles using theme
 const commonIconButtonSx: SxProps<Theme> = (theme) => ({
-  fontSize: '2rem', // Slightly larger icons for better visibility and touch targets
+  fontSize: '2rem',
   '&:hover': {
-    backgroundColor: theme.palette.action.hover, // Use theme's generic hover color for consistency
+    backgroundColor: theme.palette.action.hover,
   },
 });
 
@@ -47,8 +48,12 @@ const secondaryIconColorSx: SxProps<Theme> = (theme) => ({
   color: theme.palette.secondary.main,
 });
 
+const settingsIconColorSx: SxProps<Theme> = (theme) => ({
+  color: theme.palette.info.main,
+});
+
 const circularProgressColorSx: SxProps<Theme> = (theme) => ({
-  color: theme.palette.secondary.main, // Keep consistent with capture button color
+  color: theme.palette.secondary.main,
 });
 
 export function RecordingControls({
@@ -60,6 +65,7 @@ export function RecordingControls({
   onStartCameraRecording,
   onStopCameraRecording,
   onCapture,
+  onOpenSettings,
 }: RecordingControlsProps) {
   const theme = useTheme();
 
@@ -122,6 +128,16 @@ export function RecordingControls({
           ) : (
             <ScreenshotMonitor fontSize="inherit" />
           )}
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip title="Recording Settings">
+        <IconButton
+          aria-label="recording settings"
+          onClick={onOpenSettings}
+          sx={{ ...commonIconButtonSx(theme), ...settingsIconColorSx(theme) }}
+        >
+          <SettingsIcon fontSize="inherit" />
         </IconButton>
       </Tooltip>
     </Box>

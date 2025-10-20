@@ -197,7 +197,14 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
           </IconButton>
         </Tooltip>
           <Tooltip title="Clear editor and AI response">
-            <IconButton color="error" onClick={clearLlmStore} disabled={commonDisabled}>
+            <IconButton
+              color="error"
+              onClick={() => {
+                clearLlmStore();
+                setErrorRaw(''); // Clear the error message
+              }}
+              disabled={commonDisabled}
+            >
               <ClearIcon />
             </IconButton>
           </Tooltip>

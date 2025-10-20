@@ -2,6 +2,10 @@ import { map } from 'nanostores';
 import { persistentAtom } from '@/utils/persistentAtom';
 import { UserProfile, AuthState } from '@/types/auth';
 
+export const user = persistentAtom<UserProfile>('user', {});
+export const setUser = (userData: UserProfile) => {
+  if (userData) user.set(userData);
+};
 export const authStore = map<AuthState>({
   isLoggedIn: false,
   user: null,
@@ -19,6 +23,7 @@ export const setToken = (tokenString: string | null) => {
 
 export const loginSuccess = (user: UserProfile, token: string) => {
   if (token) setToken(token);
+  setUser(user);
   authStore.set({
     isLoggedIn: true,
     user,

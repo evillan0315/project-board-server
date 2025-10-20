@@ -8,7 +8,7 @@ import {
   Paper,
   IconButton,
   useTheme,
-  TextField, // Import TextField for the search component
+  TextField,
 } from '@mui/material';
 import FileTreeItem from './FileTreeItem';
 import {
@@ -18,30 +18,31 @@ import {
   loadChildrenForDirectory,
   setSelectedFile,
   projectRootDirectoryStore,
+  setCurrentProjectPath,
 } from '@/stores/fileTreeStore';
 import { llmStore, showGlobalSnackbar } from '@/stores/llmStore';
-import { projectStore } from '@/stores/projectStore'; // New import
 
 import { ContextMenuItem } from '@/types/main';
-import { FileEntry } from '@/types/refactored/fileTree'; // Updated import path
+import { FileEntry } from '@/types/refactored/fileTree';
 import { showFileTreeContextMenu } from '@/stores/contextMenuStore';
 import {
   ContentCopy as ContentCopyIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  NoteAdd as NoteAddIcon, // Used for new file
-  CreateNewFolder as CreateNewFolderIcon, // Used for new folder
+  NoteAdd as NoteAddIcon,
+  CreateNewFolder as CreateNewFolderIcon,
   Terminal as TerminalIcon,
   OpenInNew as OpenInNewIcon,
   Refresh as RefreshIcon,
   DriveFileMove as DriveFileMoveIcon,
   FileCopy as FileCopyIcon,
-  ArrowUpward as ArrowUpwardIcon, // Icon for going up a directory
+  ArrowUpward as ArrowUpwardIcon,
+  Source as SourceFolderIcon,
+ CreateNewFolder as MaterialIconThemeFolderResource
 } from '@mui/icons-material';
 import FolderOpenIcon from '@mui/icons-material/FolderOpenOutlined';
 import { MaterialIconThemeFolderUtils } from '@/components/icons/MaterialIconThemeFolderUtils';
 import { MaterialIconThemeFolderPrompts } from '@/components/icons/MaterialIconThemeFolderPrompts';
-import { MaterialIconThemeFolderResource } from '@/components/icons/MaterialIconThemeFolderResource';
 import { MdiRenameBox } from '@/components/icons/MdiRenameBox';
 import { MdiTerminalNetworkOutline } from '@/components/icons/MdiTerminalNetworkOutline';
 import { LineMdFileDocumentPlusFilled } from '@/components/icons/LineMdFileDocumentPlusFilled';
@@ -66,7 +67,6 @@ import FileTreeStatus from './common/FileTreeStatus';
 import FileTreeList from './common/FileTreeList';
 
 interface FileTreeProps {
-  //projectRoot?: string;
 }
 
 const FileTree: React.FC<FileTreeProps> = () => {
@@ -77,8 +77,6 @@ const FileTree: React.FC<FileTreeProps> = () => {
   } = useStore(fileTreeStore);
   const { scanPathsInput } = useStore(llmStore);
   const projectRoot = useStore(projectRootDirectoryStore);
-  const { currentProject } = useStore(projectStore); // Retrieve current project
-  const projectId = currentProject?.id; // Get projectId
 
   const showTerminal = useStore(isTerminalVisible);
   const theme = useTheme();
@@ -121,8 +119,8 @@ const FileTree: React.FC<FileTreeProps> = () => {
         if (nameMatches || childrenMatches.length > 0) {
           results.push({
             ...node,
-            collapsed: false, // Ensure path to match is expanded
-            children: childrenMatches, // Only include filtered children
+            collapsed: false,
+            children: childrenMatches,
           });
         }
       }
@@ -132,16 +130,16 @@ const FileTree: React.FC<FileTreeProps> = () => {
   );
 
   useEffect(() => {
-    if (projectRoot && projectId) {
-      loadInitialTree(projectRoot); // projectId is now handled internally by loadInitialTree from projectStore
-    } else if (projectRoot && !projectId) {
-      showGlobalSnackbar('No project selected. Cannot load file tree.', 'error');
-      clearFileTree(); // Clear existing tree if no project is selected
+    if (projectRoot) {
+      loadInitialTree(projectRoot);
+    } else {
+      showGlobalSnackbar('No project root specified. Cannot load file tree.', 'error');
+      clearFileTree();
     }
     return () => {
       clearFileTree();
     };
-  }, [projectRoot, projectId]); // Add projectId to dependency array
+  }, [projectRoot]);
 
   // Effect to apply search filter whenever treeFiles or searchTerm changes
   useEffect(() => {
@@ -150,20 +148,14 @@ const FileTree: React.FC<FileTreeProps> = () => {
 
   const refreshPath = useCallback(
     async (targetPath: string) => {
-      if (!projectId) {
-        console.error('Project ID is required to refresh path.');
-        showGlobalSnackbar('No project selected. Cannot refresh file tree.', 'error');
-        return;
-      }
-
       const parentDir = path.dirname(targetPath);
-      const isRoot = parentDir === targetPath; // This means targetPath is the root itself or a root-level item
+      const isRoot = parentDir === targetPath;
       const pathToRefresh = 
         isRoot && parentDir === '/' ? targetPath : parentDir;
 
       if (pathToRefresh && pathToRefresh !== '.') {
         const state = fileTreeStore.get();
-        const nodeToRefresh = findFileEntryInTree(state.files, pathToRefresh); // Ensure this helper exists or is imported
+        const nodeToRefresh = findFileEntryInTree(state.files, pathToRefresh);
 
         if (nodeToRefresh && nodeToRefresh.type === 'folder' && state.expandedDirs.has(pathToRefresh)) {
           await loadChildrenForDirectory(pathToRefresh);
@@ -171,16 +163,16 @@ const FileTree: React.FC<FileTreeProps> = () => {
           await loadInitialTree(projectRoot);
         }
       }
-    }, // Removed explicit projectRoot dependency here as it's passed as an arg now if applicable
-    [projectId], // Add projectId to dependency array
+    },
+    [projectRoot],
   );
 
   const handleRefreshTree = () => {
-    if (projectRoot && projectId) {
+    if (projectRoot) {
       loadInitialTree(projectRoot);
       showGlobalSnackbar('File tree refreshed.', 'info');
     } else {
-      showGlobalSnackbar('No project selected to refresh file tree.', 'warning');
+      showGlobalSnackbar('No project root specified to refresh file tree.', 'warning');
     }
   };
 
@@ -197,7 +189,7 @@ const FileTree: React.FC<FileTreeProps> = () => {
   const handleCreateSuccess = useCallback(
     (newPath: string) => {
       const parentDir = path.dirname(newPath);
-      refreshPath(parentDir); // refreshPath now uses projectId internally
+      refreshPath(parentDir);
       showGlobalSnackbar(
         `${isCreatingFolder ? 'Folder' : 'File'} created successfully at ${newPath}`,
         'success',
@@ -208,23 +200,18 @@ const FileTree: React.FC<FileTreeProps> = () => {
 
   const handleDeleteItem = useCallback(
     async (node: FileEntry) => {
-      if (!projectId) {
-        showGlobalSnackbar('No project selected. Cannot delete file.', 'error');
-        return;
-      }
-      if (
-        window.confirm(
+      if (window.confirm(
           `Are you sure you want to delete ${node.name}? This action cannot be undone.`,
         )
       ) {
         try {
-          const result = await apiDeleteFile(node.path, projectId); // Pass projectId
+          const result = await apiDeleteFile(node.path);
           if (result.success) {
             showGlobalSnackbar(result.message, 'success');
             refreshPath(node.path);
           } else {
             showGlobalSnackbar(result.message || 'Failed to delete.', 'error');
-          } 
+          }
         } catch (err: any) {
           showGlobalSnackbar(
             `Error deleting: ${err.message || String(err)}`,
@@ -233,13 +220,13 @@ const FileTree: React.FC<FileTreeProps> = () => {
         }
       }
     },
-    [refreshPath, projectId], // Add projectId to dependency array
+    [refreshPath],
   );
 
   const handleRenameSuccess = useCallback(
     (oldPath: string, newPath: string) => {
-      refreshPath(oldPath); // Refresh old parent to remove old name
-      refreshPath(newPath); // Refresh new parent to add new name (could be same parent)
+      refreshPath(oldPath);
+      refreshPath(newPath);
       showGlobalSnackbar('Item renamed successfully!', 'success');
     },
     [refreshPath],
@@ -250,7 +237,7 @@ const FileTree: React.FC<FileTreeProps> = () => {
       if (operationMode === 'move') {
         refreshPath(sourcePath);
       }
-      refreshPath(destinationPath); // Add to destination
+      refreshPath(destinationPath);
       showGlobalSnackbar(
         `${operationMode === 'copy' ? 'Copied' : 'Moved'} successfully!`,
         'success',
@@ -273,11 +260,18 @@ const FileTree: React.FC<FileTreeProps> = () => {
               setSelectedFile(file.path);
               showGlobalSnackbar(`Opening file: ${file.name}`, 'info');
             } else {
-              // For folders, we might want to expand/collapse or navigate
-              // For now, just a snackbar message
               showGlobalSnackbar(`Folder selected: ${file.name}`, 'info');
             }
           },
+        },
+        {
+          label: 'Set as Project Root',
+          icon: <SourceFolderIcon fontSize="small" />,
+          action: (file) => {
+            setCurrentProjectPath(file.path);
+            showGlobalSnackbar(`Project root set to: ${file.path}`, 'success');
+          },
+          disabled: isFile,
         },
         { type: 'divider' },
         {
@@ -342,7 +336,7 @@ const FileTree: React.FC<FileTreeProps> = () => {
               connectTerminal();
             }
           },
-          disabled: isFile, // Disable for files
+          disabled: isFile,
         },
         {
           label: 'Send to AI Scan Path',
@@ -371,13 +365,13 @@ const FileTree: React.FC<FileTreeProps> = () => {
           label: `Delete ${isFile ? 'File' : 'Folder'}...`,
           icon: <DeleteIcon fontSize="small" />,
           action: handleDeleteItem,
-          className: '!text-red-500 hover:!bg-red-900/50', // Tailwind class for danger styling
+          className: '!text-red-500 hover:!bg-red-900/50',
         },
       ];
 
       return items;
     },
-    [handleDeleteItem, scanPathsInput, handleAddFileFolder], // Add handleAddFileFolder dependency
+    [handleDeleteItem, scanPathsInput, handleAddFileFolder],
   );
 
   const handleNodeContextMenu = useCallback(
@@ -403,18 +397,11 @@ const FileTree: React.FC<FileTreeProps> = () => {
 
   // Function to handle going up a directory
   const handleGoUpDirectory = () => {
-    // Ensure projectRoot is not null before proceeding
     if (projectRoot) {
       const parentDir = path.dirname(projectRoot);
-      // If parentDir is the same as projectRoot, we are at the root already.
-      // Or if parentDir is '.' which means projectRoot is a top-level directory in the current working directory
-      // For a file tree starting at a specific projectRoot, going up means setting the parent of that root as the new root.
-      // Assuming '/' is the absolute root that should stop further 'up' navigation.
       if (parentDir && parentDir !== '.' && parentDir !== projectRoot) {
         projectRootDirectoryStore.set(parentDir);
-        // loadInitialTree will be triggered by the useEffect observing projectRoot
       } else if (projectRoot !== '/') {
-        // If at a top-level folder within '/' and try to go up, set root to '/'
         projectRootDirectoryStore.set('/');
       }
     }
@@ -453,7 +440,7 @@ const FileTree: React.FC<FileTreeProps> = () => {
         searchTerm={searchTerm}
         onGoUpDirectory={handleGoUpDirectory}
         onRefreshTree={handleRefreshTree}
-        onAddFileFolder={handleAddFileFolder} // Pass the new handler
+        onAddFileFolder={handleAddFileFolder}
         onSearchChange={handleSearchChange}
       />
 
@@ -461,15 +448,15 @@ const FileTree: React.FC<FileTreeProps> = () => {
       <FileTreeStatus
         isFetchingTree={isFetchingTree}
         fetchTreeError={fetchTreeError}
-        treeFilesCount={treeFiles.length} // Original count
-        filteredFilesCount={filteredTreeFiles.length} // New count for search
+        treeFilesCount={treeFiles.length}
+        filteredFilesCount={filteredTreeFiles.length}
         projectRoot={projectRoot}
-        searchTerm={searchTerm} // Pass search term
+        searchTerm={searchTerm}
       />
 
       {!isFetchingTree && !fetchTreeError && filteredTreeFiles.length > 0 && (
         <FileTreeList
-          treeFiles={filteredTreeFiles} // Pass filtered files
+          treeFiles={filteredTreeFiles}
           projectRoot={projectRoot}
           onNodeContextMenu={handleNodeContextMenu}
         />
@@ -483,7 +470,6 @@ const FileTree: React.FC<FileTreeProps> = () => {
         parentPath={pathForNewItem}
         isFolder={isCreatingFolder}
         onCreateSuccess={handleCreateSuccess}
-        projectId={projectId} // Pass projectId
       />
 
       <RenameDialog
@@ -492,7 +478,6 @@ const FileTree: React.FC<FileTreeProps> = () => {
         item={itemToRename}
         onRenameSuccess={handleRenameSuccess}
         snackbar={{ show: showGlobalSnackbar }}
-        projectId={projectId} // Pass projectId
       />
 
       <OperationPathDialog
@@ -503,7 +488,6 @@ const FileTree: React.FC<FileTreeProps> = () => {
         onOperationSuccess={handleOperationSuccess}
         snackbar={{ show: showGlobalSnackbar }}
         projectRoot={projectRoot}
-        projectId={projectId} // Pass projectId
       />
     </Box>
   );

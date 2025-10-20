@@ -7,10 +7,10 @@
 import { io, Socket } from 'socket.io-client';
 import { getToken } from '@/stores/authStore';
 import { atom } from 'nanostores';
-import { SendMessageDto, GetHistoryDto, JoinVideoRoomDto, SignalingPayloadDto, Message } from './types';
+import { SendMessageDto, GetHistoryDto, Message } from './types';
 
 // WebSocket URL, using relative path for Vite proxy consistency
-const WS_BASE_URL = import.meta.env.VITE_WS_URL || '/api'; 
+const WS_BASE_URL = import.meta.env.VITE_WS_URL; // Expects VITE_WS_URL to be defined
 const CHAT_WS_NAMESPACE = '/chat'; // Matches NestJS ChatGateway path
 
 /**
@@ -19,24 +19,18 @@ const CHAT_WS_NAMESPACE = '/chat'; // Matches NestJS ChatGateway path
 export const isChatSocketConnected = atom(false);
 
 /**
- * Interface for the authenticated socket, extended with userId.
- */
-interface AuthenticatedSocket extends Socket {
-  userId?: string;
-}
-
-/**
  * Helper function to deserialize message timestamps from ISO strings to Date objects.
+ * Assumes backend sends 'createdAt' as an ISO string.
  */
 const deserializeMessage = (rawMessage: any): Message => {
   return {
     ...rawMessage,
-    timestamp: new Date(rawMessage.timestamp), // Convert ISO string to Date object
+    createdAt: new Date(rawMessage.createdAt), // Correctly map 'createdAt' from backend to Date object
   };
 };
 
 class ChatSocketService {
-  private socket: AuthenticatedSocket | null = null;
+  private socket: Socket | null = null;
   private listeners: Map<string, (...args: any[]) => void> = new Map();
 
   /**
@@ -59,13 +53,19 @@ class ChatSocketService {
         return;
       }
 
+      if (!WS_BASE_URL) {
+        console.error('VITE_WS_URL is not defined. Cannot connect to Chat WebSocket.');
+        reject(new Error('WebSocket base URL missing.'));
+        return;
+      }
+
       this.socket = io(WS_BASE_URL + CHAT_WS_NAMESPACE, {
         transports: ['websocket'],
         auth: {
           token: `Bearer ${authToken}`,
         },
       });
-      console.log(authToken, this.socket);
+
       this.socket.on('connect', () => {
         console.log('Chat WebSocket connected:', this.socket?.id);
         isChatSocketConnected.set(true);
@@ -135,6 +135,7 @@ class ChatSocketService {
       if (event === 'receive_message') {
         callback(deserializeMessage(data) as T);
       } else if (event === 'conversation_history') {
+        // Ensure that each message in the history array is deserialized
         callback((data as any[]).map(deserializeMessage) as T);
       } else {
         callback(data as T);
@@ -152,10 +153,11 @@ class ChatSocketService {
    * @param event The event name to remove the listener from.
    */
   public off(event: string): void {
-    this.listeners.delete(event);
-    if (this.socket) {
-      this.socket.off(event);
+    const callback = this.listeners.get(event);
+    if (this.socket && callback) {
+      this.socket.off(event, callback);
     }
+    this.listeners.delete(event);
   }
 
   /**
@@ -170,34 +172,6 @@ class ChatSocketService {
    */
   public getHistory(data: GetHistoryDto): void {
     this.emit('get_history', data);
-  }
-
-  /**
-   * Joins a video room.
-   */
-  public joinVideoRoom(data: JoinVideoRoomDto): void {
-    this.emit('join_video_room', data);
-  }
-
-  /**
-   * Sends a WebRTC offer.
-   */
-  public sendOffer(data: SignalingPayloadDto): void {
-    this.emit('send_offer', data);
-  }
-
-  /**
-   * Sends a WebRTC answer.
-   */
-  public sendAnswer(data: SignalingPayloadDto): void {
-    this.emit('send_answer', data);
-  }
-
-  /**
-   * Sends a WebRTC ICE candidate.
-   */
-  public sendCandidate(data: SignalingPayloadDto): void {
-    this.emit('send_candidate', data);
   }
 
   public isConnected(): boolean {

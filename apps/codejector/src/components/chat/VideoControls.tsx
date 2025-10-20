@@ -27,7 +27,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 
   return (
     <Box
-      className="flex justify-center items-center p-4 gap-4"
+      className="flex justify-center items-center p-2 h-19 gap-2"
       sx={{
         backgroundColor: theme.palette.background.paper,
         borderTop: `1px solid ${theme.palette.divider}`,

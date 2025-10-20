@@ -1,6 +1,43 @@
+export interface IRecorderSettings {
+  namePrefix: string;
+  screenResolution: string;
+  screenFramerate: number;
+  cameraResolution: string;
+  cameraFramerate: number;
+  cameraVideoDevice: string;
+  cameraAudioDevice: string;
+}
+
+export type RecordingType = 'screenRecord' | 'screenShot' | 'cameraRecord';
+
+export interface RecordingItem {
+  id: string;
+  name: string;
+  createdAt: string;
+  sizeBytes: number;
+  type: RecordingType; // Use the specific RecordingType union
+  status: string;
+  path: string;
+  createdById: string;
+  data: {
+    duration?: number;
+    fileSize?: number;
+    animatedGif?: string;
+    [key: string]: any;
+  };
+}
+
+export type SortOrder = 'asc' | 'desc';
+export type SortField = 'name' | 'createdAt' | 'type' | 'sizeBytes';
+
 export interface PaginationRecordingQueryDto {
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  search?: string;
+  type?: string; // This can remain 'string' for API queries if the backend is flexible
+  pageSize?: number;
 }
 
 export interface PaginationRecordingResultDto {
@@ -8,7 +45,7 @@ export interface PaginationRecordingResultDto {
   total: number;
   page: number;
   limit: number;
-  totalPages: number; // Ensure totalPages is defined here
+  totalPages: number;
 }
 export interface RecordingStartResponse {
   id: string;
@@ -24,7 +61,7 @@ export interface RecordingStatusDto {
   startedAt: string | null;
 }
 export interface RecordingResultDto extends RecordingStartResponse {
-  type: string;
+  type: RecordingType; // Use the specific RecordingType union
   pid: string;
   status: string;
   data: RecordingDataDto;
@@ -57,7 +94,7 @@ export interface StartCameraRecordingDto {
   cameraDevice?: string;
   resolution?: string;
   framerate?: number;
-  duration?: number; // In seconds
+  duration?: number;
   name?: string;
 }
 
@@ -69,5 +106,7 @@ export interface CameraRecordingResponseDto {
 }
 
 export interface UpdateRecordingDto {
-  data: any;
+  name?: string;
+  type?: RecordingType; // Use the specific RecordingType union
+  data?: any;
 }

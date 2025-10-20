@@ -57,7 +57,7 @@ import {
 } from '@/components/icons/CodiconLayoutPanelRight';
 import { CodiconLayoutSidebarRightOff } from '@/components/icons/CodiconLayoutPanelRight';
 
-import { isScreenRecordingStore } from '@/stores/recordingStore';
+import { isScreenRecordingStore } from '@//components/recording/stores/recordingStore';
 
 interface ScriptExecutionState {
   status: ScriptStatus;

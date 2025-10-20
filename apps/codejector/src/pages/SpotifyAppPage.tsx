@@ -16,7 +16,7 @@ import {
   setPlaying,
   setError,
 } from '@/stores/mediaStore';
-import { FileType } from '@/types/refactored/media'; // Ensure FileType is imported from the correct path
+import { type FileType } from '@/types/refactored/media'; // Ensure FileType is imported from the correct path
 
 type SpotifyView = 'home' | 'search' | 'library' | 'settings';
 

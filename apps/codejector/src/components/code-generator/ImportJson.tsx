@@ -123,8 +123,10 @@ export const ImportJson: React.FC<ImportJsonProps> = ({
       try {
         const result = await getPaginatedGeminiRequests({
           requestType: 'LLM_GENERATION',
-          limit: 100, // Fetch a reasonable number of recent requests
+          page: 1,
+          pageSize: 20, // Fetch a reasonable number of recent requests
         });
+        console.log(result.items, 'items');
         setGeminiRequests(result.items);
       } catch (error) {
         console.error('Failed to fetch Gemini requests:', error);

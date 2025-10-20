@@ -98,7 +98,7 @@ const FileTabs: React.FC<FileTabsProps> = ({ sx, ...otherProps }) => {
         },
         display: 'flex', // Enable flexbox for positioning buttons
         alignItems: 'center', // Align items vertically in the center
-        justifyContent: 'center',
+        justifyContent: 'start',
         height: '60px',
         ...sx, // Merge the passed sx prop
       }}
@@ -110,7 +110,7 @@ const FileTabs: React.FC<FileTabsProps> = ({ sx, ...otherProps }) => {
             display: 'flex',
             alignItems: 'start',
             gap: 0,
-            mr: 'auto',
+            mr: 1,
             pl: 1,
           }}
         >

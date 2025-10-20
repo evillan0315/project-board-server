@@ -29,7 +29,7 @@ const VideoFeed: React.FC<VideoFeedProps> = ({ stream, muted = false, peerId, is
   const videoContainerSx = {
     position: 'relative',
     width: '100%',
-    paddingTop: '75%', // 4:3 aspect ratio (or adjust for 16:9, e.g., '56.25%')
+    //paddingTop: '75%', // 4:3 aspect ratio (or adjust for 16:9, e.g., '56.25%')
     backgroundColor: theme.palette.grey[900],
     borderRadius: '8px',
     overflow: 'hidden',

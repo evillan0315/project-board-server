@@ -3,10 +3,10 @@
  */
 
 import React, { useEffect } from 'react';
-import { Box, Typography, Paper, CircularProgress, Alert, useTheme } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, useTheme } from '@mui/material';
 import { useStore } from '@nanostores/react';
-import { authStore } from '@/stores/authStore';
-import { useWebRTC } from './useWebRTC';
+import { authStore, user, getToken } from '@/stores/authStore';
+import { webRtcStore } from '@/components/chat/stores/webRtcStore'; // Import the new Nanostore
 import VideoFeed from './VideoFeed';
 import VideoControls from './VideoControls';
 import { VideoChatComponentProps } from './types';
@@ -15,42 +15,36 @@ import { VideoChatComponentProps } from './types';
  * The main component for the video chat. It manages the WebRTC lifecycle,
  * displays local and remote video feeds, and provides call controls.
  */
-const VideoChatComponent: React.FC<VideoChatComponentProps> = ({ roomId, onClose }) => {
+export default function VideoChatComponent({ roomId, onClose }: VideoChatComponentProps) {
   const $auth = useStore(authStore);
+  const $user = useStore(user);
   const theme = useTheme();
 
-  const currentUserId = $auth.user?.id;
-  const authToken = $auth.token;
+  const currentUserId = $user?.id;
+  const authToken = getToken();
 
-  const { 
-    localStream, 
-    remoteStreams, 
-    isAudioMuted, 
-    isVideoMuted, 
-    error, 
-    isLoading, 
-    connect, 
-    disconnect, 
-    toggleAudio, 
-    toggleVideo 
-  } = useWebRTC(currentUserId || 'unknown-user'); // Fallback for userId
+  // Consume WebRTC state from the Nanostore
+  const localStream = useStore(webRtcStore.localStream);
+  const remoteStreams = useStore(webRtcStore.remoteStreams);
+  const isAudioMuted = useStore(webRtcStore.isAudioMuted);
+  const isVideoMuted = useStore(webRtcStore.isVideoMuted);
+  const error = useStore(webRtcStore.error);
+  const isLoading = useStore(webRtcStore.isLoading);
 
   useEffect(() => {
     if (roomId && currentUserId && authToken) {
-      connect(roomId, authToken);
+      webRtcStore.connect(roomId, authToken, currentUserId); // Call connect method from the store
     } else if (!authToken) {
-      // This case should ideally be handled by a route guard or higher-level auth check
-      // For robustness, ensure we disconnect if token disappears during a call.
-      disconnect();
+      webRtcStore.disconnect(); // Disconnect if token disappears
     }
     // Disconnect on component unmount
     return () => {
-      disconnect();
+      webRtcStore.disconnect(); // Call disconnect method from the store
     };
-  }, [roomId, currentUserId, authToken, connect, disconnect]);
+  }, [roomId, currentUserId, authToken]);
 
   const handleHangUp = () => {
-    disconnect();
+    webRtcStore.disconnect(); // Call disconnect method from the store
     if (onClose) {
       onClose();
     }
@@ -72,8 +66,8 @@ const VideoChatComponent: React.FC<VideoChatComponentProps> = ({ roomId, onClose
         <VideoControls
           isAudioMuted={isAudioMuted}
           isVideoMuted={isVideoMuted}
-          onToggleAudio={toggleAudio}
-          onToggleVideo={toggleVideo}
+          onToggleAudio={webRtcStore.toggleAudio}
+          onToggleVideo={webRtcStore.toggleVideo}
           onHangUp={handleHangUp}
         />
       </Box>
@@ -86,42 +80,38 @@ const VideoChatComponent: React.FC<VideoChatComponentProps> = ({ roomId, onClose
 
   return (
     <Box
-      className="flex flex-col h-full overflow-hidden"
-      sx={{ backgroundColor: theme.palette.background.default }}
+      className="flex flex-col h-full"
+      sx={{ backgroundColor: theme.palette.background.default }} // Fill the background of the video chat panel
     >
-      <Paper elevation={3} className="flex flex-col h-full rounded-b-xl overflow-hidden shadow-2xl">
-        {/* Video Feeds Area */}
-        <Box 
-          className={`flex-grow grid grid-cols-1 md:grid-cols-2 ${gridColsClass} gap-4 p-4 overflow-y-auto`}
-          sx={{ backgroundColor: theme.palette.background.default }}
-        >
-          {localStream && (
-            <VideoFeed key="local-feed" stream={localStream} muted={true} isLocal={true} peerId={currentUserId} />
-          )}
-          {remoteStreams.map((peer) => (
-            <VideoFeed key={peer.peerId} stream={peer.stream} peerId={peer.peerId} />
-          ))}
+      {/* Video Feeds Area */}
+      <Box
+        className={`flex-grow grid grid-cols-1 md:grid-cols-2 ${gridColsClass} gap-4 p-4 overflow-y-auto justify-center items-center`}
+        sx={{ backgroundColor: theme.palette.background.default }} // Keep this for the video grid background
+      >
+        {localStream && (
+          <VideoFeed key="local-feed" stream={localStream} muted={true} isLocal={true} peerId={currentUserId} />
+        )}
+        {remoteStreams.map((peer) => (
+          <VideoFeed key={peer.peerId} stream={peer.stream} peerId={peer.peerId} />
+        ))}
 
-          {!localStream && remoteStreams.length === 0 && !isLoading && !error && (
-            <Box className="col-span-full flex items-center justify-center h-full text-gray-500">
-              <Typography variant="h6" color="textSecondary">
-                No active video participants. Waiting for others...
-              </Typography>
-            </Box>
-          )}
-        </Box>
+        {!localStream && remoteStreams.length === 0 && !isLoading && !error && (
+          <Box className="col-span-full flex items-center justify-center h-full text-gray-500">
+            <Typography variant="h6" color="textSecondary">
+              No active video participants. Waiting for others...
+            </Typography>
+          </Box>
+        )}
+      </Box>
 
-        {/* Controls */}
-        <VideoControls
-          isAudioMuted={isAudioMuted}
-          isVideoMuted={isVideoMuted}
-          onToggleAudio={toggleAudio}
-          onToggleVideo={toggleVideo}
-          onHangUp={handleHangUp}
-        />
-      </Paper>
+      {/* Controls */}
+      <VideoControls
+        isAudioMuted={isAudioMuted}
+        isVideoMuted={isVideoMuted}
+        onToggleAudio={webRtcStore.toggleAudio}
+        onToggleVideo={webRtcStore.toggleVideo}
+        onHangUp={handleHangUp}
+      />
     </Box>
   );
-};
-
-export default VideoChatComponent;
+}

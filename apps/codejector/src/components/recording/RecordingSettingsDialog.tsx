@@ -11,18 +11,16 @@ import {
   Box,
 } from '@mui/material';
 import { useStore } from '@nanostores/react';
-import { IRecorderSettings } from '@/types';
-import { recorderSettingsStore } from '@/stores/recordingStore';
+import { IRecorderSettings } from './types/recording';
+import { recorderSettingsStore, isRecordingSettingsDialogOpenStore, setIsRecordingSettingsDialogOpen } from './stores/recordingStore';
 
 interface RecordingSettingsDialogProps {
-  open: boolean;
-  onClose: () => void;
+  open: boolean; // Keep for the Dialog component itself
+  onClose: () => void; // Keep to allow explicit close action from parent
 }
 
-// Constants for options
 const RESOLUTION_OPTIONS = ['1920x1080', '1280x720', '800x600'];
 const FRAMERATE_OPTIONS = [15, 24, 30, 60];
-// These should ideally be dynamic (e.g., fetched from backend or local system)
 const CAMERA_VIDEO_DEVICE_OPTIONS = ['/dev/video0', '/dev/video1'];
 const CAMERA_AUDIO_DEVICE_OPTIONS = [
   'alsa_input.pci-0000_00_1b.0.analog-stereo',
@@ -30,18 +28,18 @@ const CAMERA_AUDIO_DEVICE_OPTIONS = [
 ];
 
 export const RecordingSettingsDialog: React.FC<RecordingSettingsDialogProps> = ({
-  open,
-  onClose,
+  open: propOpen, // Rename prop to avoid conflict with store value
+  onClose: propOnClose, // Rename prop to avoid conflict with store value
 }) => {
   const currentSettings = useStore(recorderSettingsStore);
+  const isSettingsDialogOpen = useStore(isRecordingSettingsDialogOpenStore);
   const [formSettings, setFormSettings] = useState<IRecorderSettings>(currentSettings);
 
   useEffect(() => {
-    // Update form settings when currentSettings from store changes
-    if (open) {
+    if (isSettingsDialogOpen) {
       setFormSettings(currentSettings);
     }
-  }, [currentSettings, open]);
+  }, [currentSettings, isSettingsDialogOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -56,11 +54,17 @@ export const RecordingSettingsDialog: React.FC<RecordingSettingsDialogProps> = (
 
   const handleSave = () => {
     recorderSettingsStore.set(formSettings);
-    onClose();
+    setIsRecordingSettingsDialogOpen(false);
+    propOnClose(); // Call the prop-provided onClose to allow parent to react if needed
+  };
+
+  const handleClose = () => {
+    setIsRecordingSettingsDialogOpen(false);
+    propOnClose(); // Call the prop-provided onClose to allow parent to react if needed
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={isSettingsDialogOpen} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>Recorder Settings</DialogTitle>
       <DialogContent dividers>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -178,7 +182,7 @@ export const RecordingSettingsDialog: React.FC<RecordingSettingsDialogProps> = (
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} variant="outlined">
+        <Button onClick={handleClose} variant="outlined">
           Cancel
         </Button>
         <Button onClick={handleSave} variant="contained">

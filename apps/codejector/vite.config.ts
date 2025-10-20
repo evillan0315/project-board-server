@@ -1,4 +1,3 @@
-// vite.config.ts
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -53,7 +52,10 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.GOOGLE_CALLBACK_URL': JSON.stringify(
         env.GOOGLE_CALLBACK_URL,
       ),
-      'import.meta.env.FRONTEND_URL': JSON.stringify(env.VITE_FRONTEND_URL), // Add frontend URL for backend redirects
+      'import.meta.env.FRONTEND_URL': JSON.stringify(env.VITE_FRONTEND_URL),
+      // Ensure VITE_API_URL and VITE_WS_URL are explicitly defined as string literals for reliable injection
+      'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL),
+      'import.meta.env.VITE_WS_URL': JSON.stringify(env.VITE_WS_URL),
     },
   };
 });

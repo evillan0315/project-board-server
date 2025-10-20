@@ -25,9 +25,7 @@
   background-color: var(--color-bg);
 }
 
-.markdown-body pre > div {
-  background-color: #000000;
-}
+
 .language-btn {
   @apply bg-sky-500;
 }
@@ -127,7 +125,7 @@
 }
 
 .markdown-body hr {
-  border-color: var(--color-border);
+  border-color: var(--mui-palette-primary-main);
 }
 
 .markdown-body table {
@@ -148,7 +146,6 @@
 }
 
 .markdown-body hr {
-  border-color: var(--color-border);
   @apply my-6;
 }
 

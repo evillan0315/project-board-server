@@ -1,15 +1,16 @@
 import React from 'react';
 import { Box, TextField, Button, MenuItem, IconButton, Tooltip } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { RecordingType } from './types/recording';
 
 export interface RecordingSearchBarProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   onSearch: () => void;
-  typeFilter?: string;
-  onTypeFilterChange?: (value: string) => void;
-  typeOptions?: string[];
-  onRefresh: () => void; // New prop for refresh functionality
+  typeFilter?: RecordingType | ''; // Allow empty string for 'All'
+  onTypeFilterChange?: (value: RecordingType | '') => void; // Allow empty string for 'All'
+  typeOptions?: RecordingType[];
+  onRefresh: () => void;
 }
 
 export const RecordingSearchBar: React.FC<RecordingSearchBarProps> = ({
@@ -34,7 +35,7 @@ export const RecordingSearchBar: React.FC<RecordingSearchBarProps> = ({
           label="Type"
           select
           value={typeFilter || ''}
-          onChange={(e) => onTypeFilterChange(e.target.value)}
+          onChange={(e) => onTypeFilterChange(e.target.value as RecordingType | '')}
           size="small"
         >
           <MenuItem value="">All</MenuItem>

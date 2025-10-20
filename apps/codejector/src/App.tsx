@@ -48,9 +48,10 @@ const LlmGenerationPage = lazy(() => import('./pages/LlmGenerationPage'));
 const ResumeBuilderPage = lazy(() => import('./pages/ResumeBuilderPage'));
 const RecordingPage = lazy(() => import('./pages/RecordingPage'));
 const KanbanBoardPage = lazy(() => import('./pages/KanbanBoardPage'));
-const SimpleGitPage = lazy(() => import('./pages/SimpleGitPage'));
+const GitPage = lazy(() =>  import('@/components/git/GitPage'));
 const AIChatPage = lazy(() => import('./pages/AIChatPage'));
 const SchemeGeneratorPage = lazy(() => import('./pages/SchemeGeneratorPage')); // New: Lazy load SchemeGeneratorPage
+const ChatAppComponent = lazy(() => import('./components/chat/ChatApp')); // NEW: Lazy load ChatApp
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -114,6 +115,19 @@ const router = createBrowserRouter(
             <Suspense fallback={<Loading />}>
               <ErrorBoundary>
                 <AIChatPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      {/* NEW: Route for direct ChatApp component */}
+      <Route
+        path="/apps/chat-component"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <ChatAppComponent />
               </ErrorBoundary>
             </Suspense>
           </RequireAuth>
@@ -245,7 +259,7 @@ const router = createBrowserRouter(
           <RequireAuth>
             <Suspense fallback={<Loading />}>
               <ErrorBoundary>
-                <SimpleGitPage />
+                <GitPage />
               </ErrorBoundary>
             </Suspense>
           </RequireAuth>

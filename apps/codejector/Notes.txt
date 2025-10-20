@@ -1,0 +1,33 @@
+// Notes
+
+Enhancement
+
+Refactoring simple git to break it into little pieces of components
+It may take a while to generate the code..lets just wait....
+Lets play music while waiting :)
+
+
+Now lets see the logs for errors..nvm its a long logs since we are recording this
+
+Lets refresh if theres anything wrong.
+
+There was some major issue with the changes but dont worry we will fix it using the import data.. I had to reset the commit using the git management in the server
+
+As you can see the git folder was gone.. The error that have caused it because we didnt include the App.tsx in the scan files so the AI edited the file and made changes.
+
+Lets see the generated code again and review
+
+Take a look at the right, since I did not include the App.tsx which is requried for pages route..AI modified the code on its own wihout knowing the code content of App.tsx. We have 2 option we can either re run the refactor again and include app.tsx in the scan or do not check the app.tsx modification. For this demo I will uncheck the app.tsx as well as the simplegitpage
+
+LEts apply the changes and we will modify the App.tsx later
+
+since it looking for original payload we cannot import this data. No worries we can still import later. We just need to generate a simple request. 
+
+I am using an old laptopfor this develpment thats why its running slow.
+We are not going to update the README but instead we are going to import the refacxtored git generated code
+
+We can now delete the simpleGitPage it seems to be deleted now and it got deleted by the AI. Lets check out the page.
+
+Everything seems to be working after refactoring. 
+
+We dont need to go to that triuble of editing the files manually if we just rerun the code generator but I just want to show you how we can modify files and fix using the built in code editor for manual modifications of files or code content

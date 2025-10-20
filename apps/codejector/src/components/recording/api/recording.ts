@@ -1,4 +1,4 @@
-import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api';
+import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '../../../api';
 
 import {
   RecordingStartResponse,
@@ -12,7 +12,7 @@ import {
   RecordingStatusDto,
   StartCameraRecordingDto,
   CameraRecordingResponseDto,
-} from '@/types';
+} from '../types/recording';
 
 export const recordingApi = {
   startRecording: async () => {

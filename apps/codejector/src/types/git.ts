@@ -44,3 +44,8 @@ export interface GitStatusRenamed {
 export interface GitDiffResponseDto {
   diff: string;
 }
+
+export interface GitResetHardDto {
+  commitHash: string;
+  projectRoot?: string;
+}

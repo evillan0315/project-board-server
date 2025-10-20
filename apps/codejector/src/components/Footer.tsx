@@ -7,8 +7,9 @@ import {
   isCameraRecordingStore,
   currentCameraRecordingIdStore,
   setIsCameraRecording,
-} from '@/stores/recordingStore';
-import { recordingApi } from '@/api/recording';
+  recorderSettingsStore, // Import recorderSettingsStore
+} from '@/components/recording/stores/recordingStore';
+import { recordingApi } from '@/components/recording/api/recording';
 import { setSnackbarState } from '@/stores/snackbarStore';
 import { useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -18,8 +19,8 @@ import CustomDrawer from '@/components/Drawer/CustomDrawer';
 import OutputLogger from '@/components/OutputLogger';
 import MediaPlayerContainer from '@/components/media/MediaPlayerContainer';
 import { RecordingControls } from '@/components/recording/RecordingControls';
-import { RecordingStatus } from '@/components/recording/RecordingStatus'; // Import RecordingStatus
-import { StartCameraRecordingDto } from '@/types';
+import { RecordingStatus } from '@/components/recording/RecordingStatus';
+import { StartCameraRecordingDto } from '@//components/recording/types/recording'; // Corrected import path/type
 
 const Footer = () => {
   const theme = useTheme();
@@ -28,6 +29,7 @@ const Footer = () => {
 
   const isCameraRecording = useStore(isCameraRecordingStore);
   const currentCameraRecordingId = useStore(currentCameraRecordingIdStore);
+  const currentRecorderSettings = useStore(recorderSettingsStore); // Get recorder settings
 
   const [isCapturing, setIsCapturing] = useState(false);
   const [logDrawerOpen, setLogDrawerOpen] = useState(false);
@@ -70,11 +72,11 @@ const Footer = () => {
   const handleStartCameraRecording = async () => {
     try {
       const dto: StartCameraRecordingDto = {
-        cameraDevice: ['/dev/video0'],
-        audioDevice: ['alsa_input.pci-0000_00_1b.0.analog-stereo'],
-        resolution: '1280x720',
-        framerate: 30,
-        name: `camera-record-${Date.now()}`,
+        cameraDevice: currentRecorderSettings.cameraVideoDevice,
+        audioDevice: currentRecorderSettings.cameraAudioDevice,
+        resolution: currentRecorderSettings.cameraResolution,
+        framerate: currentRecorderSettings.cameraFramerate,
+        name: `${currentRecorderSettings.namePrefix}-camera-record-${Date.now()}`,
       };
       const recordingData = await recordingApi.startCameraRecording(dto);
       if (recordingData?.id) {
@@ -123,6 +125,12 @@ const Footer = () => {
     setLogDrawerOpen(false);
   };
 
+  // No change needed for onOpenSettings in Footer, as the Recording component handles the settings dialog state.
+  const handleOpenSettings = () => {
+    // This handler can remain empty or trigger a notification if settings are only editable via RecordingPage
+    notify('Recording settings are managed on the Recordings page.', 'info');
+  };
+
   return (
     <>
       <Box
@@ -134,10 +142,6 @@ const Footer = () => {
           zIndex: theme.zIndex.appBar + 1,
         }}
       >
-        {/* Left Section: Recording Controls and Status */}
-        
-
-        
         <Box className="flex justify-start items-center">
           <Box className='flex-grow relative'>
           <MediaPlayerContainer />
@@ -145,10 +149,7 @@ const Footer = () => {
         </Box>
         <Box className="flex justify-start items-center gap-4 w-1/4 pl-4">
           
-          {/* Wrap RecordingStatus in a Box with flex-1 min-w-0 for proper truncation */}
-          
         </Box>
-        {/* Right Section: Output Logger Button */}
         <Box className="flex justify-center items-center w-1/2 max-w-[600px]">
           <IconButton
             color="inherit"
@@ -167,6 +168,7 @@ const Footer = () => {
             onStartCameraRecording={handleStartCameraRecording}
             onStopCameraRecording={handleStopCameraRecording}
             onCapture={handleCaptureScreenshot}
+            onOpenSettings={handleOpenSettings} // Use local handleOpenSettings
           />
      
             <RecordingStatus />
