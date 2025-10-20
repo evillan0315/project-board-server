@@ -1,31 +1,59 @@
 import { Injectable, Logger, InternalServerErrorException, BadRequestException, ForbiddenException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { chromium, firefox, webkit, Browser, Page } from 'playwright';
-import { ScrapeUrlDto, ScreenshotUrlDto, PlaywrightOutputDto } from './dto';
+import { chromium, firefox, webkit, Browser, Page, BrowserContext, Video } from 'playwright'; // Import BrowserContext and Video
+import { ScrapeUrlDto, ScreenshotUrlDto, PlaywrightOutputDto, RecordScreenDto } from './dto'; // Import RecordScreenDto
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
 import { GoogleGeminiImageService } from '../google/google-gemini/google-gemini-image.service';
 import { ModuleControlService } from '../module-control/module-control.service';
 import { GenerateTextDto } from '../google/google-gemini/google-gemini-file/dto/generate-text.dto';
 import { ImageCaptionDto } from '../google/google-gemini/dto/image-caption.dto';
 import { RequestType } from '@prisma/client';
+import { promises as fs } from 'fs'; // Import fs.promises for file operations
+import * as path from 'path'; // Import path module
+import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique filenames
+
+interface ActiveRecordingSession {
+  browser: Browser;
+  context: BrowserContext;
+  page: Page;
+  video: Video; // Playwright's Video object
+  outputPathPromise: Promise<string>; // Promise that resolves to the final video path
+  initialOutputFilePath?: string; // The initial path provided by Playwright
+  finalOutputFilePath?: string; // The path after renaming/cleanup
+  timeoutId?: NodeJS.Timeout; // For auto-stopping
+}
 
 @Injectable()
 export class LlmPlaywrightService implements OnModuleInit {
   private readonly logger = new Logger(LlmPlaywrightService.name);
-  private browser: Browser | null = null;
+  private activeRecordingSession: ActiveRecordingSession | null = null;
+  private readonly RECORDINGS_DIR: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly googleGeminiFileService: GoogleGeminiFileService,
     private readonly googleGeminiImageService: GoogleGeminiImageService,
     private readonly moduleControlService: ModuleControlService,
-  ) {}
+  ) {
+    this.RECORDINGS_DIR = path.join(process.cwd(), 'downloads', 'recordings');
+  }
 
   onModuleInit() {
     if (!this.moduleControlService.isModuleEnabled('LlmPlaywrightModule')) {
       this.logger.warn(
         'LlmPlaywrightModule is currently disabled via ModuleControlService. Playwright operations will be restricted.',
       );
+    }
+    this.ensureRecordingsDirectoryExists();
+  }
+
+  private async ensureRecordingsDirectoryExists() {
+    try {
+      await fs.mkdir(this.RECORDINGS_DIR, { recursive: true });
+      this.logger.log(`Ensured recording directory exists: ${this.RECORDINGS_DIR}`);
+    } catch (error) {
+      this.logger.error(`Failed to create recording directory: ${this.RECORDINGS_DIR}, Error: ${error.message}`);
+      throw new InternalServerErrorException(`Failed to prepare recording directory: ${error.message}`);
     }
   }
 
@@ -37,23 +65,38 @@ export class LlmPlaywrightService implements OnModuleInit {
     }
   }
 
-  private async getBrowserInstance(): Promise<Browser> {
+  private async getBrowserInstance(options?: {
+    recordVideoDir?: string;
+    viewport?: { width: number; height: number };
+  }): Promise<Browser> {
     const browserType = this.configService.get<string>('PLAYWRIGHT_BROWSER_TYPE', 'chromium');
     const headless = this.configService.get<string>('PLAYWRIGHT_HEADLESS', 'true') === 'true';
 
     let browser: Browser;
+    const launchOptions = { headless };
+
+    let browserContextOptions: any = {};
+    if (options?.recordVideoDir) {
+      browserContextOptions.recordVideo = { dir: options.recordVideoDir };
+    }
+    if (options?.viewport) {
+      browserContextOptions.viewport = options.viewport;
+    }
+
     switch (browserType) {
       case 'firefox':
-        browser = await firefox.launch({ headless });
+        browser = await firefox.launch(launchOptions);
         break;
       case 'webkit':
-        browser = await webkit.launch({ headless });
+        browser = await webkit.launch(launchOptions);
         break;
       case 'chromium':
       default:
-        browser = await chromium.launch({ headless });
+        browser = await chromium.launch(launchOptions);
         break;
     }
+
+    // Directly return the browser for usage with newContext later
     return browser;
   }
 
@@ -178,6 +221,134 @@ export class LlmPlaywrightService implements OnModuleInit {
     } finally {
       if (page) await page.close();
       if (browser) await browser.close();
+    }
+  }
+
+  async startScreenRecording(recordScreenDto: RecordScreenDto): Promise<PlaywrightOutputDto> {
+    this.ensureLlmPlaywrightModuleEnabled();
+
+    if (this.activeRecordingSession) {
+      throw new BadRequestException('A screen recording is already active. Please stop it before starting a new one.');
+    }
+
+    const { url, duration, outputFileName } = recordScreenDto;
+    let browser: Browser | null = null;
+    let context: BrowserContext | null = null;
+    let page: Page | null = null;
+    let timeoutId: NodeJS.Timeout | undefined;
+
+    try {
+      await this.ensureRecordingsDirectoryExists();
+
+      browser = await this.getBrowserInstance();
+
+      // Create a new context with video recording enabled
+      context = await browser.newContext({
+        recordVideo: { dir: this.RECORDINGS_DIR },
+        viewport: { width: 1280, height: 720 }, // Default viewport size for recording
+      });
+      page = await context.newPage();
+
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+      const video = page.video();
+      if (!video) {
+        throw new InternalServerErrorException('Playwright video recording did not start.');
+      }
+
+      // Playwright's path() method for video returns a promise that resolves *after* the page/context is closed
+      const outputPathPromise = video.path();
+
+      this.activeRecordingSession = {
+        browser,
+        context,
+        page,
+        video,
+        outputPathPromise,
+      };
+
+      if (duration && duration > 0) {
+        this.logger.log(`Recording started for ${duration} seconds.`);
+        timeoutId = setTimeout(async () => {
+          this.logger.log('Auto-stopping recording due to duration limit.');
+          try {
+            await this.stopScreenRecording();
+          } catch (autoStopError) {
+            this.logger.error(`Error during auto-stop recording: ${autoStopError.message}`);
+          }
+        }, duration * 1000);
+        this.activeRecordingSession.timeoutId = timeoutId;
+      }
+
+      this.logger.log(`Screen recording started for URL: ${url}`);
+      return {
+        success: true,
+        scrapedText: `Screen recording started for URL: ${url}.`,
+        // The actual file path is not available until after recording stops.
+      };
+    } catch (error) {
+      this.logger.error(`Failed to start screen recording for URL ${url}: ${error.message}`, error.stack);
+      if (timeoutId) clearTimeout(timeoutId);
+      if (page) await page.close();
+      if (context) await context.close();
+      if (browser) await browser.close();
+      this.activeRecordingSession = null;
+      throw new InternalServerErrorException(`Failed to start screen recording: ${error.message}`);
+    }
+  }
+
+  async stopScreenRecording(): Promise<PlaywrightOutputDto> {
+    this.ensureLlmPlaywrightModuleEnabled();
+
+    if (!this.activeRecordingSession) {
+      throw new BadRequestException('No active screen recording session to stop.');
+    }
+
+    const { browser, context, page, outputPathPromise, timeoutId } = this.activeRecordingSession;
+
+    try {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      await page.close(); // Closing the page triggers video save
+      await context.close(); // Closing the context ensures all resources are released
+      await browser.close(); // Close the browser
+
+      const initialVideoPath = await outputPathPromise; // Get the Playwright generated path
+      let finalVideoPath = initialVideoPath; // Default to Playwright's path
+
+      const requestedFileName = this.activeRecordingSession.finalOutputFilePath; // Check if user specified a name earlier
+
+      if (requestedFileName) {
+        const originalFileName = path.basename(initialVideoPath);
+        const originalExt = path.extname(originalFileName);
+        const desiredFileNameWithoutExt = path.basename(requestedFileName, originalExt);
+        const newDesiredFilePath = path.join(this.RECORDINGS_DIR, `${desiredFileNameWithoutExt}_${uuidv4().substring(0, 8)}${originalExt}`);
+        
+        // Rename the file
+        await fs.rename(initialVideoPath, newDesiredFilePath);
+        finalVideoPath = newDesiredFilePath; // Update to the new path
+        this.logger.log(`Renamed recording from ${path.basename(initialVideoPath)} to ${path.basename(finalVideoPath)}`);
+      } else {
+        // If no custom name, just ensure a unique timestamped name
+        const uniqueFileName = `recorded-${Date.now()}${path.extname(initialVideoPath)}`;
+        const newUniqueFilePath = path.join(this.RECORDINGS_DIR, uniqueFileName);
+        await fs.rename(initialVideoPath, newUniqueFilePath);
+        finalVideoPath = newUniqueFilePath;
+      }
+
+      this.logger.log(`Screen recording stopped. Video saved to: ${finalVideoPath}`);
+
+      this.activeRecordingSession = null;
+      return {
+        success: true,
+        recordedVideoPath: path.relative(process.cwd(), finalVideoPath), // Return relative path
+        scrapedText: `Screen recording saved to: ${path.relative(process.cwd(), finalVideoPath)}`,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to stop screen recording: ${error.message}`, error.stack);
+      this.activeRecordingSession = null;
+      throw new InternalServerErrorException(`Failed to stop screen recording: ${error.message}`);
     }
   }
 }
