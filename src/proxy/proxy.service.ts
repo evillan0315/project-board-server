@@ -8,7 +8,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { URL } from 'url';
 
 @Injectable()
@@ -97,7 +97,7 @@ export class ProxyService {
       this.logger.debug(`Forwarding headers: ${JSON.stringify(Object.keys(headersToForward))}`);
 
       // Perform the actual HTTP GET request to the target URL
-      const response = await firstValueFrom(
+      const response: AxiosResponse<any> = await firstValueFrom(
         this.httpService.get(target, {
           headers: headersToForward,
           responseType: 'stream', // Ensure stream processing
@@ -125,14 +125,15 @@ export class ProxyService {
       res.setHeader('Access-Control-Allow-Credentials', 'true');
 
       // Determine Content-Security-Policy: frame-ancestors directive
-      let frameAncestors: string = `'*'`; // Default to allow all for embedding if no explicit FRONTEND_URL
+      let frameAncestors: string; // Declare local variable
       if (this.frontendUrl) {
         // If FRONTEND_URL is set, restrict embedding to 'self' (the proxy's domain) and the frontend URL.
         // Note: 'self' refers to the origin from which the current document is being served.
         // If the proxy is served from the same domain as the frontend, 'self' would be sufficient.
         // Otherwise, explicitly listing the frontend URL is necessary.
-        frameAncestors = `'self' ${this.frontendUrl}`; // Adjust if multiple frontend origins are possible
+        frameAncestors = `'self' ${this.frontendUrl}`;
       } else {
+        frameAncestors = `'*'`; // Default to allow all for embedding if no explicit FRONTEND_URL
         this.logger.warn(`FRONTEND_URL not set. Using permissive CSP 'frame-ancestors *'. Consider setting FRONTEND_URL for tighter security.`);
       }
       res.setHeader('Content-Security-Policy', `frame-ancestors ${frameAncestors}`);
