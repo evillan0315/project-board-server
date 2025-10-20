@@ -6,7 +6,7 @@ import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-f
 import { GoogleGeminiImageService } from '../google/google-gemini/google-gemini-image.service';
 import { ModuleControlService } from '../module-control/module-control.service';
 import { GenerateTextDto } from '../google/google-gemini/google-gemini-file/dto/generate-text.dto';
-import { ImageCaptionDto } from '../google/google-gemini/dto/image-caption.dto';
+// Removed ImageCaptionDto import as it's not directly used for base64 images anymore
 import { RequestType } from '@prisma/client';
 import { promises as fs } from 'fs'; // Import fs.promises for file operations
 import * as path from 'path'; // Import path module
@@ -61,7 +61,7 @@ export class LlmPlaywrightService implements OnModuleInit {
       throw new ForbiddenException(
         'LLM Playwright module is currently disabled. Cannot perform Playwright operations.',
       );
-    }
+    } 
   }
 
   private async getBrowserInstance(): Promise<Browser> {
@@ -94,7 +94,7 @@ export class LlmPlaywrightService implements OnModuleInit {
     let page: Page | null = null;
     let scrapedText: string | null = null;
     let scrapedHtml: string | null = null;
-    let screenshotBase64: string | null = null; // Corrected variable name
+    let screenshotBase64: string | null = null;
     let geminiAnalysis: any = null;
 
     try {
@@ -117,29 +117,24 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       if (takeScreenshot) {
         const screenshotBuffer = await page.screenshot({ fullPage: true });
-        screenshotBase64 = screenshotBuffer.toString('base64'); // Corrected variable name
+        screenshotBase64 = screenshotBuffer.toString('base64');
       }
 
-      if (geminiPrompt && (scrapedText || screenshotBase64)) { // Corrected variable name
+      if (geminiPrompt && (scrapedText || screenshotBase64)) {
         if (scrapedText) {
           const payload: GenerateTextDto = {
             prompt: geminiPrompt,
-            systemInstruction: `Analyze the following web page content:\n\n${scrapedText}`,
-            // Assuming a simple text output is desired from Gemini for scraping results
-            expectedOutputFormat: `Please provide a concise summary or answer based on the prompt: ${geminiPrompt}.`,
-            projectRoot: '.', // Dummy value as it's not file-related
-            scanPaths: [], // Dummy value
+            systemInstruction: `Analyze the following web page content:\n\n${scrapedText}\n\nPlease provide a concise summary or answer based on the prompt: ${geminiPrompt}.`,
           };
           geminiAnalysis = await this.googleGeminiFileService.generateText(payload, RequestType.WEB_SCRAPE_ANALYSIS);
         }
-        if (screenshotBase64) { // Corrected variable name
-          const imagePayload: ImageCaptionDto = {
-            image: screenshotBase64,
-            prompt: geminiPrompt,
-          };
-          // Overwrite text analysis if image analysis is more relevant or combine them
-          // For simplicity, let's assume image analysis takes precedence or enhances the result
-          const imageAnalysisResult = await this.googleGeminiImageService.imageCaptioning(imagePayload, RequestType.SCREENSHOT_ANALYSIS);
+        if (screenshotBase64) {
+          const imageAnalysisResult = await this.googleGeminiImageService.captionImageFromBase64(
+            screenshotBase64,
+            geminiPrompt,
+            'image/png', // Assuming PNG for screenshots by default
+            RequestType.SCREENSHOT_ANALYSIS,
+          );
           // Integrate imageAnalysisResult into geminiAnalysis. This might require a merge strategy.
           if (geminiAnalysis) {
             geminiAnalysis.imageAnalysis = imageAnalysisResult;
@@ -189,11 +184,12 @@ export class LlmPlaywrightService implements OnModuleInit {
       screenshotBase64 = screenshotBuffer.toString('base64');
 
       if (geminiPrompt && screenshotBase64) {
-        const payload: ImageCaptionDto = {
-          image: screenshotBase64,
-          prompt: geminiPrompt,
-        };
-        geminiAnalysis = await this.googleGeminiImageService.imageCaptioning(payload, RequestType.SCREENSHOT_ANALYSIS);
+        geminiAnalysis = await this.googleGeminiImageService.captionImageFromBase64(
+          screenshotBase64,
+          geminiPrompt,
+          'image/png', // Assuming PNG for screenshots by default
+          RequestType.SCREENSHOT_ANALYSIS,
+        );
       }
 
       return {
@@ -204,7 +200,7 @@ export class LlmPlaywrightService implements OnModuleInit {
     } catch (error) {
       this.logger.error(`Failed to take screenshot of URL ${url}: ${(error as Error).message}`, (error as Error).stack);
       throw new InternalServerErrorException(`Failed to take screenshot: ${(error as Error).message}`);
-    } finally {
+    finally {
       if (page) await page.close();
       if (browser) await browser.close();
     }
