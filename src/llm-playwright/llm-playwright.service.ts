@@ -1,9 +1,9 @@
 import { Injectable, Logger, InternalServerErrorException, BadRequestException, ForbiddenException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { chromium, firefox, webkit, Browser, Page, BrowserContext, Video } from 'playwright';
-import { ScrapeUrlDto, ScreenshotUrlDto, PlaywrightOutputDto, RecordScreenDto } from './dto';
+import { ScrapeUrlDto, ScreenshotUrlDto, PlaywrightOutputDto, RecordScreenDto, PerformMultipleTasksDto } from './dto';
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
-import { GoogleGeminiImageService } from '../google/google-gemini/google-gemini-image/google-gemini-image.service';
+import { GoogleGeminiImageService } from '../google/google-gemini/google-gemini-image.service';
 import { ModuleControlService } from '../module-control/module-control.service';
 import { GenerateTextDto } from '../google/google-gemini/google-gemini-file/dto/generate-text.dto';
 import { RequestType } from '@prisma/client';
@@ -93,7 +93,7 @@ export class LlmPlaywrightService implements OnModuleInit {
     let page: Page | null = null;
     let scrapedText: string | null = null;
     let scrapedHtml: string | null = null;
-    let screenshotBase64: string | null = null;
+    let screenshotBase664: string | null = null;
     let geminiAnalysis: any = null;
 
     try {
@@ -116,10 +116,10 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       if (takeScreenshot) {
         const screenshotBuffer = await page.screenshot({ fullPage: true });
-        screenshotBase64 = screenshotBuffer.toString('base64');
+        screenshotBase664 = screenshotBuffer.toString('base64');
       }
 
-      if (geminiPrompt && (scrapedText || screenshotBase64)) {
+      if (geminiPrompt && (scrapedText || screenshotBase664)) {
         if (scrapedText) {
           const payload: GenerateTextDto = {
             prompt: geminiPrompt,
@@ -127,9 +127,9 @@ export class LlmPlaywrightService implements OnModuleInit {
           };
           geminiAnalysis = await this.googleGeminiFileService.generateText(payload, RequestType.WEB_SCRAPE_ANALYSIS);
         }
-        if (screenshotBase64) {
+        if (screenshotBase664) {
           const imageAnalysisResult = await this.googleGeminiImageService.captionImageFromBase64(
-            screenshotBase64,
+            screenshotBase664,
             geminiPrompt,
             'image/png', // Assuming PNG for screenshots by default
             RequestType.SCREENSHOT_ANALYSIS,
@@ -147,7 +147,7 @@ export class LlmPlaywrightService implements OnModuleInit {
         success: true,
         scrapedText: scrapedText || undefined,
         scrapedHtml: scrapedHtml || undefined,
-        screenshotBase64: screenshotBase64 || undefined,
+        screenshotBase64: screenshotBase664 || undefined,
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
@@ -165,7 +165,7 @@ export class LlmPlaywrightService implements OnModuleInit {
     const { url, fullPage = true, selector, geminiPrompt } = screenshotUrlDto;
     let browser: Browser | null = null;
     let page: Page | null = null;
-    let screenshotBase64: string | null = null;
+    let screenshotBase664: string | null = null;
     let geminiAnalysis: any = null;
 
     try {
@@ -180,11 +180,11 @@ export class LlmPlaywrightService implements OnModuleInit {
       } else {
         screenshotBuffer = await page.screenshot({ fullPage });
       }
-      screenshotBase66 = screenshotBuffer.toString('base64');
+      screenshotBase664 = screenshotBuffer.toString('base64');
 
-      if (geminiPrompt && screenshotBase66) {
+      if (geminiPrompt && screenshotBase664) {
         geminiAnalysis = await this.googleGeminiImageService.captionImageFromBase64(
-          screenshotBase66,
+          screenshotBase664,
           geminiPrompt,
           'image/png',
           RequestType.SCREENSHOT_ANALYSIS,
@@ -193,7 +193,7 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       return {
         success: true,
-        screenshotBase66: screenshotBase66,
+        screenshotBase64: screenshotBase664,
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
@@ -256,7 +256,7 @@ export class LlmPlaywrightService implements OnModuleInit {
             await this.stopScreenRecording();
           } catch (autoStopError) {
             this.logger.error(`Error during auto-stop recording: ${(autoStopError as Error).message}`);
-          }
+          } 
         }, duration * 1000);
         if (this.activeRecordingSession) {
           this.activeRecordingSession.timeoutId = timeoutId;
@@ -324,6 +324,125 @@ export class LlmPlaywrightService implements OnModuleInit {
       this.logger.error(`Failed to stop screen recording: ${(error as Error).message}`, (error as Error).stack);
       this.activeRecordingSession = null;
       throw new InternalServerErrorException(`Failed to stop screen recording: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Performs multiple orchestrated Playwright tasks (scrape, screenshot) on a URL 
+   * and optionally analyzes the combined results with Gemini AI based on a high-level instruction.
+   */
+  async performMultipleTasks(dto: PerformMultipleTasksDto): Promise<PlaywrightOutputDto> {
+    this.ensureLlmPlaywrightModuleEnabled();
+
+    const { 
+      url, 
+      llmInstruction,
+      shouldScrape = true, 
+      scrapeSelector, 
+      returnHtmlForScrape = false, 
+      shouldTakeScreenshot = true,
+      screenshotFullPage = true, 
+      screenshotSelector 
+    } = dto;
+
+    let browser: Browser | null = null;
+    let page: Page | null = null;
+    let scrapedText: string | null = null;
+    let scrapedHtml: string | null = null;
+    let screenshotBase64: string | null = null;
+    let geminiAnalysis: any = null;
+
+    try {
+      browser = await this.getBrowserInstance();
+      page = await browser.newPage();
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+      // 1. Perform Scraping
+      if (shouldScrape) {
+        try {
+          if (scrapeSelector) {
+            const element = await page.waitForSelector(scrapeSelector);
+            scrapedText = await element.textContent();
+            if (returnHtmlForScrape) {
+              scrapedHtml = await element.innerHTML();
+            }
+          } else {
+            scrapedText = await page.textContent('body');
+            if (returnHtmlForScrape) {
+              scrapedHtml = await page.content();
+            }
+          }
+          this.logger.log(`Scraped content from ${url}`);
+        } catch (scrapeError) {
+          this.logger.warn(`Failed to scrape content from ${url}: ${(scrapeError as Error).message}`);
+          scrapedText = `Failed to scrape content: ${(scrapeError as Error).message}`;
+        }
+      }
+
+      // 2. Take Screenshot
+      if (shouldTakeScreenshot) {
+        try {
+          let screenshotBuffer: Buffer;
+          if (screenshotSelector) {
+            const element = await page.waitForSelector(screenshotSelector);
+            screenshotBuffer = await element.screenshot();
+          } else {
+            screenshotBuffer = await page.screenshot({ fullPage: screenshotFullPage });
+          }
+          screenshotBase64 = screenshotBuffer.toString('base64');
+          this.logger.log(`Took screenshot of ${url}`);
+        } catch (screenshotError) {
+          this.logger.warn(`Failed to take screenshot of ${url}: ${(screenshotError as Error).message}`);
+        }
+      }
+
+      // 3. Perform Gemini Analysis if instruction is provided
+      if (llmInstruction) {
+        let combinedContext = '';
+        if (scrapedText) {
+          combinedContext += `Web Page Content:\n${scrapedText}\n\n`;
+        }
+        if (scrapedHtml) {
+          combinedContext += `Web Page HTML:\n${scrapedHtml}\n\n`;
+        }
+
+        if (combinedContext) {
+          const textPayload: GenerateTextDto = {
+            prompt: llmInstruction,
+            systemInstruction: `Analyze the following web context derived from Playwright operations.\n${combinedContext}Please provide a concise summary or answer based on the prompt: ${llmInstruction}.`,
+          };
+          geminiAnalysis = await this.googleGeminiFileService.generateText(textPayload, RequestType.PLAYWRIGHT_TASK_ANALYSIS);
+        }
+
+        if (screenshotBase64) {
+          const imageAnalysisResult = await this.googleGeminiImageService.captionImageFromBase64(
+            screenshotBase64,
+            llmInstruction,
+            'image/png',
+            RequestType.PLAYWRIGHT_TASK_ANALYSIS,
+          );
+          // Merge image analysis into existing Gemini analysis or create new if none existed
+          if (geminiAnalysis) {
+            geminiAnalysis.imageAnalysis = imageAnalysisResult;
+          } else {
+            geminiAnalysis = { imageAnalysis: imageAnalysisResult };
+          }
+        }
+      }
+
+      return {
+        success: true,
+        scrapedText: scrapedText || undefined,
+        scrapedHtml: scrapedHtml || undefined,
+        screenshotBase64: screenshotBase64 || undefined,
+        geminiAnalysis: geminiAnalysis || undefined,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to perform multiple tasks on URL ${url}: ${(error as Error).message}`, (error as Error).stack);
+      throw new InternalServerErrorException(`Failed to perform multiple tasks: ${(error as Error).message}`);
+    } finally {
+      if (page) await page.close();
+      if (browser) await browser.close();
     }
   }
 }
