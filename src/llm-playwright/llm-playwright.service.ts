@@ -94,7 +94,7 @@ export class LlmPlaywrightService implements OnModuleInit {
     let page: Page | null = null;
     let scrapedText: string | null = null;
     let scrapedHtml: string | null = null;
-    let screenshotBase64: string | null = null;
+    let screenshotBase64: string | null = null; // Corrected variable name
     let geminiAnalysis: any = null;
 
     try {
@@ -117,10 +117,10 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       if (takeScreenshot) {
         const screenshotBuffer = await page.screenshot({ fullPage: true });
-        screenshotBase66 = screenshotBuffer.toString('base64');
+        screenshotBase64 = screenshotBuffer.toString('base64'); // Corrected variable name
       }
 
-      if (geminiPrompt && (scrapedText || screenshotBase66)) {
+      if (geminiPrompt && (scrapedText || screenshotBase64)) { // Corrected variable name
         if (scrapedText) {
           const payload: GenerateTextDto = {
             prompt: geminiPrompt,
@@ -132,9 +132,9 @@ export class LlmPlaywrightService implements OnModuleInit {
           };
           geminiAnalysis = await this.googleGeminiFileService.generateText(payload, RequestType.WEB_SCRAPE_ANALYSIS);
         }
-        if (screenshotBase66) {
+        if (screenshotBase64) { // Corrected variable name
           const imagePayload: ImageCaptionDto = {
-            image: screenshotBase66,
+            image: screenshotBase64,
             prompt: geminiPrompt,
           };
           // Overwrite text analysis if image analysis is more relevant or combine them
@@ -153,7 +153,7 @@ export class LlmPlaywrightService implements OnModuleInit {
         success: true,
         scrapedText: scrapedText || undefined,
         scrapedHtml: scrapedHtml || undefined,
-        screenshotBase64: screenshotBase66 || undefined,
+        screenshotBase64: screenshotBase64 || undefined,
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
@@ -171,7 +171,7 @@ export class LlmPlaywrightService implements OnModuleInit {
     const { url, fullPage = true, selector, geminiPrompt } = screenshotUrlDto;
     let browser: Browser | null = null;
     let page: Page | null = null;
-    let screenshotBase66: string | null = null;
+    let screenshotBase64: string | null = null;
     let geminiAnalysis: any = null;
 
     try {
@@ -186,11 +186,11 @@ export class LlmPlaywrightService implements OnModuleInit {
       } else {
         screenshotBuffer = await page.screenshot({ fullPage });
       }
-      screenshotBase66 = screenshotBuffer.toString('base64');
+      screenshotBase64 = screenshotBuffer.toString('base64');
 
-      if (geminiPrompt && screenshotBase66) {
+      if (geminiPrompt && screenshotBase64) {
         const payload: ImageCaptionDto = {
-          image: screenshotBase66,
+          image: screenshotBase64,
           prompt: geminiPrompt,
         };
         geminiAnalysis = await this.googleGeminiImageService.imageCaptioning(payload, RequestType.SCREENSHOT_ANALYSIS);
@@ -198,7 +198,7 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       return {
         success: true,
-        screenshotBase64: screenshotBase66,
+        screenshotBase64: screenshotBase64,
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
