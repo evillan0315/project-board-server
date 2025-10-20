@@ -1,25 +1,24 @@
 import { Injectable, Logger, InternalServerErrorException, BadRequestException, ForbiddenException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { chromium, firefox, webkit, Browser, Page, BrowserContext, Video } from 'playwright'; // Import BrowserContext and Video
-import { ScrapeUrlDto, ScreenshotUrlDto, PlaywrightOutputDto, RecordScreenDto } from './dto'; // Import RecordScreenDto
+import { chromium, firefox, webkit, Browser, Page, BrowserContext, Video } from 'playwright';
+import { ScrapeUrlDto, ScreenshotUrlDto, PlaywrightOutputDto, RecordScreenDto } from './dto';
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
-import { GoogleGeminiImageService } from '../google/google-gemini/google-gemini-image.service';
+import { GoogleGeminiImageService } from '../google/google-gemini/google-gemini-image/google-gemini-image.service';
 import { ModuleControlService } from '../module-control/module-control.service';
 import { GenerateTextDto } from '../google/google-gemini/google-gemini-file/dto/generate-text.dto';
-// Removed ImageCaptionDto import as it's not directly used for base64 images anymore
 import { RequestType } from '@prisma/client';
-import { promises as fs } from 'fs'; // Import fs.promises for file operations
-import * as path from 'path'; // Import path module
-import { v4 as uuidv4 } from 'uuid'; // Import uuid for unique filenames
+import { promises as fs } from 'fs';
+import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ActiveRecordingSession {
   browser: Browser;
   context: BrowserContext;
   page: Page;
-  video: Video; // Playwright's Video object
-  outputPathPromise: Promise<string>; // Promise that resolves to the final video path
-  outputFileName?: string; // Desired output file name from user
-  timeoutId?: NodeJS.Timeout; // For auto-stopping
+  video: Video;
+  outputPathPromise: Promise<string>;
+  outputFileName?: string;
+  timeoutId?: NodeJS.Timeout;
 }
 
 @Injectable()
@@ -61,7 +60,7 @@ export class LlmPlaywrightService implements OnModuleInit {
       throw new ForbiddenException(
         'LLM Playwright module is currently disabled. Cannot perform Playwright operations.',
       );
-    } 
+    }
   }
 
   private async getBrowserInstance(): Promise<Browser> {
@@ -181,26 +180,26 @@ export class LlmPlaywrightService implements OnModuleInit {
       } else {
         screenshotBuffer = await page.screenshot({ fullPage });
       }
-      screenshotBase64 = screenshotBuffer.toString('base64');
+      screenshotBase66 = screenshotBuffer.toString('base64');
 
-      if (geminiPrompt && screenshotBase64) {
+      if (geminiPrompt && screenshotBase66) {
         geminiAnalysis = await this.googleGeminiImageService.captionImageFromBase64(
-          screenshotBase64,
+          screenshotBase66,
           geminiPrompt,
-          'image/png', // Assuming PNG for screenshots by default
+          'image/png',
           RequestType.SCREENSHOT_ANALYSIS,
         );
       }
 
       return {
         success: true,
-        screenshotBase64: screenshotBase64,
+        screenshotBase66: screenshotBase66,
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
       this.logger.error(`Failed to take screenshot of URL ${url}: ${(error as Error).message}`, (error as Error).stack);
       throw new InternalServerErrorException(`Failed to take screenshot: ${(error as Error).message}`);
-    finally {
+    } finally {
       if (page) await page.close();
       if (browser) await browser.close();
     }
@@ -217,6 +216,7 @@ export class LlmPlaywrightService implements OnModuleInit {
     let browser: Browser | null = null;
     let context: BrowserContext | null = null;
     let page: Page | null = null;
+    let video: Video | null = null;
     let timeoutId: NodeJS.Timeout | undefined;
 
     try {
@@ -224,30 +224,28 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       browser = await this.getBrowserInstance();
 
-      // Create a new context with video recording enabled
       context = await browser.newContext({
         recordVideo: { dir: this.RECORDINGS_DIR },
-        viewport: { width: 1280, height: 720 }, // Default viewport size for recording
+        viewport: { width: 1280, height: 720 },
       });
       page = await context.newPage();
 
       await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-      const video = page.video();
+      video = page.video();
       if (!video) {
         throw new InternalServerErrorException('Playwright video recording did not start.');
       }
 
-      // Playwright's path() method for video returns a promise that resolves *after* the page/context is closed
       const outputPathPromise = video.path();
 
       this.activeRecordingSession = {
-        browser,
-        context,
-        page,
-        video,
+        browser: browser as Browser,
+        context: context as BrowserContext,
+        page: page as Page,
+        video: video as Video,
         outputPathPromise,
-        outputFileName, // Store the desired output file name
+        outputFileName,
       };
 
       if (duration && duration > 0) {
@@ -260,14 +258,15 @@ export class LlmPlaywrightService implements OnModuleInit {
             this.logger.error(`Error during auto-stop recording: ${(autoStopError as Error).message}`);
           }
         }, duration * 1000);
-        this.activeRecordingSession.timeoutId = timeoutId;
+        if (this.activeRecordingSession) {
+          this.activeRecordingSession.timeoutId = timeoutId;
+        }
       }
 
       this.logger.log(`Screen recording started for URL: ${url}`);
       return {
         success: true,
         scrapedText: `Screen recording started for URL: ${url}.`,
-        // The actual file path is not available until after recording stops.
       };
     } catch (error) {
       this.logger.error(`Failed to start screen recording for URL ${url}: ${(error as Error).message}`, (error as Error).stack);
@@ -293,36 +292,32 @@ export class LlmPlaywrightService implements OnModuleInit {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      await page.close(); // Closing the page triggers video save
-      await context.close(); // Closing the context ensures all resources are released
-      await browser.close(); // Close the browser
+      await page.close();
+      await context.close();
+      await browser.close();
 
-      const initialVideoPath = await outputPathPromise; // Get the Playwright generated path, e.g., /tmp/some-random-id.webm
-      const originalExt = path.extname(initialVideoPath); // e.g., .webm
+      const initialVideoPath = await outputPathPromise;
+      const originalExt = path.extname(initialVideoPath);
 
       let finalVideoName: string;
       if (initialRequestedFileName) {
-        // Use the provided outputFileName, ensuring it ends with the correct extension
-        const baseName = path.basename(initialRequestedFileName, path.extname(initialRequestedFileName)); // Remove any existing extension
+        const baseName = path.basename(initialRequestedFileName, path.extname(initialRequestedFileName));
         finalVideoName = `${baseName}${originalExt}`;
       } else {
-        // Fallback to a timestamped name if no custom name was provided
         finalVideoName = `recorded-${Date.now()}${originalExt}`;
       }
 
-      // Ensure uniqueness: add a UUID suffix just before saving to prevent overwrites
       const uniqueSuffix = uuidv4().substring(0, 8);
       const finalUniqueVideoName = `${path.basename(finalVideoName, originalExt)}-${uniqueSuffix}${originalExt}`;
       const finalUniqueVideoPath = path.join(this.RECORDINGS_DIR, finalUniqueVideoName);
 
-      // Rename the file from Playwright's temporary path to our desired final path
       await fs.rename(initialVideoPath, finalUniqueVideoPath);
       this.logger.log(`Screen recording stopped. Video saved to: ${finalUniqueVideoPath}`);
 
       this.activeRecordingSession = null;
       return {
         success: true,
-        recordedVideoPath: path.relative(process.cwd(), finalUniqueVideoPath), // Return relative path
+        recordedVideoPath: path.relative(process.cwd(), finalUniqueVideoPath),
         scrapedText: `Screen recording saved to: ${path.relative(process.cwd(), finalUniqueVideoPath)}`,
       };
     } catch (error) {
