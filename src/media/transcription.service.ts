@@ -56,7 +56,7 @@ export class TranscriptionService {
       // Use the python from your virtual environment
       const pythonPath =
         process.env.PYTHON_PATH ||
-        '/media/eddie/Data/projects/nestJS/nest-modules/project-board-server/faster-whisper-env/bin/python3.12';
+        '/home/eddie/.asdf/installs/python/3.12.12/bin/python3.12'; 
       const scriptPath = path.join(process.cwd(), 'transcribe.py');
 
       this.logger.debug(`Starting transcription with Python: ${pythonPath}`);
