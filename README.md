@@ -85,6 +85,8 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 | `POST`   | `/api/recording/capture`            | Take a screenshot of the screen           |
 | `POST`   | `/api/recording/record-start`       | Start screen recording                    |
 | `POST`   | `/api/recording/record-stop`        | Stop screen recording                     |
+| `POST`   | `/api/llm-playwright/start-recording` | Start screen recording of a URL (via Playwright). Recording runs until `stop-recording` is called. |
+| `POST`   | `/api/llm-playwright/stop-recording`  | Stop active screen recording (via Playwright) |
 | `POST`   | `/api/recording`                    | Create a new recording entry (Admin only) |
 | `GET`    | `/api/recording`                    | Retrieve all recordings (Admin only)      |
 | `GET`    | `/api/recording/paginated`          | Paginated recordings (Admin only)         |
@@ -151,6 +153,11 @@ SSH_PASSPHRASE='your_private_key_passphrase' # Optional, if your key is encrypte
 
 # Base Directory for Local File Operations (optional, defaults to CWD)
 BASE_DIR='/path/to/your/project_root'
+
+# Playwright Configuration
+PLAYWRIGHT_BROWSER_TYPE='chromium' # e.g., chromium, firefox, webkit
+PLAYWRIGHT_HEADLESS='true' # true or false
+PLAYWRIGHT_TIMEOUT_MS='30000' # Default timeout in milliseconds for Playwright page actions (e.g., navigation, selector waits).
 ```
 
 ### 3. Generate Prisma Client and Run Migrations
@@ -162,9 +169,9 @@ npx prisma migrate dev --name init
 
 ### 4. Install External System Dependencies (if needed)
 
-- **FFmpeg:** Required for screen recording, screenshots, **and video thumbnail generation**. [Download & Install FFmpeg](https://ffmpeg.org/download.html)
-- **Pandoc:** Required for converting Markdown/HTML to DOCX. [Download & Install Pandoc](https://pandoc.org/installing.html)
-- **ffprobe-client (npm package):** Required for extracting metadata (e.g., duration) from scanned local media files.
+-   **FFmpeg:** Required for screen recording, screenshots, **and video thumbnail generation**. [Download & Install FFmpeg](https://ffmpeg.org/download.html)
+-   **Pandoc:** Required for converting Markdown/HTML to DOCX. [Download & Install Pandoc](https://pandoc.org/installing.html)
+-   **ffprobe-client (npm package):** Required for extracting metadata (e.g., duration) from scanned local media files.
 
 ### 5. Run the Application
 
@@ -234,7 +241,7 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 ### Generative AI (Google Gemini & Translator)
 
 | Method | Endpoint                               | Description                             |
-| ------ | -------------------------------------- | -------- |
+| ------ | -------------------------------------- | --------------------------------------- |
 | `POST` | `/api/google-gemini/generate-doc`      | Generate documentation from code        |
 | `POST` | `/api/google-gemini/generate-code`     | Generate code snippets                  |
 | `POST` | `/api/google-gemini-image/caption-url` | Caption image from URL                  |
@@ -249,11 +256,14 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 
 ### LLM Operations
 
-| Method | Endpoint                     | Description                                            |
-| ------ | ---------------------------- | ------------------------------------------------------ |
-| `POST` | `/api/llm/generate-llm`      | Generate code/content and proposed file changes        |
-| `POST` | `/api/llm/report-error`      | Report an error to the LLM for analysis and fix suggestions |
-| `GET`  | `/api/llm/project-structure` | Generate project structure (directory tree)            |
+| Method | Endpoint                             | Description                                            |
+| ------ | ------------------------------------ | ------------------------------------------------------ |
+| `POST` | `/api/llm/generate-llm`              | Generate code/content and proposed file changes        |
+| `POST` | `/api/llm/report-error`              | Report an error to the LLM for analysis and fix suggestions |
+| `GET`  | `/api/llm/project-structure`         | Generate project structure (directory tree)            |
+| `POST` | `/api/llm-playwright/perform-tasks`  | Orchestrate Playwright tasks with optional LLM analysis. If recording is enabled, it stops at task completion. |
+| `POST` | `/api/llm-playwright/start-recording` | Start screen recording of a URL (via Playwright). Recording runs until `stop-recording` is called. |
+| `POST` | `/api/llm-playwright/stop-recording`  | Stop active screen recording (via Playwright) |
 
 ### Conversation Management
 
@@ -295,6 +305,8 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `POST`   | `/api/recording/capture`            | Take a screenshot of the screen           |
 | `POST`   | `/api/recording/record-start`       | Start screen recording                    |
 | `POST`   | `/api/recording/record-stop`        | Stop screen recording                     |
+| `POST`   | `/api/llm-playwright/start-recording` | Start screen recording of a URL (via Playwright). Recording runs until `stop-recording` is called. |
+| `POST`   | `/api/llm-playwright/stop-recording`  | Stop active screen recording (via Playwright) |
 | `POST`   | `/api/recording`                    | Create a new recording entry (Admin only) |
 | `GET`    | `/api/recording`                    | Retrieve all recordings (Admin only)      |
 | `GET`    | `/api/recording/paginated`          | Paginated recordings (Admin only)         |
@@ -375,33 +387,33 @@ This project includes a custom Nest CLI scaffolding tool that streamlines the cr
 
 If the Prisma model contains either a `createdBy` or `createdById` field, and the model is **not** `User`, the generated service will:
 
-- Inject the current user from the request (via `REQUEST`).
-- Attach the authenticated user as the creator:
+-   Inject the current user from the request (via `REQUEST`).
+-   Attach the authenticated user as the creator:
 
-  ```ts
-  createData.createdBy = {
-    connect: { id: this.userId },
-  };
-  ```
+    ```ts
+    createData.createdBy = {
+      connect: { id: this.userId },
+    };
+    ```
 
-- Automatically remove `createdById` from the DTO to avoid Prisma conflicts if both are present.
+-   Automatically remove `createdById` from the DTO to avoid Prisma conflicts if both are present.
 
 #### Requirements
 
-- Your Prisma model must define either:
+-   Your Prisma model must define either:
 
-  ```prisma
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-  ```
+    ```prisma
+    createdBy   User   @relation(fields: [createdById], references: [id])
+    createdById String
+    ```
 
-  or simply:
+    or simply:
 
-  ```prisma
-  createdBy   User   @relation(fields: [createdBy], references: [id])
-  ```
+    ```prisma
+    createdBy   User   @relation(fields: [createdBy], references: [id])
+    ```
 
-- The model must not be `User` itself to avoid circular logic during user creation.
+-   The model must not be `User` itself to avoid circular logic during user creation.
 
 #### Protected Models
 

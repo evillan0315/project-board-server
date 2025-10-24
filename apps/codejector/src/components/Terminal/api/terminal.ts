@@ -1,12 +1,12 @@
 /**
- * FilePath: src/api/terminal.ts
+ * FilePath: src/components/Terminal/api/terminal.ts
  * Title: Terminal API Client (JSON Output Support)
  * Reason: Update logging and response handling to support JSON-based stdout/stderr
  *         structure from TerminalCommandResponse.
  */
 
-import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api';
-import { TerminalCommandResponse, ProjectScriptsResponse } from '@/types';
+import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api/fetch';
+import { TerminalCommandResponse, ProjectScriptsResponse } from '../types/terminal';
 import { addLog } from '@/stores/logStore';
 
 /**
@@ -98,4 +98,3 @@ export const fetchProjectScripts = async (
     throw error;
   }
 };
-

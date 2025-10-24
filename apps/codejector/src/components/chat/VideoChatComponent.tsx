@@ -16,11 +16,10 @@ import { VideoChatComponentProps } from './types';
  * displays local and remote video feeds, and provides call controls.
  */
 export default function VideoChatComponent({ roomId, onClose }: VideoChatComponentProps) {
-  const $auth = useStore(authStore);
   const $user = useStore(user);
   const theme = useTheme();
 
-  const currentUserId = $user?.id;
+  const currentUserId = $user?.id; // This is the database user ID
   const authToken = getToken();
 
   // Consume WebRTC state from the Nanostore
@@ -33,7 +32,7 @@ export default function VideoChatComponent({ roomId, onClose }: VideoChatCompone
 
   useEffect(() => {
     if (roomId && currentUserId && authToken) {
-      webRtcStore.connect(roomId, authToken, currentUserId); // Call connect method from the store
+      webRtcStore.connect(roomId, authToken, currentUserId); // Call connect method from the store with DB userId
     } else if (!authToken) {
       webRtcStore.disconnect(); // Disconnect if token disappears
     }
@@ -92,6 +91,7 @@ export default function VideoChatComponent({ roomId, onClose }: VideoChatCompone
           <VideoFeed key="local-feed" stream={localStream} muted={true} isLocal={true} peerId={currentUserId} />
         )}
         {remoteStreams.map((peer) => (
+          // peer.peerId is the socketId of the remote peer
           <VideoFeed key={peer.peerId} stream={peer.stream} peerId={peer.peerId} />
         ))}
 

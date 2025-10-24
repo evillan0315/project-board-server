@@ -8,7 +8,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { defaultScriptIcon, scriptIcons } from '@/constants/scriptIcons';
-import { ScriptStatus } from '@/types';
+import { type ScriptStatus } from '@/components/Terminal/types/terminal';
 import { addLog } from '@/stores/logStore';
 
 interface RunScriptMenuItemProps {

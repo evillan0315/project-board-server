@@ -16,7 +16,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import DriveFileMoveIcon from '@mui/icons-material/DriveFileMove';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
-import { GitStatusResult } from '@/stores/gitStore';
+import { GitStatusResult } from './types/git';
 
 interface GitStatusSectionProps {
   status: GitStatusResult | null;
@@ -150,16 +150,16 @@ export function GitStatusSection({
           ))}
           {status?.deleted.map((file) => (
             <ListItem
-              key={file.path}
-              className={`${selectedUnstagedFiles.includes(file.path) ? 'bg-blue-100 dark:bg-blue-900' : ''} hover:bg-gray-100 dark:hover:bg-zinc-800 cursor-pointer`}
-              onClick={() => handleFileSelection(file.path, 'unstaged')}
-              onContextMenu={(e) => onFileContextMenu(e, file.path)}
+              key={file}
+              className={`${selectedUnstagedFiles.includes(file) ? 'bg-blue-100 dark:bg-blue-900' : ''} hover:bg-gray-100 dark:hover:bg-zinc-800 cursor-pointer`}
+              onClick={() => handleFileSelection(file, 'unstaged')}
+              onContextMenu={(e) => onFileContextMenu(e, file)}
             >
               <ListItemIcon>
                 <DeleteForeverIcon color="error" fontSize="small" />
               </ListItemIcon>
               <ListItemText
-                primary={`${file.path} (Deleted)`}
+                primary={`${file} (Deleted)`}
                 primaryTypographyProps={{ sx: statusItemTextSx }}
               />
             </ListItem>

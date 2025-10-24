@@ -100,4 +100,3 @@ export interface SSHConnectPayload {
   password?: string;
   privateKeyPath?: string;
 }
-

@@ -14,7 +14,7 @@ import {
 import { applyProposedChanges } from '@/api/llm';
 import { addLog } from '@/stores/logStore';
 import { ErrorStoreState, errorStore, setError } from '@/stores/errorStore';
-import { runTerminalCommand } from '@/api/terminal';
+import { runTerminalCommand } from '@/components/Terminal/api/terminal';
 
 export interface LlmStoreState {
   instruction: string;

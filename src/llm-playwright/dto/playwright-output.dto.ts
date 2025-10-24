@@ -1,7 +1,3 @@
-// FilePath: src/playwright/dto/playwright-output.dto.ts
-// Title: Playwright Output DTO
-// Reason: Defines the Playwright result structure and references LLM analysis safely
-
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
@@ -35,6 +31,14 @@ export class PlaywrightOutputDto {
   @IsOptional()
   @IsBase64()
   screenshotBase64?: string;
+
+  @ApiPropertyOptional({
+    description: 'The path to the recorded video file on the server, relative to the project root.',
+    example: 'downloads/recordings/my-session-12345.webm',
+  })
+  @IsOptional()
+  @IsString()
+  recordedVideoPath?: string;
 
   @ApiPropertyOptional({
     description:

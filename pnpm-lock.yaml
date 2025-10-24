@@ -314,6 +314,9 @@ importers:
       pg:
         specifier: ^8.16.0
         version: 8.16.0
+      playwright:
+        specifier: ^1.55.0
+        version: 1.55.0
       potrace:
         specifier: ^2.1.8
         version: 2.1.8
@@ -507,9 +510,6 @@ importers:
       jsdoc-to-markdown:
         specifier: ^9.1.1
         version: 9.1.1
-      playwright:
-        specifier: ^1.55.0
-        version: 1.55.0
       prettier:
         specifier: ^3.6.2
         version: 3.6.2

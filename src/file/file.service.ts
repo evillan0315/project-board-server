@@ -110,6 +110,8 @@ export class FileService implements OnModuleInit {
     'downloads',
     'frontend',
     'ai-editor',
+    'postgres',
+    'postgres/data',
   ]);
 
   private static readonly EXCLUDE_FILE_NAMES_FOR_SCAN = new Set([

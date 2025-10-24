@@ -60,7 +60,7 @@ import {
   isTerminalVisible,
   setShowTerminal,
   connectTerminal,
-} from '@/stores/terminalStore';
+} from '@/components/Terminal/stores/terminalStore';
 
 import FileTreeHeader from './common/FileTreeHeader';
 import FileTreeStatus from './common/FileTreeStatus';

@@ -6,14 +6,13 @@ import { atom } from 'nanostores';
 import adapter from 'webrtc-adapter'; // For browser compatibility
 import { webRtcSignalingSocketService } from '../webRtcSignalingSocketService'; // Import the new signaling service
 import { PeerConnectionState, RemoteVideoFeed, PeerInfo } from '../types';
-import { getToken } from '@/stores/authStore';
 
 // WebRTC Configuration
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     // You might add more STUN/TURN servers here for better reliability
-  ],
+  ]
 };
 
 /**
@@ -31,10 +30,12 @@ class WebRtcStore {
   public isLoading = atom<boolean>(false);
 
   // Private internal state not directly exposed as atoms, but managed by the store
+  // `peerId` here refers to the remote peer's socket ID for signaling.
   private peerConnections = new Map<string, PeerConnectionState>();
   private localStreamRef: MediaStream | null = null; // Direct reference for easier track manipulation
   private currentRoomId: string | null = null;
-  private currentUserId: string | null = null;
+  private currentUserId: string | null = null; // This is the database user ID
+  private currentSocketId: string | null = null; // This is the local client's socket ID
 
   constructor() {
     // Initialize adapter for browser compatibility (can be called once)
@@ -51,62 +52,63 @@ class WebRtcStore {
 
   /**
    * Creates a new RTCPeerConnection and sets up its event handlers.
+   * @param remoteSocketId The socket ID of the remote peer.
    */
-  private createPeerConnection = (peerId: string): RTCPeerConnection => {
+  private createPeerConnection = (remoteSocketId: string): RTCPeerConnection => {
     const pc = new RTCPeerConnection(ICE_SERVERS);
 
     pc.onicecandidate = (event) => {
       if (event.candidate && this.currentRoomId) {
-        console.log(`[WebRTC Store] Sending ICE candidate to ${peerId}`);
+        console.log(`[WebRTC Store] Sending ICE candidate from ${this.currentSocketId} to ${remoteSocketId}`);
         webRtcSignalingSocketService.sendCandidate({
           roomId: this.currentRoomId,
-          targetUserId: peerId,
-          payload: event.candidate,
+          targetSocketId: remoteSocketId, // Use targetSocketId
+          payload: event.candidate
         });
       }
     };
 
     pc.ontrack = (event) => {
-      console.log(`[WebRTC Store] Track received from ${peerId}:`, event.track.kind);
+      console.log(`[WebRTC Store] Track received from ${remoteSocketId}:`, event.track.kind);
       this.remoteStreams.set(
         ((prev) => {
-          const existing = prev.find((stream) => stream.peerId === peerId);
+          const existing = prev.find((stream) => stream.peerId === remoteSocketId);
           if (existing) {
             // Update existing stream if tracks are added/removed (rare for single peer stream)
             return prev.map((s) =>
-              s.peerId === peerId ? { ...s, stream: event.streams[0] } : s,
+              s.peerId === remoteSocketId ? { ...s, stream: event.streams[0] } : s
             );
           } else {
-            return [...prev, { peerId, stream: event.streams[0] }];
+            return [...prev, { peerId: remoteSocketId, stream: event.streams[0] }]; // Use remoteSocketId as peerId
           }
-        })(this.remoteStreams.get()), // Pass current value to updater function
+        })(this.remoteStreams.get()) // Pass current value to updater function
       );
 
       // Store remote audio/video tracks for potential future control
-      this.peerConnections.set(peerId, {
-        ...this.peerConnections.get(peerId)!,
+      this.peerConnections.set(remoteSocketId, {
+        ...this.peerConnections.get(remoteSocketId)!,
         remoteStream: event.streams[0],
         ...(event.track.kind === 'audio' && { remoteAudioTrack: event.track }),
-        ...(event.track.kind === 'video' && { remoteVideoTrack: event.track }),
+        ...(event.track.kind === 'video' && { remoteVideoTrack: event.track })
       });
     };
 
     pc.onconnectionstatechange = () => {
       console.log(
-        `[WebRTC Store] Peer connection state for ${peerId}: ${pc.connectionState}`,
+        `[WebRTC Store] Peer connection state for ${remoteSocketId}: ${pc.connectionState}`
       );
       if (
         pc.connectionState === 'disconnected' ||
         pc.connectionState === 'failed' ||
         pc.connectionState === 'closed'
       ) {
-        this.removePeer(peerId);
+        this.removePeer(remoteSocketId);
       }
     };
 
     pc.oniceconnectionstatechange = () => {
       console.log(
-        `[WebRTC Store] ICE connection state for ${peerId}: ${pc.iceConnectionstate}`,
+        `[WebRTC Store] ICE connection state for ${remoteSocketId}: ${pc.iceConnectionstate}`
       );
     };
 
@@ -117,88 +119,88 @@ class WebRtcStore {
       this.localStreamRef.getTracks().forEach((track) => {
         // Check if a sender for this track already exists on this RTCPeerConnection
         const hasSenderForTrack = existingSenders.some(
-          (sender) => sender.track && sender.track.id === track.id,
+          (sender) => sender.track && sender.track.id === track.id
         );
         if (!hasSenderForTrack) {
-          pc.addTrack(track, this.localStreamRef!);
-          console.log(`[WebRTC Store] Added track ${track.kind} (${track.id}) to peer connection for ${peerId}`);
+          pc.addTrack(track, this.localStreamRef!); // Use localStreamRef
+          console.log(`[WebRTC Store] Added track ${track.kind} (${track.id}) to peer connection for ${remoteSocketId}`);
         } else {
           console.log(`[WebRTC Store] Track ${track.kind} (${track.id}) already managed by a sender on PC, skipping addTrack.`);
         }
       });
     }
 
-    this.peerConnections.set(peerId, {
-      peerId,
+    this.peerConnections.set(remoteSocketId, {
+      peerId: remoteSocketId,
       connection: pc,
       remoteStream: null,
       remoteAudioTrack: null,
-      remoteVideoTrack: null,
+      remoteVideoTrack: null
     });
     return pc;
   };
 
   /**
    * Removes a peer connection and its associated remote stream.
+   * @param remoteSocketId The socket ID of the peer to remove.
    */
-  private removePeer = (peerId: string) => {
-    const pcState = this.peerConnections.get(peerId);
+  private removePeer = (remoteSocketId: string) => {
+    const pcState = this.peerConnections.get(remoteSocketId);
     if (pcState) {
       pcState.connection.close();
-      this.peerConnections.delete(peerId);
+      this.peerConnections.delete(remoteSocketId);
       this.remoteStreams.set(
-        this.remoteStreams.get().filter((stream) => stream.peerId !== peerId),
+        this.remoteStreams.get().filter((stream) => stream.peerId !== remoteSocketId)
       );
-      console.log(`[WebRTC Store] Peer ${peerId} connection closed and removed.`);
+      console.log(`[WebRTC Store] Peer ${remoteSocketId} connection closed and removed.`);
     }
   };
 
   /**
    * Handles the 'user_joined' WebSocket event, initiating an offer if needed.
    */
-  private handleUserJoined = async ({
-    socketId,
-    userId,
-  }: {socketId: string; userId?: string}) => {
-    //if (socketId === this.currentUserId) return; // Don't connect to self
+  private handleUserJoined = async (peerInfo: PeerInfo) => {
+    const { socketId: remoteSocketId, userId: remoteUserId } = peerInfo;
+    // Don't try to connect to self's socket ID
+    if (remoteSocketId === this.currentSocketId) return; 
 
-    console.log(`[WebRTC Store] User ${userId} (${socketId}) joined the room.`);
+    console.log(`[WebRTC Store] User ${remoteUserId} (${remoteSocketId}) joined the room.`);
 
-    let pcState = this.peerConnections.get(socketId);
+    let pcState = this.peerConnections.get(remoteSocketId);
     let pc: RTCPeerConnection;
 
     if (pcState) {
       pc = pcState.connection;
       if (pc.signalingState !== 'stable') {
         console.warn(
-          `[WebRTC Store] Peer connection for ${socketId} is in state '${pc.signalingState}', not creating a new offer.`,
+          `[WebRTC Store] Peer connection for ${remoteSocketId} is in state '${pc.signalingState}', not creating a new offer.`
         );
         return;
       }
     } else {
-      pc = this.createPeerConnection(socketId);
+      pc = this.createPeerConnection(remoteSocketId);
     }
 
     try {
       console.log(
-        `[WebRTC Store] Creating offer for ${socketId}. Signaling state: ${pc.signalingState}`,
+        `[WebRTC Store] Creating offer for ${remoteSocketId}. Signaling state: ${pc.signalingState}`
       );
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       console.log(
-        `[WebRTC Store] Local offer set for ${socketId}. Signaling state: ${pc.signalingState}`,
+        `[WebRTC Store] Local offer set for ${remoteSocketId}. Signaling state: ${pc.signalingState}`
       );
       webRtcSignalingSocketService.sendOffer({
         roomId: this.currentRoomId!,
-        targetUserId: socketId,
-        payload: pc.localDescription,
+        targetSocketId: remoteSocketId, // Use targetSocketId
+        payload: pc.localDescription
       });
-      console.log(`[WebRTC Store] Offer sent to ${socketId}`);
+      console.log(`[WebRTC Store] Offer sent to ${remoteSocketId}`);
     } catch (err) {
-      console.error(`[WebRTC Store] Error creating offer for ${socketId}:`, err);
-      let errorMessage = `Failed to create offer for ${userId || socketId}.`;
+      console.error(`[WebRTC Store] Error creating offer for ${remoteSocketId}:`, err);
+      let errorMessage = `Failed to create offer for ${remoteUserId || remoteSocketId}.`;
       if (err instanceof DOMException) {
-        errorMessage = `Failed to create offer for ${userId || socketId}. Details: ${err.message}`;
+        errorMessage = `Failed to create offer for ${remoteUserId || remoteSocketId}. Details: ${err.message}`;
       }
       this.error.set(errorMessage);
     }
@@ -209,18 +211,19 @@ class WebRtcStore {
    */
   private handleReceiveOffer = async ({
     senderSocketId,
-    offer,
-  }: {senderSocketId: string; offer: RTCSessionDescriptionInit}) => {
-    if (senderSocketId === this.currentUserId) return; // Offer from self
+    offer
+  }: { senderSocketId: string; offer: RTCSessionDescriptionInit }) => {
+    if (senderSocketId === this.currentSocketId) return; // Offer from self, ignore
 
     console.log(
-      `[WebRTC Store] Received offer from ${senderSocketId}. Current signaling state: ${this.peerConnections.get(senderSocketId)?.connection?.signalingState || 'N/A (new)'}`,
+      `[WebRTC Store] Received offer from ${senderSocketId}. Current signaling state: ${this.peerConnections.get(senderSocketId)?.connection?.signalingState || 'N/A (new)'}`
     );
 
+    // Get existing PC or create a new one for the senderSocketId
     const pc = this.peerConnections.get(senderSocketId)?.connection || this.createPeerConnection(senderSocketId);
     if (!pc) {
       this.error.set(
-        `Failed to get/create peer connection for offer from ${senderSocketId}.`,
+        `Failed to get/create peer connection for offer from ${senderSocketId}.`
       );
       return;
     }
@@ -228,7 +231,7 @@ class WebRtcStore {
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
       console.log(
-        `[WebRTC Store] Remote description (offer) set for ${senderSocketId}. Signaling state: ${pc.signalingState}`,
+        `[WebRTC Store] Remote description (offer) set for ${senderSocketId}. Signaling state: ${pc.signalingState}`
       );
 
       if (
@@ -236,34 +239,35 @@ class WebRtcStore {
         pc.signalingState !== 'have-local-pranswer'
       ) {
         const msg =
-          `[WebRTC Store] Signaling state for ${senderSocketId} is ${pc.signalingState} after setting remote offer. Expected 'have-remote-offer'. Aborting answer creation.`;
+          `[WebRTC Store] Signaling state for ${senderSocketId} is ${pc.signalingState} after setting remote offer. Expected 'have-remote-offer'. Aborting answer creation.`
+        ;
         console.error(msg);
         this.error.set(
-          `Failed to process offer from ${senderSocketId}: unexpected signaling state (${pc.signalingState}).`,
+          `Failed to process offer from ${senderSocketId}: unexpected signaling state (${pc.signalingState}).`
         );
         return;
       }
 
       console.log(
-        `[WebRTC Store] Creating answer for ${senderSocketId}. Signaling state: ${pc.signalingState}`,
+        `[WebRTC Store] Creating answer for ${senderSocketId}. Signaling state: ${pc.signalingState}`
       );
       const answer = await pc.createAnswer();
       console.log(
-        `[WebRTC Store] Created answer for ${senderSocketId}. Answer type: ${answer.type}.`,
+        `[WebRTC Store] Created answer for ${senderSocketId}. Answer type: ${answer.type}.`
       );
 
       console.log(
-        `[WebRTC Store] Setting local description (answer) for ${senderSocketId}. Signaling state: ${pc.signalingState}`,
+        `[WebRTC Store] Setting local description (answer) for ${senderSocketId}. Signaling state: ${pc.signalingState}`
       );
       await pc.setLocalDescription(answer);
       console.log(
-        `[WebRTC Store] Local description (answer) set for ${senderSocketId}. Signaling state: ${pc.signalingState}`,
+        `[WebRTC Store] Local description (answer) set for ${senderSocketId}. Signaling state: ${pc.signalingState}`
       );
 
       webRtcSignalingSocketService.sendAnswer({
         roomId: this.currentRoomId!,
-        targetUserId: senderSocketId,
-        payload: pc.localDescription,
+        targetSocketId: senderSocketId, // Use targetSocketId
+        payload: pc.localDescription
       });
       console.log(`[WebRTC Store] Answer sent to ${senderSocketId}`);
     } catch (err) {
@@ -281,46 +285,46 @@ class WebRtcStore {
    */
   private handleReceiveAnswer = async ({
     senderSocketId,
-    answer,
-  }: {senderSocketId: string; answer: RTCSessionDescriptionInit}) => {
-    if (senderSocketId === this.currentUserId) return; // Answer from self
+    answer
+  }: { senderSocketId: string; answer: RTCSessionDescriptionInit }) => {
+    if (senderSocketId === this.currentSocketId) return; // Answer from self, ignore
 
     console.log(
-      `[WebRTC Store] Received answer from ${senderSocketId}. Current signaling state: ${this.peerConnections.get(senderSocketId)?.connection?.signalingState}`,
+      `[WebRTC Store] Received answer from ${senderSocketId}. Current signaling state: ${this.peerConnections.get(senderSocketId)?.connection?.signalingState}`
     );
 
     const pc = this.peerConnections.get(senderSocketId)?.connection;
     if (!pc) {
       this.error.set(
-        `Failed to get peer connection for answer from ${senderSocketId}.`,
+        `Failed to get peer connection for answer from ${senderSocketId}.`
       );
       return;
     }
 
     if (pc.signalingState === 'stable' || pc.signalingState === 'closed') {
       console.warn(
-        `[WebRTC Store] Ignoring answer from ${senderSocketId}: signalingState is already '${pc.signalingState}'.`,
+        `[WebRTC Store] Ignoring answer from ${senderSocketId}: signalingState is already '${pc.signalingState}'.`
       );
       return;
     }
 
     if (!pc.localDescription) {
       console.warn(
-        `[WebRTC Store] Received answer from ${senderSocketId} but no local description (offer) was set. Signaling state: ${pc.signalingState}`,
+        `[WebRTC Store] Received answer from ${senderSocketId} but no local description (offer) was set. Signaling state: ${pc.signalingState}`
       );
       this.error.set(
-        `Received answer from ${senderSocketId} without a pending local offer.`,
+        `Received answer from ${senderSocketId} without a pending local offer.`
       );
       return;
     }
 
     try {
       console.log(
-        `[WebRTC Store] Setting remote description (answer) for ${senderSocketId}. Signaling state: ${pc.signalingState}`,
+        `[WebRTC Store] Setting remote description (answer) for ${senderSocketId}. Signaling state: ${pc.signalingState}`
       );
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
       console.log(
-        `[WebRTC Store] Remote description (answer) set for ${senderSocketId}. Signaling state: ${pc.signalingState}`,
+        `[WebRTC Store] Remote description (answer) set for ${senderSocketId}. Signaling state: ${pc.signalingState}`
       );
     } catch (err) {
       console.error(`[WebRTC Store] Error handling answer from ${senderSocketId}:`, err);
@@ -337,9 +341,9 @@ class WebRtcStore {
    */
   private handleReceiveCandidate = async ({
     senderSocketId,
-    candidate,
-  }: {senderSocketId: string; candidate: RTCIceCandidate}) => {
-    if (senderSocketId === this.currentUserId) return; // Candidate from self
+    candidate
+  }: { senderSocketId: string; candidate: RTCIceCandidate }) => {
+    if (senderSocketId === this.currentSocketId) return; // Candidate from self, ignore
 
     console.log(`[WebRTC Store] Received ICE candidate from ${senderSocketId}`);
 
@@ -374,7 +378,7 @@ class WebRtcStore {
     console.log('[WebRTC Store] Existing users in room:', users);
 
     for (const user of users) {
-      if (user.socketId === this.currentUserId) continue; // Don't connect to self
+      if (user.socketId === this.currentSocketId) continue; // Don't connect to self
 
       let pcState = this.peerConnections.get(user.socketId);
       let pc: RTCPeerConnection;
@@ -383,7 +387,7 @@ class WebRtcStore {
         pc = pcState.connection;
         if (pc.signalingState !== 'stable') {
           console.warn(
-            `[WebRTC Store] Peer connection for existing user ${user.socketId} is in state '${pc.signalingState}', not creating a new offer.`,
+            `[WebRTC Store] Peer connection for existing user ${user.socketId} is in state '${pc.signalingState}', not creating a new offer.`
           );
           continue;
         }
@@ -393,23 +397,23 @@ class WebRtcStore {
 
       try {
         console.log(
-          `[WebRTC Store] Creating offer for existing user ${user.socketId}. Signaling state: ${pc.signalingState}`,
+          `[WebRTC Store] Creating offer for existing user ${user.socketId}. Signaling state: ${pc.signalingState}`
         );
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         console.log(
-          `[WebRTC Store] Local offer set for existing user ${user.socketId}. Signaling state: ${pc.signalingState}`,
+          `[WebRTC Store] Local offer set for existing user ${user.socketId}. Signaling state: ${pc.signalingState}`
         );
         webRtcSignalingSocketService.sendOffer({
           roomId: this.currentRoomId!,
-          targetUserId: user.socketId,
-          payload: pc.localDescription,
+          targetSocketId: user.socketId, // Use targetSocketId
+          payload: pc.localDescription
         });
         console.log(`[WebRTC Store] Offer sent to existing user ${user.socketId}`);
       } catch (err) {
         console.error(
           `[WebRTC Store] Error creating offer for existing user ${user.socketId}:`,
-          err,
+          err
         );
         let errorMessage = `Failed to create offer for ${user.socketId}.`;
         if (err instanceof DOMException) {
@@ -429,7 +433,7 @@ class WebRtcStore {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: true,
+        audio: true
       });
       this.setLocalMediaStream(stream);
 
@@ -490,6 +494,8 @@ class WebRtcStore {
     }
 
     this.currentRoomId = null;
+    this.currentUserId = null;
+    this.currentSocketId = null;
 
     // Remove WebRTC-specific socket listeners
     webRtcSignalingSocketService.off('user_joined');
@@ -506,21 +512,17 @@ class WebRtcStore {
 
   /**
    * Connects to a video chat room, gets local media, and registers socket listeners.
-   * @param roomId The ID of the video chat room.
-   * @param userId The ID of the current user.
+   * @param roomId The ID of the conversation/video room.
    * @param token The authentication token.
+   * @param userId The database ID of the current authenticated user.
    */
-  public connect = async (roomId: string, token: string, userId?: string) => {
+  public connect = async (roomId: string, token: string, userId: string) => {
     // If already connected to this room, do nothing
     if (this.currentRoomId === roomId && this.localStreamRef) {
       console.log(`[WebRTC Store] Already connected to room ${roomId}`);
       return;
     }
 
-    if (!userId) {
-      this.error.set('User ID is required to connect to video chat.');
-      return;
-    }
     this.currentUserId = userId;
     this.currentRoomId = roomId;
 
@@ -534,11 +536,18 @@ class WebRtcStore {
         console.log('[WebRTC Store] webRtcSignalingSocketService connected for video signaling');
       }
 
+      // Set the current client's socket ID after successful connection
+      this.currentSocketId = webRtcSignalingSocketService.socket?.id || null;
+      if (!this.currentSocketId) {
+        throw new Error('Failed to get current client socket ID.');
+      }
+
       await this.getLocalMedia();
 
+      // Join the room using the database userId for backend identification
       webRtcSignalingSocketService.joinRoom({
         roomId: roomId,
-        userId: this.currentUserId, // Backend expects userId
+        userId: this.currentUserId,
       });
 
       // Register WebSocket listeners for WebRTC signaling
@@ -549,7 +558,7 @@ class WebRtcStore {
       webRtcSignalingSocketService.on('user_left', this.handleUserLeft);
       webRtcSignalingSocketService.on('existing_users_in_room', this.handleExistingUsersInRoom);
 
-      console.log(`[WebRTC Store] Attempting to join video room: ${roomId}`);
+      console.log(`[WebRTC Store] Attempting to join video room: ${roomId} with user ${userId} and socket ${this.currentSocketId}`);
     } catch (err) {
       console.error('[WebRTC Store] Error connecting to video chat:', err);
       let errorMessage = err instanceof Error ? err.message : 'Failed to connect to video chat.';

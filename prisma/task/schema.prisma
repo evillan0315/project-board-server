@@ -1,0 +1,50 @@
+// This file is created as per the user's explicit request for a schema.prisma in this directory.
+// However, please note: For this model to be recognized by the main application's Prisma client
+// (configured in the root prisma/schema.prisma), you will likely need to explicitly import this
+// schema into the main schema using a directive like `/// <reference path="./task/schema.prisma" />`
+// or configure your Prisma client generation to include this schema file.
+
+// The 'PlaywrightTask' model and its enums have also been added to the main prisma/schema.prisma
+// to ensure immediate integration with the project-board-server's existing Prisma setup.
+
+// If you intend to manage this schema separately or with a different Prisma client,
+// you would typically include `generator client {}` and `datasource db {}` blocks here
+// and configure your build process accordingly.
+
+// Playwright Task Model
+model PlaywrightTask {
+  id               String                 @id @default(uuid())
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  createdById      String                 // Links to the User who initiated the task
+  createdBy        User                   @relation(fields: [createdById], references: [id])
+  url              String                 // The URL the Playwright task was performed on
+  actionType       PlaywrightActionType   // Type of Playwright action (e.g., SCRAPE, SCREENSHOT)
+  llmInstruction   String?                @db.Text // Original LLM instruction if any
+  status           PlaywrightTaskStatus   @default(PENDING) // Current status of the task
+  errorMessage     String?                @db.Text // Error message if the task failed
+  outputJson       Json?                  // Stores the detailed output (scrapedText, screenshotBase64, recordedVideoPath, geminiAnalysis)
+  durationMs       Int?                   // Duration of the task in milliseconds
+  browserType      String?                // Which browser was used (e.g., chromium, firefox)
+  headless         Boolean?               // Whether the browser ran in headless mode
+
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum PlaywrightActionType {
+  SCRAPE
+  SCREENSHOT
+  RECORD_SCREEN
+  PERFORM_MULTIPLE_TASKS
+  CUSTOM_NAVIGATION
+}
+
+enum PlaywrightTaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}

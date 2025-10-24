@@ -7,14 +7,11 @@ export const authStore = map<AuthState>({
   loading: true, // Set to true initially to indicate loading auth status on app start
   error: null,
 });
-export const getToken = () => {
-  const localToken = localStorage.getItem('token');
-  return localToken;
-}
-export const loginSuccess = (user: UserProfile, token) => {
-  // Update localStorage
-  if(token){
-    localStorage.setItem('token', token)
+
+export const loginSuccess = (user: UserProfile, token?: string) => {
+  // Update localStorage if token is provided
+  if (token) {
+    localStorage.setItem('token', token);
   }
   authStore.set({
     isLoggedIn: true,
@@ -25,6 +22,7 @@ export const loginSuccess = (user: UserProfile, token) => {
 };
 
 export const logout = () => {
+  localStorage.removeItem('token'); // Clear token on logout
   authStore.set({
     isLoggedIn: false,
     user: null,

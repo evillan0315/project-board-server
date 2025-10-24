@@ -10,6 +10,7 @@ import { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 import { AxiosError, AxiosResponse } from 'axios';
 import { URL } from 'url';
+import { ProxyUrlDto } from './dto/proxy-url.dto';
 
 @Injectable()
 export class ProxyService {
@@ -58,16 +59,15 @@ export class ProxyService {
 
   /**
    * Proxies the given target URL, streams its content, and applies necessary security headers.
-   * @param target The URL to proxy.
+   * @param proxyUrlDto The DTO containing the URL to proxy.
    * @param req The incoming Express request object.
    * @param res The outgoing Express response object.
    */
-  async proxyUrl(target: string, req: Request, res: Response): Promise<void> {
+  async proxyUrl(proxyUrlDto: ProxyUrlDto, req: Request, res: Response): Promise<void> {
+    const target = proxyUrlDto.url;
     this.logger.debug(`Incoming proxy request for URL: ${target} from origin: ${req.headers.origin}`);
 
-    if (!target || !/^https?:///i.test(target)) {
-      throw new BadRequestException('Invalid or missing target URL format. Must be http(s).');
-    }
+    // URL validation is now handled by the ValidationPipe and ProxyUrlDto
 
     if (!this.isTargetDomainAllowed(target)) {
       throw new BadRequestException(`Proxying to target URL domain '${new URL(target).hostname}' is not permitted by server configuration.`);
@@ -125,7 +125,7 @@ export class ProxyService {
       res.setHeader('Access-Control-Allow-Credentials', 'true');
 
       // Determine Content-Security-Policy: frame-ancestors directive
-      let frameAncestors: string; // Declare local variable
+      let frameAncestors: string;
       if (this.frontendUrl) {
         // If FRONTEND_URL is set, restrict embedding to 'self' (the proxy's domain) and the frontend URL.
         // Note: 'self' refers to the origin from which the current document is being served.

@@ -33,14 +33,13 @@ import {
   gitUndoFileChanges,
   gitRevertCommit,
   gitResetHard,
-} from '@/api/git';
-import { getGitDiff } from '@/api/llm';
+  getGitDiff
+} from './api/git';
 
-import { gitStore, GitBranch, GitCommit, GitStatusResult } from '@/stores/gitStore';
+import { gitStore, GitBranch, GitCommit, GitStatusResult, GitResetHardDtoFrontend } from './types/git';
 import { showGlobalSnackbar } from '@/stores/snackbarStore';
 import { themeStore } from '@/stores/themeStore';
 import { projectRootDirectoryStore } from '@/stores/fileTreeStore';
-import { GitResetHardDto } from '@/types';
 
 import { GitStatusSection } from './GitStatusSection';
 import { GitBranchesSection } from './GitBranchesSection';
@@ -297,7 +296,7 @@ export default function GitPage() {
     setOpenResetHardDialog(false);
     gitStore.setKey('loading', true);
     try {
-      const dto: GitResetHardDto = { commitHash: resetHardCommitHash, projectRoot };
+      const dto: GitResetHardDtoFrontend = { commitHash: resetHardCommitHash, projectRoot };
       await gitResetHard(dto);
       showGlobalSnackbar(`Repository reset hard to commit '${resetHardCommitHash}'`, 'success');
       setResetHardCommitHash('');
@@ -538,8 +537,16 @@ export default function GitPage() {
         onClose={handleCloseContextMenu}
         loading={loading}
         selectedCommit={selectedCommitForMenu}
-        onRevertCommit={(commitHash) => { setRevertCommitHash(commitHash); setOpenRevertDialog(true); }}
-        onResetHard={(commitHash) => { setResetHardCommitHash(commitHash); setOpenResetHardDialog(true); }}
+        onRevertCommit={(commitHash) => {
+          setRevertCommitHash(commitHash);
+          setOpenRevertDialog(true);
+          handleCloseContextMenu(); // Close the context menu after selecting an action
+        }}
+        onResetHard={(commitHash) => {
+          setResetHardCommitHash(commitHash);
+          setOpenResetHardDialog(true);
+          handleCloseContextMenu(); // Close the context menu after selecting an action
+        }}
       />
 
       <GitSnapshotContextMenu

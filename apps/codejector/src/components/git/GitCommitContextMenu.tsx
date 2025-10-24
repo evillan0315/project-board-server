@@ -8,7 +8,7 @@ import {
 import RestoreIcon from '@mui/icons-material/Restore';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
-import { GitCommit } from '@/stores/gitStore';
+import { GitCommit } from './types/git';
 
 interface GitCommitContextMenuProps {
   anchorEl: HTMLElement | null;

@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    
     "docs:swagger": "ts-node src/swagger.ts",
     "bundle:docs": "redocly build-docs swagger.json --output=public/docs.html",
     "build:docs": "npm run docs:swagger && npm run bundle:docs",
@@ -218,6 +219,9 @@
     "vite": "^6.3.5",
     "vite-plugin-solid": "^2.11.6"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+    },
   "jest": {
     "moduleFileExtensions": [
       "js",

@@ -15,6 +15,7 @@ import GitHubIcon from '@mui/icons-material/GitHub'; // for Simple Git
 import ForumIcon from '@mui/icons-material/Forum';
 import DataObjectIcon from '@mui/icons-material/DataObject'; // For Schema Generator
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'; // NEW: For ChatApp (Direct)
+import WebAssetIcon from '@mui/icons-material/WebAsset'; // NEW: For Playwright
 
 export const appDefinitions: AppDefinition[] = [
   {
@@ -52,6 +53,15 @@ export const appDefinitions: AppDefinition[] = [
     link: '/apps/schema-generator',
     linkText: 'Open Schema Generator',
     icon: DataObjectIcon,
+    category: 'AI Tools',
+  },
+  {
+    id: 'llm-playwright',
+    title: 'LLM Playwright',
+    description: 'Automate web tasks and generate insights with Playwright and AI.',
+    link: '/apps/llm-playwright',
+    linkText: 'Open Playwright',
+    icon: WebAssetIcon,
     category: 'AI Tools',
   },
   {

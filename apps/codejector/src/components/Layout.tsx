@@ -157,7 +157,7 @@ const Layout: React.FC<LayoutProps> = ({ footer }) => {
 
       {/* Main content + optional sidebars */}
       <Box
-        className="flex-grow w-full flex flex-row overflow-hidden"
+        className="main-content flex-grow w-full flex flex-row overflow-hidden"
         sx={{
           height: `calc(100vh - ${NAVBAR_HEIGHT}px - ${FOOTER_HEIGHT}px)`,
         }}
@@ -195,7 +195,7 @@ const Layout: React.FC<LayoutProps> = ({ footer }) => {
 
         {/* Main Outlet content */}
         <Box
-          className="flex-grow flex flex-col overflow-auto min-w-0 pb-[0px]"
+          className="main-outlet-content flex-grow flex flex-col overflow-auto min-w-0 pb-[0px]"
           sx={{ backgroundColor: theme.palette.background.paper }}
         >
           {openedFile ? <AiEditorNoTreePage /> : <Outlet />}

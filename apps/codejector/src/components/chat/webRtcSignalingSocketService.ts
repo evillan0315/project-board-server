@@ -11,7 +11,7 @@ import { JoinVideoRoomDto, SignalingPayloadDto, PeerInfo } from './types';
 
 // WebSocket URL base from environment variables
 const WS_BASE_URL = import.meta.env.VITE_WS_URL; // e.g., 'ws://localhost:3000'
-const WEBRTC_WS_NAMESPACE = '/chat'; // New dedicated namespace for WebRTC signaling
+const WEBRTC_WS_NAMESPACE = '/chat'; // Matches NestJS ChatGateway namespace for video signaling
 
 /**
  * A Nanostore to hold the connection status of the WebRTC signaling WebSocket.

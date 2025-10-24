@@ -11,14 +11,13 @@ import { MessageBubbleProps, Sender } from './types'; // Import Sender enum
 import { useStore } from '@nanostores/react';
 import { user } from '@/stores/authStore';
 
-// Bot User ID (remains constant for bot messages)
-const BOT_USER_ID = 'user-bot';
-
 /**
  * Renders a single chat message bubble, styling it based on the sender.
  */
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, currentUserId }) => {
   const $user = useStore(user);
+  // Check if the message was created by the current authenticated user.
+  // This uses `createdById` which is the actual user's DB ID from the backend.
   const isCurrentUser = message.sender === Sender.USER && message.createdById === currentUserId;
   const theme = useTheme();
 
@@ -32,10 +31,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, currentUserId })
       : isBot
         ? theme.palette.background.main // A subtle background for bot messages
         : theme.palette.success.main, // Example for other users, could be another theme color
-    color: isCurrentUser ? theme.palette.primary.contrastText : isBot ? theme.palette.primary.main : theme.palette.primary.contrastText,
+    color: isCurrentUser ? theme.palette.primary.contrastText : isBot ? theme.palette.text.primary : theme.palette.primary.contrastText,
     borderRadius: '12px',
     ...(isCurrentUser && { borderBottomRightRadius: '2px' }), // Adjust corner for current user
-    ...(!isCurrentUser && { borderBottomLeftRadius: '2px' }), // Adjust corner for bot/other user
+    ...(!isCurrentUser && { borderBottomLeftRadius: '2px' }) // Adjust corner for bot/other user
   };
 
   const alignmentClass = isCurrentUser ? 'justify-end' : 'justify-start';
@@ -49,7 +48,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, currentUserId })
       </Avatar>
     )
   ) : (
-    <Avatar sx={{ bgcolor: isBot ? theme.palette.background.main : theme.palette.success.main, width: 32, height: 32, mr: 1 }}>
+    <Avatar sx={{ bgcolor: isBot ? theme.palette.grey[500] : theme.palette.success.main, width: 32, height: 32, mr: 1 }}>
       {isBot ? <SmartToyIcon fontSize="small" /> : <AccountCircleIcon fontSize="small" />}
     </Avatar>
   );
@@ -68,7 +67,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, currentUserId })
             {message.content}
             </ReactMarkdownWithCodeCopy>
           ) : message.content }
-           {/* Changed from message.text to message.content */}
         </Typography>
         <Typography variant="caption" sx={{ opacity: 0.7, mt: 1, display: 'block', textAlign: 'right' }}>
           {message.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

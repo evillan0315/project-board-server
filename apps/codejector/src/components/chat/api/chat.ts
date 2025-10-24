@@ -3,7 +3,7 @@
  */
 
 import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api/fetch';
-import { CreateConversationDto, Conversation, GetConversationsDto } from '@/types/conversation';
+import { CreateConversationDto, Conversation, GetConversationsDto } from '../types';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Chat Conversation REST API Functions

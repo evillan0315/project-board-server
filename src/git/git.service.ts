@@ -5,11 +5,27 @@ import * as path from 'path';
 
 
 import {
+  CommitDto,
+  CommitResponseDto,
+  CreateBranchDto,
+  CheckoutBranchDto,
+  DeleteBranchDto,
+  RevertCommitDto,
+  GitFileOperationDto,
+  GitFilesOperationDto,
+  GitResetStageDto,
+  CreateSnapshotDto,
+  RestoreSnapshotDto,
+  ListSnapshotsResponseDto,
+  DeleteSnapshotDto,
   GitBranchDto,
   GitCommitDto,
   GitStatusResponseDto,
-  GitStatusRenamedDto,
-} from './dto';
+  GitDiffDto,
+  GitDiffResponseDto,
+  GitResetHardDto,
+} from '~/git/dto'; // Updated import path
+
 
 
 @Injectable()
@@ -120,6 +136,35 @@ export class GitService {
     } catch (error) {
       this.logger.error(`Failed to reset staged changes: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Failed to reset staged changes: ${error.message}`);
+    }
+  }
+
+  async resetHard(commitHash?: string, projectRoot?: string): Promise<string> {
+    const git = this.getGit(projectRoot);
+    const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
+    if (!(await this.isGitRepository(git, effectiveRoot))) {
+      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
+    }
+    try {
+      if (commitHash) {
+        // Validate if the provided commitHash exists and is valid
+        try {
+          await git.show([commitHash]); // This will throw if commitHash is invalid
+        } catch (validationError) {
+          throw new BadRequestException(`Invalid commit hash: ${commitHash}`);
+        }
+        await git.reset(['--hard', commitHash]);
+        return `Hard reset to commit ${commitHash} successful.`;
+      } else {
+        await git.reset(['--hard', 'HEAD']);
+        return 'Hard reset to HEAD successful. All uncommitted changes discarded.';
+      }
+    } catch (error) {
+      this.logger.error(`Failed to perform hard reset: ${error.message}`, error.stack);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(`Failed to perform hard reset: ${error.message}`);
     }
   }
 
@@ -364,21 +409,6 @@ export class GitService {
     } catch (error) {
       this.logger.error(`Failed to list snapshots: ${error.message}`, error.stack);
       throw new InternalServerErrorException(`Failed to list snapshots: ${error.message}`);
-    }
-  }
-
-  async deleteSnapshot(snapshotName: string, projectRoot?: string): Promise<string> {
-    const git = this.getGit(projectRoot);
-    const effectiveRoot = projectRoot ? path.resolve(projectRoot) : this.DEFAULT_PROJECT_ROOT;
-    if (!(await this.isGitRepository(git, effectiveRoot))) {
-      throw new BadRequestException(`Directory \'${effectiveRoot}\' is not a Git repository.`);
-    }
-    try {
-      await git.tag(['-d', snapshotName]);
-      return `Snapshot \'${snapshotName}\' deleted.`;
-    } catch (error) {
-      this.logger.error(`Failed to delete snapshot: ${error.message}`, error.stack);
-      throw new InternalServerErrorException(`Failed to delete snapshot: ${error.message}`);
     }
   }
 

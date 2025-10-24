@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { socketService } from '@/services/socketService';
-import { appendOutput } from '@/stores/terminalStore'; // assuming you have this
+import { appendOutput } from '@/components/Terminal/stores/terminalStore'; // assuming you have this
 import stripAnsi from 'strip-ansi';
 import { useStore } from '@nanostores/react';
 import { themeStore } from '@/stores/themeStore';

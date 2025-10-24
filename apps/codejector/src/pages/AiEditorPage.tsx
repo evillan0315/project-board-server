@@ -11,7 +11,7 @@ import {
 } from '@/stores/llmStore';
 import { setError } from '@/stores/errorStore';
 import { addLog } from '@/stores/logStore';
-import { isTerminalVisible, setShowTerminal } from '@/stores/terminalStore';
+import { isTerminalVisible, setShowTerminal } from '@/components/Terminal/stores/terminalStore';
 import { projectRootDirectoryStore } from '@/stores/fileTreeStore';
 import { fileStore, setUploadedFile, openedTabs } from '@/stores/fileStore';
 

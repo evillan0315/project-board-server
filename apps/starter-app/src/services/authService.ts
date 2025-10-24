@@ -43,7 +43,7 @@ export const checkAuthStatus = async () => {
       // Backend /me endpoint returns null if not logged in, or user object
       if (user && user.id) {
         // Check for a valid user object to ensure logged in
-        loginSuccess(user);
+        loginSuccess(user); // Pass only user, as token is typically HTTP-only and not returned by /me
       } else {
         logout(); // Explicitly log out if /me returns null/empty (e.g., after token expires)
       }

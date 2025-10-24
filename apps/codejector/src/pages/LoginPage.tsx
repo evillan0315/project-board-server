@@ -133,7 +133,7 @@ const LoginPage: React.FC = () => {
   const displayError = localError || authStoreError;
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8 }}>
+    <Container className='login-container' maxWidth="sm" sx={{ mt: 8 }}>
       <Paper
         elevation={3}
         sx={{
@@ -193,6 +193,7 @@ const LoginPage: React.FC = () => {
             disabled={loading}
           />
           <Button
+            id="login-submit-btn"
             type="submit"
             fullWidth
             variant="contained"

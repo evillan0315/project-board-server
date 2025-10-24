@@ -12,7 +12,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import GitBranchIcon from '@mui/icons-material/CallSplit';
 
-import { GitBranch } from '@/stores/gitStore';
+import { GitBranch } from './types/git';
 
 interface GitBranchesSectionProps {
   branches: GitBranch[];

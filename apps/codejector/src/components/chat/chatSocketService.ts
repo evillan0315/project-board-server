@@ -1,6 +1,6 @@
 /**
  * @file Dedicated WebSocket service for chat and video signaling events.
- * @description This service connects to the '/ws' namespace of the NestJS ChatGateway
+ * @description This service connects to the '/chat' namespace of the NestJS ChatGateway
  * and provides methods for sending/receiving chat messages and WebRTC signaling payloads.
  */
 
@@ -20,12 +20,18 @@ export const isChatSocketConnected = atom(false);
 
 /**
  * Helper function to deserialize message timestamps from ISO strings to Date objects.
- * Assumes backend sends 'createdAt' as an ISO string.
+ * Assumes backend sends 'createdAt' as an ISO string and aligns with `Message` interface.
  */
 const deserializeMessage = (rawMessage: any): Message => {
   return {
     ...rawMessage,
-    createdAt: new Date(rawMessage.createdAt), // Correctly map 'createdAt' from backend to Date object
+    createdAt: new Date(rawMessage.createdAt),
+    // Ensure these fields exist and are mapped correctly from backend payload
+    id: rawMessage.id,
+    conversationId: rawMessage.conversationId,
+    createdById: rawMessage.createdById, // Match backend field
+    content: rawMessage.content,
+    sender: rawMessage.sender,
   };
 };
 

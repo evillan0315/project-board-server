@@ -31,6 +31,8 @@
     { "name": "VideoModule", "enabled": true },
     { "name": "AlbumModule", "enabled": true },
     { "name": "ArtistModule", "enabled": true },
-    { "name": "MetadataModule", "enabled": true }
+    { "name": "MetadataModule", "enabled": true },
+    { "name": "LlmPlaywrightModule", "enabled": true }
+    
   ]
 }

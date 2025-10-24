@@ -47,6 +47,7 @@ import { GoogleTranslatorController } from './google-translator/google-translato
     GoogleGeminiService,
     GoogleGeminiFileService,
     GoogleTranslatorService,
+    GoogleGeminiImageService,
   ],
 })
 export class GoogleModule {}

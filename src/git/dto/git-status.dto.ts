@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsArray, IsBoolean, IsNumber, IsOptional } from 'class-validator';
-import { GitStatusFile } from '../interfaces/git.interface';
 
-export class GitStatusFileDto implements GitStatusFile {
+
+export class GitStatusFileDto {
   @ApiProperty({ description: 'Path of the file' })
   @IsString()
   path: string;
@@ -14,6 +14,16 @@ export class GitStatusFileDto implements GitStatusFile {
   @ApiProperty({ description: 'Working directory status of the file' })
   @IsString()
   working_dir: string;
+}
+
+export class GitStatusRenamedDto {
+  @ApiProperty({ description: 'Original path of the file' })
+  @IsString()
+  from: string;
+
+  @ApiProperty({ description: 'New path of the file' })
+  @IsString()
+  to: string;
 }
 
 export class GitStatusResponseDto {
@@ -50,9 +60,9 @@ export class GitStatusResponseDto {
   @IsArray()
   modified: string[];
 
-  @ApiProperty({ type: [String], description: 'List of renamed files' })
+  @ApiProperty({ type: [GitStatusRenamedDto], description: 'List of renamed files' })
   @IsArray()
-  renamed: string[];
+  renamed: GitStatusRenamedDto[];
 
   @ApiProperty({ type: [String], description: 'List of staged files' })
   @IsArray()

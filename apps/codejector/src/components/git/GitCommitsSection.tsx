@@ -13,7 +13,7 @@ import {
 import HistoryIcon from '@mui/icons-material/History';
 import RestoreIcon from '@mui/icons-material/Restore';
 
-import { GitCommit } from '@/stores/gitStore';
+import { GitCommit } from './types/git';
 
 interface GitCommitsSectionProps {
   commits: GitCommit[];

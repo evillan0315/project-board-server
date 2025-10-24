@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pg-recover
+spec:
+  containers:
+    - name: postgres
+      image: postgres:16
+      env:
+        - name: POSTGRES_PASSWORD
+          value: "postgres"
+      volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: pg-data
+  volumes:
+    - name: pg-data
+      hostPath:
+        path: /media/eddie/Data/projects/nestJS/nest-modules/project-board-server/postgres/data
+        type: Directory

@@ -8,7 +8,7 @@ import {
 import GitBranchIcon from '@mui/icons-material/CallSplit';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
-import { GitBranch } from '@/stores/gitStore';
+import { GitBranch } from './types/git';
 
 interface GitBranchContextMenuProps {
   contextMenu: { mouseX: number; mouseY: number; branch: GitBranch } | null;

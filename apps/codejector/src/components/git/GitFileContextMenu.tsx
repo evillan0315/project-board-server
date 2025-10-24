@@ -10,7 +10,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import CodeIcon from '@mui/icons-material/Code';
 import UndoIcon from '@mui/icons-material/Undo';
 
-import { GitStatusResult } from '@/stores/gitStore';
+import { GitStatusResult } from './types/git';
 
 interface GitFileContextMenuProps {
   contextMenu: { mouseX: number; mouseY: number; file: string } | null;
@@ -36,7 +36,7 @@ export function GitFileContextMenu({
   const targetFile = contextMenu?.file || '';
   const isNotAdded = status?.not_added.includes(targetFile);
   const isModified = status?.modified.includes(targetFile);
-  const isDeleted = status?.deleted.map(f => f.path).includes(targetFile);
+  const isDeleted = status?.deleted.includes(targetFile); // Changed to 'includes' based on backend DTO
   const isStaged = status?.staged.includes(targetFile);
 
   return (

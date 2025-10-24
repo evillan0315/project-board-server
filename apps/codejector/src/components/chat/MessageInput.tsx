@@ -8,9 +8,6 @@ import SendIcon from '@mui/icons-material/Send';
 
 import { MessageInputProps } from './types';
 
-// Bot User ID for bot-generated messages
-const BOT_USER_ID = 'user-bot';
-
 /**
  * Provides the text input and send button functionality.
  */
@@ -34,7 +31,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
 
     const payload = {
       contents: [{ parts: [{ text: userText }] }],
-      systemInstruction: { parts: [{ text: systemPrompt }] },
+      systemInstruction: { parts: [{ text: systemPrompt }] }
     };
 
     let attempt = 0;
@@ -45,7 +42,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(payload)
         });
 
         if (response.ok) {
@@ -97,7 +94,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
     // 3. Send Bot Message (Delayed to simulate processing)
     if (botResponseText) {
       setTimeout(() => {
-        onSendMessage(botResponseText, BOT_USER_ID);
+        // Pass BOT_DISPLAY_ID to differentiate in ChatApp.tsx, which then maps to actual user ID for persistence
+        onSendMessage(botResponseText, 'user-bot-display-id'); 
         setIsLoading(false);
       }, 500); // 500ms delay to visually separate user and bot messages
     } else {
@@ -112,7 +110,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
       className="flex p-4 rounded-b-lg shadow-inner gap-2"
       sx={{
         borderTop: `1px solid ${theme.palette.divider}`,
-        backgroundColor: theme.palette.background.paper,
+        backgroundColor: theme.palette.background.paper
       }}
     >
       <TextField
@@ -132,8 +130,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         }}
         sx={{
             '& .MuiOutlinedInput-root': {
-                borderRadius: '9999px',
-            },
+                borderRadius: '9999px'
+            }
         }}
       />
       <IconButton

@@ -17,7 +17,7 @@ import {
   isTerminalVisible,
   setShowTerminal,
   disconnectTerminal,
-} from '@/stores/terminalStore';
+} from '@/components/Terminal/stores/terminalStore';
 
 interface TerminalToolbarProps {
   isConnected: boolean;

@@ -152,7 +152,7 @@ export class GitController {
   }
 
   @Get('snapshots')
-  @ApiOperation({ summary: 'List all available snapshots (Git tags)' } })
+  @ApiOperation({ summary: 'List all available snapshots (Git tags)' })
   @ApiResponse({ status: 200, type: ListSnapshotsResponseDto })
   async listSnapshots(@Query('projectRoot') projectRoot?: string): Promise<ListSnapshotsResponseDto> {
     const tags = await this.gitService.listSnapshots(projectRoot);

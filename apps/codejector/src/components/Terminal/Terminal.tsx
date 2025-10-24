@@ -24,7 +24,7 @@ import {
   executeCommand,
   resizeTerminal,
   appendOutput,
-} from '@/stores/terminalStore';
+} from '@/components/Terminal/stores/terminalStore';
 import { socketService } from '@/services/socketService';
 import { handleLogout } from '@/services/authService';
 import { themeStore } from '@/stores/themeStore';
@@ -337,4 +337,3 @@ export const XTerminal: React.FC<XTerminalProps> = ({
     </Paper>
   );
 };
-

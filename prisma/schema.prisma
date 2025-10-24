@@ -59,6 +59,9 @@ model User {
   ProposedFileChange ProposedFileChange[]
   ExecutionSnapshot  ExecutionSnapshot[]
   SchemaHistory      SchemaHistory[]
+  Conversation       Conversation[]
+  Message            Message[]
+  PlaywrightTask     PlaywrightTask[]
 }
 
 model Password {
@@ -259,14 +262,14 @@ model Recording {
 }
 
 model GeminiRequest {
-  id                String              @id @default(uuid())
-  userId            String
-  user              User                @relation(fields: [userId], references: [id])
-  conversationId    String?
-  modelUsed         String
-  prompt            String?
-  projectStructure  String?
-  
+  id               String  @id @default(uuid())
+  userId           String
+  user             User    @relation(fields: [userId], references: [id])
+  conversationId   String?
+  modelUsed        String
+  prompt           String?
+  projectStructure String?
+
   systemInstruction String?
   requestType       RequestType
   imageUrl          String?
@@ -283,16 +286,17 @@ model GeminiRequest {
 }
 
 model GeminiResponse {
-  id            String        @id @default(uuid())
-  requestId     String
-  request       GeminiRequest @relation(fields: [requestId], references: [id])
-  title         String?
-  responseText  String        @db.Text
-  finishReason  String?
-  safetyRatings Json?
-  tokenCount    Int?
-  createdAt     DateTime      @default(now())
-  projectRoot   String?
+  id               String        @id @default(uuid())
+  requestId        String
+  request          GeminiRequest @relation(fields: [requestId], references: [id])
+  title            String?
+  responseText     String        @db.Text
+  finishReason     String?
+  safetyRatings    Json?
+  tokenCount       Int?
+  createdAt        DateTime      @default(now())
+  projectRoot      String?
+  playwrightOutput String?
 
   @@index([requestId])
 }
@@ -715,6 +719,69 @@ model ExecutionSnapshot {
   createdBy   User   @relation(fields: [createdById], references: [id])
 }
 
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
+model Conversation {
+  id          String             @id @default(uuid())
+  title       String
+  status      ConversationStatus @default(ACTIVE)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  createdById String
+  createdBy   User               @relation(fields: [createdById], references: [id])
+  metadata    Json? // For storing system instructions, model parameters, etc.
+
+  // Relation to Message (One-to-Many)
+  messages Message[]
+
+  @@index([createdById])
+  @@index([status])
+}
+
+model Message {
+  id             String    @id @default(uuid())
+  conversationId String
+  sender         Sender // Uses the existing Sender enum (USER, AI, BOT)
+  content        String    @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime? @updatedAt
+  createdById    String
+  createdBy      User      @relation(fields: [createdById], references: [id])
+  metadata       Json? // For source links, file references, etc.
+
+  // Relation back to Conversation
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdById])
+}
+
+// Playwright Task Model
+model PlaywrightTask {
+  id               String                 @id @default(uuid())
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  createdById      String
+  createdBy        User                   @relation(fields: [createdById], references: [id])
+  url              String
+  actionType       PlaywrightActionType
+  llmInstruction   String?                @db.Text
+  status           PlaywrightTaskStatus   @default(PENDING)
+  errorMessage     String?                @db.Text
+  outputJson       Json?                  // Stores the detailed output (scraped text, screenshot base64, video path, gemini analysis)
+  durationMs       Int?
+  browserType      String?
+  headless         Boolean?
+
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+}
+
 enum Role {
   ADMIN
   USER
@@ -761,7 +828,11 @@ enum RequestType {
   AUDIO_TRANSCRIPTION
   ERROR_ANALYSIS
   REFACTOR
+  IMAGE_CAPTIONING       @map("IMAGE_CAPTIONING")
+  SCREENSHOT_ANALYSIS    @map("SCREENSHOT_ANALYSIS")
+  WEB_SCRAPE_ANALYSIS    @map("WEB_SCRAPE_ANALYSIS")
   OTHER
+  PLAYWRIGHT_TASK_ANALYSIS
 }
 
 enum TerminalSessionStatus {
@@ -833,4 +904,20 @@ enum MetadataType {
   SUBTITLES
   DESCRIPTION
   OTHER
+}
+
+enum PlaywrightActionType {
+  SCRAPE
+  SCREENSHOT
+  RECORD_SCREEN
+  PERFORM_MULTIPLE_TASKS
+  CUSTOM_NAVIGATION
+}
+
+enum PlaywrightTaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
 }

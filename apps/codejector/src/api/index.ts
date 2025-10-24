@@ -16,5 +16,4 @@ export * from './project';
 export * from './repo';
 export * from './schema';
 export * from './socket';
-export * from './terminal';
 export * from './user';

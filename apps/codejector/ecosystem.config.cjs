@@ -2,7 +2,7 @@
   apps: [
     {
       name: "project-board-front",
-      script: "node dist/index.html",
+      script: "yarn dev",
       instances: 1,
       exec_mode: "fork",
       watch: false,

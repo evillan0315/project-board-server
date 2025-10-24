@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean, IsOptional, Matches } from 'class-validator';
-import { GitBranch } from '../interfaces/git.interface';
 
-export class GitBranchDto implements GitBranch {
+
+export class GitBranchDto {
   @ApiProperty({ description: 'Name of the branch' })
   @IsString()
   name: string;

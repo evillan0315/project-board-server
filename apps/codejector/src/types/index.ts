@@ -13,6 +13,5 @@ export * from './project';
 // export * from './recording'; // REMOVED: Moved to src/components/recording/types
 export * from './resume';
 export * from './schema';
-export * from './terminal';
 export * from './user';
 export * from './refactored/media';

@@ -1,5 +1,5 @@
 /**
- * FilePath: src/stores/terminalStore.ts
+ * FilePath: src/components/Terminal/stores/terminalStore.ts
  * Title: Terminal Store with WebGL Rendering and Deduplicated Output
  * Reason: Enhance terminal responsiveness with @xterm/addon-webgl while maintaining
  *         clean deduplication logic for spinner frames and repetitive socket output.
@@ -8,10 +8,10 @@
 import { map } from 'nanostores';
 import { socketService } from '@/services/socketService';
 import { persistentAtom } from '@/utils/persistentAtom';
-import { SystemInfo, PromptData } from '@/types/terminal';
+import { SystemInfo, PromptData } from './types/terminal';
 import stripAnsi from 'strip-ansi';
-import { projectRootDirectoryStore } from './fileTreeStore';
-import { getToken } from './authStore';
+import { projectRootDirectoryStore } from '@/stores/fileTreeStore';
+import { getToken } from '@/stores/authStore';
 
 // ──────────────────────────────────────────────
 // State Definition
@@ -186,4 +186,3 @@ export const resizeTerminal = (cols: number, rows: number) => {
     socketService.resize(cols, rows);
   }
 };
-

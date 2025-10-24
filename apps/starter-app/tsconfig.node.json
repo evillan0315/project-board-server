@@ -11,7 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "strict": true,
-    "noEmit": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noImplicitAny": true,
@@ -20,7 +19,8 @@
     "strictFunctionTypes": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "noEmit": true 
   },
   "include": ["vite.config.ts", "postcss.config.js", "tailwind.config.ts", "eslint.config.ts"]
 }

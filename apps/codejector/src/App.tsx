@@ -52,6 +52,7 @@ const GitPage = lazy(() =>  import('@/components/git/GitPage'));
 const AIChatPage = lazy(() => import('./pages/AIChatPage'));
 const SchemeGeneratorPage = lazy(() => import('./pages/SchemeGeneratorPage')); // New: Lazy load SchemeGeneratorPage
 const ChatAppComponent = lazy(() => import('./components/chat/ChatApp')); // NEW: Lazy load ChatApp
+const PlaywrightPage = lazy(() => import('./pages/PlaywrightPage')); // NEW: Lazy load PlaywrightPage
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -273,6 +274,19 @@ const router = createBrowserRouter(
             <Suspense fallback={<Loading />}>
               <ErrorBoundary>
                 <SchemeGeneratorPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      {/* NEW: Route for LLM Playwright Page */}
+      <Route
+        path="/apps/llm-playwright"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <PlaywrightPage />
               </ErrorBoundary>
             </Suspense>
           </RequireAuth>
