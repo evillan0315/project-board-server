@@ -20,9 +20,10 @@ export const themeAtom = atom<ThemeState>({
 
 // Action to toggle theme
 export const toggleTheme = () => {
-  themeAtom.set((state: ThemeState): ThemeState => ({ // Explicitly type the return value to ensure correct literal type inference
-    theme: state.theme === 'light' ? 'dark' : 'light',
-  }));
+  const currentTheme = themeAtom.get().theme;
+  themeAtom.set({
+    theme: currentTheme === 'light' ? 'dark' : 'light',
+  });
 };
 
 // Side effects: persist theme to localStorage and apply class to documentElement
