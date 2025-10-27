@@ -16,7 +16,7 @@ export const Navbar: React.FC = () => {
         backgroundColor: 'background.paper',
         boxShadow: 1,
       }}
-      className="bg-white dark:bg-gray-800 shadow-sm"
+      className="shadow-sm"
     >
       <RouterLink to="/" style={{ textDecoration: 'none' }}>
         <Button sx={{ mr: 2 }} color="inherit">
