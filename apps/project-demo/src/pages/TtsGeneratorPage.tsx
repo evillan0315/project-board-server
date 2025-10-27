@@ -1,6 +1,15 @@
 import React, { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { ttsStore } from '../stores/ttsStore';
+import {
+  ttsStore,
+  addSpeaker,
+  setPrompt,
+  setLanguageCode,
+  updateSpeaker,
+  removeSpeaker,
+  setError,
+  generateSpeech,
+} from '../stores/ttsStore';
 
 import {
   Box,
@@ -29,13 +38,13 @@ export const TtsGeneratorPage: React.FC = () => {
   useEffect(() => {
     // Initialize with a default speaker if none exist
     if (speakers.length === 0) {
-      ttsStore.addSpeaker();
+      addSpeaker();
     }
   }, [speakers.length]);
 
   const handleGenerate = async () => {
     if (!isLoggedIn) {
-      ttsStore.setError('Authentication required. Please log in.');
+      setError('Authentication required. Please log in.');
       return;
     }
     const request: TtsRequestDto = {
@@ -46,7 +55,7 @@ export const TtsGeneratorPage: React.FC = () => {
       })),
       languageCode,
     };
-    ttsStore.generateSpeech(request);
+    generateSpeech(request);
   };
 
   const headerSx = {
@@ -102,7 +111,7 @@ export const TtsGeneratorPage: React.FC = () => {
           rows={6}
           fullWidth
           value={prompt}
-          onChange={(e) => ttsStore.setPrompt(e.target.value)}
+          onChange={(e) => setPrompt(e.target.value)}
           margin="normal"
           variant="outlined"
           disabled={loading || !isLoggedIn}
@@ -122,7 +131,7 @@ export const TtsGeneratorPage: React.FC = () => {
           label="Language Code (e.g., en-US)"
           fullWidth
           value={languageCode}
-          onChange={(e) => ttsStore.setLanguageCode(e.target.value)}
+          onChange={(e) => setLanguageCode(e.target.value)}
           margin="normal"
           variant="outlined"
           disabled={loading || !isLoggedIn}
@@ -151,7 +160,7 @@ export const TtsGeneratorPage: React.FC = () => {
               <TextField
                 label={`Speaker ${index + 1} Name`}
                 value={speakerData.speaker}
-                onChange={(e) => ttsStore.updateSpeaker(speakerData.id, 'speaker', e.target.value)}
+                onChange={(e) => updateSpeaker(speakerData.id, 'speaker', e.target.value)}
                 variant="outlined"
                 size="small"
                 disabled={loading || !isLoggedIn}
@@ -167,10 +176,10 @@ export const TtsGeneratorPage: React.FC = () => {
                 }}
               />
               <TextField
-                label={`Voice Name (e.g., Kore, Puck)`}
+                label={`Voice Name (e.g., en-US-Studio-F, en-US-Studio-B)`}
                 value={speakerData.voiceName}
                 onChange={(e) =>
-                  ttsStore.updateSpeaker(speakerData.id, 'voiceName', e.target.value)
+                  updateSpeaker(speakerData.id, 'voiceName', e.target.value)
                 }
                 variant="outlined"
                 size="small"
@@ -188,7 +197,7 @@ export const TtsGeneratorPage: React.FC = () => {
               />
               {speakers.length > 1 && (
                 <IconButton
-                  onClick={() => ttsStore.removeSpeaker(speakerData.id)}
+                  onClick={() => removeSpeaker(speakerData.id)}
                   color="error"
                   disabled={loading || !isLoggedIn}
                   aria-label="remove speaker"
@@ -200,7 +209,7 @@ export const TtsGeneratorPage: React.FC = () => {
           ))}
         </List>
         <Button
-          onClick={ttsStore.addSpeaker}
+          onClick={addSpeaker}
           startIcon={<AddIcon />}
           variant="outlined"
           color="secondary"

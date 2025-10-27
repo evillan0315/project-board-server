@@ -8,7 +8,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
 
   return {
-    plugins: [react(), tailwindcss()], // Removed spread operator for react() as it typically returns a single plugin object.
+    // Ensure plugins are correctly flattened if they return arrays or for type inference issues
+    plugins: [
+      react(),
+      tailwindcss()
+    ].flat().filter(Boolean),
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
@@ -36,9 +40,7 @@ export default defineConfig(({ mode }) => {
       },
       allowedHosts: [
         'app.local',
-        'localhost',
-        'viduk.swinglifestyle.com',
-        'chatv.swinglifestyle.com',
+        'localhost'
       ],
     },
     define: {

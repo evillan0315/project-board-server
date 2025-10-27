@@ -43,6 +43,7 @@
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.5",
     "tailwindcss": "^4",
+    "@tailwindcss/vite": "^4.0.0-alpha.17",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
   }

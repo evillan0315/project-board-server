@@ -18,7 +18,9 @@ initAuth();
 function App() {
   const { theme: currentThemeMode } = useStore(themeAtom);
 
-  const muiTheme = useMemo(() => getMuiTheme(currentThemeMode), [currentThemeMode]);
+  // Ensure currentThemeMode is never undefined for getMuiTheme
+  // Provide 'light' as a fallback if currentThemeMode is momentarily undefined.
+  const muiTheme = useMemo(() => getMuiTheme(currentThemeMode || 'light'), [currentThemeMode]);
 
   return (
     <ThemeProvider theme={muiTheme}>
@@ -26,12 +28,12 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<TtsGeneratorPage />} />
-          <Route path="/login" element={<LoginPage />} /> {/* Add login route */}
+          <Route path="/login" element={<LoginPage />} /> { /* Add login route */ }
           <Route
             path="/auth/callback"
             element={<AuthCallback key={nanoid()} />} // Use nanoid for unique key on callback
           />
-          {/* Add other routes here if needed */}
+          { /* Add other routes here if needed */ }
         </Routes>
       </Layout>
     </ThemeProvider>

@@ -5,7 +5,11 @@ import path from 'path';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd());
     return {
-        plugins: [react(), tailwindcss()],
+        // Ensure plugins are correctly flattened if they return arrays or for type inference issues
+        plugins: [
+            react(),
+            tailwindcss()
+        ].flat().filter(Boolean),
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, 'src'),
@@ -29,14 +33,11 @@ export default defineConfig(({ mode }) => {
             cors: {
                 origin: ['*'],
                 methods: ['GET', 'POST', 'OPTIONS', 'DELETE', 'PATCH', 'PUT'],
-                allowedHeaders: ['Content-Type', 'Authorization'],
-                credentials: true,
+                allowedHeaders: ['Content-Type', 'Authorization'], credentials: true,
             },
             allowedHosts: [
                 'app.local',
-                'localhost',
-                'viduk.swinglifestyle.com',
-                'chatv.swinglifestyle.com',
+                'localhost'
             ],
         },
         define: {

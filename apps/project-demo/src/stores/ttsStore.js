@@ -5,8 +5,8 @@ export const ttsStore = atom({
     prompt: '',
     // Updated voice names to be supported by the backend based on the error message
     speakers: [
-        { id: nanoid(), speaker: 'Eddie', voiceName: 'Kore' },
-        { id: nanoid(), speaker: 'Marionette', voiceName: 'Puck' },
+        { id: nanoid(), speaker: 'Eddie', voiceName: 'en-US-Studio-F' },
+        { id: nanoid(), speaker: 'Marionette', voiceName: 'en-US-Studio-B' },
     ],
     languageCode: 'en-US',
     loading: false,
@@ -14,15 +14,15 @@ export const ttsStore = atom({
     audioUrl: null,
 });
 // Action to set prompt
-ttsStore.setPrompt = (newPrompt) => {
+export const setPrompt = (newPrompt) => {
     ttsStore.set({ ...ttsStore.get(), prompt: newPrompt });
 };
 // Action to set language code
-ttsStore.setLanguageCode = (newLangCode) => {
+export const setLanguageCode = (newLangCode) => {
     ttsStore.set({ ...ttsStore.get(), languageCode: newLangCode });
 };
 // Action to add a new speaker
-ttsStore.addSpeaker = () => {
+export const addSpeaker = () => {
     const currentSpeakers = ttsStore.get().speakers;
     ttsStore.set({
         ...ttsStore.get(),
@@ -30,23 +30,23 @@ ttsStore.addSpeaker = () => {
     });
 };
 // Action to update an existing speaker
-ttsStore.updateSpeaker = (id, field, value) => {
+export const updateSpeaker = (id, field, value) => {
     const currentSpeakers = ttsStore.get().speakers;
     const updatedSpeakers = currentSpeakers.map((s) => (s.id === id ? { ...s, [field]: value } : s));
     ttsStore.set({ ...ttsStore.get(), speakers: updatedSpeakers });
 };
 // Action to remove a speaker
-ttsStore.removeSpeaker = (id) => {
+export const removeSpeaker = (id) => {
     const currentSpeakers = ttsStore.get().speakers;
     const filteredSpeakers = currentSpeakers.filter((s) => s.id !== id);
     ttsStore.set({ ...ttsStore.get(), speakers: filteredSpeakers });
 };
 // Action to set error
-ttsStore.setError = (errorMessage) => {
+export const setError = (errorMessage) => {
     ttsStore.set({ ...ttsStore.get(), error: errorMessage });
 };
 // Action to generate speech
-ttsStore.generateSpeech = async (request) => {
+export const generateSpeech = async (request) => {
     ttsStore.set({
         ...ttsStore.get(),
         loading: true,

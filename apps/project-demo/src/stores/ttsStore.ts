@@ -20,8 +20,8 @@ export const ttsStore = atom<TtsState>({
   prompt: '',
   // Updated voice names to be supported by the backend based on the error message
   speakers: [
-    { id: nanoid(), speaker: 'Eddie', voiceName: 'Kore' },
-    { id: nanoid(), speaker: 'Marionette', voiceName: 'Puck' },
+    { id: nanoid(), speaker: 'Eddie', voiceName: 'en-US-Studio-F' },
+    { id: nanoid(), speaker: 'Marionette', voiceName: 'en-US-Studio-B' },
   ],
   languageCode: 'en-US',
   loading: false,
@@ -30,17 +30,17 @@ export const ttsStore = atom<TtsState>({
 });
 
 // Action to set prompt
-ttsStore.setPrompt = (newPrompt: string) => {
+export const setPrompt = (newPrompt: string) => {
   ttsStore.set({ ...ttsStore.get(), prompt: newPrompt });
 };
 
 // Action to set language code
-ttsStore.setLanguageCode = (newLangCode: string) => {
+export const setLanguageCode = (newLangCode: string) => {
   ttsStore.set({ ...ttsStore.get(), languageCode: newLangCode });
 };
 
 // Action to add a new speaker
-ttsStore.addSpeaker = () => {
+export const addSpeaker = () => {
   const currentSpeakers = ttsStore.get().speakers;
   ttsStore.set({
     ...ttsStore.get(),
@@ -49,26 +49,26 @@ ttsStore.addSpeaker = () => {
 };
 
 // Action to update an existing speaker
-ttsStore.updateSpeaker = (id: string, field: keyof SpeakerDto, value: string) => {
+export const updateSpeaker = (id: string, field: keyof SpeakerDto, value: string) => {
   const currentSpeakers = ttsStore.get().speakers;
   const updatedSpeakers = currentSpeakers.map((s) => (s.id === id ? { ...s, [field]: value } : s));
   ttsStore.set({ ...ttsStore.get(), speakers: updatedSpeakers });
 };
 
 // Action to remove a speaker
-ttsStore.removeSpeaker = (id: string) => {
+export const removeSpeaker = (id: string) => {
   const currentSpeakers = ttsStore.get().speakers;
   const filteredSpeakers = currentSpeakers.filter((s) => s.id !== id);
   ttsStore.set({ ...ttsStore.get(), speakers: filteredSpeakers });
 };
 
 // Action to set error
-ttsStore.setError = (errorMessage: string | null) => {
+export const setError = (errorMessage: string | null) => {
   ttsStore.set({ ...ttsStore.get(), error: errorMessage });
 };
 
 // Action to generate speech
-ttsStore.generateSpeech = async (request: TtsRequestDto) => {
+export const generateSpeech = async (request: TtsRequestDto) => {
   ttsStore.set({
     ...ttsStore.get(),
     loading: true,

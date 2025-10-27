@@ -5,13 +5,18 @@ interface ThemeState {
 }
 
 const getInitialTheme = (): 'light' | 'dark' => {
-  if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
-    return localStorage.getItem('theme') as 'light' | 'dark';
+  if (typeof localStorage !== 'undefined') {
+    const storedTheme = localStorage.getItem('theme');
+    // Explicitly check if the stored value is one of the valid modes
+    if (storedTheme === 'light' || storedTheme === 'dark') {
+      return storedTheme;
+    }
   }
+  // Fallback to system preference or 'light'
   if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     return 'dark';
   }
-  return 'light';
+  return 'light'; // Ultimate fallback
 };
 
 export const themeAtom = atom<ThemeState>({

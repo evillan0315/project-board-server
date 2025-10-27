@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import type { TextFieldProps } from '@mui/material/TextField'; // Import for type casting
 
 // Common configurations regardless of theme mode
 const commonSettings = {
@@ -33,7 +34,7 @@ const commonSettings = {
       defaultProps: {
         variant: 'outlined',
         fullWidth: true,
-      },
+      } as Partial<TextFieldProps>, // Cast to Partial<TextFieldProps> to correctly type 'variant' literal
       styleOverrides: {
         root: {
           // Some global styles for text fields if needed
