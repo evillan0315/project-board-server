@@ -8,6 +8,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import unusedImports from 'eslint-plugin-unused-imports';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+import type { Linter } from '@eslint/js'; // Import Linter type
 
 export default [
 
@@ -117,4 +118,4 @@ export default [
       'prettier/prettier': ['error', { endOfLine: 'auto', printWidth: 100 }], // Enforce Prettier formatting errors
     },
   },
-];
+] as Linter.FlatConfig[]; // Add type assertion here
