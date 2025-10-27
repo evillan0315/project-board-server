@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Box, Button, TextField, Typography, CircularProgress, Alert, Paper, Link } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
@@ -29,11 +29,11 @@ export const LoginPage: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_APP_API_BASE_URL}/auth/google`;
+    window.location.href = `/api/auth/google?cli_port=${import.meta.env.VITE_FRONTEND_PORT}`;
   };
 
   const handleGitHubLogin = () => {
-    window.location.href = `${import.meta.env.VITE_APP_API_BASE_URL}/auth/github`;
+    window.location.href = `/api/auth/github?cli_port=${import.meta.env.VITE_FRONTEND_PORT}`;
   };
 
   const paperSx = {

@@ -1,6 +1,4 @@
 import { createTheme } from '@mui/material/styles';
-import { useStore } from '@nanostores/react';
-import { themeAtom } from '../stores/themeStore';
 
 // Common configurations regardless of theme mode
 const commonSettings = {
@@ -103,18 +101,3 @@ export const getMuiTheme = (mode: 'light' | 'dark') =>
     },
     ...commonSettings,
   });
-
-// Reactive theme: `customTheme` will update when `themeAtom` changes
-export const customTheme = createTheme(); // Initialize with a dummy theme
-
-// Update `customTheme` dynamically based on `themeAtom`
-themeAtom.listen((state) => {
-  const newTheme = getMuiTheme(state.theme);
-  // Deep merge newTheme into customTheme to update its properties
-  Object.assign(customTheme, newTheme);
-  // A common pattern is to recreate the theme object, but direct modification
-  // combined with a re-render from ThemeProvider will work in most React setups.
-  // For strict immutability, ThemeProvider would need to be re-rendered with a new object.
-  // This current setup assumes the ThemeProvider re-renders if its 'theme' prop reference changes.
-  // If you experience issues, consider passing a new `createTheme` result directly to ThemeProvider.
-});

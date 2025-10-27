@@ -18,9 +18,10 @@ interface TtsState {
 
 export const ttsStore = atom<TtsState>({
   prompt: '',
+  // Updated voice names to be supported by the backend based on the error message
   speakers: [
-    { id: nanoid(), speaker: 'Eddie', voiceName: 'en-US-Studio-F' },
-    { id: nanoid(), speaker: 'Marionette', voiceName: 'en-US-Studio-B' },
+    { id: nanoid(), speaker: 'Eddie', voiceName: 'Kore' },
+    { id: nanoid(), speaker: 'Marionette', voiceName: 'Puck' },
   ],
   languageCode: 'en-US',
   loading: false,

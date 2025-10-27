@@ -18,26 +18,19 @@ export const themeAtom = atom<ThemeState>({
   theme: getInitialTheme(),
 });
 
-// Function to update the theme and persist it
-const updateTheme = (newTheme: 'light' | 'dark') => {
-  themeAtom.set({ theme: newTheme });
+// Action to toggle theme
+export const toggleTheme = () => {
+  themeAtom.set((state) => ({
+    theme: state.theme === 'light' ? 'dark' : 'light',
+  }));
+};
+
+// Side effects: persist theme to localStorage and apply class to documentElement
+themeAtom.listen((state) => {
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('theme', newTheme);
+    localStorage.setItem('theme', state.theme);
   }
-  document.documentElement.classList.toggle('dark', newTheme === 'dark');
-};
-
-// Initialize class on document element
-if (typeof document !== 'undefined') {
-  document.documentElement.classList.toggle('dark', themeAtom.get().theme === 'dark');
-}
-
-// Actions
-themeAtom.setKey = <K extends keyof ThemeState>(key: K, value: ThemeState[K]) => {
-  updateTheme(value as 'light' | 'dark');
-};
-
-themeAtom.toggleTheme = () => {
-  const currentTheme = themeAtom.get().theme;
-  updateTheme(currentTheme === 'light' ? 'dark' : 'light');
-};
+  if (typeof document !== 'undefined') {
+    document.documentElement.classList.toggle('dark', state.theme === 'dark');
+  }
+});
