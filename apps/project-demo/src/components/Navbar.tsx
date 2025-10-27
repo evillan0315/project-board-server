@@ -6,14 +6,6 @@ import { useAuth } from '../hooks/useAuth';
 export const Navbar: React.FC = () => {
   const { isLoggedIn, logout, user } = useAuth(); // Destructure user as well
 
-  const navbarLinkSx = {
-    color: 'inherit',
-    textDecoration: 'none',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-  };
-
   return (
     <Box
       component="nav"

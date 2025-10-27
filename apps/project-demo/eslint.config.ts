@@ -12,7 +12,7 @@ import type { Linter } from 'eslint'; // Corrected import for Linter type
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', 'public/**', 'build/**'],
+    ignores: ['dist/**', 'node_modules/**', 'public/**', 'build/**', '**/*.d.ts'],
   },
 
   js.configs.recommended,

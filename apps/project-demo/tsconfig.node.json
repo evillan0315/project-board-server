@@ -10,7 +10,8 @@
     "esModuleInterop": true,
     "allowJs": true,
     "target": "ESNext",
-    "types": ["node"]
+    "types": ["node"],
+    "preserveSymlinks": true
   },
   "include": [
     "vite.config.ts",

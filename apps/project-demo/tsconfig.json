@@ -22,7 +22,8 @@
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "preserveSymlinks": true
   },
   "include": ["src"],
   "references": [{"path": "./tsconfig.node.json"}]

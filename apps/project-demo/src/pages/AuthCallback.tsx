@@ -29,7 +29,7 @@ export const AuthCallback: React.FC = () => {
           // The fetchUserProfile action will update the user field and set loading to false on success.
           await fetchUserProfile();
 
-          console.log('JWT Token received and stored, user profile fetched.');
+          console.warn('JWT Token received and stored, user profile fetched.');
           navigate('/'); // Redirect to home or dashboard after successful login
         } catch (profileError) {
           console.error('Failed to fetch user profile after token:', profileError);
