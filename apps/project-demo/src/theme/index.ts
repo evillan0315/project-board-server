@@ -12,7 +12,7 @@ const commonSettings = {
     h6: { fontSize: '1rem', fontWeight: 500 },
     body1: { fontSize: '1rem' },
     body2: { fontSize: '0.875rem' },
-    button: { textTransform: 'none', fontWeight: 600 },
+    button: { textTransform: 'none' as const, fontWeight: 600 }, // Added 'as const' for strict type checking
   },
   shape: {
     borderRadius: 8,
