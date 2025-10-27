@@ -6,7 +6,7 @@ import pluginReact from 'eslint-plugin-react';
 import eslintConfigPrettier from 'eslint-config-prettier';
 import eslintPluginReactRefresh from 'eslint-plugin-react-refresh';
 import eslintPluginUnusedImports from 'eslint-plugin-unused-imports';
-import pluginPrettier from 'eslint-plugin-prettier'; // <-- Uncommented
+import pluginPrettier from 'eslint-plugin-prettier';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 // -----------------------------------------------------------------------------
 // ESLint configuration
 // -----------------------------------------------------------------------------
-export default tseslintPlugin.configs.base.extend(
+export default [
   {
     ignores: [
       'dist',
@@ -36,17 +36,28 @@ export default tseslintPlugin.configs.base.extend(
     ],
   },
 
+  // Recommended JavaScript rules from @eslint/js. This is an object.
   pluginJs.configs.recommended,
-  tseslintPlugin.configs.recommended,
+
+  // Recommended TypeScript rules from @typescript-eslint/eslint-plugin.
+  // These are arrays of config objects, so they need to be spread.
+  // `recommended` includes `base` internally for flat config.
+  ...tseslintPlugin.configs.recommended,
+
+  // Recommended React rules from eslint-plugin-react.
+  // These are arrays of config objects, so they need to be spread.
+  ...pluginReact.configs.recommended,
+  ...pluginReact.configs['jsx-runtime'], // For React 17+ JSX transform without explicit React import
 
   {
     files: ['**/*.{ts,tsx}'],
+    // Explicitly declare plugins used for rules within this specific config object.
+    // Plugins for @typescript-eslint and eslint-plugin-react are implicitly handled
+    // by spreading their `configs` arrays at the top level, so no need to redeclare them here.
     plugins: {
-      react: pluginReact,
       'react-refresh': eslintPluginReactRefresh,
       'unused-imports': eslintPluginUnusedImports,
-      prettier: pluginPrettier, // <-- Uncommented
-      '@typescript-eslint': tseslintPlugin, // Explicitly declare the plugin
+      prettier: pluginPrettier,
     },
     languageOptions: {
       parser: tseslintParser,
@@ -56,7 +67,6 @@ export default tseslintPlugin.configs.base.extend(
         sourceType: 'module',
         project: [
           './tsconfig.json',
-          // './tsconfig.app.json', // Removed: file does not exist
           './tsconfig.node.json',
         ],
         tsconfigRootDir: __dirname,
@@ -68,14 +78,13 @@ export default tseslintPlugin.configs.base.extend(
     },
     settings: {
       react: {
-        version: 'detect',
+        version: 'detect', // Auto-detect React version
       },
       'import/resolver': {
         typescript: {
           alwaysTryTypes: true,
           project: [
             './tsconfig.json',
-            // './tsconfig.app.json', // Removed: file does not exist
             './tsconfig.node.json',
           ],
         },
@@ -83,36 +92,39 @@ export default tseslintPlugin.configs.base.extend(
       },
     },
     rules: {
-      // General rules
-      'no-console': 'off',
+      // General ESLint rules
+      'no-console': 'off', // Allow console.log for development
       'arrow-body-style': ['error', 'as-needed'],
       'prefer-const': 'error',
 
-      // React rules – import recommended sets directly from plugin
-      ...pluginReact.configs.recommended.rules,
-      //...pluginReact.configs['jsx-runtime'].rules,
-      'react/react-in-jsx-scope': 'off',
-      'react/prop-types': 'off',
+      // React-specific rules
+      'react/react-in-jsx-scope': 'off', // Not needed for new JSX transform (React 17+)
+      'react/prop-types': 'off', // Not needed with TypeScript prop validation
 
-      // React Hooks - functionality is now included in eslint-plugin-react v7+
-      // ...eslintPluginReactHooks.configs.recommended.rules, // Removed
-
-      // React Refresh
+      // React Refresh rules (for Vite HMR)
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
 
-      // TypeScript rules
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
+      // TypeScript ESLint rules
+      '@typescript-eslint/explicit-module-boundary-types': 'off', // Too restrictive for common patterns
+      '@typescript-eslint/no-explicit-any': 'off', // Allow `any` for flexibility when needed
+      '@typescript-eslint/no-unused-vars': 'off', // Use `unused-imports` for better control
 
-      // Unused imports
-      'unused-imports/no-unused-imports': 'off',
-      'unused-imports/no-unused-vars': 'off',
+      // `eslint-plugin-unused-imports` rules for cleaner code
+      'unused-imports/no-unused-imports': 'error', // Disallow unused imports
+      'unused-imports/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
+      ],
 
-      // Prettier <-- Uncommented
+      // Prettier rules for consistent formatting
       'prettier/prettier': [
         'warn',
         {
@@ -127,6 +139,8 @@ export default tseslintPlugin.configs.base.extend(
     },
   },
 
-  // Must be last: disables rules that conflict with Prettier
+  // `eslint-config-prettier` should always be the last configuration
+  // in the array to ensure it correctly disables all ESLint rules
+  // that conflict with Prettier's formatting.
   eslintConfigPrettier,
-);
+];
