@@ -18,7 +18,10 @@ import { writeFile, stat, unlink, mkdir, readdir } from 'fs/promises';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { TerminalService } from '../terminal/terminal.service';
-import { CreateRecordingDto } from './dto/create-recording.dto';
+import {
+  CreateRecordingDto,
+  StartRecordingDto, // Import the StartRecordingDto for screen recording options
+} from './dto/create-recording.dto';
 import { UpdateRecordingDto } from './dto/update-recording.dto';
 import { StartRecordingResponseDto } from './dto/start-recording-response.dto';
 import { Prisma, Recording } from '@prisma/client';
@@ -51,6 +54,8 @@ interface RecordingData {
   resolution?: string;
   fps?: number;
   capturedAt?: string;
+  enableAudio?: boolean; // New field
+  audioDevice?: string; // New field
   // Add other potential properties from the `data` JSON field
   [key: string]: Prisma.InputJsonValue | undefined; // Add index signature for compatibility with Prisma's Json type
 }
@@ -319,7 +324,10 @@ export class RecordingService {
     };
   }
 
-  async startRecording(userId: string): Promise<StartRecordingResponseDto> {
+  async startRecording(
+    userId: string,
+    dto: StartRecordingDto, // Accept DTO with audio options
+  ): Promise<StartRecordingResponseDto> {
     const outputFile = join(
       process.cwd(),
       'downloads',
@@ -336,8 +344,12 @@ export class RecordingService {
     }
     await mkdir(dirname(outputFile), { recursive: true });
 
-    const ffmpegArgs = this._getScreenRecordingFfmpegArgs(outputFile);
-    this.logger.log(`Starting screen recording: ${outputFile}`);
+    const ffmpegArgs = this._getScreenRecordingFfmpegArgs(
+      outputFile,
+      dto.enableAudio || false,
+      dto.audioDevice,
+    );
+    this.logger.log(`Starting screen recording: ${outputFile} with args: ${ffmpegArgs.join(' ')}`);
 
     const recordingProcess = spawn('ffmpeg', ffmpegArgs);
 
@@ -359,6 +371,8 @@ export class RecordingService {
         pid: pid,
         data: {
           startedAt: startedAtISO,
+          enableAudio: dto.enableAudio || false,
+          audioDevice: dto.audioDevice || null, // Store selected audio device
         } as RecordingData,
         createdBy: { connect: { id: userId } },
       },
@@ -445,8 +459,8 @@ export class RecordingService {
 
     return {
       id: updatedRecording.id,
-      status: updatedRecording.status,
       path: updatedRecording.path,
+      status: updatedRecording.status,
     };
   }
 
@@ -489,7 +503,7 @@ export class RecordingService {
           );
           // Potentially emit this via WebSocket for real-time client updates
         },
-        { resolution: dto.resolution, fps: dto.fps },
+        { resolution: dto.resolution, fps: dto.framerate },
       );
 
       const pid = String(recordingProcess.pid);
@@ -506,7 +520,7 @@ export class RecordingService {
             startedAt: startedAtISO,
             cameraDevice: dto.cameraDevice,
             resolution: dto.resolution,
-            fps: dto.fps,
+            fps: dto.framerate,
           } as RecordingData,
           createdBy: { connect: { id: userId } },
         },
@@ -671,7 +685,7 @@ export class RecordingService {
             duration,
             fileSize,
             exitCode,
-            resolution: process.env.RESOLUTION || '1920x1080'
+            resolution: process.env.RESOLUTION || '1920x1080',
           },
         },
       });
@@ -684,82 +698,94 @@ export class RecordingService {
   }
 
   /**
- * FilePath: src/recording/recording.service.ts
- * Title: FFmpeg Fullscreen Capture Configuration
- * Reason: Ensure screen recording captures full display dynamically across OS platforms.
- */
-private _getScreenRecordingFfmpegArgs(outputFile: string): string[] {
-  const platform = process.platform;
-  const commonOutputArgs = [
-    '-c:v', 'libx264',
-    '-preset', 'ultrafast',
-    '-tune', 'zerolatency',
-    '-pix_fmt', 'yuv420p',
-    '-b:v', '1M',
-    '-r', '30',
-    '-c:a', 'aac',
-    '-b:a', '128k',
-    '-ar', '44100',
-    '-movflags', '+faststart',
-    '-y', // Overwrite output file
-  ];
-
-  if (platform === 'darwin') {
-    // macOS - Capture fullscreen from primary display
-    return [
-      '-f', 'avfoundation',
-      '-framerate', '30',
-      '-i', '1:0', // Video device 1 (display), audio device 0 (mic)
-      ...commonOutputArgs,
+   * Constructs FFmpeg arguments for screen recording with optional audio.
+   * @param outputFile The path to the output video file.
+   * @param enableAudio Whether to capture audio.
+   * @param audioDevice The specific audio device to use (optional).
+   * @returns An array of FFmpeg arguments.
+   */
+  private _getScreenRecordingFfmpegArgs(
+    outputFile: string,
+    enableAudio: boolean,
+    audioDevice: string | undefined,
+  ): string[] {
+    const platform = process.platform;
+    const ffmpegInputArgs: string[] = [];
+    const ffmpegOutputArgs: string[] = [
+      '-c:v', 'libx264',
+      '-preset', 'ultrafast',
+      '-tune', 'zerolatency',
+      '-pix_fmt', 'yuv420p',
+      '-b:v', '1M',
+      '-r', '30',
+      '-movflags', '+faststart',
+      '-y', // Overwrite output file if it exists
       outputFile,
     ];
+
+    if (platform === 'darwin') {
+      // macOS - Use avfoundation
+      // For avfoundation, video device 1 is typically the primary display.
+      // Audio device 0 is usually the default microphone.
+      if (enableAudio) {
+        ffmpegInputArgs.push('-f', 'avfoundation', '-framerate', '30', '-i', `1:${audioDevice || '0'}`);
+        ffmpegOutputArgs.unshift('-c:a', 'aac', '-b:a', '128k', '-ar', '44100');
+      } else {
+        ffmpegInputArgs.push('-f', 'avfoundation', '-framerate', '30', '-i', '1'); // Video only
+        ffmpegOutputArgs.unshift('-an'); // Disable audio in output
+      }
+    } else if (platform === 'win32') {
+      // Windows - Use gdigrab for screen, dshow for audio
+      ffmpegInputArgs.push(
+        '-f', 'gdigrab',
+        '-framerate', '30',
+        '-i', 'desktop',
+      );
+      if (enableAudio) {
+        ffmpegInputArgs.push(
+          '-f', 'dshow',
+          '-i', `audio=${audioDevice || 'virtual-audio-capturer'}`, // Requires a virtual audio device or specific device name
+        );
+        ffmpegOutputArgs.unshift('-c:a', 'aac', '-b:a', '128k', '-ar', '44100');
+      } else {
+        ffmpegOutputArgs.unshift('-an'); // Disable audio in output
+      }
+    } else { // Linux
+      try {
+        const { execSync } = require('child_process');
+        // Attempt to get full screen resolution via xrandr
+        const xrandrOutput = execSync('xrandr | grep "\\*" | cut -d" " -f4').toString().trim();
+        const fullResolution = xrandrOutput || '1920x1080';
+        const display = process.env.DISPLAY || ':0.0';
+
+        ffmpegInputArgs.push(
+          '-video_size', fullResolution,
+          '-framerate', '30',
+          '-f', 'x11grab',
+          '-i', `${display}`, // Use `display` only, .0 is part of it for x11grab
+        );
+        if (enableAudio) {
+          ffmpegInputArgs.push('-f', 'pulse', '-i', audioDevice || 'default');
+          ffmpegOutputArgs.unshift('-c:a', 'aac', '-b:a', '128k', '-ar', '44100');
+        } else {
+          ffmpegOutputArgs.unshift('-an');
+        }
+      } catch (e) {
+        this.logger.warn(`Failed to detect display resolution with xrandr: ${e.message}. Using default.`);
+        // Fallback for Linux if xrandr fails or is not available
+        ffmpegInputArgs.push(
+          '-f', 'x11grab',
+          '-framerate', '30',
+          '-i', ':0.0', // Default display
+        );
+        if (enableAudio) {
+          ffmpegInputArgs.push('-f', 'pulse', '-i', audioDevice || 'default');
+          ffmpegOutputArgs.unshift('-c:a', 'aac', '-b:a', '128k', '-ar', '44100');
+        } else {
+          ffmpegOutputArgs.unshift('-an');
+        }
+      }
+    }
+    return [...ffmpegInputArgs, ...ffmpegOutputArgs];
   }
-
-  if (platform === 'win32') {
-    // Windows - Capture entire desktop
-    return [
-      '-f', 'gdigrab',
-      '-framerate', '30',
-      '-i', 'desktop',
-      '-f', 'dshow',
-      '-i', 'audio=virtual-audio-capturer', // Requires virtual audio device
-      ...commonOutputArgs,
-      outputFile,
-    ];
-  }
-
-  // Linux (auto-detect full screen via xrandr)
-  try {
-    const { execSync } = require('child_process');
-    const xrandrOutput = execSync('xrandr | grep "\\*" | cut -d" " -f4').toString().trim();
-    const fullResolution = xrandrOutput || '1920x1080';
-    const display = process.env.DISPLAY || ':0.0';
-    const audioDevice = process.env.AUDIO_DEVICE || 'default';
-
-    return [
-      '-video_size', fullResolution,
-      '-framerate', '30',
-      '-f', 'x11grab',
-      '-i', `${display}.0`,
-      '-f', 'pulse',
-      '-i', audioDevice,
-      ...commonOutputArgs,
-      outputFile,
-    ];
-  } catch {
-    // Fallback if xrandr fails
-    return [
-      '-f', 'x11grab',
-      '-framerate', '30',
-      '-i', ':0.0',
-      '-f', 'pulse',
-      '-i', 'default',
-      ...commonOutputArgs,
-      outputFile,
-    ];
-  }
-}
-
-
-  // The _getCameraFfmpegArgs method is removed from here as it's correctly located in FfmpegService
 }
