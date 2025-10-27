@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
 
   return {
-    plugins: [...react(), tailwindcss()], // Spread react() plugin as it returns an array of plugins
+    plugins: [react(), tailwindcss()], // Removed spread operator for react() as it typically returns a single plugin object.
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
