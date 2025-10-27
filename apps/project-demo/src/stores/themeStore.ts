@@ -20,7 +20,7 @@ export const themeAtom = atom<ThemeState>({
 
 // Action to toggle theme
 export const toggleTheme = () => {
-  themeAtom.set((state: ThemeState) => ({
+  themeAtom.set((state: ThemeState): ThemeState => ({ // Explicitly type the return value to ensure correct literal type inference
     theme: state.theme === 'light' ? 'dark' : 'light',
   }));
 };
