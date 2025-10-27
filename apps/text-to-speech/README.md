@@ -1,33 +1,35 @@
 # Google Gemini TTS Generator Frontend
 
-This is a React/Vite frontend application designed to interact with the Google Gemini Text-to-Speech (TTS) backend controller (`/api/google-tts/generate`). It allows users to input text, configure multiple speakers, generate speech audio, and play it directly in the browser.
+## Project Overview
+
+This is a modern React/Vite frontend application designed to interact with a Node.js/NestJS backend for Google Gemini Text-to-Speech (TTS) generation. It empowers users to input text, configure multiple speakers with specific voice profiles, generate high-quality speech audio, and play it directly within the browser. The application emphasizes a clean, intuitive user experience with robust authentication and error handling.
 
 ## Features
 
--   **Authentication:** Integrates with JWT-based authentication, Google OAuth2, and GitHub OAuth2 provided by the backend server.
--   **Text Input:** Type or paste text for speech synthesis.
--   **Multi-Speaker Configuration:** Dynamically add and remove speaker profiles, specifying a speaker name (for the AI prompt) and a voice name (e.g., 'Kore', 'Puck').
--   **Language Selection:** Set the language code for the speech output (defaults to 'en-US').
--   **Audio Playback:** Plays the generated `.wav` audio file directly in the browser.
--   **Loading & Error Handling:** Provides visual feedback during API calls and displays error messages.
+-   **Authentication:** Seamless integration with JWT-based authentication, supporting Google OAuth2 and GitHub OAuth2 via the backend server.
+-   **Dynamic Text Input:** Flexible text area for inputting content to be synthesized.
+-   **Multi-Speaker Configuration:** Users can dynamically add, remove, and configure speaker profiles, assigning a unique speaker name (for AI prompting) and a specific voice name (e.g., 'Kore', 'Puck').
+-   **Language Selection:** Ability to specify the language code for speech output (defaults to 'en-US').
+-   **Integrated Audio Playback:** Generated `.wav` audio files are played directly in the browser for immediate feedback.
+-   **User Feedback:** Provides clear visual cues for loading states, along with comprehensive error handling and messaging.
+-   **Theming:** Light/Dark mode toggle for personalized viewing.
 
 ## Technologies Used
 
--   **React** & **Vite**: Fast development and build tool for modern web projects.
--   **TypeScript**: Type-safe JavaScript.
--   **Material UI**: A comprehensive React UI component library for consistent and accessible design.
--   **Tailwind CSS**: A utility-first CSS framework for rapid custom styling.
--   **Nanostores**: A tiny, fast, and testable state manager for React.
--   **Axios**: Promise-based HTTP client for the browser and Node.js.
--   **React Router DOM**: Declarative routing for React.
+-   **Frontend**: React, Vite, TypeScript, Material UI v6, Tailwind CSS v4, Nanostores, Axios, React Router DOM.
+-   **Backend (Interacts with)**: Node.js, NestJS, Google Gemini API.
 
 ## Getting Started
 
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+
 ### Prerequisites
 
--   Node.js (v18 or higher)
--   pnpm (recommended package manager)
--   The backend server (`project-board-server`) running on `http://localhost:3000` with authentication configured.
+Before you begin, ensure you have the following installed:
+
+-   [Node.js](https://nodejs.org/) (v18 or higher)
+-   [pnpm](https://pnpm.io/) (recommended package manager)
+-   The corresponding backend server (`project-board-server`) running and accessible (typically at `http://localhost:3000`) with authentication and Google Gemini TTS configured.
 
 ### Installation
 
@@ -39,7 +41,7 @@ This is a React/Vite frontend application designed to interact with the Google G
 
 2.  **Navigate to the frontend application directory:**
     ```bash
-    cd apps/project-demo
+    cd apps/text-to-speech
     ```
 
 3.  **Install dependencies:**
@@ -54,7 +56,7 @@ This is a React/Vite frontend application designed to interact with the Google G
 
 ### Configuration
 
-Create a `.env` file in the `apps/project-demo` directory for local development:
+Create a `.env` file in the `apps/text-to-speech` directory for local development:
 
 ```env
 VITE_APP_API_BASE_URL=http://localhost:3000
@@ -72,26 +74,32 @@ For Google and GitHub OAuth to work, ensure your backend's (`project-board-serve
 # Google OAuth2 Credentials
 GOOGLE_CLIENT_ID='your_google_client_id'
 GOOGLE_CLIENT_SECRET='your_google_client_secret'
-GOOGLE_CALLBACK_URL='http://localhost:3001/auth/callback' # Must match this frontend's callback route
+GOOGLE_CALLBACK_URL='http://localhost:3002/auth/callback' # Must match this frontend's callback route
 
 # GitHub OAuth2 Credentials
 GITHUB_CLIENT_ID='your_github_client_id'
 GITHUB_CLIENT_SECRET='your_github_client_secret'
-GITHUB_CALLBACK_URL='http://localhost:3001/auth/callback' # Must match this frontend's callback route
+GITHUB_CALLBACK_URL='http://localhost:3002/auth/callback' # Must match this frontend's callback route
 
 # ...
-FRONTEND_URL='http://localhost:3001' # Ensure this is correctly set in backend too
+FRONTEND_URL='http://localhost:3002' # Ensure this is correctly set in backend too
 ```
 
+> **Note**: The default development port for this frontend is `3002`, which is reflected in the callback URLs above. The Vite preview server typically runs on `4173`.
+
 ### Running the Application
+
+To start the development server:
 
 ```bash
 pnpm run dev
 ```
 
-This will start the development server, usually accessible at `http://localhost:5173`. You can then navigate to `/login` to authenticate.
+This will start the development server, usually accessible at `http://localhost:3002`. You can then navigate to `/login` to authenticate.
 
 ### Building for Production
+
+To compile the application for production:
 
 ```bash
 pnpm run build
@@ -99,9 +107,45 @@ pnpm run build
 
 This command compiles the application for production, and the output will be in the `dist/` directory.
 
+## Detailed Guides
+
+For more in-depth information, refer to the following documentation files:
+
+*   [**User Guide**](docs/USER_GUIDE.md): How to use the application's features.
+*   [**Developer Guide**](docs/DEVELOPER_GUIDE.md): Detailed setup, coding standards, and project architecture for contributors.
+*   [**Deployment Guide**](docs/DEPLOYMENT.md): Instructions for deploying the application to various environments.
+
+## Project Structure
+
+```
+text-to-speech/
+├── public/                     # Static assets
+├── src/                        # Main application source code
+│   ├── api/                    # API client services (Axios)
+│   ├── components/             # Reusable UI components
+│   ├── hooks/                  # Custom React hooks
+│   ├── pages/                  # Page-level components (routes)
+│   ├── stores/                 # Nanostores for global state management
+│   ├── theme/                  # Material UI theme configuration
+│   ├── types/                  # TypeScript type definitions
+│   └── App.tsx                 # Main application component
+├── docs/                       # Project documentation (User, Developer, Deployment guides)
+├── kubernetes/                 # Kubernetes deployment configurations
+├── .env                        # Environment variables
+├── .editorconfig               # Editor configuration
+├── .eslintrc.ts                # ESLint configuration
+├── .gitignore                  # Files ignored by Git
+├── .dockerignore               # Files ignored by Docker
+├── Dockerfile                  # Docker build instructions
+├── package.json                # Project dependencies and scripts
+├── tsconfig.json               # TypeScript configuration
+├── vite.config.ts              # Vite build configuration
+└── README.md                   # Project README (this file)
+```
+
 ## Backend Endpoints
 
-This frontend interacts with the following backend endpoints:
+This frontend interacts with the following backend endpoints (assuming `VITE_APP_API_BASE_URL` is configured):
 
 -   `POST /api/auth/login`: Authenticates with email and password.
 -   `POST /api/auth/logout`: Invalidates the server-side session/cookie.
@@ -128,3 +172,23 @@ This frontend interacts with the following backend endpoints:
 -   **Theme:** The Material UI theme can be customized in `src/theme/index.ts`.
 -   **Tailwind CSS:** Modify `tailwind.config.js` for custom classes and design system adaptations.
 -   **Voice Names:** The `voiceName` values in the speaker configurations depend on the available voices in your Google Gemini TTS setup. Refer to Google's documentation or your backend implementation for valid voice names.
+
+## Contributing
+
+Contributions are welcome! Please see the [Developer Guide](docs/DEVELOPER_GUIDE.md) for details on how to get started.
+
+## License
+
+This project is licensed under the MIT License - see the `LICENSE` file in the main `project-board-server` repository for details.
+
+## Acknowledgements
+
+*   Thanks to Google Gemini for the powerful Text-to-Speech capabilities.
+*   Inspired by modern web development practices and tools.
+*   
+
+## 📧 Contact
+
+Eddie Villanueva - [evillan0315@gmail.com](mailto:evillan0315@gmail.com)
+[LinkedIn](https://www.linkedin.com/in/eddie-villalon/)
+[GitHub](https://github.com/evillan0315)

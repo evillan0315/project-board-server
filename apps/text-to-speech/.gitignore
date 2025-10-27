@@ -1,0 +1,21 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnpm-store
+/.pnpm-cache
+
+# build output
+/dist
+/build
+
+# editor configs
+.idea
+.vscode
+
+# misc
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.dockerignore

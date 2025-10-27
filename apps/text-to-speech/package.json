@@ -1,0 +1,50 @@
+{
+  "name": "text-to-speech",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write src/**/*.tsx src/**/*.ts",
+    "tailwind:init": "npx tailwindcss init -p"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled":"^11.11.5",
+    "@mui/icons-material": "^6",
+    "@mui/material": "^6",
+    "@nanostores/react": "^0.7.2",
+    "axios": "^1.7.2",
+    "clsx": "^2.1.1",
+    "nanostores": "^0.10.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.25.1",
+    "tailwind-merge": "^2.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.6.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^9.6.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.34.3",
+    "eslint-plugin-react-refresh": "^0.4.7",
+    "eslint-plugin-unused-imports": "^4.0.0",
+    "globals": "^15.6.0",
+    "jiti": "^2.6.1",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.5",
+    "tailwindcss": "^4",
+    "@tailwindcss/vite": "^4.0.0-alpha.17",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3"
+  }
+}

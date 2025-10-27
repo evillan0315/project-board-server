@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: project-demo-frontend
+  name: text-to-speech-frontend
   labels:
-    app: project-demo-frontend
+    app: text-to-speech-frontend
 spec:
   replicas: 2 # Recommend at least 2 replicas for high availability
   selector:
     matchLabels:
-      app: project-demo-frontend
+      app: text-to-speech-frontend
   template:
     metadata:
       labels:
-        app: project-demo-frontend
+        app: text-to-speech-frontend
     spec:
       containers:
       - name: frontend
-        image: project-demo:latest # TODO: Replace with your actual image registry and tag (e.g., your-registry/project-demo:v1.0.0)
+        image: text-to-speech-frontend:latest # TODO: Replace with your actual image registry and tag (e.g., your-registry/text-to-speech-frontend:v1.0.0)
         ports:
         - containerPort: 80 # Nginx listens on port 80
         env:

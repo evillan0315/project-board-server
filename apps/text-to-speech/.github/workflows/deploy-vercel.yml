@@ -1,0 +1,74 @@
+name: Deploy Text-to-Speech Frontend to Vercel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/text-to-speech/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'apps/text-to-speech/**'
+
+env:
+  NODE_VERSION: '20'
+  PNPM_CACHE_DIR: '~/.pnpm-store'
+
+jobs:
+  deploy-vercel:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/text-to-speech
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }} and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: | 
+          echo "PNPM_STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.PNPM_STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: | 
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm run lint
+
+      - name: Build project
+        run: pnpm run build
+
+      - name: Deploy to Vercel
+        uses: vercel/action-deploy@v5
+        with:
+          token: ${{ secrets.VERCEL_TOKEN }}
+          org-id: ${{ secrets.VERCEL_ORG_ID }}
+          project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          # Set 'cwd' to the subdirectory containing your Vercel project (where vercel.json is)
+          cwd: './apps/text-to-speech'
+          # Pass the backend API URL as an environment variable for vercel.json rewrites
+          env: |
+            VERCEL_BACKEND_API_URL=${{ secrets.VERCEL_BACKEND_API_URL }}
