@@ -1,9 +1,9 @@
 import globals from 'globals';
 import pluginJs from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import * as tseslintParser from '@typescript-eslint/parser';
+import tseslintPlugin from '@typescript-eslint/eslint-plugin';
 import pluginReact from 'eslint-plugin-react';
 import eslintConfigPrettier from 'eslint-config-prettier';
-import eslintPluginReactHooks from 'eslint-plugin-react-hooks';
 import eslintPluginReactRefresh from 'eslint-plugin-react-refresh';
 import eslintPluginUnusedImports from 'eslint-plugin-unused-imports';
 import pluginPrettier from 'eslint-plugin-prettier'; // <-- Uncommented
@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 // -----------------------------------------------------------------------------
 // ESLint configuration
 // -----------------------------------------------------------------------------
-export default tseslint.config(
+export default tseslintPlugin.configs.base.extend(
   {
     ignores: [
       'dist',
@@ -37,26 +37,26 @@ export default tseslint.config(
   },
 
   pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
+  tseslintPlugin.configs.recommended,
 
   {
     files: ['**/*.{ts,tsx}'],
     plugins: {
       react: pluginReact,
-      'react-hooks': eslintPluginReactHooks,
       'react-refresh': eslintPluginReactRefresh,
       'unused-imports': eslintPluginUnusedImports,
       prettier: pluginPrettier, // <-- Uncommented
+      '@typescript-eslint': tseslintPlugin, // Explicitly declare the plugin
     },
     languageOptions: {
-      parser: tseslint.parser,
+      parser: tseslintParser,
       parserOptions: {
         ecmaFeatures: { jsx: true },
         ecmaVersion: 'latest',
         sourceType: 'module',
         project: [
           './tsconfig.json',
-          './tsconfig.app.json',
+          // './tsconfig.app.json', // Removed: file does not exist
           './tsconfig.node.json',
         ],
         tsconfigRootDir: __dirname,
@@ -75,7 +75,7 @@ export default tseslint.config(
           alwaysTryTypes: true,
           project: [
             './tsconfig.json',
-            './tsconfig.app.json',
+            // './tsconfig.app.json', // Removed: file does not exist
             './tsconfig.node.json',
           ],
         },
@@ -94,8 +94,8 @@ export default tseslint.config(
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
 
-      // React Hooks
-      ...eslintPluginReactHooks.configs.recommended.rules,
+      // React Hooks - functionality is now included in eslint-plugin-react v7+
+      // ...eslintPluginReactHooks.configs.recommended.rules, // Removed
 
       // React Refresh
       'react-refresh/only-export-components': [
