@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: project-demo-frontend
+  labels:
+    app: project-demo-frontend
+spec:
+  replicas: 2 # Recommend at least 2 replicas for high availability
+  selector:
+    matchLabels:
+      app: project-demo-frontend
+  template:
+    metadata:
+      labels:
+        app: project-demo-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: project-demo:latest # TODO: Replace with your actual image registry and tag (e.g., your-registry/project-demo:v1.0.0)
+        ports:
+        - containerPort: 80 # Nginx listens on port 80
+        env:
+        - name: API_BASE_URL
+          # TODO: Replace with your actual backend service URL + port.
+          # Example: http://your-backend-service-name:5000
+          # Based on .env: VITE_APP_API_BASE_URL=http://localhost:5000/api implies backend is on port 5000
+          value: "http://project-board-server-backend:5000" 
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

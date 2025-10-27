@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: project-demo-frontend-service
+  labels:
+    app: project-demo-frontend
+spec:
+  selector:
+    app: project-demo-frontend
+  ports:
+    - protocol: TCP
+      port: 80 # Service port
+      targetPort: 80 # Container port (Nginx listens on 80)
+  type: ClusterIP # Use ClusterIP for internal access, an Ingress would typically expose it externally
