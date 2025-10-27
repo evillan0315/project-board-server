@@ -14,7 +14,7 @@ export default [
     },
     js.configs.recommended,
     {
-        files: ['**/*.{ts,tsx, js, jsx}'],
+        files: ['**/*.{ts,tsx}'],
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
@@ -97,7 +97,7 @@ export default [
     // 4. Prettier integration
     prettierConfig, // Disables ESLint rules that conflict with Prettier
     {
-        files: ['**/*.{ts,tsx,js,jsx,mjs,cjs}'], // Apply Prettier to all relevant code files
+        files: ['**/*.{ts,tsx,mjs,cjs}'], // Apply Prettier to all relevant code files
         plugins: {
             prettier,
         },
