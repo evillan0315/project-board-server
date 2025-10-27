@@ -40,20 +40,19 @@ export default [
   pluginJs.configs.recommended,
 
   // Recommended TypeScript rules from @typescript-eslint/eslint-plugin.
-  // These are arrays of config objects, so they need to be spread.
-  // `recommended` includes `base` internally for flat config.
-  ...tseslintPlugin.configs.recommended,
+  // `recommended` is an object for flat config.
+  tseslintPlugin.configs.recommended,
 
   // Recommended React rules from eslint-plugin-react.
-  // These are arrays of config objects, so they need to be spread.
-  ...pluginReact.configs.recommended,
-  ...pluginReact.configs['jsx-runtime'], // For React 17+ JSX transform without explicit React import
+  // These are objects for flat config.
+  pluginReact.configs.recommended,
+  pluginReact.configs['jsx-runtime'], // For React 17+ JSX transform without explicit React import
 
   {
     files: ['**/*.{ts,tsx}'],
     // Explicitly declare plugins used for rules within this specific config object.
     // Plugins for @typescript-eslint and eslint-plugin-react are implicitly handled
-    // by spreading their `configs` arrays at the top level, so no need to redeclare them here.
+    // by their respective config objects at the top level, so no need to redeclare them here.
     plugins: {
       'react-refresh': eslintPluginReactRefresh,
       'unused-imports': eslintPluginUnusedImports,
