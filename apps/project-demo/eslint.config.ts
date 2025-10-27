@@ -48,15 +48,13 @@ export default [
   pluginReact.configs.recommended,
   pluginReact.configs['jsx-runtime'], // For React 17+ JSX transform without explicit React import
 
+  // Main configuration for TypeScript and TSX files
   {
     files: ['**/*.{ts,tsx}'],
     // Explicitly declare plugins used for rules within this specific config object.
-    // Plugins for @typescript-eslint and eslint-plugin-react are implicitly handled
-    // by their respective config objects at the top level, so no need to redeclare them here.
     plugins: {
       'react-refresh': eslintPluginReactRefresh,
       'unused-imports': eslintPluginUnusedImports,
-      prettier: pluginPrettier,
     },
     languageOptions: {
       parser: tseslintParser,
@@ -122,8 +120,16 @@ export default [
           argsIgnorePattern: '^_',
         },
       ],
+    },
+  },
 
-      // Prettier rules for consistent formatting
+  // Configuration for eslint-plugin-prettier rules
+  {
+    files: ['**/*.{ts,tsx}'],
+    plugins: {
+      prettier: pluginPrettier,
+    },
+    rules: {
       'prettier/prettier': [
         'warn',
         {
