@@ -8,10 +8,9 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import unusedImports from 'eslint-plugin-unused-imports';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
-import type { Linter } from '@eslint/js'; // Import Linter type
+import type { Linter } from 'eslint'; // Corrected import for Linter type
 
 export default [
-
   {
     ignores: ['dist/**', 'node_modules/**', 'public/**', 'build/**'],
   },
@@ -19,7 +18,7 @@ export default [
   js.configs.recommended,
 
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{ts,tsx, js, jsx}'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {

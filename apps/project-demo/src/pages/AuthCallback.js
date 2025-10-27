@@ -1,17 +1,15 @@
-import React, { useEffect } from 'react';
+import { jsxs as _jsxs, jsx as _jsx, Fragment as _Fragment } from 'react/jsx-runtime';
+import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { authStore, fetchUserProfile, logoutUser } from '../stores/authStore'; // Import fetchUserProfile and logoutUser
 import { Box, Typography, CircularProgress, Alert } from '@mui/material';
 // No need to import authService here directly for getProfile as fetchUserProfile handles it
-
-export const AuthCallback: React.FC = () => {
+export const AuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
   useEffect(() => {
     const token = searchParams.get('accessToken');
     const error = searchParams.get('error');
-
     const handleAuthResult = async () => {
       if (token) {
         try {
@@ -24,11 +22,9 @@ export const AuthCallback: React.FC = () => {
             loading: true,
             error: null,
           });
-
           // 2. Fetch the user profile using the token now stored in authStore.
           // The fetchUserProfile action will update the user field and set loading to false on success.
           await fetchUserProfile();
-
           console.log('JWT Token received and stored, user profile fetched.');
           navigate('/'); // Redirect to home or dashboard after successful login
         } catch (profileError) {
@@ -38,9 +34,7 @@ export const AuthCallback: React.FC = () => {
           logoutUser(); // This will clear the token from store and localStorage, and set loading/error.
           navigate(
             '/login?error=' +
-              encodeURIComponent(
-                (profileError as Error).message || 'Failed to retrieve user profile.',
-              ),
+              encodeURIComponent(profileError.message || 'Failed to retrieve user profile.'),
           );
         }
       } else if (error) {
@@ -57,30 +51,29 @@ export const AuthCallback: React.FC = () => {
         navigate('/login');
       }
     };
-
     handleAuthResult();
   }, [searchParams, navigate]);
-
   const currentError = authStore.get().error;
-
-  return (
-    <Box className="flex flex-col items-center justify-center min-h-[50vh]" sx={{ mt: 4 }}>
-      {currentError ? (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
-        >
-          Authentication failed: {currentError}
-        </Alert>
-      ) : (
-        <>
-          <CircularProgress className="text-sky-600 dark:text-sky-950" />
-          <Typography variant="h6" sx={{ mt: 2 }} className="text-gray-700 dark:text-gray-300">
-            Authenticating...
-          </Typography>
-        </>
-      )}
-    </Box>
-  );
+  return _jsx(Box, {
+    className: 'flex flex-col items-center justify-center min-h-[50vh]',
+    sx: { mt: 4 },
+    children: currentError
+      ? _jsxs(Alert, {
+          severity: 'error',
+          sx: { mb: 2 },
+          className: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+          children: ['Authentication failed: ', currentError],
+        })
+      : _jsxs(_Fragment, {
+          children: [
+            _jsx(CircularProgress, { className: 'text-sky-600 dark:text-sky-950' }),
+            _jsx(Typography, {
+              variant: 'h6',
+              sx: { mt: 2 },
+              className: 'text-gray-700 dark:text-gray-300',
+              children: 'Authenticating...',
+            }),
+          ],
+        }),
+  });
 };

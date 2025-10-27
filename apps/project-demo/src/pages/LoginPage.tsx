@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { Box, Button, TextField, Typography, CircularProgress, Alert, Paper, Link } from '@mui/material';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  CircularProgress,
+  Alert,
+  Paper,
+  Link,
+} from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { useAuth } from '../hooks/useAuth';
@@ -37,19 +46,31 @@ export const LoginPage: React.FC = () => {
   };
 
   const paperSx = {
-    p: 4, mb: 3, borderRadius: 2, boxShadow: 3,
-    className: 'bg-white dark:bg-gray-800'
+    p: 4,
+    mb: 3,
+    borderRadius: 2,
+    boxShadow: 3,
+    className: 'bg-white dark:bg-gray-800',
   };
 
   return (
     <Box className="flex flex-col items-center justify-center p-6 max-w-md mx-auto min-h-[calc(100vh-128px)]">
-      <Typography variant="h4" component="h1" sx={{ mb: 3 }} className="font-bold text-gray-800 dark:text-gray-100">
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{ mb: 3 }}
+        className="font-bold text-gray-800 dark:text-gray-100"
+      >
         Login
       </Typography>
 
       <Paper sx={paperSx}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+          >
             {error}
           </Alert>
         )}
@@ -71,7 +92,7 @@ export const LoginPage: React.FC = () => {
               },
               '& .MuiInputLabel-root': { color: 'text.secondary' },
               '& .MuiInputBase-input': { color: 'text.primary' },
-              mb: 2
+              mb: 2,
             }}
           />
           <TextField
@@ -90,7 +111,7 @@ export const LoginPage: React.FC = () => {
               },
               '& .MuiInputLabel-root': { color: 'text.secondary' },
               '& .MuiInputBase-input': { color: 'text.primary' },
-              mb: 2
+              mb: 2,
             }}
           />
           <Button
@@ -132,7 +153,14 @@ export const LoginPage: React.FC = () => {
 
         <Typography variant="body2" sx={{ mt: 3, textAlign: 'center' }}>
           Don't have an account?{' '}
-          <Link component={RouterLink} to="/register" sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+          <Link
+            component={RouterLink}
+            to="/register"
+            sx={{
+              textDecoration: 'none',
+              '&:hover': { textDecoration: 'underline' },
+            }}
+          >
             Register
           </Link>
         </Typography>

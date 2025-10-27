@@ -1,9 +1,6 @@
 import axios from 'axios';
 import { getAuthToken } from '../stores/authStore';
-import type { TtsRequestDto } from '../types/tts';
-
 const API_BASE_URL = '/api';
-
 /**
  * Service for interacting with the Google Gemini TTS backend.
  */
@@ -15,14 +12,13 @@ export const geminiTtsService = {
    * @returns A Promise that resolves to a Blob containing the audio data.
    * @throws Error if authentication token is missing or API call fails.
    */
-  generateSpeech: async (data: TtsRequestDto): Promise<Blob> => {
+  generateSpeech: async (data) => {
     const token = getAuthToken();
     if (!token) {
       throw new Error('Authentication token is missing. Please log in.');
     }
-
     try {
-      const response = await axios.post<Blob>(`${API_BASE_URL}/google-tts/generate`, data, {
+      const response = await axios.post(`${API_BASE_URL}/google-tts/generate`, data, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -53,7 +49,7 @@ export const geminiTtsService = {
           );
         }
       } else {
-        throw new Error((error as Error).message || 'An unexpected error occurred');
+        throw new Error(error.message || 'An unexpected error occurred');
       }
     }
   },

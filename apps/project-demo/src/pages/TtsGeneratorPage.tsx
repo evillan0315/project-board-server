@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { ttsStore } from '../stores/ttsStore';
-import { authStore } from '../stores/authStore';
-import { nanoid } from 'nanoid';
 
 import {
   Box,
@@ -15,14 +13,13 @@ import {
   Alert,
   List,
   ListItem,
-  InputAdornment,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { TtsRequestDto, SpeakerDto } from '../types/tts';
+import type { TtsRequestDto } from '../types/tts';
 import { useAuth } from '../hooks/useAuth';
 
 export const TtsGeneratorPage: React.FC = () => {
@@ -43,7 +40,10 @@ export const TtsGeneratorPage: React.FC = () => {
     }
     const request: TtsRequestDto = {
       prompt,
-      speakers: speakers.map(s => ({ speaker: s.speaker, voiceName: s.voiceName })),
+      speakers: speakers.map((s) => ({
+        speaker: s.speaker,
+        voiceName: s.voiceName,
+      })),
       languageCode,
     };
     ttsStore.generateSpeech(request);
@@ -66,8 +66,11 @@ export const TtsGeneratorPage: React.FC = () => {
   };
 
   const paperSx = {
-    p: 3, mb: 3, borderRadius: 2, boxShadow: 3,
-    className: 'bg-white dark:bg-gray-800'
+    p: 3,
+    mb: 3,
+    borderRadius: 2,
+    boxShadow: 3,
+    className: 'bg-white dark:bg-gray-800',
   };
 
   return (
@@ -77,7 +80,11 @@ export const TtsGeneratorPage: React.FC = () => {
       </Typography>
 
       {!isLoggedIn && (
-        <Alert severity="warning" sx={{ mb: 3 }} className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 flex items-center justify-between">
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+          className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 flex items-center justify-between"
+        >
           You are not logged in. Please{' '}
           <RouterLink to="/login" style={{ textDecoration: 'none' }}>
             <Button variant="contained" color="primary" size="small">
@@ -131,7 +138,11 @@ export const TtsGeneratorPage: React.FC = () => {
           }}
         />
 
-        <Typography variant="h6" sx={{ mt: 2, mb: 1 }} className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+        <Typography
+          variant="h6"
+          sx={{ mt: 2, mb: 1 }}
+          className="text-lg font-semibold text-gray-700 dark:text-gray-300"
+        >
           Speakers
         </Typography>
         <List dense>
@@ -158,7 +169,9 @@ export const TtsGeneratorPage: React.FC = () => {
               <TextField
                 label={`Voice Name (e.g., Kore, Puck)`}
                 value={speakerData.voiceName}
-                onChange={(e) => ttsStore.updateSpeaker(speakerData.id, 'voiceName', e.target.value)}
+                onChange={(e) =>
+                  ttsStore.updateSpeaker(speakerData.id, 'voiceName', e.target.value)
+                }
                 variant="outlined"
                 size="small"
                 disabled={loading || !isLoggedIn}
@@ -198,7 +211,11 @@ export const TtsGeneratorPage: React.FC = () => {
         </Button>
 
         {error && (
-          <Alert severity="error" sx={{ mt: 3 }} className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+          <Alert
+            severity="error"
+            sx={{ mt: 3 }}
+            className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+          >
             {error}
           </Alert>
         )}
@@ -209,7 +226,12 @@ export const TtsGeneratorPage: React.FC = () => {
             variant="contained"
             sx={buttonSx}
             startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
-            disabled={loading || !isLoggedIn || !prompt.trim() || speakers.some(s => !s.speaker.trim() || !s.voiceName.trim())}
+            disabled={
+              loading ||
+              !isLoggedIn ||
+              !prompt.trim() ||
+              speakers.some((s) => !s.speaker.trim() || !s.voiceName.trim())
+            }
             className="w-full py-3 text-lg font-bold"
           >
             {loading ? 'Generating Speech...' : 'Generate Speech'}
@@ -219,7 +241,11 @@ export const TtsGeneratorPage: React.FC = () => {
 
       {audioUrl && (
         <Paper sx={paperSx}>
-          <Typography variant="h6" sx={{ mb: 2 }} className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+          <Typography
+            variant="h6"
+            sx={{ mb: 2 }}
+            className="text-lg font-semibold text-gray-700 dark:text-gray-300"
+          >
             Generated Audio
           </Typography>
           <audio controls src={audioUrl} className="w-full" />
