@@ -6,7 +6,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import eslintPluginReactHooks from 'eslint-plugin-react-hooks';
 import eslintPluginReactRefresh from 'eslint-plugin-react-refresh';
 import eslintPluginUnusedImports from 'eslint-plugin-unused-imports';
-import pluginPrettier from 'eslint-plugin-prettier';
+import pluginPrettier from 'eslint-plugin-prettier'; // <-- Uncommented
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -46,7 +46,7 @@ export default tseslint.config(
       'react-hooks': eslintPluginReactHooks,
       'react-refresh': eslintPluginReactRefresh,
       'unused-imports': eslintPluginUnusedImports,
-      //prettier: pluginPrettier,
+      prettier: pluginPrettier, // <-- Uncommented
     },
     languageOptions: {
       parser: tseslint.parser,
@@ -112,8 +112,8 @@ export default tseslint.config(
       'unused-imports/no-unused-imports': 'off',
       'unused-imports/no-unused-vars': 'off',
 
-      // Prettier
-      /*'prettier/prettier': [
+      // Prettier <-- Uncommented
+      'prettier/prettier': [
         'warn',
         {
           endOfLine: 'lf',
@@ -123,7 +123,7 @@ export default tseslint.config(
           trailingComma: 'all',
           printWidth: 100,
         },
-      ],*/
+      ],
     },
   },
 

@@ -93,4 +93,3 @@ export const clearLogs = () => {
   logStore.set([]);
   addLog('System', 'All logs cleared.', 'info');
 };
-

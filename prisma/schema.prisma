@@ -62,6 +62,44 @@ model User {
   Conversation       Conversation[]
   Message            Message[]
   PlaywrightTask     PlaywrightTask[]
+  members            Member[] // Add reverse relation from Member
+}
+
+// New Member model based on IMemberFull interface
+model Member {
+  id                     String              @id @default(uuid())
+  username        String
+  email           String    @unique
+  provider        String?   
+  confirmed       Boolean   
+  blocked         Boolean   
+  role            Int       // IMemberFull.role (number)
+  memberSystemId  Int       @unique @map("userId") // IMemberFull.userId. Unique identifier from the external member system.
+  jsonData        Json      @map("json_data") // Stores the entire IMemberJsonData structure as JSON
+  blockedExpire   DateTime? // IMemberFull.blockedExpire (string | null)
+  blockedStart    DateTime? // IMemberFull.blockedStart (string | null)
+  isPaid          Boolean   @map("PAID") // IMemberFull.PAID (boolean)
+  createGroup     Boolean   
+  isEmployee      Boolean   @map("EMPLOYEE") // IMemberFull.EMPLOYEE (boolean)
+  isOnline        Boolean   @map("ONLINE") // IMemberFull.ONLINE (boolean)
+  memberType      String    @map("MEMBERTYPE") // IMemberFull.MEMBERTYPE (string)
+  picture         String?   @map("PICTURE") // IMemberFull.PICTURE (string)
+  adminUser       Json?     @map("admin_user") // IMemberFull.admin_user (any | null)
+  createdAt       DateTime  @default(now()) @map("created_at") // IMemberFull.created_at (string)
+  updatedAt       DateTime  @updatedAt @map("updated_at") // IMemberFull.updated_at (string)
+  latString       String?   @map("LAT") // IMemberFull.LAT (string)
+  lonString       String?   @map("LON") // IMemberFull.LON (string)
+  userSetting     Json?     @map("usetting") // IMemberFull.usetting (any | null)
+  terms           Json?     // IMemberFull.terms (any | null)
+
+  // Standard creator relation for audit trails
+  createdById     String
+  createdBy       User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@map("members") // Map table name to "members"
+  @@index([createdById])
+  @@index([email])
+  @@index([memberSystemId]) // Add index for the external system's user ID
 }
 
 model Password {
@@ -405,7 +443,7 @@ model Form {
   id          String       @id @default(uuid())
   name        String
   fields      Json
-  createdAt   DateTime     @default(now())
+  createdAt   DateTime @default(now())
   updatedAt   DateTime     @updatedAt
   createdById String
   createdBy   User         @relation(fields: [createdById], references: [id])

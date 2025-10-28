@@ -29,7 +29,16 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
-
+        '/openvidu/api': {
+          target: env.VITE_SLS_VIDU_URL,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/openvidu\/api/, ''),
+        },
+        '/swingers': {
+          target: env.VITE_SLS_API_URL,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/swingers/, ''),
+        },
         '/socket.io': {
           target: env.VITE_WS_URL,
           changeOrigin: true,
@@ -38,11 +47,11 @@ export default defineConfig(({ mode }) => {
       },
       cors: {
         origin: ['*'],
-        methods: ['GET', 'POST', 'OPTIONS'],
+        methods: ['GET', 'POST', 'OPTIONS', 'DELETE', 'PATCH', 'PUT'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
       },
-      allowedHosts: ['app.local','localhost'],
+      allowedHosts: ['app.local','localhost', 'viduk.swinglifestyle.com', 'chatv.swinglifestyle.com'],
     },
     define: {
       'process.env.NODE_ENV': JSON.stringify(mode),
@@ -57,6 +66,10 @@ export default defineConfig(({ mode }) => {
       // Ensure VITE_API_URL and VITE_WS_URL are explicitly defined as string literals for reliable injection
       'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL),
       'import.meta.env.VITE_WS_URL': JSON.stringify(env.VITE_WS_URL),
+      'import.meta.env.VITE_SLS_API_URL': JSON.stringify(env.VITE_SLS_API_URL),
+      'import.meta.env.VITE_SLS_VIDU_URL': JSON.stringify(env.VITE_SLS_VIDU_URL),
+      'import.meta.env.VITE_SLS_API_KEY': JSON.stringify(env.VITE_SLS_API_KEY),
+      'import.meta.env.VITE_SLS_USERNAME': JSON.stringify(env.VITE_SLS_USERNAME),   
     },
   };
 });

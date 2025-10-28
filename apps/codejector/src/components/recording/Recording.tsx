@@ -30,6 +30,8 @@ import {
   isVideoModalOpenStore,
   currentPlayingVideoSrcStore,
   currentPlayingMediaTypeStore,
+  availableAudioInputDevicesStore,
+  availableVideoInputDevicesStore,
   setRecordingsList,
   setTotalRecordings,
   setRecordingsPage,
@@ -45,15 +47,28 @@ import {
   setIsVideoModalOpen,
   setCurrentPlayingVideoSrc,
   setCurrentPlayingMediaType,
+  setAvailableAudioInputDevices,
+  setAvailableVideoInputDevices,
 } from './stores/recordingStore';
 import { useStore } from '@nanostores/react';
 
 import { getFileStreamUrl } from '@/api/media';
 import { recordingApi } from './api/recording';
+import { ffmpegApi } from '@/api/ffmpeg'; // Import new ffmpegApi
 import { setLoading, isLoading } from '@/stores/loadingStore';
-import { StartCameraRecordingDto, RecordingItem, SortField, SortOrder, RecordingType } from './types/recording';
+import {
+  StartCameraRecordingDto,
+  RecordingItem,
+  SortField,
+  SortOrder,
+  RecordingType,
+  StartScreenRecordingDto,
+  DeviceDto,
+} from './types/recording';
 import VideoModal from '@/components/VideoModal';
 import path from 'path-browserify';
+import { showDialog, hideDialog } from '@/stores/dialogStore';
+import AudioDeviceSelector from './AudioDeviceSelector';
 
 const RECORDING_TYPES: RecordingType[] = ['screenRecord', 'screenShot', 'cameraRecord'];
 
@@ -80,6 +95,7 @@ export function Recording() {
   const isVideoModalOpen = useStore(isVideoModalOpenStore);
   const currentPlayingVideoSrc = useStore(currentPlayingVideoSrcStore);
   const currentPlayingMediaType = useStore(currentPlayingMediaTypeStore);
+  const availableAudioInputDevices = useStore(availableAudioInputDevicesStore);
 
   // Ref for media element
   const mediaElementRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
@@ -128,10 +144,24 @@ export function Recording() {
     setRecordingsPage,
   ]);
 
+  // Fetch available devices from API
+  const fetchAvailableDevices = useCallback(async () => {
+    setLoading('fetchDevices', true);
+    try {
+      const devices = await ffmpegApi.getAvailableDevices();
+      setAvailableAudioInputDevices(devices.audioInputDevices);
+      setAvailableVideoInputDevices(devices.videoInputDevices);
+    } finally {
+      setLoading('fetchDevices', false);
+    }
+  }, [setAvailableAudioInputDevices, setAvailableVideoInputDevices]);
+
   useEffect(() => {
     fetchRecordings();
+    fetchAvailableDevices(); // Fetch devices on component mount
   }, [
     fetchRecordings,
+    fetchAvailableDevices,
     isScreenRecording,
     currentRecordingId,
     isCameraRecording,
@@ -140,9 +170,39 @@ export function Recording() {
 
   // Screen Recording actions
   const handleStartScreenRecording = async () => {
+    if (currentRecorderSettings.enableScreenAudio) {
+      // Show dialog to select audio device
+      showDialog({
+        title: 'Select Audio Input',
+        content: (
+          <AudioDeviceSelector
+            devices={availableAudioInputDevices}
+            onSelect={async (selectedAudioDevice) => {
+              hideDialog();
+              await startScreenRecordingWithAudio(selectedAudioDevice);
+            }}
+            defaultSelection={currentRecorderSettings.screenAudioDevice}
+          />
+        ),
+        maxWidth: 'xs',
+        fullWidth: true,
+        showCloseButton: true,
+      });
+    } else {
+      // Start recording without audio
+      await startScreenRecordingWithAudio(null); // No audio device
+    }
+  };
+
+  const startScreenRecordingWithAudio = async (audioDevice: string | null) => {
     setLoading('startRecording', true);
     try {
-      const res = await recordingApi.startRecording();
+      const dto: StartScreenRecordingDto = {
+        name: `${currentRecorderSettings.namePrefix}-screen-record-${Date.now()}`,
+        enableAudio: audioDevice !== null,
+        audioDevice: audioDevice || undefined,
+      };
+      const res = await recordingApi.startRecording(dto);
       setIsScreenRecording(true);
       currentRecordingIdStore.set(res.id);
       fetchRecordings();
@@ -227,6 +287,16 @@ export function Recording() {
       } finally {
         setLoading('stopCameraRecording', false);
       }
+    }
+  };
+
+  const handleCaptureScreenshot = async () => {
+    setLoading('captureScreenshot', true);
+    try {
+      await recordingApi.capture();
+      fetchRecordings(); // Refresh the list to show the new screenshot
+    } finally {
+      setLoading('captureScreenshot', false);
     }
   };
 
@@ -363,18 +433,20 @@ export function Recording() {
         isLoading('startCameraRecording') ||
         isLoading('stopCameraRecording') ||
         isLoading('updateRecording') ||
-        isLoading('convertToGif')) && <LinearProgress />}
+        isLoading('convertToGif') ||
+        isLoading('captureScreenshot') ||
+        isLoading('fetchDevices')) && <LinearProgress />}
 
       <Box className="flex items-center justify-between">
         <RecordingControls
           isScreenRecording={isScreenRecording}
           isCameraRecording={isCameraRecording}
-          isCapturing={false}
+          isCapturing={isLoading('captureScreenshot')}
           onStartScreenRecording={handleStartScreenRecording}
           onStopScreenRecording={handleStopScreenRecording}
           onStartCameraRecording={handleStartCameraRecording}
           onStopCameraRecording={handleStopCameraRecording}
-          onCapture={() => {}}
+          onCapture={handleCaptureScreenshot}
           onOpenSettings={handleOpenSettingsDialog}
         />
         <RecordingStatus />

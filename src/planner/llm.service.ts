@@ -2,7 +2,11 @@
 // Title: LLMService extended with Google Gemini support
 // Reason: Provide the same functionality as GoogleGeminiFileService for text and file prompts.
 
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import fetch from 'node-fetch';
 import { FileChangeDto, CreatePlannerDto as PlanDto } from './dto';
 import { FileAction, RequestType } from '@prisma/client';
@@ -14,7 +18,8 @@ export class LlmService {
   private openaiKey = process.env.OPENAI_API_KEY;
   private geminiKey = process.env.GOOGLE_GEMINI_API_KEY;
   private geminiModel = process.env.GOOGLE_GEMINI_MODEL || 'gemini-2.0-flash';
-  private geminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+  private geminiBaseUrl =
+    'https://generativelanguage.googleapis.com/v1beta/models';
   private static extractJsonFromMarkdown(text: string): string {
     const jsonBlockRegex = /```json\n([\s\S]*?)\n```/;
     const match = text.match(jsonBlockRegex);
@@ -56,7 +61,7 @@ export class LlmService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.openaiKey}`,
+        Authorization: `Bearer ${this.openaiKey}`,
       },
       body: JSON.stringify(body),
     });
@@ -74,7 +79,9 @@ export class LlmService {
    */
   private async generatePlanWithGemini(prompt: string): Promise<PlanDto> {
     if (!this.geminiKey) {
-      throw new InternalServerErrorException('GOOGLE_GEMINI_API_KEY is not configured.');
+      throw new InternalServerErrorException(
+        'GOOGLE_GEMINI_API_KEY is not configured.',
+      );
     }
 
     const systemInstruction = `You are an AI Planner. Return ONLY a JSON object matching:
@@ -122,15 +129,20 @@ export class LlmService {
     }
 
     const result = await response.json();
-    
+
     const candidate = result.candidates?.[0];
     const parts = candidate?.content?.parts ?? [];
     const generatedText = parts.map((p: any) => p.text ?? '').join('');
-    console.log(LlmService.extractJsonFromMarkdown(generatedText), 'generatedText');
-    
+    console.log(
+      LlmService.extractJsonFromMarkdown(generatedText),
+      'generatedText',
+    );
+
     try {
       // Ensure Prisma FileAction enum is used
-      const plan = JSON.parse(LlmService.extractJsonFromMarkdown(generatedText)) as PlanDto;
+      const plan = JSON.parse(
+        LlmService.extractJsonFromMarkdown(generatedText),
+      ) as PlanDto;
       plan.changes = plan.changes.map((c) => ({
         ...c,
         action: (FileAction as any)[c.action.toUpperCase()],
@@ -189,4 +201,3 @@ export function ping() {
     };
   }
 }
-

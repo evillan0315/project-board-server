@@ -23,25 +23,34 @@ export class ChatService {
   /**
    * Retrieves messages for a given conversation ID, ordered by creation time.
    */
-  async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
+  async getMessagesByConversationId(
+    conversationId: string,
+  ): Promise<Message[]> {
+    // First, check if the conversation itself exists
+    const conversationExists = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { id: true }, // Only fetch ID for existence check
+    });
+
+    if (!conversationExists) {
+      throw new NotFoundException(
+        `Conversation with ID ${conversationId} not found.`,
+      );
+    }
+
+    // If conversation exists, retrieve its messages
     const messages = await this.prisma.message.findMany({
       where: { conversationId },
       orderBy: { createdAt: 'asc' },
       take: 50, // Limit history size
     });
 
-    // Note: The check below is slightly flawed. If a conversation exists but has no messages, it returns an empty array, 
-    // which is valid. A better check is to see if the conversation itself exists, but for now, we'll keep the logic.
-    if (!messages) { 
-        throw new NotFoundException(`Conversation with ID ${conversationId} not found.`);
-    }
-
-    return messages;
+    return messages; // Returns an empty array if no messages, which is a valid response
   }
-  
+
   /**
    * Retrieves a list of conversations associated with a given user ID.
-   * In a real application, this would typically involve a join/intermediate table 
+   * In a real application, this would typically involve a join/intermediate table
    * (e.g., ConversationParticipants) to find all conversations a user is part of.
    * For simplicity here, we assume the user is the creator.
    */
@@ -49,14 +58,12 @@ export class ChatService {
     const conversations = await this.prisma.conversation.findMany({
       where: { createdById: userId },
       orderBy: { createdAt: 'desc' },
-      include: {messages:true}
+      include: { messages: true },
       // You might add an 'include' here to show the last message or participants for the list view
     });
 
-    if (!conversations || conversations.length === 0) {
-      throw new NotFoundException(`No conversations found for user ID: ${userId}.`);
-    }
-
+    // Return an empty array if no conversations are found, as this is a valid state.
+    // An error should only be thrown if the userId itself is invalid or unauthorized.
     return conversations;
   }
 

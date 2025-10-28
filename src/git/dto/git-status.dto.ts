@@ -1,6 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsArray, IsBoolean, IsNumber, IsOptional } from 'class-validator';
-
+import {
+  IsString,
+  IsArray,
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+} from 'class-validator';
 
 export class GitStatusFileDto {
   @ApiProperty({ description: 'Path of the file' })
@@ -36,11 +41,17 @@ export class GitStatusResponseDto {
   @IsBoolean()
   detached: boolean;
 
-  @ApiProperty({ type: [GitStatusFileDto], description: 'List of files with their status' })
+  @ApiProperty({
+    type: [GitStatusFileDto],
+    description: 'List of files with their status',
+  })
   @IsArray()
   files: GitStatusFileDto[];
 
-  @ApiProperty({ type: [String], description: 'List of files not yet added to Git' })
+  @ApiProperty({
+    type: [String],
+    description: 'List of files not yet added to Git',
+  })
   @IsArray()
   not_added: string[];
 
@@ -60,7 +71,10 @@ export class GitStatusResponseDto {
   @IsArray()
   modified: string[];
 
-  @ApiProperty({ type: [GitStatusRenamedDto], description: 'List of renamed files' })
+  @ApiProperty({
+    type: [GitStatusRenamedDto],
+    description: 'List of renamed files',
+  })
   @IsArray()
   renamed: GitStatusRenamedDto[];
 

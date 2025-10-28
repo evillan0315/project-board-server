@@ -1,5 +1,5 @@
 import { persistentAtom } from '@/utils/persistentAtom';
-import { IRecorderSettings, RecordingItem, SortField, SortOrder, RecordingType } from '../types/recording';
+import { IRecorderSettings, RecordingItem, SortField, SortOrder, RecordingType, DeviceDto } from '../types/recording';
 
 // Existing stores
 export const currentRecordingIdStore = persistentAtom<string | null>(
@@ -81,6 +81,16 @@ export const currentPlayingMediaTypeStore = persistentAtom<
   'video' | 'gif' | 'image'
 >('currentPlayingMediaType', 'video');
 
+// New stores for available devices
+export const availableAudioInputDevicesStore = persistentAtom<DeviceDto[]>(
+  'availableAudioInputDevices',
+  [],
+);
+export const availableVideoInputDevicesStore = persistentAtom<DeviceDto[]>(
+  'availableVideoInputDevices',
+  [],
+);
+
 // Setters
 export const setIsScreenRecording = (isRecording: boolean) => {
   isScreenRecordingStore.set(isRecording);
@@ -152,15 +162,25 @@ export const setCurrentPlayingMediaType = (
   currentPlayingMediaTypeStore.set(type);
 };
 
+export const setAvailableAudioInputDevices = (devices: DeviceDto[]) => {
+  availableAudioInputDevicesStore.set(devices);
+};
+
+export const setAvailableVideoInputDevices = (devices: DeviceDto[]) => {
+  availableVideoInputDevicesStore.set(devices);
+};
+
 export const recorderSettingsStore = persistentAtom<IRecorderSettings>(
   'recorderSettings',
   {
     namePrefix: 'codejector-recording',
     screenResolution: '1920x1080',
     screenFramerate: 30,
+    enableScreenAudio: false, // New: Default to no audio for screen recording
+    screenAudioDevice: 'default', // New: Default audio device for screen recording
     cameraResolution: '1280x720',
     cameraFramerate: 30,
     cameraVideoDevice: '/dev/video0',
-    cameraAudioDevice: 'alsa_input.pci-0000_00_1b.0.analog-stereo',
+    cameraAudioDevice: 'default', // Changed default to 'default' for flexibility
   },
 );

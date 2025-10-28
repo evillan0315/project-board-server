@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_APP_API_BASE_URL: string;
+  readonly VITE_FRONTEND_PORT: string;
   // Removed VITE_APP_JWT_TOKEN as it's no longer used for mocking
   // more env variables...
 }

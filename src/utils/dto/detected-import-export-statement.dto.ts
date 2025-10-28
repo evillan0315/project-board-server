@@ -9,26 +9,30 @@ export class DetectedImportExportStatementDto {
   type: 'import' | 'export';
 
   @ApiProperty({
-    description: "The module path or name, e.g., './my-module' or 'react'. 'local' for internal exports.",
+    description:
+      "The module path or name, e.g., './my-module' or 'react'. 'local' for internal exports.",
     example: './my-module',
   })
   moduleSpecifier: string;
 
   @ApiPropertyOptional({
-    description: "Named bindings, e.g., ['Component', 'useState'] for `{ Component, useState }`.",
+    description:
+      "Named bindings, e.g., ['Component', 'useState'] for `{ Component, useState }`.",
     type: [String],
     example: ['useState', 'useEffect'],
   })
   namedBindings?: string[];
 
   @ApiPropertyOptional({
-    description: "Namespace import, e.g., 'React' for `import * as React from 'react'` (the 'React' part).",
+    description:
+      "Namespace import, e.g., 'React' for `import * as React from 'react'` (the 'React' part).",
     example: 'React',
   })
   namespaceImport?: string;
 
   @ApiPropertyOptional({
-    description: "Default import or export name, e.g., 'MyComponent' for `import MyComponent from './file'` or `export default MyComponent`.",
+    description:
+      "Default import or export name, e.g., 'MyComponent' for `import MyComponent from './file'` or `export default MyComponent`.",
     example: 'MyComponent',
   })
   defaultImport?: string;

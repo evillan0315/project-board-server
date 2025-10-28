@@ -6,7 +6,11 @@ interface ImportMetaEnv {
   readonly GITHUB_CALLBACK_URL: string;
   readonly GOOGLE_CALLBACK_URL: string;
   readonly VITE_BASE_DIR: string;
-  readonly VITE_PREVIEW_APP_URL?: string; // New: Optional URL for previewing a built application
+  readonly VITE_PREVIEW_APP_URL?: string;
+  readonly VITE_SLS_API_KEY: string;
+  readonly VITE_SLS_API_URL: string;
+  readonly VITE_SLS_USERNAME: string;
+  readonly VITE_SLS_VIDU_URL: string;
 }
 
 interface ImportMeta {

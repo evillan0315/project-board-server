@@ -29,7 +29,7 @@ interface ErrorBoundaryState {
 
 /**
  * ErrorBoundary Component
- * 
+ *
  * A React class component that catches JavaScript errors anywhere in its child component tree,
  * logs them, and displays a fallback UI instead of crashing the whole application.
  */
@@ -84,11 +84,14 @@ interface DefaultFallbackProps {
 
 /**
  * Default Fallback UI
- * 
+ *
  * Provides a user-friendly interface for displaying error messages
  * and debugging details in development mode.
  */
-const DefaultFallback: React.FC<DefaultFallbackProps> = ({ error, errorInfo }) => {
+const DefaultFallback: React.FC<DefaultFallbackProps> = ({
+  error,
+  errorInfo,
+}) => {
   const theme = useTheme();
 
   return (
@@ -130,7 +133,12 @@ const DefaultFallback: React.FC<DefaultFallbackProps> = ({ error, errorInfo }) =
             {error.message}
           </Typography>
           {errorInfo && (
-            <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              mt={1}
+            >
               {errorInfo.componentStack}
             </Typography>
           )}

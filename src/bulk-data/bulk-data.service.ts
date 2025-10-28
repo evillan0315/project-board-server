@@ -78,7 +78,9 @@ export class BulkDataService {
           await this.prisma.$executeRawUnsafe(dto.data ?? '');
           return { message: 'SQL script executed successfully.' };
         } catch (error) {
-          throw new BadRequestException(`SQL execution error: ${error.message}`);
+          throw new BadRequestException(
+            `SQL execution error: ${error.message}`,
+          );
         }
 
       default:
@@ -126,8 +128,7 @@ export class BulkDataService {
               if (typeof value === 'string')
                 return `'${value.replace(/'/g, "''")}'`;
               if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
-              if (value instanceof Date)
-                return `'${value.toISOString()}'`;
+              if (value instanceof Date) return `'${value.toISOString()}'`;
               return value;
             })
             .join(', ');

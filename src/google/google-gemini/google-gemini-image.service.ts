@@ -49,7 +49,12 @@ export class GoogleGeminiImageService {
       const base64ImageData = Buffer.from(arrayBuffer).toString('base64');
       const mimeType = response.headers.get('content-type') || 'image/jpeg'; // Attempt to get MIME type from headers
 
-      return await this.sendToGemini(base64ImageData, prompt, mimeType, requestType);
+      return await this.sendToGemini(
+        base64ImageData,
+        prompt,
+        mimeType,
+        requestType,
+      );
     } catch (error) {
       throw new HttpException(
         `Error processing image URL: ${error.message || error}`,
@@ -79,9 +84,15 @@ export class GoogleGeminiImageService {
       const base64ImageData = fs.readFileSync(absolutePath, {
         encoding: 'base64',
       });
-      const mimeType = require('mime-types').lookup(absolutePath) || 'image/jpeg'; // Use mime-types to infer
+      const mimeType =
+        require('mime-types').lookup(absolutePath) || 'image/jpeg'; // Use mime-types to infer
 
-      return await this.sendToGemini(base64ImageData, prompt, mimeType, requestType);
+      return await this.sendToGemini(
+        base64ImageData,
+        prompt,
+        mimeType,
+        requestType,
+      );
     } catch (error) {
       throw new HttpException(
         `Error processing local file: ${error.message || error}`,
@@ -104,7 +115,12 @@ export class GoogleGeminiImageService {
     requestType: RequestType = RequestType.IMAGE_CAPTIONING,
   ): Promise<string> {
     try {
-      return await this.sendToGemini(base64ImageData, prompt, mimeType, requestType);
+      return await this.sendToGemini(
+        base64ImageData,
+        prompt,
+        mimeType,
+        requestType,
+      );
     } catch (error) {
       throw new HttpException(
         `Error processing base64 image: ${error.message || error}`,

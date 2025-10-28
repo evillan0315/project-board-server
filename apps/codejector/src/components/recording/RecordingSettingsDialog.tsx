@@ -9,10 +9,19 @@ import {
   MenuItem,
   Typography,
   Box,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import { useStore } from '@nanostores/react';
 import { IRecorderSettings } from './types/recording';
-import { recorderSettingsStore, isRecordingSettingsDialogOpenStore, setIsRecordingSettingsDialogOpen } from './stores/recordingStore';
+import {
+  recorderSettingsStore,
+  isRecordingSettingsDialogOpenStore,
+  setIsRecordingSettingsDialogOpen,
+  availableAudioInputDevicesStore,
+  availableVideoInputDevicesStore,
+} from './stores/recordingStore';
+import { DeviceDto } from '@/types/refactored/media'; // Import DeviceDto
 
 interface RecordingSettingsDialogProps {
   open: boolean; // Keep for the Dialog component itself
@@ -21,11 +30,6 @@ interface RecordingSettingsDialogProps {
 
 const RESOLUTION_OPTIONS = ['1920x1080', '1280x720', '800x600'];
 const FRAMERATE_OPTIONS = [15, 24, 30, 60];
-const CAMERA_VIDEO_DEVICE_OPTIONS = ['/dev/video0', '/dev/video1'];
-const CAMERA_AUDIO_DEVICE_OPTIONS = [
-  'alsa_input.pci-0000_00_1b.0.analog-stereo',
-  'default',
-];
 
 export const RecordingSettingsDialog: React.FC<RecordingSettingsDialogProps> = ({
   open: propOpen, // Rename prop to avoid conflict with store value
@@ -33,6 +37,9 @@ export const RecordingSettingsDialog: React.FC<RecordingSettingsDialogProps> = (
 }) => {
   const currentSettings = useStore(recorderSettingsStore);
   const isSettingsDialogOpen = useStore(isRecordingSettingsDialogOpenStore);
+  const availableAudioInputDevices = useStore(availableAudioInputDevicesStore);
+  const availableVideoInputDevices = useStore(availableVideoInputDevicesStore);
+
   const [formSettings, setFormSettings] = useState<IRecorderSettings>(currentSettings);
 
   useEffect(() => {
@@ -49,6 +56,14 @@ export const RecordingSettingsDialog: React.FC<RecordingSettingsDialogProps> = (
         name === 'screenFramerate' || name === 'cameraFramerate'
           ? Number(value)
           : value,
+    }));
+  };
+
+  const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormSettings((prev) => ({
+      ...prev,
+      [name]: checked,
     }));
   };
 
@@ -114,6 +129,38 @@ export const RecordingSettingsDialog: React.FC<RecordingSettingsDialogProps> = (
           </TextField>
 
           <Typography variant="h6" sx={{ mt: 2 }}>
+            Screen Recording Audio
+          </Typography>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formSettings.enableScreenAudio}
+                onChange={handleSwitchChange}
+                name="enableScreenAudio"
+              />
+            }
+            label="Enable Audio for Screen Recording"
+          />
+          {formSettings.enableScreenAudio && (
+            <TextField
+              label="Screen Audio Device"
+              name="screenAudioDevice"
+              select
+              value={formSettings.screenAudioDevice}
+              onChange={handleChange}
+              fullWidth
+              size="small"
+              helperText="Specific audio input device (e.g., 'default', 'pulse', 'alsa_input...', '0' on macOS)"
+            >
+              {availableAudioInputDevices.map((device: DeviceDto) => (
+                <MenuItem key={device.id} value={device.id}>
+                  {device.name} ({device.id})
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+
+          <Typography variant="h6" sx={{ mt: 2 }}>
             Camera Recording
           </Typography>
           <TextField
@@ -155,11 +202,11 @@ export const RecordingSettingsDialog: React.FC<RecordingSettingsDialogProps> = (
             onChange={handleChange}
             fullWidth
             size="small"
-            helperText="Linux device path (e.g., '/dev/video0')"
+            helperText="Platform-specific video device identifier (e.g., '/dev/video0', '0' on macOS, 'Integrated Camera' on Windows)"
           >
-            {CAMERA_VIDEO_DEVICE_OPTIONS.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
+            {availableVideoInputDevices.map((device: DeviceDto) => (
+              <MenuItem key={device.id} value={device.id}>
+                {device.name} ({device.id})
               </MenuItem>
             ))}
           </TextField>
@@ -171,11 +218,11 @@ export const RecordingSettingsDialog: React.FC<RecordingSettingsDialogProps> = (
             onChange={handleChange}
             fullWidth
             size="small"
-            helperText="PulseAudio source (e.g., 'alsa_input...')"
+            helperText="Platform-specific audio device identifier (e.g., 'alsa_input...', '0' on macOS, 'Microphone' on Windows)"
           >
-            {CAMERA_AUDIO_DEVICE_OPTIONS.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
+            {availableAudioInputDevices.map((device: DeviceDto) => (
+              <MenuItem key={device.id} value={device.id}>
+                {device.name} ({device.id})
               </MenuItem>
             ))}
           </TextField>

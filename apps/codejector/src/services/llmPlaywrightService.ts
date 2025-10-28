@@ -1,5 +1,11 @@
 import axios from 'axios';
-import { PlaywrightOutputDto, ScrapeUrlDto, ScreenshotUrlDto, RecordScreenDto, PerformMultipleTasksDto } from '@/types/IPlaywrightTypes';
+import {
+  PlaywrightOutputDto,
+  ScrapeUrlDto,
+  ScreenshotUrlDto,
+  RecordScreenDto,
+  PerformMultipleTasksDto,
+} from '@/types/IPlaywrightTypes';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -13,9 +19,13 @@ export const llmPlaywrightService = {
    * @returns A promise that resolves to PlaywrightOutputDto.
    */
   scrapeUrl: async (data: ScrapeUrlDto): Promise<PlaywrightOutputDto> => {
-    const response = await axios.post(`${BASE_URL}/api/llm-playwright/scrape`, data, {
-      withCredentials: true,
-    });
+    const response = await axios.post(
+      `${BASE_URL}/api/llm-playwright/scrape`,
+      data,
+      {
+        withCredentials: true,
+      },
+    );
     return response.data;
   },
 
@@ -24,10 +34,16 @@ export const llmPlaywrightService = {
    * @param data The DTO containing URL and screenshot options.
    * @returns A promise that resolves to PlaywrightOutputDto.
    */
-  takeScreenshot: async (data: ScreenshotUrlDto): Promise<PlaywrightOutputDto> => {
-    const response = await axios.post(`${BASE_URL}/api/llm-playwright/screenshot`, data, {
-      withCredentials: true,
-    });
+  takeScreenshot: async (
+    data: ScreenshotUrlDto,
+  ): Promise<PlaywrightOutputDto> => {
+    const response = await axios.post(
+      `${BASE_URL}/api/llm-playwright/screenshot`,
+      data,
+      {
+        withCredentials: true,
+      },
+    );
     return response.data;
   },
 
@@ -36,10 +52,16 @@ export const llmPlaywrightService = {
    * @param data The DTO containing URL and recording options.
    * @returns A promise that resolves to PlaywrightOutputDto.
    */
-  startRecording: async (data: RecordScreenDto): Promise<PlaywrightOutputDto> => {
-    const response = await axios.post(`${BASE_URL}/api/llm-playwright/start-recording`, data, {
-      withCredentials: true,
-    });
+  startRecording: async (
+    data: RecordScreenDto,
+  ): Promise<PlaywrightOutputDto> => {
+    const response = await axios.post(
+      `${BASE_URL}/api/llm-playwright/start-recording`,
+      data,
+      {
+        withCredentials: true,
+      },
+    );
     return response.data;
   },
 
@@ -48,9 +70,13 @@ export const llmPlaywrightService = {
    * @returns A promise that resolves to PlaywrightOutputDto.
    */
   stopRecording: async (): Promise<PlaywrightOutputDto> => {
-    const response = await axios.post(`${BASE_URL}/api/llm-playwright/stop-recording`, {}, {
-      withCredentials: true,
-    });
+    const response = await axios.post(
+      `${BASE_URL}/api/llm-playwright/stop-recording`,
+      {},
+      {
+        withCredentials: true,
+      },
+    );
     return response.data;
   },
 
@@ -59,10 +85,16 @@ export const llmPlaywrightService = {
    * @param data The DTO containing the tasks to perform.
    * @returns A promise that resolves to PlaywrightOutputDto.
    */
-  performMultipleTasks: async (data: PerformMultipleTasksDto): Promise<PlaywrightOutputDto> => {
-    const response = await axios.post(`${BASE_URL}/api/llm-playwright/perform-tasks`, data, {
-      withCredentials: true,
-    });
+  performMultipleTasks: async (
+    data: PerformMultipleTasksDto,
+  ): Promise<PlaywrightOutputDto> => {
+    const response = await axios.post(
+      `${BASE_URL}/api/llm-playwright/perform-tasks`,
+      data,
+      {
+        withCredentials: true,
+      },
+    );
     return response.data;
   },
 };

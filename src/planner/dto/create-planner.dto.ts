@@ -33,7 +33,8 @@ export class FileChangeDto {
   action: FileAction;
 
   @ApiPropertyOptional({
-    description: 'Optional unified diff to apply instead of providing full newContent.',
+    description:
+      'Optional unified diff to apply instead of providing full newContent.',
     example: '--- a/src/old.ts\n+++ b/src/old.ts\n@@ ...',
   })
   @IsString()
@@ -96,4 +97,3 @@ export class CreatePlannerDto {
   @IsDefined()
   changes: FileChangeDto[];
 }
-

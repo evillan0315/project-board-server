@@ -251,7 +251,6 @@ export function isFile(filePath: string): boolean {
   return path.extname(filePath) !== '';
 }
 
-
 /**
  * Extracts the file extension from a given file path.
  * Returns an empty string if no extension is found or if it's a directory.

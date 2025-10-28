@@ -7,7 +7,10 @@ export class CommitDto {
   @IsNotEmpty()
   message: string;
 
-  @ApiPropertyOptional({ description: 'Optional project root path for the Git repository', example: '/path/to/my/repo' })
+  @ApiPropertyOptional({
+    description: 'Optional project root path for the Git repository',
+    example: '/path/to/my/repo',
+  })
   @IsOptional()
   @IsString()
   projectRoot?: string;
@@ -47,12 +50,18 @@ export class GitCommitDto {
 }
 
 export class RevertCommitDto {
-  @ApiProperty({ description: 'The commit hash to revert to, or "HEAD" to revert the last commit' })
+  @ApiProperty({
+    description:
+      'The commit hash to revert to, or "HEAD" to revert the last commit',
+  })
   @IsString()
   @IsNotEmpty()
   commitHash: string;
 
-  @ApiPropertyOptional({ description: 'Optional project root path for the Git repository', example: '/path/to/my/repo' })
+  @ApiPropertyOptional({
+    description: 'Optional project root path for the Git repository',
+    example: '/path/to/my/repo',
+  })
   @IsOptional()
   @IsString()
   projectRoot?: string;

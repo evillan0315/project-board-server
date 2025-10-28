@@ -2,6 +2,8 @@
 
 This document outlines how to containerize the `text-to-speech` frontend application using Docker and deploy it to a Kubernetes cluster.
 
+**For Vercel-specific deployments using GitHub Actions, please refer to the [Vercel Deployment Guide](VERCEL_GITHUB_ACTIONS.md).**
+
 ## 1. Dockerization
 
 ### Overview

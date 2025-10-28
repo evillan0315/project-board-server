@@ -70,7 +70,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = ({
  
        <Box>
          <AudioVisualizer />
-          </Box>
+      </Box>
  
       </Box>
     </Box>

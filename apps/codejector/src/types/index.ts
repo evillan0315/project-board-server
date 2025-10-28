@@ -4,7 +4,6 @@ export * from './auth';
 export * from './conversation';
 export * from './file';
 export * from './gemini';
-export * from './git';
 export * from './llm';
 export * from './main';
 export * from './material-ui.d';

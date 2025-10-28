@@ -33,7 +33,8 @@ export class PlaywrightOutputDto {
   screenshotBase64?: string;
 
   @ApiPropertyOptional({
-    description: 'The path to the recorded video file on the server, relative to the project root.',
+    description:
+      'The path to the recorded video file on the server, relative to the project root.',
     example: 'downloads/recordings/my-session-12345.webm',
   })
   @IsOptional()

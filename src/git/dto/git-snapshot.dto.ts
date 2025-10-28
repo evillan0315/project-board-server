@@ -5,7 +5,9 @@ export class CreateSnapshotDto {
   @ApiProperty({ description: 'Name of the snapshot (Git tag) to create' })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[a-zA-Z0-9_\-]+$/, { message: 'Snapshot name must be alphanumeric, dashes, or underscores' })
+  @Matches(/^[a-zA-Z0-9_\-]+$/, {
+    message: 'Snapshot name must be alphanumeric, dashes, or underscores',
+  })
   snapshotName: string;
 
   @ApiPropertyOptional({ description: 'Optional message for the snapshot tag' })
@@ -13,7 +15,10 @@ export class CreateSnapshotDto {
   @IsString()
   message?: string;
 
-  @ApiPropertyOptional({ description: 'Optional project root path for the Git repository', example: '/path/to/my/repo' })
+  @ApiPropertyOptional({
+    description: 'Optional project root path for the Git repository',
+    example: '/path/to/my/repo',
+  })
   @IsOptional()
   @IsString()
   projectRoot?: string;
@@ -25,7 +30,10 @@ export class RestoreSnapshotDto {
   @IsNotEmpty()
   snapshotName: string;
 
-  @ApiPropertyOptional({ description: 'Optional project root path for the Git repository', example: '/path/to/my/repo' })
+  @ApiPropertyOptional({
+    description: 'Optional project root path for the Git repository',
+    example: '/path/to/my/repo',
+  })
   @IsOptional()
   @IsString()
   projectRoot?: string;
@@ -42,7 +50,10 @@ export class DeleteSnapshotDto {
   @IsNotEmpty()
   snapshotName: string;
 
-  @ApiPropertyOptional({ description: 'Optional project root path for the Git repository', example: '/path/to/my/repo' })
+  @ApiPropertyOptional({
+    description: 'Optional project root path for the Git repository',
+    example: '/path/to/my/repo',
+  })
   @IsOptional()
   @IsString()
   projectRoot?: string;

@@ -79,14 +79,14 @@ const FileTreeHeader: React.FC<FileTreeHeaderProps> = ({
   const pageHeaderActions: GlobalAction[] = [
     {
       id: 'add-file',
-      icon: NoteAddIcon,
+      icon: <NoteAddIcon />,
       label: 'New File',
       action: () => onAddFileFolder('file', projectRoot),
       disabled: isFetchingTree || !projectRoot,
     },
     {
       id: 'add-folder',
-      icon: CreateNewFolderIcon,
+      icon: <CreateNewFolderIcon />,
       label: 'New Folder',
       action: () => onAddFileFolder('folder', projectRoot),
       disabled: isFetchingTree || !projectRoot,
@@ -100,6 +100,7 @@ const FileTreeHeader: React.FC<FileTreeHeaderProps> = ({
       actions={pageHeaderActions}
       sticky // Keep sticky behavior
       sx={{px:1}}
+      iconOnly={true}
     />
   );
 };

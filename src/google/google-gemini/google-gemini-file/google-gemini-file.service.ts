@@ -343,8 +343,7 @@ export class GoogleGeminiFileService {
 
       //generatedText += geminiApiResult.fullText ?? '';
       let n = 1;
-      
-     
+
       while (geminiApiResult.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
         this.logger.warn(
           'Gemini output truncated (MAX_TOKENS), requesting continuation...',
@@ -372,7 +371,6 @@ export class GoogleGeminiFileService {
         );
 
         generatedText += geminiApiResult.fullText ?? '';
-         
       }
       await this.saveGeminiInteraction(
         currentUserId,

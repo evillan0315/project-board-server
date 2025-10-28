@@ -2,14 +2,14 @@
  * FilePath: src/stores/snackbarStore.ts
  * Title: Global Snackbar Store with Logging Integration
  * Reason: Provides a globally accessible snackbar (toast) state using Nanostores,
- *          enabling consistent user notifications across the application and 
+ *          enabling consistent user notifications across the application and
  *          automatic integration with the global log store.
  */
 
 import { atom } from 'nanostores';
 import { addLog } from './logStore';
 
-/** 
+/**
  * Allowed snackbar severities for clarity and type-safety.
  * Mirrors Material UI's supported snackbar alert types.
  */
@@ -19,8 +19,8 @@ export type SnackbarSeverity = 'success' | 'info' | 'warning' | 'error';
  * Describes the current state of the global snackbar.
  */
 export interface SnackbarState {
-  open: boolean;             // Whether the snackbar is visible
-  message: string;           // The message displayed in the snackbar
+  open: boolean; // Whether the snackbar is visible
+  message: string; // The message displayed in the snackbar
   severity: SnackbarSeverity; // Type of snackbar for visual styling
 }
 

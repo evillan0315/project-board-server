@@ -149,7 +149,7 @@ const OpenedFileViewer: React.FC<OpenedFileViewerProps> = () => {
           </Typography>
         </Box>
       ) : (
-       <>
+        <>
           {isMarkdownFile ? (
             <MarkdownEditor
               value={$openedFileContent || ''}
@@ -167,7 +167,7 @@ const OpenedFileViewer: React.FC<OpenedFileViewerProps> = () => {
               additionalExtensions={[saveKeymapExtension]} // Pass the custom keymap
             />
           )}
-       </>
+        </>
       )}
     </Box>
   );

@@ -20,7 +20,7 @@ import { JsonYamlController } from './json-yaml/json-yaml.controller';
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
 import { ConversationService } from '../conversation/conversation.service';
 import { JsonFixModule } from './json-fix/json-fix.module';
-import { ImportExportDetectorService } from './import-export-detector.service'; 
+import { ImportExportDetectorService } from './import-export-detector.service';
 @Module({
   imports: [
     // 👇 Import the module that provides ModuleControlService
@@ -44,7 +44,7 @@ import { ImportExportDetectorService } from './import-export-detector.service';
     JsonFixService,
     GoogleGeminiFileService,
     ConversationService,
-    ImportExportDetectorService
+    ImportExportDetectorService,
   ],
   exports: [
     EncodingService,
@@ -52,7 +52,7 @@ import { ImportExportDetectorService } from './import-export-detector.service';
     JsDocToMarkdownService,
     HighlightCodeService,
     JsonFixService,
-    ImportExportDetectorService
+    ImportExportDetectorService,
   ],
 })
 export class UtilsModule {}

@@ -16,6 +16,7 @@ interface PageHeaderProps {
   sticky?: boolean;
   /** Optional custom styling for the root Paper component. */
   sx?: SxProps;
+  iconOnly?: boolean;
 }
 
 /**
@@ -59,11 +60,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   actions,
   sticky = false,
   sx,
+  iconOnly
 }) => {
   const theme = useTheme();
 
   return (
-    <Paper className='gap-2' sx={(t) => ({ ...headerPaperSx(t, sticky), ...sx })}>
+    <Paper className='gap-2 w-full' sx={(t) => ({ ...headerPaperSx(t, sticky), ...sx })}>
       <Box className="flex-grow">
         {typeof title === 'string' ? (
           <Typography
@@ -78,7 +80,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         )}
       </Box>
       {actions && actions.length > 0 && (
-        <GlobalActionButton globalActions={actions} />
+        <GlobalActionButton globalActions={actions} iconOnly={iconOnly}/>
       )}
     </Paper>
   );

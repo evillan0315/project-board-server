@@ -66,17 +66,13 @@ export const AuthCallback: React.FC = () => {
   return (
     <Box className="flex flex-col items-center justify-center min-h-[50vh]" sx={{ mt: 4 }}>
       {currentError ? (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
-        >
+        <Alert severity="error" sx={{ mb: 2 }}>
           Authentication failed: {currentError}
         </Alert>
       ) : (
         <>
-          <CircularProgress className="text-sky-600 dark:text-sky-950" />
-          <Typography variant="h6" sx={{ mt: 2 }} className="text-gray-700 dark:text-gray-300">
+          <CircularProgress />
+          <Typography variant="h6" sx={{ mt: 2, color: 'text.secondary' }}>
             Authenticating...
           </Typography>
         </>

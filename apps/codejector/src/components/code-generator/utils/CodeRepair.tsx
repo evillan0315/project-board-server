@@ -20,12 +20,16 @@ export const CodeRepair: React.FC<CodeRepairProps> = ({
   return (
     <Box
       sx={{
+        flexGrow: 1,
         display: 'flex',
         flexDirection: 'column',
-        width: '100%',
+        height: '100%',
+        maxHeight: '100%',
+        overflowY: 'hidden',
         position: 'relative',
       }}
     >
+
       <CodeMirrorEditor
         value={value}
         onChange={onChange}
@@ -33,6 +37,8 @@ export const CodeRepair: React.FC<CodeRepairProps> = ({
         height={height ? height : '100%'}
         width={width ? width : '100%'}
       />
+  
     </Box>
   );
 };
+

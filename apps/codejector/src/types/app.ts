@@ -2,6 +2,7 @@ import React from 'react';
 import { SvgIconComponent } from '@mui/icons-material';
 import { RequestType, LlmOutputFormat } from './llm';
 import { FileEntry } from './refactored/fileTree';
+import { ButtonColor, ButtonVariant } from '@mui/material/Button';
 
 // =========================================================================
 // App & UI Component Types
@@ -44,4 +45,14 @@ export interface ContextMenuState {
   y: number;
   items: ContextMenuItem[];
   targetFile: FileEntry | null; // The FileEntry that the context menu was opened for
+}
+
+export interface GlobalAction {
+  label?: string; // Made optional as component might not need a label for GlobalActionButton
+  action?: () => void; // Made optional as component might not need an action for GlobalActionButton
+  icon?: React.ReactNode;
+  color?: ButtonColor;
+  variant?: ButtonVariant;
+  disabled?: boolean;
+  component?: React.ReactNode; // NEW: Allow rendering a custom React component directly
 }

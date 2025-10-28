@@ -143,13 +143,11 @@ const Footer = () => {
         }}
       >
         <Box className="flex justify-start items-center">
-          <Box className='flex-grow relative'>
-          <MediaPlayerContainer />
-         </Box>
+          <Box className="flex-grow relative">
+            <MediaPlayerContainer />
+          </Box>
         </Box>
-        <Box className="flex justify-start items-center gap-4 w-1/4 pl-4">
-          
-        </Box>
+        <Box className="flex justify-start items-center gap-4 w-1/4 pl-4"></Box>
         <Box className="flex justify-center items-center w-1/2 max-w-[600px]">
           <IconButton
             color="inherit"
@@ -158,21 +156,21 @@ const Footer = () => {
           >
             <DynamicIcon iconName="CarbonTerminal" />
           </IconButton>
-           <Box className='flex items-center flex-shrink'>
-          <RecordingControls
-            isScreenRecording={isScreenRecording}
-            isCameraRecording={isCameraRecording}
-            isCapturing={isCapturing}
-            onStartScreenRecording={handleStartScreenRecording}
-            onStopScreenRecording={handleStopScreenRecording}
-            onStartCameraRecording={handleStartCameraRecording}
-            onStopCameraRecording={handleStopCameraRecording}
-            onCapture={handleCaptureScreenshot}
-            onOpenSettings={handleOpenSettings} // Use local handleOpenSettings
-          />
-     
+          <Box className="flex items-center flex-shrink">
+            <RecordingControls
+              isScreenRecording={isScreenRecording}
+              isCameraRecording={isCameraRecording}
+              isCapturing={isCapturing}
+              onStartScreenRecording={handleStartScreenRecording}
+              onStopScreenRecording={handleStopScreenRecording}
+              onStartCameraRecording={handleStartCameraRecording}
+              onStopCameraRecording={handleStopCameraRecording}
+              onCapture={handleCaptureScreenshot}
+              onOpenSettings={handleOpenSettings} // Use local handleOpenSettings
+            />
+
             <RecordingStatus />
-         </Box>
+          </Box>
         </Box>
       </Box>
 

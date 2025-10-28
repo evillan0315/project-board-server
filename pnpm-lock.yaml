@@ -290,6 +290,9 @@ importers:
       openapi3-ts:
         specifier: ^4.5.0
         version: 4.5.0
+      openvidu-node-client:
+        specifier: ^2.25.0
+        version: 2.25.0
       papaparse:
         specifier: ^5.5.3
         version: 5.5.3
@@ -3706,6 +3709,9 @@ packages:
     resolution: {integrity: sha512-NZKeq9AfyQvEeNlN0zSYAaWrmBffJh3IELMZfRpJVWgrpEbtEpnjvzqBPf+mxoI287JohRDoa+/nsfqqiZmF6g==}
     engines: {node: '>= 6.0.0'}
 
+  axios@0.27.2:
+    resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
+
   axios@1.9.0:
     resolution: {integrity: sha512-re4CqKTJaURpzbLHtIi6XpDv20/CnpXOtjRY5/CU32L8gU8ek9UIivcfvSWvmKEngmVbrUtPpdDwWDWL7DNHvg==}
 
@@ -6607,6 +6613,9 @@ packages:
 
   openapi3-ts@4.5.0:
     resolution: {integrity: sha512-jaL+HgTq2Gj5jRcfdutgRGLosCy/hT8sQf6VOy+P+g36cZOjI1iukdPnijC+4CmeRzg/jEllJUboEic2FhxhtQ==}
+
+  openvidu-node-client@2.25.0:
+    resolution: {integrity: sha512-EWKPnUL/ooJTJr0vy6Cf5Cs+8F7pNuRZR0cbL6Bk0wBAn2zXtUhCKvudE5Uq5BZM+XX87FJ7b5N/UV+K+GEr6Q==}
 
   option@0.2.4:
     resolution: {integrity: sha512-pkEqbDyl8ou5cpq+VsnQbe/WlEy5qS7xPzMS1U55OCG9KPvwFD46zDbxQIj3egJSFc3D+XhYOPUzz49zQAVy7A==}
@@ -12645,6 +12654,13 @@ snapshots:
 
   aws-ssl-profiles@1.1.2: {}
 
+  axios@0.27.2:
+    dependencies:
+      follow-redirects: 1.15.9(debug@4.4.3)
+      form-data: 4.0.4
+    transitivePeerDependencies:
+      - debug
+
   axios@1.9.0:
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.3)
@@ -16248,6 +16264,13 @@ snapshots:
   openapi3-ts@4.5.0:
     dependencies:
       yaml: 2.8.0
+
+  openvidu-node-client@2.25.0:
+    dependencies:
+      axios: 0.27.2
+      buffer: 6.0.3
+    transitivePeerDependencies:
+      - debug
 
   option@0.2.4: {}
 

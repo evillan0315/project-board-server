@@ -36,6 +36,7 @@ import {
   CreateRecordingDto,
   PaginationRecordingResultDto,
   PaginationRecordingQueryDto,
+  StartRecordingDto, // Import the updated DTO
 } from './dto/create-recording.dto';
 import { UpdateRecordingDto } from './dto/update-recording.dto';
 import { StartRecordingResponseDto } from './dto/start-recording-response.dto';
@@ -138,7 +139,7 @@ export class RecordingController {
 
   @Post('record-start')
   @Roles(UserRole.ADMIN, UserRole.USER)
-  @ApiOperation({ summary: 'Start screen recording.' })
+  @ApiOperation({ summary: 'Start screen recording with optional audio.' })
   @ApiOkResponse({
     description: 'Recording started.',
     type: StartRecordingResponseDto,
@@ -146,8 +147,9 @@ export class RecordingController {
   @ApiBadRequestResponse({ description: 'Invalid input.' })
   async start(
     @CurrentUser('id') userId: string,
+    @Body() dto: StartRecordingDto, // Accept StartRecordingDto
   ): Promise<StartRecordingResponseDto> {
-    return this.recordingService.startRecording(userId);
+    return this.recordingService.startRecording(userId, dto);
   }
 
   @Post('record-stop')
@@ -171,7 +173,8 @@ export class RecordingController {
   @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({
     summary: 'Start camera recording.',
-    description: 'Initiates a camera recording session. Specify camera device, resolution, and FPS. Records indefinitely until stopped or for a specified duration.',
+    description:
+      'Initiates a camera recording session. Specify camera device, resolution, and FPS. Records indefinitely until stopped or for a specified duration.',
   })
   @ApiCreatedResponse({
     description: 'Camera recording started successfully.',
@@ -193,7 +196,8 @@ export class RecordingController {
   @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({
     summary: 'Stop camera recording.',
-    description: 'Stops an active camera recording session identified by its ID.',
+    description:
+      'Stops an active camera recording session identified by its ID.',
   })
   @ApiOkResponse({
     description: 'Camera recording stopped successfully.',
@@ -221,10 +225,7 @@ export class RecordingController {
     type: CreateRecordingDto,
   })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
-  create(
-    @CurrentUser('id') userId: string,
-    @Body() dto: CreateRecordingDto,
-  ) {
+  create(@CurrentUser('id') userId: string, @Body() dto: CreateRecordingDto) {
     return this.recordingService.create(dto);
   }
 
@@ -264,10 +265,7 @@ export class RecordingController {
   @ApiOperation({ summary: 'Find recording by ID.' })
   @ApiOkResponse({ description: 'Record found.', type: CreateRecordingDto })
   @ApiNotFoundResponse({ description: 'Record not found.' })
-  findOne(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  findOne(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.recordingService.findOne(id, userId);
   }
 
@@ -293,10 +291,7 @@ export class RecordingController {
   @ApiOperation({ summary: 'Delete recording by ID.' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
-  remove(
-    @CurrentUser('id') userId: string,
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.recordingService.remove(id, userId);
   }
 }

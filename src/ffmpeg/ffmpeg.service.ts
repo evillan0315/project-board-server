@@ -145,7 +145,7 @@ export class FfmpegService {
         const output = pactlList.stdout.toString();
         const lines = output.split('\n');
         for (const line of lines) {
-          // Example: 0	alsa_input.pci-0000_00_1b.0.analog-stereo	module-alsa-card.c	s.input	0	44100	2	0	0
+          // Example: 0\talsa_input.pci-0000_00_1b.0.analog-stereo\tmodule-alsa-card.c\ts.input\t0\t44100\t2\t0\t0
           const parts = line.split(/\s+/);
           if (parts.length > 1) {
             const id = parts[1]; // e.g., alsa_input.pci-0000_00_1b.0.analog-stereo
@@ -211,7 +211,7 @@ export class FfmpegService {
           if (deviceNameMatch) {
             currentDeviceName = deviceNameMatch[1].trim();
           }
-          const devicePathMatch = line.match(/\s*(/dev/video\d+)/);
+          const devicePathMatch = line.match(/\s*(\/dev\/video\d+)/); // ESCAPED FORWARD SLASHES
           if (devicePathMatch && currentDeviceName) {
             const id = devicePathMatch[1];
             videoDevices.push({ id, name: currentDeviceName, type: DeviceType.VIDEO_INPUT });
@@ -577,7 +577,7 @@ export class FfmpegService {
         '-f',
         'pulse',
         '-i',
-        audioInput, // Use the determined audio device
+        audioInput,
         ...commonOutputArgs,
         outputPath,
       ];

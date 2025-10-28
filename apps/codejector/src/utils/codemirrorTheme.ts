@@ -1,4 +1,4 @@
-import path from 'path-browserify'; 
+import path from 'path-browserify';
 import { EditorView } from '@codemirror/view';
 import { type Theme } from '@mui/material';
 import { LanguageSupport } from '@codemirror/language';

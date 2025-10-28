@@ -9,32 +9,39 @@ import RestoreIcon from '@mui/icons-material/Restore';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 interface GitSnapshotContextMenuProps {
-  contextMenu: { mouseX: number; mouseY: number; snapshot: string } | null;
+  anchorEl: HTMLElement | null;
+  open: boolean;
   onClose: () => void;
   loading: boolean;
-  onRestoreSnapshot: (snapshotName: string) => Promise<void>;
+  selectedSnapshot: string | null;
+  onRestoreSnapshot: (snapshotName: string) => void;
   onDeleteSnapshot: (snapshotName: string) => void;
 }
 
 export function GitSnapshotContextMenu({
-  contextMenu,
+  anchorEl,
+  open,
   onClose,
   loading,
+  selectedSnapshot,
   onRestoreSnapshot,
   onDeleteSnapshot,
 }: GitSnapshotContextMenuProps) {
-  const targetSnapshot = contextMenu?.snapshot || '';
+  const targetSnapshot = selectedSnapshot;
 
   return (
     <Menu
-      open={contextMenu !== null}
+      open={open}
       onClose={onClose}
-      anchorReference="point"
-      anchorPosition={
-        contextMenu !== null
-          ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
-          : undefined
-      }
+      anchorEl={anchorEl}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'left',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'left',
+      }}
     >
       {targetSnapshot && (
         <MenuItem onClick={() => { onRestoreSnapshot(targetSnapshot); onClose(); }} disabled={loading}>

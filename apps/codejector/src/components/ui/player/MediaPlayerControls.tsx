@@ -71,7 +71,7 @@ interface MediaPlayerControlsProps {
 
 const MediaPlayerControls: React.FC<MediaPlayerControlsProps> = () => {
   const theme = useTheme();
-  const { loading, mediaElement } = useStore($mediaStore);
+  const { isFetchingMedia, mediaElement } = useStore($mediaStore); // Corrected: use isFetchingMedia
   const isPlaying = useStore(isPlayingAtom);
   const shuffle = useStore(shuffleAtom);
   const repeatMode = useStore(repeatModeAtom);
@@ -115,7 +115,7 @@ const MediaPlayerControls: React.FC<MediaPlayerControlsProps> = () => {
     [mediaElement, setTrackProgress],
   );
 
-  const isPlayerDisabled = !currentTrack || !mediaElement || loading;
+  const isPlayerDisabled = !currentTrack || !mediaElement || isFetchingMedia; // Corrected: use isFetchingMedia
 
   return (
     <Box
@@ -181,7 +181,7 @@ const MediaPlayerControls: React.FC<MediaPlayerControlsProps> = () => {
                 borderRadius: '50%',
               }}
             >
-              {loading ? (
+              {isFetchingMedia ? ( // Corrected: use isFetchingMedia
                 <CircularProgress size={20} color="inherit" />
               ) : isPlaying ? (
                 <Pause fontSize="small" />

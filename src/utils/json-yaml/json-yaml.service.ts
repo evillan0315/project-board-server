@@ -10,9 +10,9 @@ export class JsonYamlService {
    */
   jsonToYaml(json: Record<string, unknown>): string {
     try {
-      return yaml.dump(json, { 
+      return yaml.dump(json, {
         noRefs: true,
-        lineWidth: -1 // Prevent line wrapping
+        lineWidth: -1, // Prevent line wrapping
       });
     } catch (err) {
       throw new Error(`Failed to convert JSON to YAML: ${err.message}`);
@@ -26,7 +26,7 @@ export class JsonYamlService {
     try {
       // First clean the YAML string by removing markdown code blocks
       const cleanedYaml = this.cleanYamlString(yamlStr);
-      
+
       // Try to parse directly
       return yaml.load(cleanedYaml) as Record<string, unknown>;
     } catch (err) {
@@ -71,16 +71,16 @@ export class JsonYamlService {
    */
   fixYamlSyntax(yamlStr: string): string {
     let fixedYaml = yamlStr;
-    
+
     // Fix 1: Ensure proper indentation for lists
     fixedYaml = fixedYaml.replace(/(\w+:)\s*-\s*/g, '$1\n  - ');
-    
+
     // Fix 2: Properly escape newContent field to prevent YAML parsing issues
     fixedYaml = this.escapeNewContent(fixedYaml);
-    
+
     // Fix 3: Ensure consistent 2-space indentation
     fixedYaml = fixedYaml.replace(/\t/g, '  '); // Replace tabs with spaces
-    
+
     return fixedYaml;
   }
 
@@ -92,10 +92,10 @@ export class JsonYamlService {
     let inNewContent = false;
     let newContentIndent = 0;
     const result: string[] = [];
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       // Check if we're entering a newContent block
       if (line.includes('newContent:') && line.trim().endsWith('|')) {
         inNewContent = true;
@@ -103,11 +103,14 @@ export class JsonYamlService {
         result.push(line);
         continue;
       }
-      
+
       // If we're in a newContent block, escape YAML special characters
       if (inNewContent) {
         // Check if we've exited the newContent block
-        if (line.trim().length > 0 && line.indexOf(line.trim()) <= newContentIndent) {
+        if (
+          line.trim().length > 0 &&
+          line.indexOf(line.trim()) <= newContentIndent
+        ) {
           inNewContent = false;
         } else {
           // Escape any YAML-like content within newContent
@@ -118,10 +121,10 @@ export class JsonYamlService {
           continue;
         }
       }
-      
+
       result.push(line);
     }
-    
+
     return result.join('\n');
   }
 
@@ -130,7 +133,7 @@ export class JsonYamlService {
    */
   validateYaml(yamlStr: string): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
-    
+
     try {
       const cleanedYaml = this.cleanYamlString(yamlStr);
       yaml.load(cleanedYaml);

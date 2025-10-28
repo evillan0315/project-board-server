@@ -128,10 +128,10 @@ export const loadInitialTree = async (projectRoot: string) => {
   fileTreeStore.setKey('lastFetchedProjectRoot', projectRoot); // Set this immediately to indicate a fetch is in progress for this root
 
   try {
-     if (!isConnected.get()) socketService.connect(getToken(), projectRoot);
+    if (!isConnected.get()) socketService.connect(getToken(), projectRoot);
     // Fetch top-level directories and files
     const apiNodes = await fetchDirectoryContents(projectRoot);
-    console.log(apiNodes, 'apiNodes')
+    //console.log(apiNodes, 'apiNodes');
     const initialTreeNodes: FileEntry[] = apiNodes.map((node) => ({
       ...node,
       depth: 0,

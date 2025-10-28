@@ -1,17 +1,26 @@
+/**
+ * Represents credentials for email/password login.
+ */
+export interface LoginCredentials {
+  email: string;
+  passwordHash: string; // Typically password is sent, backend handles hashing.
+}
+
+/**
+ * Represents the profile of an authenticated user.
+ */
 export interface UserProfile {
   id: string;
   email: string;
-  name?: string;
-  image?: string;
-  role: 'USER' | 'ADMIN' | 'MANAGER' | 'SUPERADMIN'; // Mirroring backend Role enum
-  username?: string;
-  provider?: 'google' | 'github';
-  accessToken?: string;
+  firstName?: string;
+  lastName?: string;
+  roles?: string[];
 }
 
-export interface AuthState {
-  isLoggedIn: boolean;
-  user: UserProfile | null;
-  loading: boolean; // Indicates if auth status is being loaded (e.g., on app start)
-  error: string | null;
+/**
+ * Represents the response received after a successful login or token validation.
+ */
+export interface AuthResponse {
+  token: string;
+  user: UserProfile;
 }

@@ -115,42 +115,47 @@ export class MediaService {
   }
 
   // Replace the ffprobe import with this implementation
-private async getMediaDuration(filePath: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const ffprobe = spawn('ffprobe', [
-      '-v', 'error',
-      '-show_entries', 'format=duration',
-      '-of', 'default=noprint_wrappers=1:nokey=1',
-      filePath
-    ]);
+  private async getMediaDuration(filePath: string): Promise<number> {
+    return new Promise((resolve, reject) => {
+      const ffprobe = spawn('ffprobe', [
+        '-v',
+        'error',
+        '-show_entries',
+        'format=duration',
+        '-of',
+        'default=noprint_wrappers=1:nokey=1',
+        filePath,
+      ]);
 
-    let output = '';
-    let errorOutput = '';
-    
-    ffprobe.stdout.on('data', (data) => output += data.toString());
-    ffprobe.stderr.on('data', (data) => errorOutput += data.toString());
+      let output = '';
+      let errorOutput = '';
 
-    ffprobe.on('close', (code) => {
-      if (code === 0) {
-        const duration = parseFloat(output.trim());
-        if (isNaN(duration)) {
-          this.logger.warn(`Could not parse duration from ffprobe output: ${output}`);
-          resolve(0);
+      ffprobe.stdout.on('data', (data) => (output += data.toString()));
+      ffprobe.stderr.on('data', (data) => (errorOutput += data.toString()));
+
+      ffprobe.on('close', (code) => {
+        if (code === 0) {
+          const duration = parseFloat(output.trim());
+          if (isNaN(duration)) {
+            this.logger.warn(
+              `Could not parse duration from ffprobe output: ${output}`,
+            );
+            resolve(0);
+          } else {
+            resolve(duration);
+          }
         } else {
-          resolve(duration);
+          this.logger.warn(`FFprobe failed for ${filePath}: ${errorOutput}`);
+          resolve(0);
         }
-      } else {
-        this.logger.warn(`FFprobe failed for ${filePath}: ${errorOutput}`);
-        resolve(0);
-      }
-    });
+      });
 
-    ffprobe.on('error', (err) => {
-      this.logger.warn(`FFprobe error for ${filePath}: ${err.message}`);
-      resolve(0);
+      ffprobe.on('error', (err) => {
+        this.logger.warn(`FFprobe error for ${filePath}: ${err.message}`);
+        resolve(0);
+      });
     });
-  });
-}
+  }
   private async fetchYoutubeMetadata(url: string, cookieFile?: string) {
     return new Promise<any>((resolve, reject) => {
       const args = ['-j', url];
@@ -295,13 +300,12 @@ private async getMediaDuration(filePath: string): Promise<number> {
     const result: { songId?: string; videoId?: string } = {};
 
     if (fileType === FileType.AUDIO) {
-
       let duration = metadata?.duration ?? 0;
-    
-    // If metadata doesn't have duration or it's 0, try to get it from the file
-    if ((duration === 0 || !duration) && filePath) {
-      duration = await this.getMediaDuration(filePath);
-    }
+
+      // If metadata doesn't have duration or it's 0, try to get it from the file
+      if ((duration === 0 || !duration) && filePath) {
+        duration = await this.getMediaDuration(filePath);
+      }
       const artistName =
         metadata?.artist || metadata?.uploader || 'Unknown Artist';
       const albumTitle = metadata?.album || 'Unknown Album';
@@ -920,7 +924,7 @@ private async getMediaDuration(filePath: string): Promise<number> {
       where: { path: absoluteFilePath, createdById: userId },
       include: { metadata: true },
     });
-  
+
     if (existingFile) {
       this.logger.debug(`File already exists in DB: ${absoluteFilePath}`);
 
@@ -992,28 +996,34 @@ private async getMediaDuration(filePath: string): Promise<number> {
       }
       return existingFile; // Return existing file, either with existing thumbnail or if it's not a video
     }
-  
+
     // Get file stats
     const fileStats = await fs.promises.stat(absoluteFilePath);
     const fileSize = BigInt(fileStats.size);
     const fileNameWithExt = path.basename(absoluteFilePath);
     const fileTitle = path.parse(fileNameWithExt).name;
     const fileExtension = path.extname(absoluteFilePath).toLowerCase();
-    const mimeType = MIME_TYPES_MAP[fileExtension] || 'application/octet-stream';
+    const mimeType =
+      MIME_TYPES_MAP[fileExtension] || 'application/octet-stream';
     const newFileId = uuidv4();
-  
+
     // Create folder structure based on the actual file path
-    const relativePath = path.relative(baseScanDirectory, path.dirname(absoluteFilePath));
-    const pathSegments = relativePath.split(path.sep).filter(segment => segment !== '' && segment !== '.');
-    
+    const relativePath = path.relative(
+      baseScanDirectory,
+      path.dirname(absoluteFilePath),
+    );
+    const pathSegments = relativePath
+      .split(path.sep)
+      .filter((segment) => segment !== '' && segment !== '.');
+
     let currentParentFolderId: string | null = null;
     let currentPath = baseScanDirectory;
-  
+
     // Find or create the base scan directory folder
     let parentFolder = await this.prisma.folder.findFirst({
       where: { path: baseScanDirectory, createdById: userId },
     });
-  
+
     if (!parentFolder) {
       parentFolder = await this.prisma.folder.create({
         data: {
@@ -1026,15 +1036,15 @@ private async getMediaDuration(filePath: string): Promise<number> {
       this.logger.log(`Created base scan folder: ${parentFolder.path}`);
     }
     currentParentFolderId = parentFolder.id;
-  
+
     // Create nested folder structure
     for (const segment of pathSegments) {
       currentPath = path.join(currentPath, segment);
-      
+
       let folder = await this.prisma.folder.findFirst({
         where: { path: currentPath, createdById: userId },
       });
-  
+
       if (!folder) {
         folder = await this.prisma.folder.create({
           data: {
@@ -1048,13 +1058,17 @@ private async getMediaDuration(filePath: string): Promise<number> {
       }
       currentParentFolderId = folder.id;
     }
-  
+
     // Generate thumbnail if needed
     let thumbnailUrl: string | null = null;
     if (fileType === FileType.VIDEO && ffmpegAvailable) {
-      thumbnailUrl = await this._generateThumbnail(absoluteFilePath, newFileId, userId);
+      thumbnailUrl = await this._generateThumbnail(
+        absoluteFilePath,
+        newFileId,
+        userId,
+      );
     }
-  
+
     // Process media content
     const { songId, videoId } = await this._processMediaContentAndLinkToPrisma(
       fileType,
@@ -1063,7 +1077,7 @@ private async getMediaDuration(filePath: string): Promise<number> {
       undefined,
       absoluteFilePath,
     );
-  
+
     // Create file entry
     const file = await this.prisma.file.create({
       data: {
@@ -1092,12 +1106,10 @@ private async getMediaDuration(filePath: string): Promise<number> {
       },
       include: { metadata: true },
     });
-  
+
     this.logger.log(`Created file entry from scan: ${file.path}`);
     return file;
   }
-
- 
 
   async findAllPaginated(
     query: PaginationMediaQueryDto,

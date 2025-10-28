@@ -7,10 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { LlmService } from './llm.service';
 import { ExecutorService } from './executor.service';
-import {
-  FileChangeDto,
-  CreatePlannerDto as PlanDto,
-} from './dto';
+import { FileChangeDto, CreatePlannerDto as PlanDto } from './dto';
 import { validatePlan } from './validator';
 
 @Injectable()
@@ -25,7 +22,9 @@ export class PlannerService {
   /**
    * Generate a plan from a free-form prompt using the LLM and validate the result.
    */
-  async planFromPrompt(prompt: string): Promise<{ planId: string; plan: PlanDto }> {
+  async planFromPrompt(
+    prompt: string,
+  ): Promise<{ planId: string; plan: PlanDto }> {
     const raw = await this.llm.generatePlan(prompt);
     validatePlan(raw as unknown); // Throws on invalid
     const id = uuidv4();
@@ -62,7 +61,10 @@ export class PlannerService {
     if (!p) throw new Error('plan not found');
     const chunks = this.chunkPlan(planId);
     if (!chunks || !chunks[chunkIndex]) throw new Error('chunk not found');
-    return this.executor.snapshotAndApply(p.title || planId, chunks[chunkIndex]);
+    return this.executor.snapshotAndApply(
+      p.title || planId,
+      chunks[chunkIndex],
+    );
   }
 
   /**
@@ -76,11 +78,13 @@ export class PlannerService {
     }
 
     try {
-      const res = await this.executor.snapshotAndApply(plan.title || 'plan', plan.changes);
+      const res = await this.executor.snapshotAndApply(
+        plan.title || 'plan',
+        plan.changes,
+      );
       return { ok: true, result: res };
     } catch (err) {
       return { ok: false, error: (err as Error).message };
     }
   }
 }
-

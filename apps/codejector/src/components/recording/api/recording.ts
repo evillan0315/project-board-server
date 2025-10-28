@@ -1,4 +1,4 @@
-import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '../../../api';
+import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api/fetch';
 
 import {
   RecordingStartResponse,
@@ -12,15 +12,17 @@ import {
   RecordingStatusDto,
   StartCameraRecordingDto,
   CameraRecordingResponseDto,
+  StartScreenRecordingDto, // Import the new DTO
 } from '../types/recording';
 
 export const recordingApi = {
-  startRecording: async () => {
+  startRecording: async (dto: StartScreenRecordingDto) => { // Accept the new DTO
     try {
       const response = await fetchWithAuth(
         `${API_BASE_URL}/recording/record-start`,
         {
           method: 'POST',
+          body: JSON.stringify(dto),
         },
       );
       return handleResponse<RecordingStartResponse>(response);

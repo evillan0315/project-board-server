@@ -8,7 +8,13 @@ import { FileModule } from '../file/file.module'; // Ensure FileModule is import
 import { UtilsModule } from '../utils/utils.module'; // For detectLanguage or other utilities
 
 @Module({
-  imports: [GoogleModule, ConfigModule, ModuleControlModule, FileModule, UtilsModule],
+  imports: [
+    GoogleModule,
+    ConfigModule,
+    ModuleControlModule,
+    FileModule,
+    UtilsModule,
+  ],
   providers: [LlmPlaywrightService],
   controllers: [LlmPlaywrightController],
   exports: [LlmPlaywrightService], // Export if other modules might need to use it

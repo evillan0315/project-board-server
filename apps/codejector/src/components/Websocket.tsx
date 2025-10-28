@@ -9,7 +9,7 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 
 export default function WebSocketDemo() {
   const { isConnected, messages, sendMessage } = useWebSocket(
-    'wss://viduk.swinglifestyle.com?sessionId=bdsm&token=tok_ZX1tNBg6X8OXPj1o'
+    'wss://viduk.swinglifestyle.com?sessionId=bdsm&token=tok_ZX1tNBg6X8OXPj1o',
   );
 
   useEffect(() => {

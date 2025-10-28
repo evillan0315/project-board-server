@@ -12,6 +12,7 @@ import {
   AppBar,
   Toolbar,
   Paper,
+  DialogActions
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useStore } from '@nanostores/react';
@@ -169,15 +170,15 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
             {children}
           </Box>
           {footerActionButton && (
-            <Box
-              sx={{
+            <DialogActions sx={{
                 p: 2,
                 bgcolor: theme.palette.background.default,
                 borderTop: `1px solid ${theme.palette.divider}`,
-              }}
-            >
+                justifyContent: `${position === 'left' ? 'flex-end' : 'flex-start' }`,
+              }}>
+
               <GlobalActionButton globalActions={footerActionButton} />
-            </Box>
+            </DialogActions>
           )}
         </Box>
       )}

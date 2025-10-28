@@ -1,4 +1,3 @@
-// src/ffmpeg/ffmpeg.controller.ts
 import {
   Controller,
   Post,
@@ -7,6 +6,7 @@ import {
   HttpStatus,
   BadRequestException,
   InternalServerErrorException,
+  Get,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,6 +15,7 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiResponse,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 import { join } from 'path';
 import { stat, mkdir } from 'fs/promises';
@@ -32,12 +33,26 @@ import {
   TranscodeGifResponseDto,
 } from './dto/transcode-gif.dto';
 
+import { DevicesListDto } from './dto/device.dto';
+
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('FFmpeg Transcoding')
 @Controller('api/ffmpeg')
 export class FfmpegController {
   constructor(private readonly ffmpegService: FfmpegService) {}
+
+  @Get('devices')
+  @Roles(UserRole.ADMIN, UserRole.USER)
+  @ApiOperation({
+    summary: 'List available audio and video input devices for recording.',
+    description: 'Retrieves a list of detected microphones and cameras on the server, which can be used for recording.',
+  })
+  @ApiOkResponse({ description: 'List of available devices.', type: DevicesListDto })
+  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Failed to list devices.' })
+  async listDevices(): Promise<DevicesListDto> {
+    return this.ffmpegService.listInputDevices();
+  }
 
   @Post('transcode-gif')
   @Roles(UserRole.ADMIN, UserRole.USER) // Or adjust roles as needed

@@ -16,10 +16,10 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import DriveFileMoveIcon from '@mui/icons-material/DriveFileMove';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
-import { GitStatusResult } from './types/git';
+import { IGitStatusResult } from './types/git';
 
 interface GitStatusSectionProps {
-  status: GitStatusResult | null;
+  status: IGitStatusResult | null;
   loading: boolean;
   selectedStagedFiles: string[];
   setSelectedStagedFiles: React.Dispatch<React.SetStateAction<string[]>>;

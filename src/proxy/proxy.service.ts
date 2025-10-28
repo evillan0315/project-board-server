@@ -23,14 +23,22 @@ export class ProxyService {
     private readonly configService: ConfigService,
   ) {
     const domains = this.configService.get<string>('ALLOWED_PROXY_DOMAINS');
-    this.allowedProxyDomains = domains ? domains.split(',').map(d => d.trim().toLowerCase()) : [];
+    this.allowedProxyDomains = domains
+      ? domains.split(',').map((d) => d.trim().toLowerCase())
+      : [];
     this.frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
-    this.logger.log(`Configured ALLOWED_PROXY_DOMAINS: [${this.allowedProxyDomains.join(', ')}]`);
-    this.logger.log(`Configured FRONTEND_URL for CORS/CSP: ${this.frontendUrl || 'Not set, defaulting to dynamic origin or *'}`);
+    this.logger.log(
+      `Configured ALLOWED_PROXY_DOMAINS: [${this.allowedProxyDomains.join(', ')}]`,
+    );
+    this.logger.log(
+      `Configured FRONTEND_URL for CORS/CSP: ${this.frontendUrl || 'Not set, defaulting to dynamic origin or *'}`,
+    );
 
     if (this.allowedProxyDomains.length === 0) {
-      this.logger.warn('No ALLOWED_PROXY_DOMAINS configured. Proxying to any external domain is a significant security risk (Server-Side Request Forgery - SSRF).');
+      this.logger.warn(
+        'No ALLOWED_PROXY_DOMAINS configured. Proxying to any external domain is a significant security risk (Server-Side Request Forgery - SSRF).',
+      );
     }
   }
 
@@ -47,12 +55,17 @@ export class ProxyService {
     try {
       const parsedTargetUrl = new URL(targetUrl);
       const targetHostname = parsedTargetUrl.hostname.toLowerCase();
-      return this.allowedProxyDomains.some(allowedDomain => {
+      return this.allowedProxyDomains.some((allowedDomain) => {
         // Direct match or subdomain match (e.g., "sub.example.com" matches "example.com")
-        return targetHostname === allowedDomain || targetHostname.endsWith(`.${allowedDomain}`);
+        return (
+          targetHostname === allowedDomain ||
+          targetHostname.endsWith(`.${allowedDomain}`)
+        );
       });
     } catch (e) {
-      this.logger.error(`Failed to parse target URL for domain check: ${targetUrl}. Error: ${(e as Error).message}`);
+      this.logger.error(
+        `Failed to parse target URL for domain check: ${targetUrl}. Error: ${(e as Error).message}`,
+      );
       return false;
     }
   }
@@ -63,14 +76,22 @@ export class ProxyService {
    * @param req The incoming Express request object.
    * @param res The outgoing Express response object.
    */
-  async proxyUrl(proxyUrlDto: ProxyUrlDto, req: Request, res: Response): Promise<void> {
+  async proxyUrl(
+    proxyUrlDto: ProxyUrlDto,
+    req: Request,
+    res: Response,
+  ): Promise<void> {
     const target = proxyUrlDto.url;
-    this.logger.debug(`Incoming proxy request for URL: ${target} from origin: ${req.headers.origin}`);
+    this.logger.debug(
+      `Incoming proxy request for URL: ${target} from origin: ${req.headers.origin}`,
+    );
 
     // URL validation is now handled by the ValidationPipe and ProxyUrlDto
 
     if (!this.isTargetDomainAllowed(target)) {
-      throw new BadRequestException(`Proxying to target URL domain '${new URL(target).hostname}' is not permitted by server configuration.`);
+      throw new BadRequestException(
+        `Proxying to target URL domain '${new URL(target).hostname}' is not permitted by server configuration.`,
+      );
     }
 
     try {
@@ -90,11 +111,17 @@ export class ProxyService {
 
       for (const key in req.headers) {
         const headerValue = req.headers[key];
-        if (req.headers.hasOwnProperty(key) && !sensitiveHeaders.includes(key.toLowerCase()) && headerValue !== undefined) {
+        if (
+          req.headers.hasOwnProperty(key) &&
+          !sensitiveHeaders.includes(key.toLowerCase()) &&
+          headerValue !== undefined
+        ) {
           headersToForward[key] = headerValue;
         }
       }
-      this.logger.debug(`Forwarding headers: ${JSON.stringify(Object.keys(headersToForward))}`);
+      this.logger.debug(
+        `Forwarding headers: ${JSON.stringify(Object.keys(headersToForward))}`,
+      );
 
       // Perform the actual HTTP GET request to the target URL
       const response: AxiosResponse<any> = await firstValueFrom(
@@ -117,11 +144,19 @@ export class ProxyService {
         corsOrigin = this.frontendUrl; // Prioritize configured frontend URL
       } else if (req.headers.origin) {
         corsOrigin = req.headers.origin;
-        this.logger.warn(`FRONTEND_URL not set. Using dynamic Access-Control-Allow-Origin: ${corsOrigin}. For better security, consider setting FRONTEND_URL explicitly.`);
+        this.logger.warn(
+          `FRONTEND_URL not set. Using dynamic Access-Control-Allow-Origin: ${corsOrigin}. For better security, consider setting FRONTEND_URL explicitly.`,
+        );
       }
       res.setHeader('Access-Control-Allow-Origin', corsOrigin);
-      res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
+      res.setHeader(
+        'Access-Control-Allow-Methods',
+        'GET,HEAD,PUT,PATCH,POST,DELETE',
+      );
+      res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Accept, Authorization',
+      );
       res.setHeader('Access-Control-Allow-Credentials', 'true');
 
       // Determine Content-Security-Policy: frame-ancestors directive
@@ -134,17 +169,31 @@ export class ProxyService {
         frameAncestors = `'self' ${this.frontendUrl}`;
       } else {
         frameAncestors = `'*'`; // Default to allow all for embedding if no explicit FRONTEND_URL
-        this.logger.warn(`FRONTEND_URL not set. Using permissive CSP 'frame-ancestors *'. Consider setting FRONTEND_URL for tighter security.`);
+        this.logger.warn(
+          `FRONTEND_URL not set. Using permissive CSP 'frame-ancestors *'. Consider setting FRONTEND_URL for tighter security.`,
+        );
       }
-      res.setHeader('Content-Security-Policy', `frame-ancestors ${frameAncestors}`);
+      res.setHeader(
+        'Content-Security-Policy',
+        `frame-ancestors ${frameAncestors}`,
+      );
 
       // Forward Content-Type from the original response, default to binary stream
-      res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
+      res.setHeader(
+        'Content-Type',
+        response.headers['content-type'] || 'application/octet-stream',
+      );
 
       // Forward other relevant headers from the proxied response (e.g., Cache-Control, ETag, Last-Modified)
       // Exclude transfer-encoding as it might conflict with Node.js streaming and is often managed automatically.
-      const headersToCopy = ['cache-control', 'expires', 'last-modified', 'etag', 'content-length'];
-      headersToCopy.forEach(header => {
+      const headersToCopy = [
+        'cache-control',
+        'expires',
+        'last-modified',
+        'etag',
+        'content-length',
+      ];
+      headersToCopy.forEach((header) => {
         if (response.headers[header]) {
           res.setHeader(header, response.headers[header]);
         }
@@ -153,24 +202,35 @@ export class ProxyService {
       // Pipe the upstream response stream directly to the client's response
       response.data.pipe(res);
       this.logger.debug(`Successfully streamed content from: ${target}`);
-
     } catch (error) {
       if (error instanceof AxiosError) {
-        this.logger.error(`Axios HTTP error during proxy for ${target}: ${error.message}`, error.stack);
+        this.logger.error(
+          `Axios HTTP error during proxy for ${target}: ${error.message}`,
+          error.stack,
+        );
         // If the upstream server responded with an error, forward its status and data.
         if (error.response) {
           res.status(error.response.status).send(error.response.data);
           return;
         } else if (error.code === 'ECONNABORTED') {
           // Timeout error
-          throw new InternalServerErrorException(`Proxy request to ${target} timed out after 15 seconds.`);
+          throw new InternalServerErrorException(
+            `Proxy request to ${target} timed out after 15 seconds.`,
+          );
         } else {
           // Other network errors (DNS, connection refused, etc.)
-          throw new InternalServerErrorException(`Network error while trying to reach ${target}: ${error.message}`);
+          throw new InternalServerErrorException(
+            `Network error while trying to reach ${target}: ${error.message}`,
+          );
         }
       } else {
-        this.logger.error(`Unexpected server error during proxy for ${target}: ${(error as Error).message}`, (error as Error).stack);
-        throw new InternalServerErrorException(`An unexpected server error occurred while processing the proxy request for ${target}.`);
+        this.logger.error(
+          `Unexpected server error during proxy for ${target}: ${(error as Error).message}`,
+          (error as Error).stack,
+        );
+        throw new InternalServerErrorException(
+          `An unexpected server error occurred while processing the proxy request for ${target}.`,
+        );
       }
     }
   }

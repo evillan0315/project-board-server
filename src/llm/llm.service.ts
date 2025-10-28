@@ -213,7 +213,15 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
   }
   async generateProjectStructure(
     rootPath: string,
-    ignorePatterns: string[] = ['node_modules', '.git', 'dist', 'build', 'postgres', 'downloads', 'icons'],
+    ignorePatterns: string[] = [
+      'node_modules',
+      '.git',
+      'dist',
+      'build',
+      'postgres',
+      'downloads',
+      'icons',
+    ],
   ): Promise<string> {
     const walk = async (dir: string, depth = 0): Promise<string> => {
       const entries = await fs.readdir(dir, { withFileTypes: true });

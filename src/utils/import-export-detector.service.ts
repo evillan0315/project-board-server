@@ -88,7 +88,9 @@ export class ImportExportDetectorService {
         // For `export { original as alias }`, getAliasNode() returns 'alias', getName() returns 'original'
         // Using getAliasNode()?.getText() as a workaround for a potential ts-morph type definition issue
         // where getAlias() is reported as non-existent.
-        namedBindings.push(namedExport.getAliasNode()?.getText() || namedExport.getName());
+        namedBindings.push(
+          namedExport.getAliasNode()?.getText() || namedExport.getName(),
+        );
       }
 
       // Handle `export * from './module'`
@@ -114,7 +116,9 @@ export class ImportExportDetectorService {
         if (statement.isExported()) {
           const declarationNames: string[] = [];
           if (statement.isKind(ts.SyntaxKind.VariableStatement)) {
-            statement.getDeclarations().forEach((d) => declarationNames.push(d.getName()));
+            statement
+              .getDeclarations()
+              .forEach((d) => declarationNames.push(d.getName()));
           } else if (
             statement.isKind(ts.SyntaxKind.FunctionDeclaration) ||
             statement.isKind(ts.SyntaxKind.ClassDeclaration)
@@ -127,14 +131,16 @@ export class ImportExportDetectorService {
             statements.push({
               type: 'export',
               moduleSpecifier: 'local',
-              defaultImport: declarationNames.length > 0 ? declarationNames[0] : undefined, // Fallback for unnamed default exports or if there's no explicit name
+              defaultImport:
+                declarationNames.length > 0 ? declarationNames[0] : undefined, // Fallback for unnamed default exports or if there's no explicit name
               rawStatement: statement.getText(),
             });
           } else {
             statements.push({
               type: 'export',
               moduleSpecifier: 'local',
-              namedBindings: declarationNames.length > 0 ? declarationNames : undefined,
+              namedBindings:
+                declarationNames.length > 0 ? declarationNames : undefined,
               rawStatement: statement.getText(),
             });
           }

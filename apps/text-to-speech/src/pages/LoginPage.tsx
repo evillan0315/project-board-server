@@ -9,9 +9,11 @@ import {
   Alert,
   Paper,
   Link,
+  Stack,
 } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver'; // Import the chosen icon
 import { useAuth } from '../hooks/useAuth';
 
 export const LoginPage: React.FC = () => {
@@ -38,15 +40,11 @@ export const LoginPage: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    // In a production environment, the backend's `FRONTEND_URL` environment variable
-    // should be correctly configured to generate the full OAuth callback URL.
-    // The frontend should not hardcode or infer its own port for this.
-    window.location.href = `/api/auth/google`;
+    window.location.href = `/api/auth/google?cli_port=${import.meta.env.VITE_FRONTEND_PORT}`;
   };
 
   const handleGitHubLogin = () => {
-    // Same as Google login, rely on backend's `FRONTEND_URL` for callback construction.
-    window.location.href = `/api/auth/github`;
+    window.location.href = `/api/auth/github?cli_port=${import.meta.env.VITE_FRONTEND_PORT}`;
   };
 
   const paperSx = {
@@ -54,27 +52,27 @@ export const LoginPage: React.FC = () => {
     mb: 3,
     borderRadius: 2,
     boxShadow: 3,
-    className: 'bg-white dark:bg-gray-800',
+    bgcolor: 'background.paper', // Rely on theme for background color
   };
 
   return (
     <Box className="flex flex-col items-center justify-center p-6 max-w-md mx-auto min-h-[calc(100vh-128px)]">
-      <Typography
-        variant="h4"
-        component="h1"
-        sx={{ mb: 3 }}
-        className="font-bold text-gray-800 dark:text-gray-100"
+      {/* Logo Section */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1}
+        sx={{ mb: 4, color: 'primary.main' }}
       >
-        Login
-      </Typography>
+        <RecordVoiceOverIcon sx={{ fontSize: 60 }} />
+        <Typography variant="h3" component="div" className="font-extrabold">
+          Gemini TTS
+        </Typography>
+      </Stack>
 
       <Paper sx={paperSx}>
         {error && (
-          <Alert
-            severity="error"
-            sx={{ mb: 2 }}
-            className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
-          >
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
@@ -155,7 +153,7 @@ export const LoginPage: React.FC = () => {
           </Button>
         </Box>
 
-        <Typography variant="body2" sx={{ mt: 3, textAlign: 'center' }}>
+        <Typography variant="body2" sx={{ mt: 3, textAlign: 'center', color: 'text.secondary' }}>
           Don't have an account?{' '}
           <Link
             component={RouterLink}
@@ -163,6 +161,7 @@ export const LoginPage: React.FC = () => {
             sx={{
               textDecoration: 'none',
               '&:hover': { textDecoration: 'underline' },
+              color: 'primary.main',
             }}
           >
             Register

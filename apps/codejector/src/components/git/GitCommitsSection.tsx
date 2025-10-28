@@ -13,13 +13,13 @@ import {
 import HistoryIcon from '@mui/icons-material/History';
 import RestoreIcon from '@mui/icons-material/Restore';
 
-import { GitCommit } from './types/git';
+import { IGitCommit } from './types/git';
 
 interface GitCommitsSectionProps {
-  commits: GitCommit[];
+  commits: IGitCommit[];
   loading: boolean;
   onRevertCommit: (commitHash: string) => void;
-  onCommitContextMenu: (event: React.MouseEvent, commit: GitCommit) => void;
+  onCommitContextMenu: (event: React.MouseEvent, commit: IGitCommit) => void;
 }
 
 const sectionPaperSx = {

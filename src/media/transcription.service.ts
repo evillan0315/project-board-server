@@ -53,10 +53,10 @@ export class TranscriptionService {
     filePath: string,
   ): Promise<TranscriptionResult> {
     return new Promise((resolve, reject) => {
-      // Use the python from your virtual environment
+      // Prioritize environment variable, otherwise use Python from project's virtual environment
       const pythonPath =
         process.env.PYTHON_PATH ||
-        '/home/eddie/.asdf/installs/python/3.12.12/bin/python3.12'; 
+        path.join(process.cwd(), '.venv', 'bin', 'python3.12');
       const scriptPath = path.join(process.cwd(), 'transcribe.py');
 
       this.logger.debug(`Starting transcription with Python: ${pythonPath}`);

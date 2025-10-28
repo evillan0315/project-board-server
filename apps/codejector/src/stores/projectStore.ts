@@ -10,7 +10,7 @@ export interface ProjectState {
 
 export const projectStore = map<ProjectState>({
   projects: [],
-  currentProject: {id: 'dc4fabb0-34cc-4421-a473-9a360d203f52'} || null,
+  currentProject: { id: 'dc4fabb0-34cc-4421-a473-9a360d203f52' } || null,
   loading: false,
   error: null,
 });

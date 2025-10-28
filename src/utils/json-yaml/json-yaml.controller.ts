@@ -232,10 +232,10 @@ export class JsonYamlController {
       this.jsonYamlService.yamlToJson(body.yaml);
       return { isValid: true, message: 'YAML syntax is valid' };
     } catch (error) {
-      return { 
-        isValid: false, 
+      return {
+        isValid: false,
         errors: [error.message],
-        message: 'YAML syntax contains errors'
+        message: 'YAML syntax contains errors',
       };
     }
   }
@@ -246,7 +246,8 @@ export class JsonYamlController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Fix common YAML syntax issues',
-    description: 'Attempts to fix common YAML syntax issues like multiline keys and indentation problems.',
+    description:
+      'Attempts to fix common YAML syntax issues like multiline keys and indentation problems.',
   })
   @ApiBody({ type: FixYamlDto })
   @ApiQuery({
@@ -266,22 +267,22 @@ export class JsonYamlController {
   ): FixYamlResponseDto {
     const fixedYaml = this.jsonYamlService.fixYamlSyntax(body.yaml);
     let filePath: string | undefined;
-    
+
     if (save === 'true') {
       filePath = this.jsonYamlService.saveResult(
         fixedYaml,
         'fixed-output.yaml',
       );
     }
-    
+
     return {
       originalYaml: body.yaml,
       fixedYaml,
       fixesApplied: [
         'Quoted multiline keys',
         'Fixed indentation',
-        'Standardized YAML syntax'
-      ]
+        'Standardized YAML syntax',
+      ],
     };
   }
 
@@ -314,7 +315,8 @@ export class JsonYamlController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Upload and fix YAML file',
-    description: 'Uploads a YAML file and attempts to fix common syntax issues.',
+    description:
+      'Uploads a YAML file and attempts to fix common syntax issues.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiQuery({

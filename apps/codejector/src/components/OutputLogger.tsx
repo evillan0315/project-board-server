@@ -42,7 +42,9 @@ const getSeverityIcon = (severity: LogEntry['severity']) => {
     case 'warning':
       return <WarningAmberOutlinedIcon fontSize="small" color="warning" />;
     case 'success':
-      return <CheckCircleOutlineOutlinedIcon fontSize="small" color="success" />;
+      return (
+        <CheckCircleOutlineOutlinedIcon fontSize="small" color="success" />
+      );
     case 'debug':
       return <BugReportOutlinedIcon fontSize="small" color="info" />;
     case 'info':
@@ -94,7 +96,9 @@ const OutputLogger: React.FC<OutputLoggerProps> = () => {
 
   if (logs.length === 0) {
     return (
-      <Box sx={{ p: 2, textAlign: 'center', color: theme.palette.text.secondary }}>
+      <Box
+        sx={{ p: 2, textAlign: 'center', color: theme.palette.text.secondary }}
+      >
         <Typography variant="body2">No logs to display yet.</Typography>
       </Box>
     );
@@ -122,11 +126,23 @@ const OutputLogger: React.FC<OutputLoggerProps> = () => {
           }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', pr: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                pr: 2,
+              }}
+            >
               {getSeverityIcon(log.severity)}
               <Typography
                 variant="subtitle2"
-                sx={{ ml: 1, fontWeight: 'bold', flexShrink: 0, color: theme.palette.text.primary }}
+                sx={{
+                  ml: 1,
+                  fontWeight: 'bold',
+                  flexShrink: 0,
+                  color: theme.palette.text.primary,
+                }}
               >
                 [{log.timestamp}] {log.source}:
               </Typography>
@@ -136,7 +152,10 @@ const OutputLogger: React.FC<OutputLoggerProps> = () => {
                 sx={{
                   ml: 1,
                   flexGrow: 1,
-                  color: log.severity === 'error' ? theme.palette.error.main : theme.palette.text.primary,
+                  color:
+                    log.severity === 'error'
+                      ? theme.palette.error.main
+                      : theme.palette.text.primary,
                 }}
               >
                 {log.message}
@@ -218,20 +237,32 @@ const OutputLogger: React.FC<OutputLoggerProps> = () => {
 
                 {log.rawOutput.stdout?.length > 0 && (
                   <>
-                    <Typography variant="subtitle2" sx={{ color: theme.palette.success.main }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ color: theme.palette.success.main }}
+                    >
                       STDOUT
                     </Typography>
-                    {renderCommandOutput(log.rawOutput.stdout, theme.palette.text.primary)}
+                    {renderCommandOutput(
+                      log.rawOutput.stdout,
+                      theme.palette.text.primary,
+                    )}
                   </>
                 )}
 
                 {log.rawOutput.stderr?.length > 0 && (
                   <>
                     <Divider sx={{ my: 1 }} />
-                    <Typography variant="subtitle2" sx={{ color: theme.palette.error.main }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ color: theme.palette.error.main }}
+                    >
                       STDERR
                     </Typography>
-                    {renderCommandOutput(log.rawOutput.stderr, theme.palette.error.main)}
+                    {renderCommandOutput(
+                      log.rawOutput.stderr,
+                      theme.palette.error.main,
+                    )}
                   </>
                 )}
 
@@ -271,4 +302,3 @@ const OutputLogger: React.FC<OutputLoggerProps> = () => {
 };
 
 export default OutputLogger;
-

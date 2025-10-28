@@ -54,6 +54,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
       {header && (
         <AppBar
           sx={{
+            w: '100%',
             position: 'relative',
             p: 0,
             '& .MuiToolbar-root': { p: 0, minHeight: 20 },

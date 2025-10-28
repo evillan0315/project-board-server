@@ -1,13 +1,8 @@
 export * from './ai';
 export * from './auth';
-export * from './fetch';
 export * from './file';
 export * from './gemini';
 export * from './geminiLive';
-export * from './git';
-// export * from './recording'; // REMOVED: Moved to src/components/recording/api
-export * from './index';
-export * from './llm';
 export * from './media';
 export * from './organization';
 export * from './playlist';
@@ -17,3 +12,5 @@ export * from './repo';
 export * from './schema';
 export * from './socket';
 export * from './user';
+export * from './ffmpeg';
+export * from './fetch';

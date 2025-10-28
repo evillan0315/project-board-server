@@ -19,7 +19,8 @@ export class ImportBulkDataDto {
   @ApiProperty({
     type: 'string',
     example: 'User', // Added modelName to DTO
-    description: 'The name of the Prisma model/database table to import data into.',
+    description:
+      'The name of the Prisma model/database table to import data into.',
   })
   @IsString()
   modelName: string;

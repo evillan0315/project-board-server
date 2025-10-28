@@ -31,4 +31,5 @@ export const protectedModels = [
   'VideoHistory',
   'FavoriteSong',
   'FavoriteVideo',
+  'Member',
 ];

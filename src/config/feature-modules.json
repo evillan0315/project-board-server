@@ -32,7 +32,7 @@
     { "name": "AlbumModule", "enabled": true },
     { "name": "ArtistModule", "enabled": true },
     { "name": "MetadataModule", "enabled": true },
-    { "name": "LlmPlaywrightModule", "enabled": true }
-    
+    { "name": "LlmPlaywrightModule", "enabled": true },
+    { "name": "MemberModule", "enabled": true }
   ]
 }

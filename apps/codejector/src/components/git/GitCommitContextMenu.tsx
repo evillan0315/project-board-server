@@ -8,14 +8,14 @@ import {
 import RestoreIcon from '@mui/icons-material/Restore';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
-import { GitCommit } from './types/git';
+import { IGitCommit } from './types/git';
 
 interface GitCommitContextMenuProps {
   anchorEl: HTMLElement | null;
   open: boolean;
   onClose: () => void;
   loading: boolean;
-  selectedCommit: GitCommit | null;
+  selectedCommit: IGitCommit | null;
   onRevertCommit: (commitHash: string) => void;
   onResetHard: (commitHash: string) => void;
 }

@@ -1,7 +1,31 @@
-import { Injectable, Logger, InternalServerErrorException, BadRequestException, ForbiddenException, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+  BadRequestException,
+  ForbiddenException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { chromium, firefox, webkit, Browser, Page, BrowserContext, Video } from 'playwright';
-import { ScrapeUrlDto, ScreenshotUrlDto, PlaywrightOutputDto, RecordScreenDto, PerformMultipleTasksDto, NavigationStepDto, PlaywrightNavigationAction, LoginCredentialsDto } from './dto';
+import {
+  chromium,
+  firefox,
+  webkit,
+  Browser,
+  Page,
+  BrowserContext,
+  Video,
+} from 'playwright';
+import {
+  ScrapeUrlDto,
+  ScreenshotUrlDto,
+  PlaywrightOutputDto,
+  RecordScreenDto,
+  PerformMultipleTasksDto,
+  NavigationStepDto,
+  PlaywrightNavigationAction,
+  LoginCredentialsDto,
+} from './dto';
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
 import { GoogleGeminiImageService } from '../google/google-gemini/google-gemini-image.service';
 import { ModuleControlService } from '../module-control/module-control.service';
@@ -36,7 +60,10 @@ export class LlmPlaywrightService implements OnModuleInit {
     private readonly moduleControlService: ModuleControlService,
   ) {
     this.RECORDINGS_DIR = path.join(process.cwd(), 'downloads', 'recordings');
-    this.PLAYWRIGHT_DEFAULT_TIMEOUT = this.configService.get<number>('PLAYWRIGHT_TIMEOUT_MS', 30000); // Default to 30 seconds
+    this.PLAYWRIGHT_DEFAULT_TIMEOUT = this.configService.get<number>(
+      'PLAYWRIGHT_TIMEOUT_MS',
+      30000,
+    ); // Default to 30 seconds
   }
 
   onModuleInit() {
@@ -51,10 +78,16 @@ export class LlmPlaywrightService implements OnModuleInit {
   private async ensureRecordingsDirectoryExists() {
     try {
       await fs.mkdir(this.RECORDINGS_DIR, { recursive: true });
-      this.logger.log(`Ensured recording directory exists: ${this.RECORDINGS_DIR}`);
+      this.logger.log(
+        `Ensured recording directory exists: ${this.RECORDINGS_DIR}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to create recording directory: ${this.RECORDINGS_DIR}, Error: ${(error as Error).message}`);
-      throw new InternalServerErrorException(`Failed to prepare recording directory: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to create recording directory: ${this.RECORDINGS_DIR}, Error: ${(error as Error).message}`,
+      );
+      throw new InternalServerErrorException(
+        `Failed to prepare recording directory: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -67,8 +100,12 @@ export class LlmPlaywrightService implements OnModuleInit {
   }
 
   private async getBrowserInstance(): Promise<Browser> {
-    const browserType = this.configService.get<string>('PLAYWRIGHT_BROWSER_TYPE', 'chromium');
-    const headless = this.configService.get<string>('PLAYWRIGHT_HEADLESS', 'true') === 'true';
+    const browserType = this.configService.get<string>(
+      'PLAYWRIGHT_BROWSER_TYPE',
+      'chromium',
+    );
+    const headless =
+      this.configService.get<string>('PLAYWRIGHT_HEADLESS', 'true') === 'true';
 
     let browser: Browser;
     const launchOptions = { headless };
@@ -91,7 +128,8 @@ export class LlmPlaywrightService implements OnModuleInit {
   async scrapeUrl(scrapeUrlDto: ScrapeUrlDto): Promise<PlaywrightOutputDto> {
     this.ensureLlmPlaywrightModuleEnabled();
 
-    const { url, selector, returnHtml, geminiPrompt, takeScreenshot } = scrapeUrlDto;
+    const { url, selector, returnHtml, geminiPrompt, takeScreenshot } =
+      scrapeUrlDto;
     let browser: Browser | null = null;
     let page: Page | null = null;
     let scrapedText: string | null = null;
@@ -102,10 +140,15 @@ export class LlmPlaywrightService implements OnModuleInit {
     try {
       browser = await this.getBrowserInstance();
       page = await browser.newPage();
-      await page.goto(url, { waitUntil: 'networkidle', timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+      await page.goto(url, {
+        waitUntil: 'networkidle',
+        timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+      });
 
       if (selector) {
-        const element = await page.waitForSelector(selector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+        const element = await page.waitForSelector(selector, {
+          timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+        });
         scrapedText = await element.textContent();
         if (returnHtml) {
           scrapedHtml = await element.innerHTML();
@@ -122,13 +165,18 @@ export class LlmPlaywrightService implements OnModuleInit {
         screenshotBase64 = screenshotBuffer.toString('base64');
       }
 
-      if (geminiPrompt) { // Only proceed with Gemini if a prompt is provided
+      if (geminiPrompt) {
+        // Only proceed with Gemini if a prompt is provided
         if (scrapedText) {
           const payload: GenerateTextDto = {
             prompt: geminiPrompt,
             systemInstruction: `Analyze the following web page content:\n\n${scrapedText}\n\nPlease provide a concise summary or answer based on the prompt: ${geminiPrompt}.`,
           };
-          const textAnalysisResponse = await this.googleGeminiFileService.generateText(payload, RequestType.WEB_SCRAPE_ANALYSIS);
+          const textAnalysisResponse =
+            await this.googleGeminiFileService.generateText(
+              payload,
+              RequestType.WEB_SCRAPE_ANALYSIS,
+            );
           // Ensure the result is an object. If generateText returns a string, wrap it.
           if (typeof textAnalysisResponse === 'string') {
             geminiAnalysis = { summary: textAnalysisResponse };
@@ -138,12 +186,13 @@ export class LlmPlaywrightService implements OnModuleInit {
         }
 
         if (screenshotBase64) {
-          const imageAnalysisResult = await this.googleGeminiImageService.captionImageFromBase64(
-            screenshotBase64,
-            geminiPrompt,
-            'image/png',
-            RequestType.SCREENSHOT_ANALYSIS,
-          );
+          const imageAnalysisResult =
+            await this.googleGeminiImageService.captionImageFromBase64(
+              screenshotBase64,
+              geminiPrompt,
+              'image/png',
+              RequestType.SCREENSHOT_ANALYSIS,
+            );
 
           // Ensure geminiAnalysis is an object before adding imageAnalysis.
           if (!geminiAnalysis) {
@@ -168,15 +217,22 @@ export class LlmPlaywrightService implements OnModuleInit {
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
-      this.logger.error(`Failed to scrape URL ${url}: ${(error as Error).message}`, (error as Error).stack);
-      throw new InternalServerErrorException(`Failed to scrape URL: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to scrape URL ${url}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        `Failed to scrape URL: ${(error as Error).message}`,
+      );
     } finally {
       if (page) await page.close();
       if (browser) await browser.close();
     }
   }
 
-  async takeScreenshot(screenshotUrlDto: ScreenshotUrlDto): Promise<PlaywrightOutputDto> {
+  async takeScreenshot(
+    screenshotUrlDto: ScreenshotUrlDto,
+  ): Promise<PlaywrightOutputDto> {
     this.ensureLlmPlaywrightModuleEnabled();
 
     const { url, fullPage = true, selector, geminiPrompt } = screenshotUrlDto;
@@ -188,11 +244,16 @@ export class LlmPlaywrightService implements OnModuleInit {
     try {
       browser = await this.getBrowserInstance();
       page = await browser.newPage();
-      await page.goto(url, { waitUntil: 'networkidle', timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+      await page.goto(url, {
+        waitUntil: 'networkidle',
+        timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+      });
 
       let screenshotBuffer: Buffer;
       if (selector) {
-        const element = await page.waitForSelector(selector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+        const element = await page.waitForSelector(selector, {
+          timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+        });
         screenshotBuffer = await element.screenshot();
       } else {
         screenshotBuffer = await page.screenshot({ fullPage });
@@ -200,12 +261,13 @@ export class LlmPlaywrightService implements OnModuleInit {
       screenshotBase64 = screenshotBuffer.toString('base64');
 
       if (geminiPrompt && screenshotBase64) {
-        const imageAnalysisResult = await this.googleGeminiImageService.captionImageFromBase64(
-          screenshotBase64,
-          geminiPrompt,
-          'image/png',
-          RequestType.SCREENSHOT_ANALYSIS,
-        );
+        const imageAnalysisResult =
+          await this.googleGeminiImageService.captionImageFromBase64(
+            screenshotBase64,
+            geminiPrompt,
+            'image/png',
+            RequestType.SCREENSHOT_ANALYSIS,
+          );
         // Ensure geminiAnalysis is an object before adding imageAnalysis.
         if (!geminiAnalysis) {
           geminiAnalysis = {}; // Initialize as empty LlmOutputPlayDto
@@ -225,19 +287,28 @@ export class LlmPlaywrightService implements OnModuleInit {
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
-      this.logger.error(`Failed to take screenshot of URL ${url}: ${(error as Error).message}`, (error as Error).stack);
-      throw new InternalServerErrorException(`Failed to take screenshot: ${(error as Error).message}`);
+      this.logger.error(
+        `Failed to take screenshot of URL ${url}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException(
+        `Failed to take screenshot: ${(error as Error).message}`,
+      );
     } finally {
       if (page) await page.close();
       if (browser) await browser.close();
     }
   }
 
-  async startScreenRecording(recordScreenDto: RecordScreenDto): Promise<PlaywrightOutputDto> {
+  async startScreenRecording(
+    recordScreenDto: RecordScreenDto,
+  ): Promise<PlaywrightOutputDto> {
     this.ensureLlmPlaywrightModuleEnabled();
 
     if (this.activeRecordingSession) {
-      throw new BadRequestException('A screen recording is already active. Please stop it before starting a new one.');
+      throw new BadRequestException(
+        'A screen recording is already active. Please stop it before starting a new one.',
+      );
     }
 
     const { url, outputFileName } = recordScreenDto; // 'duration' is removed
@@ -259,12 +330,17 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       video = page.video();
       if (!video) {
-        throw new InternalServerErrorException('Playwright video recording did not start.');
+        throw new InternalServerErrorException(
+          'Playwright video recording did not start.',
+        );
       }
 
       const outputPathPromise = video.path();
 
-      await page.goto(url, { waitUntil: 'networkidle', timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+      await page.goto(url, {
+        waitUntil: 'networkidle',
+        timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+      });
 
       this.activeRecordingSession = {
         browser: browser as Browser,
@@ -275,19 +351,26 @@ export class LlmPlaywrightService implements OnModuleInit {
         outputFileName,
       };
 
-      this.logger.log(`Screen recording started for URL: ${url}. It will continue until explicitly stopped.`);
+      this.logger.log(
+        `Screen recording started for URL: ${url}. It will continue until explicitly stopped.`,
+      );
       return {
         success: true,
         scrapedText: `Screen recording started for URL: ${url}. It will continue until explicitly stopped.`,
       };
     } catch (error) {
-      this.logger.error(`Failed to start screen recording for URL ${url}: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to start screen recording for URL ${url}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       // No timeoutId to clear anymore
       if (page) await page.close();
       if (context) await context.close();
       if (browser) await browser.close();
       this.activeRecordingSession = null;
-      throw new InternalServerErrorException(`Failed to start screen recording: ${(error as Error).message}`);
+      throw new InternalServerErrorException(
+        `Failed to start screen recording: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -295,10 +378,18 @@ export class LlmPlaywrightService implements OnModuleInit {
     this.ensureLlmPlaywrightModuleEnabled();
 
     if (!this.activeRecordingSession) {
-      throw new BadRequestException('No active screen recording session to stop.');
+      throw new BadRequestException(
+        'No active screen recording session to stop.',
+      );
     }
 
-    const { browser, context, page, outputPathPromise, outputFileName: initialRequestedFileName } = this.activeRecordingSession;
+    const {
+      browser,
+      context,
+      page,
+      outputPathPromise,
+      outputFileName: initialRequestedFileName,
+    } = this.activeRecordingSession;
 
     try {
       // No timeoutId to clear anymore
@@ -308,15 +399,25 @@ export class LlmPlaywrightService implements OnModuleInit {
 
       const initialVideoPath = await outputPathPromise;
       const originalExt = path.extname(initialVideoPath);
-      const baseNameWithoutExt = initialRequestedFileName ? path.basename(initialRequestedFileName, path.extname(initialRequestedFileName)) : `recorded-${Date.now()}`;
+      const baseNameWithoutExt = initialRequestedFileName
+        ? path.basename(
+            initialRequestedFileName,
+            path.extname(initialRequestedFileName),
+          )
+        : `recorded-${Date.now()}`;
       const uniqueSuffix = uuidv4().substring(0, 8);
-      
+
       const finalVideoName = `${baseNameWithoutExt}-${uniqueSuffix}${originalExt}`;
-      const finalUniqueVideoPath = path.join(this.RECORDINGS_DIR, finalVideoName);
+      const finalUniqueVideoPath = path.join(
+        this.RECORDINGS_DIR,
+        finalVideoName,
+      );
 
       await fs.mkdir(path.dirname(finalUniqueVideoPath), { recursive: true });
       await fs.rename(initialVideoPath, finalUniqueVideoPath);
-      this.logger.log(`Screen recording stopped. Video saved to: ${finalUniqueVideoPath}`);
+      this.logger.log(
+        `Screen recording stopped. Video saved to: ${finalUniqueVideoPath}`,
+      );
 
       this.activeRecordingSession = null;
       return {
@@ -325,9 +426,14 @@ export class LlmPlaywrightService implements OnModuleInit {
         scrapedText: `Screen recording saved to: ${path.relative(process.cwd(), finalUniqueVideoPath)}`,
       };
     } catch (error) {
-      this.logger.error(`Failed to stop screen recording: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to stop screen recording: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       this.activeRecordingSession = null;
-      throw new InternalServerErrorException(`Failed to stop screen recording: ${(error as Error).message}`);
+      throw new InternalServerErrorException(
+        `Failed to stop screen recording: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -338,7 +444,10 @@ export class LlmPlaywrightService implements OnModuleInit {
    */
   private async _performNavigate(page: Page, url: string): Promise<void> {
     this.logger.log(`Navigating to: ${url}`);
-    await page.goto(url, { waitUntil: 'networkidle', timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+    await page.goto(url, {
+      waitUntil: 'networkidle',
+      timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+    });
   }
 
   /**
@@ -348,9 +457,20 @@ export class LlmPlaywrightService implements OnModuleInit {
    */
   private async _performClick(page: Page, selector: string): Promise<void> {
     this.logger.log(`Clicking element with selector: ${selector}`);
-    await page.waitForSelector(selector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+    await page.waitForSelector(selector, {
+      timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+    });
     await page.click(selector);
-    await page.waitForNavigation({ waitUntil: 'networkidle', timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT }).catch(e => this.logger.warn(`Click navigation wait timed out or failed in _performClick: ${(e as Error).message}`));
+    await page
+      .waitForNavigation({
+        waitUntil: 'networkidle',
+        timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+      })
+      .catch((e) =>
+        this.logger.warn(
+          `Click navigation wait timed out or failed in _performClick: ${(e as Error).message}`,
+        ),
+      );
   }
 
   /**
@@ -359,9 +479,15 @@ export class LlmPlaywrightService implements OnModuleInit {
    * @param selector The CSS selector of the input element.
    * @param value The text value to type.
    */
-  private async _performType(page: Page, selector: string, value: string): Promise<void> {
+  private async _performType(
+    page: Page,
+    selector: string,
+    value: string,
+  ): Promise<void> {
     this.logger.log(`Typing into element with selector: ${selector}`);
-    await page.waitForSelector(selector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+    await page.waitForSelector(selector, {
+      timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+    });
     await page.fill(selector, value);
   }
 
@@ -370,39 +496,81 @@ export class LlmPlaywrightService implements OnModuleInit {
    * @param page The Playwright page object.
    * @param credentials Login credentials and selectors.
    */
-  private async _performLogin(page: Page, credentials: LoginCredentialsDto): Promise<void> {
-    const { username, password, usernameSelector, passwordSelector, submitSelector } = credentials;
-    this.logger.log(`Attempting login with username selector: ${usernameSelector || 'N/A'}, password selector: ${passwordSelector || 'N/A'}, submit selector: ${submitSelector || 'N/A'}`);
+  private async _performLogin(
+    page: Page,
+    credentials: LoginCredentialsDto,
+  ): Promise<void> {
+    const {
+      username,
+      password,
+      usernameSelector,
+      passwordSelector,
+      submitSelector,
+    } = credentials;
+    this.logger.log(
+      `Attempting login with username selector: ${usernameSelector || 'N/A'}, password selector: ${passwordSelector || 'N/A'}, submit selector: ${submitSelector || 'N/A'}`,
+    );
 
     if (!usernameSelector) {
-        this.logger.warn('Login action skipped: usernameSelector is required for login but not provided.');
-        throw new BadRequestException('usernameSelector is required for login action.');
+      this.logger.warn(
+        'Login action skipped: usernameSelector is required for login but not provided.',
+      );
+      throw new BadRequestException(
+        'usernameSelector is required for login action.',
+      );
     }
     if (!passwordSelector) {
-        this.logger.warn('Login action skipped: passwordSelector is required for login but not provided.');
-        throw new BadRequestException('passwordSelector is required for login action.');
+      this.logger.warn(
+        'Login action skipped: passwordSelector is required for login but not provided.',
+      );
+      throw new BadRequestException(
+        'passwordSelector is required for login action.',
+      );
     }
     if (!submitSelector) {
-        this.logger.warn('Login action skipped: submitSelector is required for login but not provided.');
-        throw new BadRequestException('submitSelector is required for login action.');
+      this.logger.warn(
+        'Login action skipped: submitSelector is required for login but not provided.',
+      );
+      throw new BadRequestException(
+        'submitSelector is required for login action.',
+      );
     }
 
-    await page.waitForSelector(usernameSelector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+    await page.waitForSelector(usernameSelector, {
+      timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+    });
     await page.fill(usernameSelector, username ?? '');
     if (username === undefined) {
-        this.logger.debug(`No username value provided for selector: ${usernameSelector}, filling with empty string.`);
+      this.logger.debug(
+        `No username value provided for selector: ${usernameSelector}, filling with empty string.`,
+      );
     }
 
-    await page.waitForSelector(passwordSelector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+    await page.waitForSelector(passwordSelector, {
+      timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+    });
     await page.fill(passwordSelector, password ?? '');
     if (password === undefined) {
-        this.logger.debug(`No password value provided for selector: ${passwordSelector}, filling with empty string.`);
+      this.logger.debug(
+        `No password value provided for selector: ${passwordSelector}, filling with empty string.`,
+      );
     }
 
-    await page.waitForSelector(submitSelector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+    await page.waitForSelector(submitSelector, {
+      timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+    });
     await page.click(submitSelector);
     this.logger.log('Login form submitted.');
-    await page.waitForNavigation({ waitUntil: 'networkidle', timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT }).catch(e => this.logger.warn(`Login navigation wait timed out or failed: ${(e as Error).message}`));
+    await page
+      .waitForNavigation({
+        waitUntil: 'networkidle',
+        timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+      })
+      .catch((e) =>
+        this.logger.warn(
+          `Login navigation wait timed out or failed: ${(e as Error).message}`,
+        ),
+      );
   }
 
   /**
@@ -411,17 +579,23 @@ export class LlmPlaywrightService implements OnModuleInit {
    * @param durationMs Duration in milliseconds to wait.
    * @param selector CSS selector to wait for.
    */
-  private async _performWait(page: Page, durationMs?: number, selector?: string): Promise<void> {
+  private async _performWait(
+    page: Page,
+    durationMs?: number,
+    selector?: string,
+  ): Promise<void> {
     if (durationMs !== undefined && durationMs > 0) {
       this.logger.log(`Waiting for ${durationMs}ms.`);
       await page.waitForTimeout(durationMs);
-    }
-    else if (selector) {
+    } else if (selector) {
       this.logger.log(`Waiting for selector: ${selector}`);
-      await page.waitForSelector(selector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
-    }
-    else {
-      throw new BadRequestException('WAIT action requires either durationMs or selector.');
+      await page.waitForSelector(selector, {
+        timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+      });
+    } else {
+      throw new BadRequestException(
+        'WAIT action requires either durationMs or selector.',
+      );
     }
   }
 
@@ -431,28 +605,41 @@ export class LlmPlaywrightService implements OnModuleInit {
    * @param instruction The natural language instruction string.
    * @returns An array of NavigationStepDto. Returns empty array if no matching pattern is found.
    */
-  private _parsePlaywrightInstruction(instruction: string): NavigationStepDto[] {
+  private _parsePlaywrightInstruction(
+    instruction: string,
+  ): NavigationStepDto[] {
     const steps: NavigationStepDto[] = [];
-    
-    const loginRegex = /Enter Email address:(?<email>[^ ]+) in the \((?<emailSelector>[^)]+)\) and Password:(?<password>[^ ]+) in the \((?<passwordSelector>[^)]+)\) field and click the Sign in \((?<submitSelector>[^)]+)\) button/i;
-    
+
+    const loginRegex =
+      /Enter Email address:(?<email>[^ ]+) in the \((?<emailSelector>[^)]+)\) and Password:(?<password>[^ ]+) in the \((?<passwordSelector>[^)]+)\) field and click the Sign in \((?<submitSelector>[^)]+)\) button/i;
+
     const loginMatch = instruction.match(loginRegex);
 
     if (loginMatch?.groups) {
-        const { email, emailSelector, password, passwordSelector, submitSelector } = loginMatch.groups;
-        steps.push({
-            action: PlaywrightNavigationAction.LOGIN,
-            loginCredentials: {
-                username: email,
-                usernameSelector: emailSelector,
-                password: password,
-                passwordSelector: passwordSelector,
-                submitSelector: submitSelector,
-            },
-        });
-        this.logger.debug(`Parsed login instruction: Email: ${email}, EmailSelector: ${emailSelector}, PasswordSelector: ${passwordSelector}, SubmitSelector: ${submitSelector}`);
+      const {
+        email,
+        emailSelector,
+        password,
+        passwordSelector,
+        submitSelector,
+      } = loginMatch.groups;
+      steps.push({
+        action: PlaywrightNavigationAction.LOGIN,
+        loginCredentials: {
+          username: email,
+          usernameSelector: emailSelector,
+          password: password,
+          passwordSelector: passwordSelector,
+          submitSelector: submitSelector,
+        },
+      });
+      this.logger.debug(
+        `Parsed login instruction: Email: ${email}, EmailSelector: ${emailSelector}, PasswordSelector: ${passwordSelector}, SubmitSelector: ${submitSelector}`,
+      );
     } else {
-        this.logger.debug(`No matching Playwright instruction pattern found for: "${instruction}".`);
+      this.logger.debug(
+        `No matching Playwright instruction pattern found for: "${instruction}".`,
+      );
     }
 
     return steps;
@@ -462,7 +649,9 @@ export class LlmPlaywrightService implements OnModuleInit {
    * Performs multiple orchestrated Playwright tasks (scrape, screenshot) on a URL
    * and optionally analyzes the combined results with Gemini AI based on a high-level instruction.
    */
-  async performMultipleTasks(dto: PerformMultipleTasksDto): Promise<PlaywrightOutputDto> {
+  async performMultipleTasks(
+    dto: PerformMultipleTasksDto,
+  ): Promise<PlaywrightOutputDto> {
     this.ensureLlmPlaywrightModuleEnabled();
 
     const {
@@ -477,7 +666,7 @@ export class LlmPlaywrightService implements OnModuleInit {
       screenshotSelector,
       shouldRecordScreen = false,
       // recordDuration is removed
-      recordOutputFileName
+      recordOutputFileName,
     } = dto;
 
     let browser: Browser | null = null;
@@ -495,21 +684,28 @@ export class LlmPlaywrightService implements OnModuleInit {
     let finalNavigationSteps: NavigationStepDto[] = [...initialNavigationSteps];
 
     if (llmInstruction) {
-        const parsedPlaywrightSteps = this._parsePlaywrightInstruction(llmInstruction);
-        if (parsedPlaywrightSteps.length > 0) {
-            finalNavigationSteps = [...parsedPlaywrightSteps, ...finalNavigationSteps];
-            this.logger.log(`Prepended ${parsedPlaywrightSteps.length} steps from llmInstruction (interpreted as Playwright command).`);
-            effectiveGeminiPrompt = undefined;
-        }
+      const parsedPlaywrightSteps =
+        this._parsePlaywrightInstruction(llmInstruction);
+      if (parsedPlaywrightSteps.length > 0) {
+        finalNavigationSteps = [
+          ...parsedPlaywrightSteps,
+          ...finalNavigationSteps,
+        ];
+        this.logger.log(
+          `Prepended ${parsedPlaywrightSteps.length} steps from llmInstruction (interpreted as Playwright command).`,
+        );
+        effectiveGeminiPrompt = undefined;
+      }
     }
-
 
     try {
       browser = await this.getBrowserInstance();
 
       if (shouldRecordScreen) {
         if (this.activeRecordingSession) {
-          throw new BadRequestException('A screen recording is already active. Please stop it before starting a new one.');
+          throw new BadRequestException(
+            'A screen recording is already active. Please stop it before starting a new one.',
+          );
         }
 
         await this.ensureRecordingsDirectoryExists();
@@ -523,12 +719,17 @@ export class LlmPlaywrightService implements OnModuleInit {
 
         video = page.video();
         if (!video) {
-          throw new InternalServerErrorException('Playwright video recording did not start within performMultipleTasks.');
+          throw new InternalServerErrorException(
+            'Playwright video recording did not start within performMultipleTasks.',
+          );
         }
 
         const outputPathPromise = video.path();
 
-        await page.goto(url, { waitUntil: 'networkidle', timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+        await page.goto(url, {
+          waitUntil: 'networkidle',
+          timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+        });
 
         this.activeRecordingSession = {
           browser: browser as Browser,
@@ -540,10 +741,15 @@ export class LlmPlaywrightService implements OnModuleInit {
         };
 
         // Removed setTimeout for automatic duration stopping
-        this.logger.log(`Screen recording initiated for URL: ${url} within performMultipleTasks. It will stop when all tasks are complete.`);
+        this.logger.log(
+          `Screen recording initiated for URL: ${url} within performMultipleTasks. It will stop when all tasks are complete.`,
+        );
       } else {
         page = await browser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle', timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+        await page.goto(url, {
+          waitUntil: 'networkidle',
+          timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+        });
       }
 
       if (finalNavigationSteps && finalNavigationSteps.length > 0) {
@@ -551,19 +757,31 @@ export class LlmPlaywrightService implements OnModuleInit {
           try {
             switch (step.action) {
               case PlaywrightNavigationAction.NAVIGATE:
-                if (!step.url) throw new BadRequestException('URL is required for NAVIGATE action.');
+                if (!step.url)
+                  throw new BadRequestException(
+                    'URL is required for NAVIGATE action.',
+                  );
                 await this._performNavigate(page, step.url);
                 break;
               case PlaywrightNavigationAction.CLICK:
-                if (!step.selector) throw new BadRequestException('Selector is required for CLICK action.');
+                if (!step.selector)
+                  throw new BadRequestException(
+                    'Selector is required for CLICK action.',
+                  );
                 await this._performClick(page, step.selector);
                 break;
               case PlaywrightNavigationAction.TYPE:
-                if (!step.selector || step.value === undefined) throw new BadRequestException('Selector and value are required for TYPE action.');
+                if (!step.selector || step.value === undefined)
+                  throw new BadRequestException(
+                    'Selector and value are required for TYPE action.',
+                  );
                 await this._performType(page, step.selector, step.value);
                 break;
               case PlaywrightNavigationAction.LOGIN:
-                if (!step.loginCredentials) throw new BadRequestException('Login credentials are required for LOGIN action.');
+                if (!step.loginCredentials)
+                  throw new BadRequestException(
+                    'Login credentials are required for LOGIN action.',
+                  );
                 await this._performLogin(page, step.loginCredentials);
                 break;
               case PlaywrightNavigationAction.WAIT:
@@ -574,8 +792,12 @@ export class LlmPlaywrightService implements OnModuleInit {
                 break;
             }
           } catch (navError) {
-            this.logger.error(`Failed to perform navigation step ${step.action}: ${(navError as Error).message}`);
-            throw new InternalServerErrorException(`Failed during navigation step: ${step.action} - ${(navError as Error).message}`);
+            this.logger.error(
+              `Failed to perform navigation step ${step.action}: ${(navError as Error).message}`,
+            );
+            throw new InternalServerErrorException(
+              `Failed during navigation step: ${step.action} - ${(navError as Error).message}`,
+            );
           }
         }
       }
@@ -583,7 +805,9 @@ export class LlmPlaywrightService implements OnModuleInit {
       if (shouldScrape) {
         try {
           if (scrapeSelector) {
-            const element = await page.waitForSelector(scrapeSelector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+            const element = await page.waitForSelector(scrapeSelector, {
+              timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+            });
             scrapedText = await element.textContent();
             if (returnHtmlForScrape) {
               scrapedHtml = await element.innerHTML();
@@ -596,7 +820,9 @@ export class LlmPlaywrightService implements OnModuleInit {
           }
           this.logger.log(`Scraped content from ${url}`);
         } catch (scrapeError) {
-          this.logger.warn(`Failed to scrape content from ${url}: ${(scrapeError as Error).message}`);
+          this.logger.warn(
+            `Failed to scrape content from ${url}: ${(scrapeError as Error).message}`,
+          );
           scrapedText = `Failed to scrape content: ${(scrapeError as Error).message}`;
         }
       }
@@ -605,15 +831,21 @@ export class LlmPlaywrightService implements OnModuleInit {
         try {
           let screenshotBuffer: Buffer;
           if (screenshotSelector) {
-            const element = await page.waitForSelector(screenshotSelector, { timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT });
+            const element = await page.waitForSelector(screenshotSelector, {
+              timeout: this.PLAYWRIGHT_DEFAULT_TIMEOUT,
+            });
             screenshotBuffer = await element.screenshot();
           } else {
-            screenshotBuffer = await page.screenshot({ fullPage: screenshotFullPage });
+            screenshotBuffer = await page.screenshot({
+              fullPage: screenshotFullPage,
+            });
           }
           screenshotBase64 = screenshotBuffer.toString('base64');
           this.logger.log(`Took screenshot of ${url}`);
         } catch (screenshotError) {
-          this.logger.warn(`Failed to take screenshot of ${url}: ${(screenshotError as Error).message}`);
+          this.logger.warn(
+            `Failed to take screenshot of ${url}: ${(screenshotError as Error).message}`,
+          );
         }
       }
 
@@ -642,7 +874,11 @@ export class LlmPlaywrightService implements OnModuleInit {
             prompt: effectiveGeminiPrompt,
             systemInstruction: `You are an AI assistant. Analyze the provided web context to fulfill the user's request. \n\nWeb Context:\n${combinedContext}\n\nConsider the web context carefully when responding to the user's prompt. `,
           };
-          const textAnalysisResponse = await this.googleGeminiFileService.generateText(textPayload, RequestType.PLAYWRIGHT_TASK_ANALYSIS);
+          const textAnalysisResponse =
+            await this.googleGeminiFileService.generateText(
+              textPayload,
+              RequestType.PLAYWRIGHT_TASK_ANALYSIS,
+            );
           if (typeof textAnalysisResponse === 'string') {
             geminiAnalysis = { summary: textAnalysisResponse };
           } else {
@@ -651,12 +887,13 @@ export class LlmPlaywrightService implements OnModuleInit {
         }
 
         if (screenshotBase64) {
-          const imageAnalysisResult = await this.googleGeminiImageService.captionImageFromBase64(
-            screenshotBase64,
-            effectiveGeminiPrompt,
-            'image/png',
-            RequestType.PLAYWRIGHT_TASK_ANALYSIS,
-          );
+          const imageAnalysisResult =
+            await this.googleGeminiImageService.captionImageFromBase64(
+              screenshotBase64,
+              effectiveGeminiPrompt,
+              'image/png',
+              RequestType.PLAYWRIGHT_TASK_ANALYSIS,
+            );
           if (!geminiAnalysis) {
             geminiAnalysis = {};
           }
@@ -677,27 +914,62 @@ export class LlmPlaywrightService implements OnModuleInit {
         geminiAnalysis: geminiAnalysis || undefined,
       };
     } catch (error) {
-      this.logger.error(`Failed to perform multiple tasks on URL ${url}: ${(error as Error).message}`, (error as Error).stack);
+      this.logger.error(
+        `Failed to perform multiple tasks on URL ${url}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
       if (this.activeRecordingSession) {
         // No timeoutId to clear anymore
         if (this.activeRecordingSession.page) {
-          try { await this.activeRecordingSession.page.close(); } catch (e) { this.logger.error(`Error closing page on task error: ${(e as Error).message}`); }
+          try {
+            await this.activeRecordingSession.page.close();
+          } catch (e) {
+            this.logger.error(
+              `Error closing page on task error: ${(e as Error).message}`,
+            );
+          }
         }
         if (this.activeRecordingSession.context) {
-          try { await this.activeRecordingSession.context.close(); } catch (e) { this.logger.error(`Error closing context on task error: ${(e as Error).message}`); }
+          try {
+            await this.activeRecordingSession.context.close();
+          } catch (e) {
+            this.logger.error(
+              `Error closing context on task error: ${(e as Error).message}`,
+            );
+          }
         }
         if (this.activeRecordingSession.browser) {
-          try { await this.activeRecordingSession.browser.close(); } catch (e) { this.logger.error(`Error closing browser on task error: ${(e as Error).message}`); }
+          try {
+            await this.activeRecordingSession.browser.close();
+          } catch (e) {
+            this.logger.error(
+              `Error closing browser on task error: ${(e as Error).message}`,
+            );
+          }
         }
         this.activeRecordingSession = null;
       } else if (page) {
-        try { await page.close(); } catch (e) { this.logger.error(`Error closing page on task error: ${(e as Error).message}`); }
+        try {
+          await page.close();
+        } catch (e) {
+          this.logger.error(
+            `Error closing page on task error: ${(e as Error).message}`,
+          );
+        }
         if (browser) {
-          try { await browser.close(); } catch (e) { this.logger.error(`Error closing browser on task error: ${(e as Error).message}`); }
+          try {
+            await browser.close();
+          } catch (e) {
+            this.logger.error(
+              `Error closing browser on task error: ${(e as Error).message}`,
+            );
+          }
         }
       }
 
-      throw new InternalServerErrorException(`Failed to perform multiple tasks: ${(error as Error).message}`);
+      throw new InternalServerErrorException(
+        `Failed to perform multiple tasks: ${(error as Error).message}`,
+      );
     }
   }
 }

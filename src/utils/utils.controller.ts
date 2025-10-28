@@ -57,12 +57,13 @@ export class UtilsController {
     private readonly importExportDetectorService: ImportExportDetectorService,
   ) {}
 
-  @Post('detect-imports-exports') 
+  @Post('detect-imports-exports')
   @ApiOperation({
     summary: 'Detect import and export statements in a code string',
-    description: 'Analyzes a given code string (TypeScript, JavaScript, TSX, JSX) ' +
-                 'and returns a list of detected import and export statements, including their type, ' +
-                 'module specifier, and named/default bindings.',
+    description:
+      'Analyzes a given code string (TypeScript, JavaScript, TSX, JSX) ' +
+      'and returns a list of detected import and export statements, including their type, ' +
+      'module specifier, and named/default bindings.',
   })
   @ApiBody({ type: DetectImportsExportsDto })
   @ApiResponse({
@@ -640,7 +641,8 @@ export class UtilsController {
       properties: {
         content: {
           type: 'string',
-          example: `\n/**\n * Adds two numbers\n */\nfunction add(a: number, b: number): number {\n  // Add them\n  return a + b;\n}\n        `.trim(),
+          example:
+            `\n/**\n * Adds two numbers\n */\nfunction add(a: number, b: number): number {\n  // Add them\n  return a + b;\n}\n        `.trim(),
         },
       },
       required: ['content'],

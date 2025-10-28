@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Box, useTheme } from '@mui/material';
 import { useStore } from '@nanostores/react';
-import { $mediaStore, isPlayingAtom } from '@/stores/mediaStore';
+import { $mediaStore, isPlayingAtom, currentTrackAtom } from '@/stores/mediaStore';
 import { FileType } from '@/types/refactored/media';
 
 interface AudioVisualizerProps {
@@ -20,8 +20,9 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({canvasHeight=40,canvas
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const animationFrameId = useRef<number | null>(null);
 
-  const { mediaElement, currentTrack } = useStore($mediaStore);
+  const { mediaElement } = useStore($mediaStore);
   const isPlaying = useStore(isPlayingAtom);
+  const currentTrack = useStore(currentTrackAtom);
 
   const [canvasDimensions, setCanvasDimensions] = useState({ width: canvasWidth, height: canvasHeight });
 
@@ -52,7 +53,7 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({canvasHeight=40,canvas
     // Only create/resume AudioContext if the user has interacted with the document
     // or if the browser allows autoplay with sound.
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
     const audioContext = audioContextRef.current;
 
@@ -174,7 +175,7 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({canvasHeight=40,canvas
       sx={{
         //width: '100%',
         height: '40px', // Dedicated height for the visualizer
-        display: isPlaying ? 'flex' : 'none',
+        display: (isPlaying && currentTrack?.fileType === FileType.AUDIO) ? 'flex' : 'none',
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',

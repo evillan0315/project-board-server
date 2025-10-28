@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEnum, ValidateNested, IsNumber, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  ValidateNested,
+  IsNumber,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { LoginCredentialsDto } from './login-credentials.dto';
 
@@ -32,7 +39,8 @@ export class NavigationStepDto {
   url?: string;
 
   @ApiPropertyOptional({
-    description: 'CSS selector for the element to interact with. Required for CLICK, TYPE actions, or to wait for in WAIT action.',
+    description:
+      'CSS selector for the element to interact with. Required for CLICK, TYPE actions, or to wait for in WAIT action.',
     example: '#myButton',
   })
   @IsOptional()
@@ -40,7 +48,8 @@ export class NavigationStepDto {
   selector?: string;
 
   @ApiPropertyOptional({
-    description: 'Value to type into the input field. Required for TYPE action.',
+    description:
+      'Value to type into the input field. Required for TYPE action.',
     example: 'Hello World',
   })
   @IsOptional()
@@ -57,7 +66,8 @@ export class NavigationStepDto {
   loginCredentials?: LoginCredentialsDto;
 
   @ApiPropertyOptional({
-    description: 'Duration in milliseconds to wait. Required if action is WAIT and no selector is provided. Minimum 0.',
+    description:
+      'Duration in milliseconds to wait. Required if action is WAIT and no selector is provided. Minimum 0.',
     example: 5000,
   })
   @IsOptional()

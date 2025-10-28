@@ -1,7 +1,6 @@
 import React from 'react';
 import { AppDefinition } from '@/types';
 import { appDefinitions } from '@/constants/appDefinitions';
-import { AppsIcon } from '@mui/icons-material';
 import {
   Card,
   CardContent,

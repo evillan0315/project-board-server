@@ -1,19 +1,40 @@
 import { Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
-import LoginPage from './pages/LoginPage';
-import AuthCallback from './pages/AuthCallback';
-import HomePage from './pages/HomePage'; // Import HomePage
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { getMuiTheme } from './theme';
+import { Layout } from './components/Layout';
+import { HomePage } from './pages/HomePage';
+import { AuthCallback } from './pages/AuthCallback';
+import { LoginPage } from './pages/LoginPage'; // Import LoginPage
+import { themeAtom } from './stores/themeStore';
+import { useStore } from '@nanostores/react';
+import { useMemo } from 'react';
+import { nanoid } from 'nanoid';
+import { initAuth } from './stores/authStore'; // Import initAuth
+
+// Initialize authentication store on app start
+initAuth();
 
 function App() {
+  const { theme: currentThemeMode } = useStore(themeAtom);
+
+  const muiTheme = useMemo(() => getMuiTheme(currentThemeMode), [currentThemeMode]);
+
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<HomePage />} /> {/* Changed to HomePage */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        {/* Add more routes here as needed */}
-      </Route>
-    </Routes>
+    <ThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      <Layout>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} /> { /* Add login route */}
+          <Route
+            path="/auth/callback"
+            element={<AuthCallback key={nanoid()} />} // Use nanoid for unique key on callback
+          />
+          {/* Add other routes here if needed */}
+        </Routes>
+      </Layout>
+    </ThemeProvider>
   );
 }
 

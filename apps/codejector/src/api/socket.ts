@@ -17,7 +17,7 @@ const getWebSocketUrl = (): string => {
   return 'http://localhost:5000/files';
 };
 
-// --- Interfaces and Types --- 
+// --- Interfaces and Types ---
 
 /**
  * Represents the payload structure for dynamic WebSocket events sent to the backend.
@@ -28,7 +28,13 @@ export interface ApiDataProps {
   body?: any; // Request body
   event: string; // A unique identifier for the specific operation (e.g., 'fileReadFileContent')
   params?: Record<string, any>; // Query parameters for GET requests
-  responseType?: 'arraybuffer' | 'blob' | 'document' | 'json' | 'text' | 'stream';
+  responseType?:
+    | 'arraybuffer'
+    | 'blob'
+    | 'document'
+    | 'json'
+    | 'text'
+    | 'stream';
   headers?: Record<string, string>; // Additional headers for the API call
 }
 
@@ -69,7 +75,7 @@ class SocketService {
    * Connects to the WebSocket server.
    * @param token Optional JWT token for authentication.
    */
-  public connect(token?: string, initialCwd?:string): void {
+  public connect(token?: string, initialCwd?: string): void {
     if (this.socket && this.socket.connected) {
       console.warn('Socket already connected.');
       return;
@@ -77,22 +83,23 @@ class SocketService {
 
     const authToken = token || getToken();
     if (!authToken) {
-      console.error('No authentication token available for WebSocket connection.');
+      console.error(
+        'No authentication token available for WebSocket connection.',
+      );
       // Attempt to connect without token, may be rejected by gateway
     }
     const initialCwdFromEnv =
-          projectRootDirectoryStore.get() || import.meta.env.VITE_BASE_DIR;
+      projectRootDirectoryStore.get() || import.meta.env.VITE_BASE_DIR;
 
-        this.socket = io(`${this.wsUrl}`, {
-          auth: {
-            token: `Bearer ${authToken}`,
-          },
-          query:
-            initialCwd || initialCwdFromEnv
-              ? { initialCwd: initialCwd || initialCwdFromEnv }
-              : undefined,
-        });
-
+    this.socket = io(`${this.wsUrl}`, {
+      auth: {
+        token: `Bearer ${authToken}`,
+      },
+      query:
+        initialCwd || initialCwdFromEnv
+          ? { initialCwd: initialCwd || initialCwdFromEnv }
+          : undefined,
+    });
 
     this.socket.on('connect', () => {
       console.log('WebSocket connected:', this.socket?.id);
@@ -132,7 +139,11 @@ class SocketService {
    * @param onProgress Optional callback for progress updates.
    * @returns A Promise that resolves with the response data or rejects with an error.
    */
-  public emit<T>(eventName: string, data: ApiDataProps, onProgress?: (progress: ProgressEventPayload) => void): Promise<T> {
+  public emit<T>(
+    eventName: string,
+    data: ApiDataProps,
+    onProgress?: (progress: ProgressEventPayload) => void,
+  ): Promise<T> {
     if (!this.socket || !this.socket.connected) {
       return Promise.reject(new Error('WebSocket is not connected.'));
     }
@@ -146,22 +157,41 @@ class SocketService {
         this.socket?.on(progressEvent, onProgress);
       }
 
-      this.socket?.emit('dynamicFileEvent', data, (response: WsResponse<T> | { message: string; data?: any }) => { // Adjusted response type for error handling
-        // Unregister progress listener after the main response is received
-        if (onProgress) {
-          this.socket?.off(progressEvent, onProgress);
-        }
+      this.socket?.emit(
+        'dynamicFileEvent',
+        data,
+        (response: WsResponse<T> | { message: string; data?: any }) => {
+          // Adjusted response type for error handling
+          // Unregister progress listener after the main response is received
+          if (onProgress) {
+            this.socket?.off(progressEvent, onProgress);
+          }
 
-        if (response && 'event' in response && response.event === responseEvent) {
-          resolve(response.data);
-        } else if (response && 'event' in response && response.event === errorEvent) {
-          reject(new Error(response.data?.message || response.message || 'An unknown error occurred.'));
-        } else if (response && 'message' in response) {
-          reject(new Error(response.message));
-        } else {
-          reject(new Error('Unknown response format.'));
-        }
-      });
+          if (
+            response &&
+            'event' in response &&
+            response.event === responseEvent
+          ) {
+            resolve(response.data);
+          } else if (
+            response &&
+            'event' in response &&
+            response.event === errorEvent
+          ) {
+            reject(
+              new Error(
+                response.data?.message ||
+                  response.message ||
+                  'An unknown error occurred.',
+              ),
+            );
+          } else if (response && 'message' in response) {
+            reject(new Error(response.message));
+          } else {
+            reject(new Error('Unknown response format.'));
+          }
+        },
+      );
 
       // Set a timeout for the response
       const timeoutId = setTimeout(() => {
@@ -204,14 +234,22 @@ class SocketService {
    * @param onProgress Optional callback for progress updates during download.
    * @returns A Promise that resolves with the file content.
    */
-  public readFile(filePath: string, projectId: string, onProgress?: (progress: ProgressEventPayload) => void): Promise<string> {
-    return this.emit<string>('fileReadFileContent', {
-      endpoint: '/api/file/read',
-      method: 'POST',
-      body: { path: filePath, projectId },
-      event: 'fileReadFileContent',
-      responseType: 'text',
-    }, onProgress);
+  public readFile(
+    filePath: string,
+    projectId: string,
+    onProgress?: (progress: ProgressEventPayload) => void,
+  ): Promise<string> {
+    return this.emit<string>(
+      'fileReadFileContent',
+      {
+        endpoint: '/api/file/read',
+        method: 'POST',
+        body: { path: filePath, projectId },
+        event: 'fileReadFileContent',
+        responseType: 'text',
+      },
+      onProgress,
+    );
   }
 
   /**
@@ -222,13 +260,23 @@ class SocketService {
    * @param onProgress Optional callback for progress updates during upload.
    * @returns A Promise that resolves when the file is written.
    */
-  public writeFile(filePath: string, content: string, projectId: string, onProgress?: (progress: ProgressEventPayload) => void): Promise<FileOperationResult> { // Changed return type
-    return this.emit<FileOperationResult>('fileWriteFileContent', {
-      endpoint: '/api/file/write',
-      method: 'POST',
-      body: { path: filePath, content, projectId },
-      event: 'fileWriteFileContent',
-    }, onProgress);
+  public writeFile(
+    filePath: string,
+    content: string,
+    projectId: string,
+    onProgress?: (progress: ProgressEventPayload) => void,
+  ): Promise<FileOperationResult> {
+    // Changed return type
+    return this.emit<FileOperationResult>(
+      'fileWriteFileContent',
+      {
+        endpoint: '/api/file/write',
+        method: 'POST',
+        body: { path: filePath, content, projectId },
+        event: 'fileWriteFileContent',
+      },
+      onProgress,
+    );
   }
 
   /**
@@ -238,13 +286,21 @@ class SocketService {
    * @param projectId The ID of the project.
    * @returns A Promise that resolves with the operation result.
    */
-  public createFileOrFolder(filePath: string, type: 'file' | 'folder', projectId: string): Promise<FileOperationResult & { path: string }> { // Changed return type
-    return this.emit<FileOperationResult & { path: string }>('fileCreateFileOrFolder', {
-      endpoint: '/api/file/create',
-      method: 'POST',
-      body: { path: filePath, type, projectId },
-      event: 'fileCreateFileOrFolder',
-    });
+  public createFileOrFolder(
+    filePath: string,
+    type: 'file' | 'folder',
+    projectId: string,
+  ): Promise<FileOperationResult & { path: string }> {
+    // Changed return type
+    return this.emit<FileOperationResult & { path: string }>(
+      'fileCreateFileOrFolder',
+      {
+        endpoint: '/api/file/create',
+        method: 'POST',
+        body: { path: filePath, type, projectId },
+        event: 'fileCreateFileOrFolder',
+      },
+    );
   }
 
   /**
@@ -253,7 +309,10 @@ class SocketService {
    * @param projectId The ID of the project.
    * @returns A Promise that resolves with the operation result.
    */
-  public deleteFileOrFolder(filePath: string, projectId: string): Promise<FileOperationResult> {
+  public deleteFileOrFolder(
+    filePath: string,
+    projectId: string,
+  ): Promise<FileOperationResult> {
     return this.emit<FileOperationResult>('fileDeleteFileOrFolder', {
       endpoint: '/api/file/delete',
       method: 'POST',
@@ -269,7 +328,11 @@ class SocketService {
    * @param projectId The ID of the project.
    * @returns A Promise that resolves with the operation result.
    */
-  public renameFileOrFolder(oldPath: string, newPath: string, projectId: string): Promise<FileOperationResult> {
+  public renameFileOrFolder(
+    oldPath: string,
+    newPath: string,
+    projectId: string,
+  ): Promise<FileOperationResult> {
     return this.emit<FileOperationResult>('fileRenameFileOrFolder', {
       endpoint: '/api/file/rename',
       method: 'POST',
@@ -285,7 +348,11 @@ class SocketService {
    * @param projectId The ID of the project.
    * @returns A Promise that resolves with the copy operation result.
    */
-  public copyFileOrFolder(sourcePath: string, destinationPath: string, projectId: string): Promise<CopyResult> {
+  public copyFileOrFolder(
+    sourcePath: string,
+    destinationPath: string,
+    projectId: string,
+  ): Promise<CopyResult> {
     return this.emit<CopyResult>('fileCopyFileOrFolder', {
       endpoint: '/api/file/copy',
       method: 'POST',
@@ -301,7 +368,11 @@ class SocketService {
    * @param projectId The ID of the project.
    * @returns A Promise that resolves with the move operation result.
    */
-  public moveFileOrFolder(sourcePath: string, destinationPath: string, projectId: string): Promise<MoveResult> {
+  public moveFileOrFolder(
+    sourcePath: string,
+    destinationPath: string,
+    projectId: string,
+  ): Promise<MoveResult> {
     return this.emit<MoveResult>('fileMoveFileOrFolder', {
       endpoint: '/api/file/move',
       method: 'POST',
@@ -335,7 +406,10 @@ class SocketService {
    * @param filePath The path to the file to subscribe to.
    * @param callback The callback to execute when updates are received.
    */
-  public subscribeToFileUpdates<T>(filePath: string, callback: (data: T) => void): void {
+  public subscribeToFileUpdates<T>(
+    filePath: string,
+    callback: (data: T) => void,
+  ): void {
     // This assumes the backend emits file-specific events like 'fileUpdated:{filePath}'
     // or a more generic 'fileUpdated' event with a payload containing the file path.
     // Adjust the event name if the backend uses a different convention.
@@ -348,7 +422,10 @@ class SocketService {
    * @param filePath The path to the file.
    * @param callback The callback to remove.
    */
-  public unsubscribeFromFileUpdates<T>(filePath: string, callback: (data: T) => void): void {
+  public unsubscribeFromFileUpdates<T>(
+    filePath: string,
+    callback: (data: T) => void,
+  ): void {
     this.off(`fileUpdated:${filePath}`, callback);
     console.log(`Unsubscribed from updates for file: ${filePath}`);
   }

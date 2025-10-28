@@ -3,12 +3,13 @@
  */
 
 import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api/fetch';
-import { CreateConversationDto, Conversation, GetConversationsDto } from '../types';
+import { CreateConversationDto, Conversation } from '../types';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Chat Conversation REST API Functions
 // ────────────────────────────────────────────────────────────────────────────
 
+// Full path including the global API prefix, constructed using API_BASE_URL
 const CHAT_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/chat/conversations`;
 
 /**
@@ -29,7 +30,7 @@ export const chatApi = {
         body: JSON.stringify(data),
       });
       return handleResponse<Conversation>(response);
-    } catch (error: ApiError) {
+    } catch (error) {
       console.error('Error creating conversation:', error);
       throw error;
     }
@@ -45,13 +46,13 @@ export const chatApi = {
   ): Promise<Conversation[]> => {
     try {
       const response = await fetchWithAuth(
-        `${CHAT_CONVERSATIONS_BASE_URL}?userId=${userId}`,
+        `${CHAT_CONVERSATIONS_BASE_URL}?userId=${userId}`, // Note: CHAT_CONVERSATIONS_BASE_URL already includes /api
         {
           method: 'GET',
         },
       );
       return handleResponse<Conversation[]>(response);
-    } catch (error: ApiError) {
+    } catch (error) {
       console.error(
         `Error fetching conversations for user ${userId}:`,
         error,

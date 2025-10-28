@@ -10,7 +10,7 @@ import { atom } from 'nanostores';
 import { JoinVideoRoomDto, SignalingPayloadDto, PeerInfo } from './types';
 
 // WebSocket URL base from environment variables
-const WS_BASE_URL = import.meta.env.VITE_WS_URL; // e.g., 'ws://localhost:3000'
+const WS_BASE_URL = import.meta.env.VITE_WS_URL as string; // e.g., 'ws://localhost:3000'
 const WEBRTC_WS_NAMESPACE = '/chat'; // Matches NestJS ChatGateway namespace for video signaling
 
 /**

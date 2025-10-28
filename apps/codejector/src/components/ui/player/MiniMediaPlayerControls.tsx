@@ -48,7 +48,7 @@ const MiniMediaPlayerControls: React.FC<MiniMediaPlayerControlsProps> = ({
   mediaElementRef,
 }) => {
   const theme = useTheme();
-  const { loading } = useStore($mediaStore);
+  const { isFetchingMedia } = useStore($mediaStore); // Corrected: use isFetchingMedia
   const isPlaying = useStore(isPlayingAtom);
   const trackProgress = useStore(progressAtom);
   const duration = useStore(durationAtom);
@@ -88,7 +88,7 @@ const MiniMediaPlayerControls: React.FC<MiniMediaPlayerControlsProps> = ({
     [mediaElementRef, setTrackProgress],
   );
 
-  const isPlayerDisabled = !currentTrack || loading;
+  const isPlayerDisabled = !currentTrack || isFetchingMedia; // Corrected: use isFetchingMedia
 
   return (
     <Box
@@ -138,7 +138,7 @@ const MiniMediaPlayerControls: React.FC<MiniMediaPlayerControlsProps> = ({
             justifyContent: 'center',
           }}
         >
-          {loading ? (
+          {isFetchingMedia ? ( // Corrected: use isFetchingMedia
             <CircularProgress size={18} color="inherit" /> // Smaller progress spinner
           ) : isPlaying ? (
             <Pause fontSize="small" /> // Smaller icon

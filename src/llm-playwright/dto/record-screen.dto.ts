@@ -15,7 +15,8 @@ export class RecordScreenDto {
   url: string;
 
   @ApiPropertyOptional({
-    description: 'Optional desired file name for the output video (e.g., "my-session-recording.webm"). If not provided, a timestamp-based unique name will be used.',
+    description:
+      'Optional desired file name for the output video (e.g., "my-session-recording.webm"). If not provided, a timestamp-based unique name will be used.',
     example: 'my-custom-recording.webm',
   })
   @IsOptional()

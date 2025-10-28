@@ -10,7 +10,7 @@ import { atom } from 'nanostores';
 import { SendMessageDto, GetHistoryDto, Message } from './types';
 
 // WebSocket URL, using relative path for Vite proxy consistency
-const WS_BASE_URL = import.meta.env.VITE_WS_URL; // Expects VITE_WS_URL to be defined
+const WS_BASE_URL = import.meta.env.VITE_WS_URL as string; // Expects VITE_WS_URL to be defined
 const CHAT_WS_NAMESPACE = '/chat'; // Matches NestJS ChatGateway path
 
 /**
@@ -29,7 +29,7 @@ const deserializeMessage = (rawMessage: any): Message => {
     // Ensure these fields exist and are mapped correctly from backend payload
     id: rawMessage.id,
     conversationId: rawMessage.conversationId,
-    createdById: rawMessage.createdById, // Match backend field
+    createdById: rawMessage.createdById,
     content: rawMessage.content,
     sender: rawMessage.sender,
   };
@@ -145,7 +145,7 @@ class ChatSocketService {
         callback((data as any[]).map(deserializeMessage) as T);
       } else {
         callback(data as T);
-      }
+      n}
     };
 
     this.listeners.set(event, wrappedCallback); // Store wrapped listener

@@ -77,7 +77,9 @@ import { PlannerModule } from './planner/planner.module';
 import { LogsModule } from './logs/logs.module';
 import { LlmPlaywrightModule } from './llm-playwright/llm-playwright.module';
 import { GitModule } from './git/git.module';
-
+import { ChatModule } from './chat/chat.module';
+import { OpenviduModule } from './openvidu/openvidu.module';
+import { MemberModule } from './member/member.module';
 /**
  * The root module of the NestJS application.
  *
@@ -239,6 +241,9 @@ import { GitModule } from './git/git.module';
     LogsModule,
     LlmPlaywrightModule,
     GitModule,
+    ChatModule,
+    OpenviduModule,
+    MemberModule,
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.

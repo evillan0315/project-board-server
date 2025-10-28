@@ -36,4 +36,3 @@ export type Plan = z.infer<typeof PlanSchema>;
 export function validatePlan(obj: unknown): Plan {
   return PlanSchema.parse(obj);
 }
-

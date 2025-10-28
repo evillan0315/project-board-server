@@ -12,14 +12,14 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import GitBranchIcon from '@mui/icons-material/CallSplit';
 
-import { GitBranch } from './types/git';
+import { IGitBranch } from './types/git';
 
 interface GitBranchesSectionProps {
-  branches: GitBranch[];
+  branches: IGitBranch[];
   loading: boolean;
   onCreateBranchClick: () => void;
   onCheckoutBranch: (branchName: string) => void;
-  onBranchContextMenu: (event: React.MouseEvent, branch: GitBranch) => void;
+  onBranchContextMenu: (event: React.MouseEvent, branch: IGitBranch) => void;
 }
 
 const sectionPaperSx = {

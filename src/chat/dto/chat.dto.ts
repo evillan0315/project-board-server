@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsUUID, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Sender } from '@prisma/client';
 
@@ -15,7 +21,7 @@ export class SendMessageDto {
   })
   @IsUUID('4')
   @IsNotEmpty()
-  userId: string; 
+  userId: string;
 
   @ApiProperty({
     description: 'The unique ID of the conversation thread (UUID v4).',
@@ -47,7 +53,8 @@ export class SendMessageDto {
 // DTO for requesting a conversation's history
 export class GetHistoryDto {
   @ApiProperty({
-    description: 'The unique ID of the conversation thread to retrieve history for (UUID v4).',
+    description:
+      'The unique ID of the conversation thread to retrieve history for (UUID v4).',
     example: 'b1c2d3e4-f5g6-7h8i-9j0k-l1m2n3o4p5q6',
     format: 'uuid',
   })
@@ -91,39 +98,45 @@ export class SignalingPayloadDto {
   })
   @IsUUID('4')
   @IsNotEmpty()
-  roomId: string; 
+  roomId: string;
 
   @ApiProperty({
-    description: 'The socket ID or user ID of the recipient/target peer (UUID v4).',
+    description:
+      'The socket ID or user ID of the recipient/target peer (UUID v4).',
     example: 'd1e2f3g4-h5i6-7j8k-9l0m-n1o2p3q4r5s6',
     format: 'uuid',
   })
   @IsUUID('4')
   @IsNotEmpty()
-  targetUserId: string; 
+  targetUserId: string;
 
   @ApiPropertyOptional({
-    description: 'The ID of the sending user (UUID v4), optional if inferred from socket.',
+    description:
+      'The ID of the sending user (UUID v4), optional if inferred from socket.',
     example: 'a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6',
     format: 'uuid',
   })
   @IsUUID('4')
   @IsOptional()
-  senderUserId?: string; 
+  senderUserId?: string;
 
   @ApiPropertyOptional({
-    description: 'The actual WebRTC payload (SDP Offer, Answer, or ICE Candidate object).',
-    example: { 
-      type: 'offer', 
-      sdp: 'v=0\\r\\no=- 33810141386762013 2 IN IP4 127.0.0.1\\r\\n...' 
+    description:
+      'The actual WebRTC payload (SDP Offer, Answer, or ICE Candidate object).',
+    example: {
+      type: 'offer',
+      sdp: 'v=0\\r\\no=- 33810141386762013 2 IN IP4 127.0.0.1\\r\\n...',
     },
     oneOf: [
-      { type: 'object', description: 'RTCSessionDescriptionInit (Offer/Answer)' },
-      { type: 'object', description: 'RTCIceCandidate' }
-    ]
+      {
+        type: 'object',
+        description: 'RTCSessionDescriptionInit (Offer/Answer)',
+      },
+      { type: 'object', description: 'RTCIceCandidate' },
+    ],
   })
   @IsOptional()
-  payload: RTCSessionDescriptionInit | RTCIceCandidate | any; 
+  payload: RTCSessionDescriptionInit | RTCIceCandidate | any;
 }
 
 // Base DTO for creating a new Conversation via REST (for initial setup)
@@ -137,7 +150,8 @@ export class CreateConversationDto {
   title: string;
 
   @ApiProperty({
-    description: 'The ID of the user who is creating the conversation (UUID v4).',
+    description:
+      'The ID of the user who is creating the conversation (UUID v4).',
     example: 'a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6',
     format: 'uuid',
   })
@@ -149,7 +163,8 @@ export class CreateConversationDto {
 // DTO for getting a list of conversations for a user
 export class GetConversationsDto {
   @ApiProperty({
-    description: 'The ID of the user whose conversations are being requested (UUID v4).',
+    description:
+      'The ID of the user whose conversations are being requested (UUID v4).',
     example: 'a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6',
     format: 'uuid',
   })

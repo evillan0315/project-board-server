@@ -1,9 +1,11 @@
-import React, {
-  useState,
-  useCallback,
-  useMemo,
-  useEffect,
-} from 'react';
+import React,
+  {
+    useState,
+    useCallback,
+    useMemo,
+    useEffect,
+  }
+ from 'react';
 import { useStore } from '@nanostores/react';
 import {
   Box,
@@ -47,9 +49,7 @@ import {
   ADDITIONAL_INSTRUCTION_EXPECTED_OUTPUT,
 } from '@/constants/instruction';
 import { generateCode, applyProposedChanges } from '@/api/llm';
-import PromptGeneratorSettings from '@/components/Drawer/PromptGeneratorSettings';
 import { LlmOutputFormat, LlmGeneratePayload, ModelResponse } from '@/types';
-import CustomDrawer from '@/components/Drawer/CustomDrawer';
 import BottomToolbar from './BottomToolbar';
 import { debounce } from '@/utils/debounce';
 
@@ -109,11 +109,9 @@ const promptTextFieldStyles = {
   const [projectInput, setProjectInput] = useState(
     currentProjectPath || import.meta.env.VITE_BASE_DIR || '',
   );
-  const [isPickerDialogOpen, setIsPickerDialogOpen] = useState(false); // Unused
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isProjectRootPickerDialogOpen, setIsProjectRootPickerDialogOpen] = useState(false);
   const [isScanPathsDialogOpen, setIsScanPathsDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const commonDisabled = !isLoggedIn || loading || isBuilding;
 
@@ -289,7 +287,6 @@ const promptTextFieldStyles = {
 
   const handleSave = useCallback(() => {
     // Settings are saved directly by PromptGeneratorSettings, just close the drawer
-    setIsSettingsOpen(false);
     addLog('Prompt Generator', 'Prompt Generator settings saved.', 'info');
   }, []);
 
@@ -366,8 +363,6 @@ const promptTextFieldStyles = {
         handleLoadProject={handleLoadProject}
         isImportDialogOpen={isImportDialogOpen}
         setIsImportDialogOpen={setIsImportDialogOpen}
-        isSettingsOpen={isSettingsOpen}
-        setIsSettingsOpen={setIsSettingsOpen}
         isProjectRootPickerDialogOpen={isProjectRootPickerDialogOpen}
         setIsProjectRootPickerDialogOpen={setIsProjectRootPickerDialogOpen}
         isScanPathsDialogOpen={isScanPathsDialogOpen}

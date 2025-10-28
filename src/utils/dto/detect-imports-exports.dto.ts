@@ -11,7 +11,8 @@ export class DetectImportsExportsDto {
   code: string;
 
   @ApiProperty({
-    description: 'The programming language of the code (e.g., "typescript", "javascript", "tsx", "jsx").',
+    description:
+      'The programming language of the code (e.g., "typescript", "javascript", "tsx", "jsx").',
     example: 'typescript',
   })
   @IsString()

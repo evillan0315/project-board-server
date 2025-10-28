@@ -1,4 +1,3 @@
-// Source: src/components/Layout.tsx
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import LinearProgress from '@mui/material/LinearProgress';
@@ -10,6 +9,7 @@ import { checkAuthStatus } from '@/services/authService';
 import { useStore } from '@nanostores/react';
 import { authStore } from '@/stores/authStore';
 import { llmStore } from '@/stores/llmStore';
+import { roomStore } from '@/components/swingers/stores/roomStore';
 import {
   isRightSidebarVisible,
   isLeftSidebarVisible,
@@ -29,6 +29,7 @@ import Footer from './Footer';
 // ✅ NEW: import global loading store
 import { loadingStore } from '@/stores/loadingStore';
 import { currentURL } from '@/stores/page';
+import { openViduEntitiesStore } from '@/components/swingers/stores/openViduEntitiesStore'; // Import the new store
 
 const NAVBAR_HEIGHT = 64;
 const FOOTER_HEIGHT = 50; // Adjusted to accommodate both original footer controls (40px) and MediaPlayerContainer (80px)
@@ -45,7 +46,8 @@ const Layout: React.FC<LayoutProps> = ({ footer }) => {
   const { loading: authLoading, isLoggedIn } = useStore(authStore);
   const { loading: llmLoading, isBuilding } = useStore(llmStore);
   const { loading: mediaLoading } = useStore($mediaStore);
-
+  const { loading: roomLoading } = useStore(roomStore);
+  const { loading: openViduEntitiesLoading } = useStore(openViduEntitiesStore); // Use loading state from new store
   const { openedFile } = useStore(fileStore);
 
   // ✅ subscribe to global loading store
@@ -54,14 +56,14 @@ const Layout: React.FC<LayoutProps> = ({ footer }) => {
   const theme = useTheme();
 
   // ✅ consider both existing loaders and global request loaders
-  const isAnyGlobalRequestLoading =
-    Object.values(globalLoadingState).some(Boolean);
+  const isAnyGlobalRequestLoading = Object.values(globalLoadingState).some(Boolean);
   const layoutLoader =
     authLoading ||
     llmLoading ||
     isBuilding ||
     isAnyGlobalRequestLoading ||
-    mediaLoading;
+    mediaLoading ||
+    openViduEntitiesLoading; // Include loading state from openViduEntitiesStore
 
   const $isRightSidebarVisible = useStore(isRightSidebarVisible);
   const $isLeftSidebarVisible = useStore(isLeftSidebarVisible);
@@ -150,7 +152,7 @@ const Layout: React.FC<LayoutProps> = ({ footer }) => {
       {/* ✅ now also shows when global loadingStore has any active request */}
 
       {layoutLoader && (
-        <Box className="w-full fixed top-18 z-[1100] flex-shrink-0">
+        <Box className="w-full fixed top-15 z-[1100] flex-shrink-0">
           <LinearProgress />
         </Box>
       )}

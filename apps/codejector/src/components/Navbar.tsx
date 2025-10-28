@@ -6,7 +6,10 @@ import { projectRootDirectoryStore } from '@/stores/fileTreeStore'; // Only the 
 import { isRightSidebarVisible, isLeftSidebarVisible } from '@/stores/uiStore';
 import { snackbarState, setSnackbarState } from '@/stores/snackbarStore';
 import { handleLogout } from '@/services/authService';
-import { runTerminalCommand, fetchProjectScripts } from '@/components/Terminal/api/terminal';
+import {
+  runTerminalCommand,
+  fetchProjectScripts,
+} from '@/components/Terminal/api/terminal';
 import ThemeToggle from './ThemeToggle';
 import RunScriptMenuItem from './RunScriptMenuItem';
 import AppsMenuContent from './AppsMenuContent';

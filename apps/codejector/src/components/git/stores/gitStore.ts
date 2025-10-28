@@ -1,10 +1,10 @@
 import { map } from 'nanostores';
-import { GitBranch, GitCommit, GitStatusResult } from '../types/git';
+import { IGitBranch, IGitCommit, IGitStatusResult } from '../types/git';
 
 export interface GitState {
-  status: GitStatusResult | null;
-  branches: GitBranch[];
-  commits: GitCommit[];
+  status: IGitStatusResult | null;
+  branches: IGitBranch[];
+  commits: IGitCommit[];
   snapshots: string[];
   loading: boolean;
   error: string | null;

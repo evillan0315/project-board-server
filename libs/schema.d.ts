@@ -12,10 +12,10 @@ export type FileChange = {
   [k: string]: unknown;
 } & {
   filePath: string;
-  action: "add" | "modify" | "delete" | "repair" | "analyze";
+  action: 'add' | 'modify' | 'delete' | 'repair' | 'analyze';
   newContent?: string;
   reason?: string;
-  encoding?: "utf-8" | "base64";
+  encoding?: 'utf-8' | 'base64';
   /**
    * SHA256 hex of newContent (if provided)
    */
@@ -97,7 +97,7 @@ export interface LLMCodeApplicationGenerationBuilderModelProduction {
         tool?: string;
         configured?: boolean;
       };
-    }[]
+    }[],
   ];
   buildScripts?: {
     [k: string]: string;
@@ -129,7 +129,7 @@ export interface LLMCodeApplicationGenerationBuilderModelProduction {
   ci?: {
     provider?: string;
     pipelineRef?: string;
-    status?: "not-configured" | "passing" | "failing" | "unknown";
+    status?: 'not-configured' | 'passing' | 'failing' | 'unknown';
     requiredChecks?: string[];
   };
   containerization?: {
@@ -145,7 +145,7 @@ export interface LLMCodeApplicationGenerationBuilderModelProduction {
     sbom?: string;
     securityScans?: SecurityScan[];
     licenseCompliance?: {
-      status?: "ok" | "warning" | "violation" | "unknown";
+      status?: 'ok' | 'warning' | 'violation' | 'unknown';
       details?: string;
     };
     /**
@@ -163,14 +163,20 @@ export interface Dependency {
 }
 export interface ApiEndpoint {
   path: string;
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "HEAD";
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'HEAD';
   description?: string;
   authRequired?: boolean;
   requestSchemaRef?: string;
   responseSchemaRef?: string;
 }
 export interface Artifact {
-  type: "docker-image" | "archive" | "binary" | "sbom" | "report" | "container-image";
+  type:
+    | 'docker-image'
+    | 'archive'
+    | 'binary'
+    | 'sbom'
+    | 'report'
+    | 'container-image';
   /**
    * relative or registry path
    */

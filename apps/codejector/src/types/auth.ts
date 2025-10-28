@@ -1,29 +1,33 @@
-export interface UserProfile {
-  id?: string;
-  email?: string;
-  name?: string;
-  image?: string;
-  role?: 'USER' | 'ADMIN' | 'MANAGER' | 'SUPERADMIN'; // Mirroring backend Role enum
-  username?: string; // Add username for local registration/profile
-  provider?: 'google' | 'github' | 'local'; // Added 'local' provider
-  accessToken?: string; // Only for client-side use if needed, backend sets HTTP-only cookie
-  organization?: string; // New: User's primary organization for display purposes
+import { GitUser } from './git';
+
+export enum Provider {
+  GOOGLE = 'google',
+  GITHUB = 'github',
+  LOCAL = 'local',
 }
 
-export interface AuthState {
-  isLoggedIn: boolean;
-  user: UserProfile | null;
-  loading: boolean; // Indicates if auth status is being loaded (e.g., on app start)
-  error: string | null;
-}
-
-export interface LoginRequest {
+export interface IAuthUser {
+  id: string;
   email: string;
-  password: string;
+  username: string;
+  profileImage: string | null;
+  pictureFull?: string; // Optional full picture URL, derived from profileImage or external source
+  provider: Provider;
+  githubId?: string;
+  googleId?: string;
+  createdAt: string;
+  updatedAt: string;
+  roles: string[];
+  accessToken: string;
+  refreshToken: string;
+  githubAuth?: { id: string; username: string }[];
+  gender1?: string;
+  gender2?: string;
+  gitHubUser?: GitUser; // New field for GitHub user details
 }
 
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  name: string; // Changed from 'username' to 'name' to align with backend RegisterDto
+export interface IAuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: IAuthUser;
 }

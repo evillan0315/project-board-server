@@ -8323,6 +8323,46 @@
         ]
       }
     },
+    "/api/ffmpeg/devices": {
+      "get": {
+        "description": "Retrieves a list of detected microphones and cameras on the server, which can be used for recording.",
+        "operationId": "FfmpegController_listDevices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of available devices.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevicesListDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to list devices."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available audio and video input devices for recording.",
+        "tags": [
+          "FFmpeg Transcoding"
+        ]
+      }
+    },
     "/api/ffmpeg/transcode-gif": {
       "post": {
         "operationId": "FfmpegController_transcodeToGif",
@@ -9273,6 +9313,16 @@
       "post": {
         "operationId": "RecordingController_start",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRecordingDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Recording started.",
@@ -9302,7 +9352,7 @@
             "bearer": []
           }
         ],
-        "summary": "Start screen recording.",
+        "summary": "Start screen recording with optional audio.",
         "tags": [
           "Recording"
         ]
@@ -18622,6 +18672,1470 @@
           "LLM Playwright Operations"
         ]
       }
+    },
+    "/api/git/status": {
+      "get": {
+        "operationId": "GitController_getStatus",
+        "parameters": [
+          {
+            "name": "projectRoot",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitStatusResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current Git repository status",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/stage": {
+      "post": {
+        "operationId": "GitController_stageFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitFilesOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Files staged successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stage one or more files",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/unstage": {
+      "post": {
+        "operationId": "GitController_unstageFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitFilesOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Files unstaged successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unstage one or more files",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/reset-staged": {
+      "post": {
+        "operationId": "GitController_resetStagedChanges",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitResetStageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Staged changes reset successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reset all staged changes or a specific file",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/reset-hard": {
+      "post": {
+        "operationId": "GitController_resetHard",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitResetHardDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hard reset performed successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Perform a hard reset to a specific commit or HEAD. WARNING: This discards all uncommitted changes.",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/commit": {
+      "post": {
+        "operationId": "GitController_commit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Commit staged changes",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/revert": {
+      "post": {
+        "operationId": "GitController_revertCommit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertCommitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Commit reverted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revert a specific commit or the last commit",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/undo-file-changes": {
+      "post": {
+        "operationId": "GitController_undoFileChanges",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitFileOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File changes undone successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Discard changes in a specific file in the working directory",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/branches": {
+      "get": {
+        "operationId": "GitController_getBranches",
+        "parameters": [
+          {
+            "name": "projectRoot",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GitBranchDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all local and remote branches",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/branch": {
+      "post": {
+        "operationId": "GitController_createBranch",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Branch created successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new local branch and checkout",
+        "tags": [
+          "Git Management"
+        ]
+      },
+      "delete": {
+        "operationId": "GitController_deleteBranch",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Branch deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a local branch",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/checkout": {
+      "post": {
+        "operationId": "GitController_checkoutBranch",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Branch checked out successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Checkout an existing local or remote branch",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/snapshot": {
+      "post": {
+        "operationId": "GitController_createSnapshot",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSnapshotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Snapshot created successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a Git snapshot (tag current HEAD)",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/restore-snapshot": {
+      "post": {
+        "operationId": "GitController_restoreSnapshot",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreSnapshotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Snapshot restored successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Restore the repository to a specific snapshot (checkout tag)",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/snapshots": {
+      "get": {
+        "operationId": "GitController_listSnapshots",
+        "parameters": [
+          {
+            "name": "projectRoot",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSnapshotsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all available snapshots (Git tags)",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/snapshot/{snapshotName}": {
+      "delete": {
+        "operationId": "GitController_deleteSnapshot",
+        "parameters": [
+          {
+            "name": "snapshotName",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectRoot",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshot deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a specific snapshot (Git tag)",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/commits": {
+      "get": {
+        "operationId": "GitController_getCommitLog",
+        "parameters": [
+          {
+            "name": "projectRoot",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GitCommitDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the commit log for the repository",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/git/diff": {
+      "post": {
+        "operationId": "GitController_getDiff",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitDiffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitDiffResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the Git diff for a specific file",
+        "tags": [
+          "Git Management"
+        ]
+      }
+    },
+    "/api/chat/conversations": {
+      "post": {
+        "operationId": "ChatController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConversationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The conversation has been successfully created."
+          }
+        },
+        "summary": "Create a new chat conversation",
+        "tags": [
+          "Chat Conversations"
+        ]
+      },
+      "get": {
+        "operationId": "ChatController_getConversations",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "query",
+            "description": "The UUID of the user to fetch conversations for.",
+            "schema": {
+              "format": "uuid",
+              "example": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the list of conversations."
+          }
+        },
+        "summary": "Get all conversations for a specific user",
+        "tags": [
+          "Chat Conversations"
+        ]
+      }
+    },
+    "/api/openvidu/sessions": {
+      "post": {
+        "operationId": "OpenviduController_createSession",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOpenViduSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to create session."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new OpenVidu session",
+        "tags": [
+          "OpenVidu"
+        ]
+      },
+      "get": {
+        "operationId": "OpenviduController_getActiveSessions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of active session IDs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all active OpenVidu session IDs",
+        "tags": [
+          "OpenVidu"
+        ]
+      }
+    },
+    "/api/openvidu/tokens": {
+      "post": {
+        "operationId": "OpenviduController_generateToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateOpenViduTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Token generated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to generate token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate a new OpenVidu token for a session",
+        "tags": [
+          "OpenVidu"
+        ]
+      }
+    },
+    "/api/openvidu/sessions/{sessionId}": {
+      "delete": {
+        "operationId": "OpenviduController_deleteSession",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session deleted successfully."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Session not found."
+          },
+          "500": {
+            "description": "Failed to delete session."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an OpenVidu session",
+        "tags": [
+          "OpenVidu"
+        ]
+      }
+    },
+    "/api/member": {
+      "post": {
+        "operationId": "MemberController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMemberDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Member",
+        "tags": [
+          "Member"
+        ]
+      },
+      "get": {
+        "operationId": "MemberController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Member records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateMemberDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Member records",
+        "tags": [
+          "Member"
+        ]
+      }
+    },
+    "/api/member/paginated": {
+      "get": {
+        "operationId": "MemberController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "username",
+            "required": false,
+            "in": "query",
+            "description": "Filter by username",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "required": false,
+            "in": "query",
+            "description": "Filter by email",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provider",
+            "required": false,
+            "in": "query",
+            "description": "Filter by provider",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "confirmed",
+            "required": false,
+            "in": "query",
+            "description": "Filter by confirmed",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "blocked",
+            "required": false,
+            "in": "query",
+            "description": "Filter by blocked",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "description": "Filter by role",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "memberSystemId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by memberSystemId",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "jsonData",
+            "required": false,
+            "in": "query",
+            "description": "Filter by jsonData",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "blockedExpire",
+            "required": false,
+            "in": "query",
+            "description": "Filter by blockedExpire",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "blockedStart",
+            "required": false,
+            "in": "query",
+            "description": "Filter by blockedStart",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "isPaid",
+            "required": false,
+            "in": "query",
+            "description": "Filter by isPaid",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "createGroup",
+            "required": false,
+            "in": "query",
+            "description": "Filter by createGroup",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isEmployee",
+            "required": false,
+            "in": "query",
+            "description": "Filter by isEmployee",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "isOnline",
+            "required": false,
+            "in": "query",
+            "description": "Filter by isOnline",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "memberType",
+            "required": false,
+            "in": "query",
+            "description": "Filter by memberType",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "picture",
+            "required": false,
+            "in": "query",
+            "description": "Filter by picture",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "adminUser",
+            "required": false,
+            "in": "query",
+            "description": "Filter by adminUser",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "latString",
+            "required": false,
+            "in": "query",
+            "description": "Filter by latString",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lonString",
+            "required": false,
+            "in": "query",
+            "description": "Filter by lonString",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userSetting",
+            "required": false,
+            "in": "query",
+            "description": "Filter by userSetting",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "terms",
+            "required": false,
+            "in": "query",
+            "description": "Filter by terms",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationMemberResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Member records",
+        "tags": [
+          "Member"
+        ]
+      }
+    },
+    "/api/member/{id}": {
+      "get": {
+        "operationId": "MemberController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMemberDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Member by ID",
+        "tags": [
+          "Member"
+        ]
+      },
+      "patch": {
+        "operationId": "MemberController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateMemberDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Member by ID",
+        "tags": [
+          "Member"
+        ]
+      },
+      "delete": {
+        "operationId": "MemberController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Member by ID",
+        "tags": [
+          "Member"
+        ]
+      }
     }
   },
   "info": {
@@ -20536,7 +22050,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-10-23T20:41:32.302Z",
+            "example": "2025-10-27T23:49:04.740Z",
             "format": "date-time"
           },
           "requestType": {
@@ -21270,6 +22784,55 @@
           "code"
         ]
       },
+      "DeviceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the device (e.g., /dev/video0, default, Microphone)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name of the device"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "audioinput",
+              "videoinput"
+            ],
+            "description": "Type of the device (audioinput or videoinput)"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type"
+        ]
+      },
+      "DevicesListDto": {
+        "type": "object",
+        "properties": {
+          "audioInputDevices": {
+            "description": "List of available audio input devices (microphones)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceDto"
+            }
+          },
+          "videoInputDevices": {
+            "description": "List of available video input devices (cameras)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceDto"
+            }
+          }
+        },
+        "required": [
+          "audioInputDevices",
+          "videoInputDevices"
+        ]
+      },
       "TranscodeToGifDto": {
         "type": "object",
         "properties": {
@@ -21575,6 +23138,25 @@
         "type": "object",
         "properties": {}
       },
+      "StartRecordingDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Recording name"
+          },
+          "enableAudio": {
+            "type": "boolean",
+            "description": "Whether to enable audio recording during screen capture. Defaults to false.",
+            "example": true
+          },
+          "audioDevice": {
+            "type": "string",
+            "description": "Specific audio input device to use (e.g., \"default\", \"alsa_input.pci-...\", \"0\" on macOS). Requires enableAudio to be true.",
+            "example": "default"
+          }
+        }
+      },
       "StartRecordingResponseDto": {
         "type": "object",
         "properties": {
@@ -21597,20 +23179,22 @@
         "properties": {
           "cameraDevice": {
             "type": "string",
-            "description": "Identifier for the camera device to use (platform-specific). On Linux, this is typically /dev/videoX. On macOS, 0 for default iSight. On Windows, the name of the camera.",
+            "description": "Identifier for the camera device to use (platform-specific). On Linux, this is typically /dev/videoX. On macOS, the numerical ID (e.g., 0). On Windows, the name of the camera.",
             "example": [
               "default",
               "/dev/video0",
+              "0",
               "Integrated Camera"
             ],
             "nullable": true
           },
           "audioDevice": {
             "type": "string",
-            "description": "Identifier for the audio input device to use (platform-specific). On Linux, this might be a PulseAudio source like `alsa_input.pci-0000_00_1b.0.analog-stereo`. On macOS, 0 for default microphone. On Windows, the name of the microphone.",
+            "description": "Identifier for the audio input device to use (platform-specific). On Linux, this might be a PulseAudio source like `alsa_input.pci-0000_00_1b.0.analog-stereo` or `default`. On macOS, the numerical ID (e.g., 0). On Windows, the name of the microphone.",
             "example": [
               "default",
               "alsa_input.pci-0000_00_1b.0.analog-stereo",
+              "0",
               "Microphone (Realtek(R) Audio)"
             ],
             "nullable": true
@@ -21630,9 +23214,15 @@
           },
           "duration": {
             "type": "number",
-            "description": "Duration of the recording in seconds. If not provided, records indefinitely until stopped. Max 2 hours.",
+            "description": "Duration of the recording in seconds. If not provided, records indefinitely until stopped. Max 2 hours (7200 seconds).",
             "default": 7200,
             "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Optional name for the recording file.",
+            "example": "my-camera-session",
+            "nullable": true
           }
         }
       },
@@ -21650,6 +23240,10 @@
           "message": {
             "type": "string",
             "description": "A status message for the operation."
+          },
+          "pid": {
+            "type": "string",
+            "description": "The process ID of the FFmpeg recording process, if applicable."
           }
         },
         "required": [
@@ -24784,6 +26378,796 @@
         "required": [
           "url"
         ]
+      },
+      "GitStatusFileDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path of the file"
+          },
+          "index": {
+            "type": "string",
+            "description": "Index status of the file"
+          },
+          "working_dir": {
+            "type": "string",
+            "description": "Working directory status of the file"
+          }
+        },
+        "required": [
+          "path",
+          "index",
+          "working_dir"
+        ]
+      },
+      "GitStatusRenamedDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "Original path of the file"
+          },
+          "to": {
+            "type": "string",
+            "description": "New path of the file"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      },
+      "GitStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "type": "object",
+            "description": "Current branch name",
+            "nullable": true
+          },
+          "detached": {
+            "type": "boolean",
+            "description": "True if HEAD is detached"
+          },
+          "files": {
+            "description": "List of files with their status",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitStatusFileDto"
+            }
+          },
+          "not_added": {
+            "description": "List of files not yet added to Git",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "conflicted": {
+            "description": "List of conflicted files",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "created": {
+            "description": "List of created files",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "deleted": {
+            "description": "List of deleted files",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "modified": {
+            "description": "List of modified files",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "renamed": {
+            "description": "List of renamed files",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GitStatusRenamedDto"
+            }
+          },
+          "staged": {
+            "description": "List of staged files",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ahead": {
+            "type": "number",
+            "description": "Number of commits ahead of tracking branch"
+          },
+          "behind": {
+            "type": "number",
+            "description": "Number of commits behind tracking branch"
+          },
+          "tracking": {
+            "type": "object",
+            "description": "Tracking branch name",
+            "nullable": true
+          },
+          "is_clean": {
+            "type": "boolean",
+            "description": "True if the working directory is clean"
+          }
+        },
+        "required": [
+          "detached",
+          "files",
+          "not_added",
+          "conflicted",
+          "created",
+          "deleted",
+          "modified",
+          "renamed",
+          "staged",
+          "ahead",
+          "behind",
+          "is_clean"
+        ]
+      },
+      "GitFilesOperationDto": {
+        "type": "object",
+        "properties": {
+          "filePaths": {
+            "description": "Array of file paths to operate on (relative to projectRoot)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "filePaths"
+        ]
+      },
+      "GitResetStageDto": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "Path of the file to unstage. If not provided, all staged changes are reset.",
+            "nullable": true
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        }
+      },
+      "GitResetHardDto": {
+        "type": "object",
+        "properties": {
+          "commitHash": {
+            "type": "string",
+            "description": "The commit hash to reset to. If not provided, resets to HEAD.",
+            "nullable": true
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        }
+      },
+      "CommitDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "The commit message"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "CommitResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the commit was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message about the commit operation"
+          },
+          "commitHash": {
+            "type": "string",
+            "description": "Hash of the new commit"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
+      "RevertCommitDto": {
+        "type": "object",
+        "properties": {
+          "commitHash": {
+            "type": "string",
+            "description": "The commit hash to revert to, or \"HEAD\" to revert the last commit"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "commitHash"
+        ]
+      },
+      "GitFileOperationDto": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "Path of the file to operate on (relative to projectRoot)"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "filePath"
+        ]
+      },
+      "GitBranchDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the branch"
+          },
+          "current": {
+            "type": "boolean",
+            "description": "True if this is the current branch"
+          },
+          "commit": {
+            "type": "string",
+            "description": "Hash of the latest commit on this branch"
+          },
+          "label": {
+            "type": "string",
+            "description": "Label for the branch (e.g., HEAD)"
+          }
+        },
+        "required": [
+          "name",
+          "current",
+          "commit",
+          "label"
+        ]
+      },
+      "CreateBranchDto": {
+        "type": "object",
+        "properties": {
+          "newBranchName": {
+            "type": "string",
+            "description": "Name of the new branch to create"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "newBranchName"
+        ]
+      },
+      "CheckoutBranchDto": {
+        "type": "object",
+        "properties": {
+          "branchName": {
+            "type": "string",
+            "description": "Name of the branch (local or remote) to checkout"
+          },
+          "remote": {
+            "type": "boolean",
+            "description": "Set to true to checkout a remote branch. Will create a local tracking branch if it doesn't exist.",
+            "default": false
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "branchName"
+        ]
+      },
+      "DeleteBranchDto": {
+        "type": "object",
+        "properties": {
+          "branchName": {
+            "type": "string",
+            "description": "Name of the branch to delete"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "Set to true to force delete the branch (even if not merged)",
+            "default": false
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "branchName"
+        ]
+      },
+      "CreateSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "snapshotName": {
+            "type": "string",
+            "description": "Name of the snapshot (Git tag) to create"
+          },
+          "message": {
+            "type": "string",
+            "description": "Optional message for the snapshot tag"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "snapshotName"
+        ]
+      },
+      "RestoreSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "snapshotName": {
+            "type": "string",
+            "description": "Name of the snapshot (Git tag) to restore"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "snapshotName"
+        ]
+      },
+      "ListSnapshotsResponseDto": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "description": "List of snapshot names (Git tags)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tags"
+        ]
+      },
+      "GitCommitDto": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": "string",
+            "description": "The hash of the commit"
+          },
+          "date": {
+            "type": "string",
+            "description": "The date of the commit"
+          },
+          "message": {
+            "type": "string",
+            "description": "The commit message"
+          },
+          "author_name": {
+            "type": "string",
+            "description": "The author name of the commit"
+          },
+          "author_email": {
+            "type": "string",
+            "description": "The author email of the commit"
+          }
+        },
+        "required": [
+          "hash",
+          "date",
+          "message",
+          "author_name",
+          "author_email"
+        ]
+      },
+      "GitDiffDto": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "Path of the file for which to retrieve the diff (relative to projectRoot)"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "Optional project root path for the Git repository",
+            "example": "/path/to/my/repo"
+          }
+        },
+        "required": [
+          "filePath"
+        ]
+      },
+      "GitDiffResponseDto": {
+        "type": "object",
+        "properties": {
+          "diff": {
+            "type": "string",
+            "description": "The raw Git diff output for the specified file"
+          }
+        },
+        "required": [
+          "diff"
+        ]
+      },
+      "CreateConversationDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "A descriptive title for the new conversation.",
+            "example": "Project Alpha Team Chat"
+          },
+          "createdById": {
+            "type": "string",
+            "description": "The ID of the user who is creating the conversation (UUID v4).",
+            "example": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "title",
+          "createdById"
+        ]
+      },
+      "CreateOpenViduSessionDto": {
+        "type": "object",
+        "properties": {
+          "customSessionId": {
+            "type": "string",
+            "description": "Custom ID for the OpenVidu session. If not provided, OpenVidu generates one.",
+            "example": "my-custom-session-id"
+          }
+        }
+      },
+      "KurentoOptionsDto": {
+        "type": "object",
+        "properties": {
+          "videoMinSendBandwidth": {
+            "type": "number",
+            "description": "Minimum video send bandwidth in kbps.",
+            "example": 100
+          },
+          "videoMaxSendBandwidth": {
+            "type": "number",
+            "description": "Maximum video send bandwidth in kbps.",
+            "example": 1000
+          },
+          "videoMinRecvBandwidth": {
+            "type": "number",
+            "description": "Minimum video receive bandwidth in kbps.",
+            "example": 100
+          },
+          "videoMaxRecvBandwidth": {
+            "type": "number",
+            "description": "Maximum video receive bandwidth in kbps.",
+            "example": 1000
+          }
+        }
+      },
+      "GenerateOpenViduTokenDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "ID of the OpenVidu session to connect to. If session does not exist, it will be created.",
+            "example": "session-id-123"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role of the connection (SUBSCRIBER, PUBLISHER, MODERATOR). Defaults to PUBLISHER.",
+            "enum": [
+              "SUBSCRIBER",
+              "PUBLISHER",
+              "MODERATOR"
+            ],
+            "example": "PUBLISHER"
+          },
+          "data": {
+            "type": "string",
+            "description": "Arbitrary data associated with the connection, usually JSON string.",
+            "example": "{\"username\": \"John Doe\", \"userId\": \"abc\"}"
+          },
+          "kurentoOptions": {
+            "description": "Kurento Media Server specific options for the connection.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/KurentoOptionsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "sessionId"
+        ]
+      },
+      "CreateMemberDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "username field"
+          },
+          "email": {
+            "type": "string",
+            "description": "email field"
+          },
+          "provider": {
+            "type": "string",
+            "description": "provider field"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "description": "confirmed field"
+          },
+          "blocked": {
+            "type": "boolean",
+            "description": "blocked field"
+          },
+          "role": {
+            "type": "number",
+            "description": "role field"
+          },
+          "memberSystemId": {
+            "type": "number",
+            "description": "memberSystemId field"
+          },
+          "jsonData": {
+            "type": "object",
+            "description": "jsonData field"
+          },
+          "blockedExpire": {
+            "format": "date-time",
+            "type": "string",
+            "description": "blockedExpire field"
+          },
+          "blockedStart": {
+            "format": "date-time",
+            "type": "string",
+            "description": "blockedStart field"
+          },
+          "isPaid": {
+            "type": "boolean",
+            "description": "isPaid field"
+          },
+          "createGroup": {
+            "type": "boolean",
+            "description": "createGroup field"
+          },
+          "isEmployee": {
+            "type": "boolean",
+            "description": "isEmployee field"
+          },
+          "isOnline": {
+            "type": "boolean",
+            "description": "isOnline field"
+          },
+          "memberType": {
+            "type": "string",
+            "description": "memberType field"
+          },
+          "picture": {
+            "type": "string",
+            "description": "picture field"
+          },
+          "adminUser": {
+            "type": "object",
+            "description": "adminUser field"
+          },
+          "latString": {
+            "type": "string",
+            "description": "latString field"
+          },
+          "lonString": {
+            "type": "string",
+            "description": "lonString field"
+          },
+          "userSetting": {
+            "type": "object",
+            "description": "userSetting field"
+          },
+          "terms": {
+            "type": "object",
+            "description": "terms field"
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "provider",
+          "confirmed",
+          "blocked",
+          "role",
+          "memberSystemId",
+          "jsonData",
+          "blockedExpire",
+          "blockedStart",
+          "isPaid",
+          "createGroup",
+          "isEmployee",
+          "isOnline",
+          "memberType",
+          "picture",
+          "adminUser",
+          "latString",
+          "lonString",
+          "userSetting",
+          "terms"
+        ]
+      },
+      "PaginationMemberResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateMemberDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateMemberDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "username field"
+          },
+          "email": {
+            "type": "string",
+            "description": "email field"
+          },
+          "provider": {
+            "type": "string",
+            "description": "provider field"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "description": "confirmed field"
+          },
+          "blocked": {
+            "type": "boolean",
+            "description": "blocked field"
+          },
+          "role": {
+            "type": "number",
+            "description": "role field"
+          },
+          "memberSystemId": {
+            "type": "number",
+            "description": "memberSystemId field"
+          },
+          "jsonData": {
+            "type": "object",
+            "description": "jsonData field"
+          },
+          "blockedExpire": {
+            "format": "date-time",
+            "type": "string",
+            "description": "blockedExpire field"
+          },
+          "blockedStart": {
+            "format": "date-time",
+            "type": "string",
+            "description": "blockedStart field"
+          },
+          "isPaid": {
+            "type": "boolean",
+            "description": "isPaid field"
+          },
+          "createGroup": {
+            "type": "boolean",
+            "description": "createGroup field"
+          },
+          "isEmployee": {
+            "type": "boolean",
+            "description": "isEmployee field"
+          },
+          "isOnline": {
+            "type": "boolean",
+            "description": "isOnline field"
+          },
+          "memberType": {
+            "type": "string",
+            "description": "memberType field"
+          },
+          "picture": {
+            "type": "string",
+            "description": "picture field"
+          },
+          "adminUser": {
+            "type": "object",
+            "description": "adminUser field"
+          },
+          "latString": {
+            "type": "string",
+            "description": "latString field"
+          },
+          "lonString": {
+            "type": "string",
+            "description": "lonString field"
+          },
+          "userSetting": {
+            "type": "object",
+            "description": "userSetting field"
+          },
+          "terms": {
+            "type": "object",
+            "description": "terms field"
+          }
+        }
       }
     }
   }

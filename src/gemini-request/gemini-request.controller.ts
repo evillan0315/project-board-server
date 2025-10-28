@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,24 @@ import {
 } from './dto/create-gemini-request.dto';
 import { UpdateGeminiRequestDto } from './dto/update-gemini-request.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'GeminiRequest'
-)
+@ApiTags('GeminiRequest')
 @Controller('api/gemini-request')
 export class GeminiRequestController {
   constructor(private readonly geminiRequestService: GeminiRequestService) {}
-  
-  
-  
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new GeminiRequest' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateGeminiRequestDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateGeminiRequestDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +76,12 @@ export class GeminiRequestController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all GeminiRequest records' })
-  @ApiOkResponse({ description: 'List of GeminiRequest records.', type: [CreateGeminiRequestDto] })
+  @ApiOkResponse({
+    description: 'List of GeminiRequest records.',
+    type: [CreateGeminiRequestDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,28 +93,23 @@ export class GeminiRequestController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated GeminiRequest records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationGeminiRequestResultDto,
-})
-findAllPaginated(@Query() query: PaginationGeminiRequestQueryDto) {
-  return this.geminiRequestService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated GeminiRequest records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationGeminiRequestResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationGeminiRequestQueryDto) {
+    return this.geminiRequestService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find GeminiRequest by ID' })
   @ApiOkResponse({ description: 'Record found.', type: CreateGeminiRequestDto })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -135,11 +124,12 @@ findAllPaginated(@Query() query: PaginationGeminiRequestQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update GeminiRequest by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateGeminiRequestDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateGeminiRequestDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +143,7 @@ findAllPaginated(@Query() query: PaginationGeminiRequestQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete GeminiRequest by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +153,3 @@ findAllPaginated(@Query() query: PaginationGeminiRequestQueryDto) {
     return this.geminiRequestService.remove(id);
   }
 }
-

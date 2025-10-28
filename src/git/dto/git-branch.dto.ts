@@ -1,6 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, Matches } from 'class-validator';
-
+import {
+  IsString,
+  IsNotEmpty,
+  IsBoolean,
+  IsOptional,
+  Matches,
+} from 'class-validator';
 
 export class GitBranchDto {
   @ApiProperty({ description: 'Name of the branch' })
@@ -24,27 +29,41 @@ export class CreateBranchDto {
   @ApiProperty({ description: 'Name of the new branch to create' })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[a-zA-Z0-9_\-]+$/, { message: 'Branch name must be alphanumeric, dashes, or underscores' })
+  @Matches(/^[a-zA-Z0-9_\-]+$/, {
+    message: 'Branch name must be alphanumeric, dashes, or underscores',
+  })
   newBranchName: string;
 
-  @ApiPropertyOptional({ description: 'Optional project root path for the Git repository', example: '/path/to/my/repo' })
+  @ApiPropertyOptional({
+    description: 'Optional project root path for the Git repository',
+    example: '/path/to/my/repo',
+  })
   @IsOptional()
   @IsString()
   projectRoot?: string;
 }
 
 export class CheckoutBranchDto {
-  @ApiProperty({ description: 'Name of the branch (local or remote) to checkout' })
+  @ApiProperty({
+    description: 'Name of the branch (local or remote) to checkout',
+  })
   @IsString()
   @IsNotEmpty()
   branchName: string;
 
-  @ApiPropertyOptional({ description: 'Set to true to checkout a remote branch. Will create a local tracking branch if it doesn\'t exist.', default: false })
+  @ApiPropertyOptional({
+    description:
+      "Set to true to checkout a remote branch. Will create a local tracking branch if it doesn't exist.",
+    default: false,
+  })
   @IsOptional()
   @IsBoolean()
   remote?: boolean = false;
 
-  @ApiPropertyOptional({ description: 'Optional project root path for the Git repository', example: '/path/to/my/repo' })
+  @ApiPropertyOptional({
+    description: 'Optional project root path for the Git repository',
+    example: '/path/to/my/repo',
+  })
   @IsOptional()
   @IsString()
   projectRoot?: string;
@@ -56,12 +75,18 @@ export class DeleteBranchDto {
   @IsNotEmpty()
   branchName: string;
 
-  @ApiPropertyOptional({ description: 'Set to true to force delete the branch (even if not merged)', default: false })
+  @ApiPropertyOptional({
+    description: 'Set to true to force delete the branch (even if not merged)',
+    default: false,
+  })
   @IsOptional()
   @IsBoolean()
   force?: boolean = false;
 
-  @ApiPropertyOptional({ description: 'Optional project root path for the Git repository', example: '/path/to/my/repo' })
+  @ApiPropertyOptional({
+    description: 'Optional project root path for the Git repository',
+    example: '/path/to/my/repo',
+  })
   @IsOptional()
   @IsString()
   projectRoot?: string;

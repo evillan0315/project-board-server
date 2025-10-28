@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,24 @@ import {
 } from './dto/create-gemini-response.dto';
 import { UpdateGeminiResponseDto } from './dto/update-gemini-response.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'GeminiResponse'
-)
+@ApiTags('GeminiResponse')
 @Controller('api/gemini-response')
 export class GeminiResponseController {
   constructor(private readonly geminiResponseService: GeminiResponseService) {}
-  
-  
-  
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new GeminiResponse' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateGeminiResponseDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateGeminiResponseDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +76,12 @@ export class GeminiResponseController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all GeminiResponse records' })
-  @ApiOkResponse({ description: 'List of GeminiResponse records.', type: [CreateGeminiResponseDto] })
+  @ApiOkResponse({
+    description: 'List of GeminiResponse records.',
+    type: [CreateGeminiResponseDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,30 +93,28 @@ export class GeminiResponseController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated GeminiResponse records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationGeminiResponseResultDto,
-})
-findAllPaginated(@Query() query: PaginationGeminiResponseQueryDto) {
-  return this.geminiResponseService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated GeminiResponse records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationGeminiResponseResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationGeminiResponseQueryDto) {
+    return this.geminiResponseService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find GeminiResponse by ID' })
-  @ApiOkResponse({ description: 'Record found.', type: CreateGeminiResponseDto })
+  @ApiOkResponse({
+    description: 'Record found.',
+    type: CreateGeminiResponseDto,
+  })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -135,11 +127,12 @@ findAllPaginated(@Query() query: PaginationGeminiResponseQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update GeminiResponse by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateGeminiResponseDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateGeminiResponseDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +146,7 @@ findAllPaginated(@Query() query: PaginationGeminiResponseQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete GeminiResponse by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +156,3 @@ findAllPaginated(@Query() query: PaginationGeminiResponseQueryDto) {
     return this.geminiResponseService.remove(id);
   }
 }
-

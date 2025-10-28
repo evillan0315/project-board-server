@@ -28,7 +28,10 @@ import { CarbonTerminal3270 } from '@/components/icons/CarbonTerminal3270';
 
 import { getFileTypeIcon } from '@/constants/fileIcons';
 
-import { isTerminalVisible, setShowTerminal } from '@/components/Terminal/stores/terminalStore';
+import {
+  isTerminalVisible,
+  setShowTerminal,
+} from '@/components/Terminal/stores/terminalStore';
 import {
   fileStore,
   setOpenedFile,

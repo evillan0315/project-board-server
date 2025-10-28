@@ -131,7 +131,10 @@ export class RecordingService {
     userId: string,
     file: string,
   ):
-    Promise<{ size: number; modified: string }> {
+    Promise<{
+      size: number;
+      modified: string;
+    }> {
     // Ensure the file is within the user's directory for security
     const baseDir = join(process.cwd(), 'downloads', 'recordings', userId);
     const filePath = file.includes('/') ? file : join(baseDir, file);
@@ -372,7 +375,7 @@ export class RecordingService {
         data: {
           startedAt: startedAtISO,
           enableAudio: dto.enableAudio || false,
-          audioDevice: dto.audioDevice || null, // Store selected audio device
+          audioDevice: dto.audioDevice || null,
         } as RecordingData,
         createdBy: { connect: { id: userId } },
       },
@@ -503,7 +506,7 @@ export class RecordingService {
           );
           // Potentially emit this via WebSocket for real-time client updates
         },
-        { resolution: dto.resolution, fps: dto.framerate },
+        { resolution: dto.resolution, fps: dto.fps, audioDevice: dto.audioDevice },
       );
 
       const pid = String(recordingProcess.pid);
@@ -520,7 +523,8 @@ export class RecordingService {
             startedAt: startedAtISO,
             cameraDevice: dto.cameraDevice,
             resolution: dto.resolution,
-            fps: dto.framerate,
+            fps: dto.fps,
+            audioDevice: dto.audioDevice,
           } as RecordingData,
           createdBy: { connect: { id: userId } },
         },
@@ -553,6 +557,7 @@ export class RecordingService {
         id: recording.id,
         path: recording.path,
         message: 'Camera recording started successfully.',
+        pid: pid,
       };
     } catch (error) {
       this.logger.error(
@@ -762,7 +767,7 @@ export class RecordingService {
           '-video_size', fullResolution,
           '-framerate', '30',
           '-f', 'x11grab',
-          '-i', `${display}`, // Use `display` only, .0 is part of it for x11grab
+          '-i', `${display}`,
         );
         if (enableAudio) {
           ffmpegInputArgs.push('-f', 'pulse', '-i', audioDevice || 'default');

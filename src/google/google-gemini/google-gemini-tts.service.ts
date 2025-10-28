@@ -1,4 +1,3 @@
-
 // full-stack/src/google/google-gemini/google-gemini-file/google-gemini-file.service.ts
 import {
   Injectable,
@@ -27,9 +26,11 @@ interface SpeakerVoiceInput {
 export class GoogleGeminiTtsService {
   private readonly ai: GoogleGenAI;
   private readonly downloadDir = path.resolve(process.cwd(), 'downloads');
-  
-  constructor(@Inject(REQUEST)
-    private readonly request: Request & { user?: CreateJwtUserDto },) {
+
+  constructor(
+    @Inject(REQUEST)
+    private readonly request: Request & { user?: CreateJwtUserDto },
+  ) {
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
     if (!apiKey) {
       throw new HttpException(
@@ -54,9 +55,8 @@ export class GoogleGeminiTtsService {
     rate = 24000,
     sampleWidth = 2,
   ): Promise<void> {
-   
     const baseTypeDirName = 'TTS';
-   
+
     const currentUserId = this.userId;
 
     // Construct the target directory: downloads/<audio|videos>/<provider>/<userId>
@@ -141,18 +141,17 @@ export class GoogleGeminiTtsService {
       const voices = speakers.map((s) => s.voiceName).join('_');
       const filename = `${dateStr}_${voices}_${languageCode}.wav`;
 
+      const baseTypeDirName = 'TTS';
 
-    const baseTypeDirName = 'TTS';
-   
-    const currentUserId = this.userId;
+      const currentUserId = this.userId;
 
-    // Construct the target directory: downloads/<audio|videos>/<provider>/<userId>
-    const dir = path.join(
-      this.downloadDir,
-      baseTypeDirName,
-      'voice',
-      currentUserId,
-    );
+      // Construct the target directory: downloads/<audio|videos>/<provider>/<userId>
+      const dir = path.join(
+        this.downloadDir,
+        baseTypeDirName,
+        'voice',
+        currentUserId,
+      );
 
       const fullPath = path.join(dir, filename);
       console.log(fullPath, 'fullPath generateSpeech');

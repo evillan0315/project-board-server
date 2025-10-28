@@ -41,7 +41,10 @@ export class ExecutorService {
           await fs.promises.mkdir(path.dirname(abs), { recursive: true });
 
           if ((ch as any).diff) {
-            const diffPath = path.join(this.repoPath, `.ai-diff-${Date.now()}.patch`);
+            const diffPath = path.join(
+              this.repoPath,
+              `.ai-diff-${Date.now()}.patch`,
+            );
             await fs.promises.writeFile(diffPath, (ch as any).diff, 'utf-8');
             await exec(`git apply ${diffPath}`, { cwd: this.repoPath });
             await fs.promises.unlink(diffPath).catch(() => {});
@@ -58,7 +61,11 @@ export class ExecutorService {
             results.push({ file: ch.filePath, ok: false, error: String(e) });
           }
         } else {
-          results.push({ file: ch.filePath, ok: false, error: 'unknown action' });
+          results.push({
+            file: ch.filePath,
+            ok: false,
+            error: 'unknown action',
+          });
         }
       }
 
@@ -70,18 +77,30 @@ export class ExecutorService {
         } catch (e) {
           // rollback on tsc failure
           await git.reset(['--hard', snapshot]);
-          return { ok: false, error: 'TypeScript check failed', details: String(e) };
+          return {
+            ok: false,
+            error: 'TypeScript check failed',
+            details: String(e),
+          };
         }
       }
 
       // Lint (run npm run lint if provided; otherwise try eslint)
       try {
-        const pkg = JSON.parse(
-          await fs.promises.readFile(path.join(this.repoPath, 'package.json'), 'utf-8'),
-        ).scripts || {};
+        const pkg =
+          JSON.parse(
+            await fs.promises.readFile(
+              path.join(this.repoPath, 'package.json'),
+              'utf-8',
+            ),
+          ).scripts || {};
         if (pkg.lint) {
           await exec('npm run lint', { cwd: this.repoPath });
-        } else if (fs.existsSync(path.join(this.repoPath, 'node_modules', '.bin', 'eslint'))) {
+        } else if (
+          fs.existsSync(
+            path.join(this.repoPath, 'node_modules', '.bin', 'eslint'),
+          )
+        ) {
           await exec('npx eslint .', { cwd: this.repoPath });
         }
       } catch (e) {
@@ -104,4 +123,3 @@ export class ExecutorService {
     }
   }
 }
-

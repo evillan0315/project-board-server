@@ -133,7 +133,7 @@ const LoginPage: React.FC = () => {
   const displayError = localError || authStoreError;
 
   return (
-    <Container className='login-container' maxWidth="sm" sx={{ mt: 8 }}>
+    <Container className="login-container" maxWidth="sm" sx={{ mt: 8 }}>
       <Paper
         elevation={3}
         sx={{

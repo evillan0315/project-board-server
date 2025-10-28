@@ -9,11 +9,6 @@ import Box from '@mui/material/Box';
 
 const Layout: React.FC = () => {
   const { loading: authLoading } = useStore(authStore);
-
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center">
       <Navbar />

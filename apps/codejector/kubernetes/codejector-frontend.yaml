@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: codejector-frontend-config
+data:
+  VITE_API_URL: "http://your-backend-service-name:3000" # IMPORTANT: Replace with your actual backend K8s Service name and port
+  VITE_WS_URL: "ws://your-backend-service-name:3000"   # IMPORTANT: Replace with your actual backend K8s Service name and port
+  VITE_FRONTEND_URL: "http://codejector.local"        # IMPORTANT: Replace with desired frontend URL/domain
+  VITE_BACKEND_URL: "http://your-backend-service-name:3000" # IMPORTANT: Replace with your actual backend K8s Service name and port
+  VITE_SLS_API_URL: "http://your-sls-api-service-name:3000" # IMPORTANT: Replace with your actual SLS API K8s Service name and port
+  VITE_SLS_VIDU_URL: "https://your-openvidu-instance-ip" # IMPORTANT: Replace with your OpenVidu instance URL or IP
+  VITE_SLS_WS_URL: "ws://your-sls-api-service-name:3000" # IMPORTANT: Replace with your actual SLS API K8s Service name and port
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: codejector-frontend-secret
+type: Opaque # Opaque type is a generic Secret type. Data should be base64 encoded.
+stringData: # Use stringData for plain text values, Kubernetes will base64 encode them automatically.
+  GITHUB_CALLBACK_URL: "http://codejector.local/auth/github/callback" # IMPORTANT: Update with your GitHub OAuth callback URL
+  GOOGLE_CALLBACK_URL: "http://codejector.local/auth/google/callback" # IMPORTANT: Update with your Google OAuth callback URL
+  VITE_SLS_API_KEY: "your_sls_api_key_here" # IMPORTANT: Replace with your actual OpenVidu/SLS API key
+  VITE_SLS_USERNAME: "your_sls_username_here" # IMPORTANT: Replace with your actual OpenVidu/SLS username
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codejector-frontend
+  labels:
+    app: codejector-frontend
+spec:
+  replicas: 2 # Adjust as needed for high availability
+  selector:
+    matchLabels:
+      app: codejector-frontend
+  template:
+    metadata:
+      labels:
+        app: codejector-frontend
+    spec:
+      containers:
+      - name: codejector-frontend
+        image: your-docker-registry/codejector:latest # IMPORTANT: Replace with your actual Docker image name and tag
+        ports:
+        - containerPort: 80 # Nginx listens on port 80 as per Dockerfile
+        envFrom:
+        - configMapRef:
+            name: codejector-frontend-config
+        - secretRef:
+            name: codejector-frontend-secret
+        # Add resource limits/requests for production deployments
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: codejector-frontend-service
+  labels:
+    app: codejector-frontend
+spec:
+  selector:
+    app: codejector-frontend
+  ports:
+    - protocol: TCP
+      port: 80 # Service port
+      targetPort: 80 # Container port
+  type: ClusterIP # Internal to the cluster, Ingress will expose externally
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: codejector-frontend-ingress
+  annotations:
+    # IMPORTANT: Specify your ingress controller class (e.g., "nginx", "gce")
+    kubernetes.io/ingress.class: "nginx"
+    # Uncomment the following lines and configure cert-manager if using HTTPS
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod" # Replace with your cluster issuer name
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  rules:
+  - host: codejector.local # IMPORTANT: Replace with your actual domain/hostname
+    http:
+      paths:
+      - path: / # Root path
+        pathType: Prefix
+        backend:
+          service:
+            name: codejector-frontend-service # Name of the Kubernetes Service
+            port:
+              number: 80 # Port exposed by the Service
+  # Uncomment the tls section for HTTPS
+  # tls:
+  # - hosts:
+  #   - codejector.local # IMPORTANT: Replace with your actual domain/hostname
+  #   secretName: codejector-frontend-tls # Cert-manager will store the certificate here

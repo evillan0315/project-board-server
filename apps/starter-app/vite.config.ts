@@ -25,7 +25,6 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         },
-
         '/socket.io': {
           target: env.VITE_API_URL,
           changeOrigin: true,
@@ -44,7 +43,8 @@ export default defineConfig(({ mode }) => {
       'process.env.NODE_ENV': JSON.stringify(mode),
       'import.meta.env.GITHUB_CALLBACK_URL': JSON.stringify(env.GITHUB_CALLBACK_URL),
       'import.meta.env.GOOGLE_CALLBACK_URL': JSON.stringify(env.GOOGLE_CALLBACK_URL),
-      'import.meta.env.FRONTEND_URL': JSON.stringify(env.VITE_FRONTEND_URL), // Add frontend URL for backend redirects
+      'import.meta.env.FRONTEND_URL': JSON.stringify(env.VITE_FRONTEND_URL),
+      'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL),
     },
   };
 });

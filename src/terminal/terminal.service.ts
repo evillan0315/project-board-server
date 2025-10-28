@@ -73,7 +73,7 @@ export class TerminalService {
 
     shell.onData((data: string) => {
       // Emit raw output to the client
-     
+
       //const clean = data.replace(/\r\n/g, '\n'); // handle Windows-style endings
       //client.emit('output', clean);
       client.emit('output', data);
@@ -161,61 +161,61 @@ export class TerminalService {
   }
 
   async runCommandOnce(
-  command: string,
-  cwd: string,
-): Promise<{ stdout: any[]; stderr: any[]; exitCode: number }> {
-  return new Promise((resolve, reject) => {
-    const shell = spawn(command, {
-      shell: '/bin/bash',
-      cwd,
-    });
+    command: string,
+    cwd: string,
+  ): Promise<{ stdout: any[]; stderr: any[]; exitCode: number }> {
+    return new Promise((resolve, reject) => {
+      const shell = spawn(command, {
+        shell: '/bin/bash',
+        cwd,
+      });
 
-    const stdoutChunks: any[] = [];
-    const stderrChunks: any[] = [];
+      const stdoutChunks: any[] = [];
+      const stderrChunks: any[] = [];
 
-    const tryParseJson = (data: string): any => {
-      try {
-        return JSON.parse(data);
-      } catch {
-        return { message: data.trim() };
-      }
-    };
+      const tryParseJson = (data: string): any => {
+        try {
+          return JSON.parse(data);
+        } catch {
+          return { message: data.trim() };
+        }
+      };
 
-    shell.stdout.on('data', (data) => {
-      const text = data.toString().trim();
-      if (text) {
-        text
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .forEach((line) => stdoutChunks.push(tryParseJson(line)));
-      }
-    });
+      shell.stdout.on('data', (data) => {
+        const text = data.toString().trim();
+        if (text) {
+          text
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .forEach((line) => stdoutChunks.push(tryParseJson(line)));
+        }
+      });
 
-    shell.stderr.on('data', (data) => {
-      const text = data.toString().trim();
-      if (text) {
-        text
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .forEach((line) => stderrChunks.push(tryParseJson(line)));
-      }
-    });
+      shell.stderr.on('data', (data) => {
+        const text = data.toString().trim();
+        if (text) {
+          text
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .forEach((line) => stderrChunks.push(tryParseJson(line)));
+        }
+      });
 
-    shell.on('close', (code) => {
-      resolve({
-        stdout: stdoutChunks,
-        stderr: stderrChunks,
-        exitCode: code ?? 0,
+      shell.on('close', (code) => {
+        resolve({
+          stdout: stdoutChunks,
+          stderr: stderrChunks,
+          exitCode: code ?? 0,
+        });
+      });
+
+      shell.on('error', (err) => {
+        reject(err);
       });
     });
-
-    shell.on('error', (err) => {
-      reject(err);
-    });
-  });
-}
+  }
 
   async runSshCommandOnce(options: {
     host: string;

@@ -168,7 +168,14 @@ export const saveActiveFile = async () => {
   }
 
   if (!projectId) {
-    addLog('File Editor', 'No project selected. Cannot save file.', 'error', undefined, undefined, true);
+    addLog(
+      'File Editor',
+      'No project selected. Cannot save file.',
+      'error',
+      undefined,
+      undefined,
+      true,
+    );
     setSaveFileContentError('No project selected. Cannot save file.');
     return;
   }
@@ -177,7 +184,11 @@ export const saveActiveFile = async () => {
   setSaveFileContentError(null); // Clear previous error
 
   try {
-    const result = await writeFileContent(currentOpenedFile, fileContent, projectId); // Pass projectId
+    const result = await writeFileContent(
+      currentOpenedFile,
+      fileContent,
+      projectId,
+    ); // Pass projectId
     if (result.success) {
       setInitialFileContentSnapshot(fileContent);
       setIsOpenedFileDirty(false);

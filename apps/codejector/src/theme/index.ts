@@ -5,8 +5,8 @@ import { PaletteMode } from '@mui/material';
 const tailwindFontSize = {
   '3xl': '1.875rem', // 30px
   '2xl': '1.5rem', // 24px
-  'xl': '1.25rem', // 20px
-  'sm': '0.875rem', // 14px
+  xl: '1.25rem', // 20px
+  sm: '0.875rem', // 14px
 };
 
 export const getAppTheme = (mode: PaletteMode) => {
@@ -23,10 +23,10 @@ export const getAppTheme = (mode: PaletteMode) => {
         main: mode === 'dark' ? '#f48fb1' : '#dc004e',
         light: mode === 'dark' ? '#ffc1e3' : '#ff4081',
         dark: mode === 'dark' ? '#c75a85' : '#c51162',
-        contrastText: mode === 'dark' ? '#000000' : '#ffffff',
+        contrastText: mode === 'dark' ? '#ffffff' : '#ffffff',
       },
       error: {
-        main: mode === 'dark' ? '#ef9a9a' : '#d32f2f',
+        main: mode === 'dark' ? '#dc2626' : '#d32f2f',
         light: mode === 'dark' ? '#ffcdd2' : '#e57373',
         dark: mode === 'dark' ? '#c62828' : '#c62828',
         contrastText: mode === 'dark' ? '#000000' : '#ffffff',

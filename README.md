@@ -115,6 +115,10 @@ PORT=3000
 DATABASE_URL='postgresql://...' # Your PostgreSQL database connection string
 JWT_SECRET='your_jwt_secret' # Secret for JWT token signing
 
+# OpenVidu Configuration
+OPENVIDU_URL='https://viduk.swinglifestyle.com/openvidu' # Your OpenVidu Server URL
+OPENVIDU_SECRET='MY_SECRET' # Your OpenVidu Secret (usually 'MY_SECRET' by default)
+
 # Google OAuth2 Credentials
 GOOGLE_CLIENT_ID='your_google_client_id'
 GOOGLE_CLIENT_SECRET='your_google_client_secret'
@@ -198,6 +202,15 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `GET`  | `/api/auth/google`                 | Initiate Google OAuth2 login   |
 | `GET`  | `/api/auth/github`                 | Initiate GitHub OAuth2 login   |
 | `GET`  | `/api/auth/me`                     | Get current authenticated user |
+
+### OpenVidu Management
+
+| Method   | Endpoint                | Description                                         |
+| -------- | ----------------------- | --------------------------------------------------- |
+| `POST`   | `/api/openvidu/sessions`| Create a new OpenVidu session.                    |
+| `POST`   | `/api/openvidu/tokens`  | Generate a token for a user to connect to a session. |
+| `DELETE` | `/api/openvidu/sessions/:sessionId` | Delete an OpenVidu session.                       |
+| `GET`    | `/api/openvidu/sessions`| Get a list of all active OpenVidu session IDs.    |
 
 ### File & Folder Management
 
@@ -327,6 +340,7 @@ src/
 ├── auth/               # User authentication, authorization, OAuth (Google, GitHub)
 ├── aws/                # AWS service integrations (EC2, RDS, S3, DynamoDB, Security Groups, Billing)
 ├── bulk-data/          # Bulk data import/export functionalities
+├── chat/               # Chat services and WebSockets
 ├── code-extractor/     # Extracting code from various file formats
 ├── command-history/    # Persistence for terminal command history
 ├── common/             # Common DTOs, services, and helpers
@@ -344,12 +358,18 @@ src/
 ├── google/             # Google AI integrations (Gemini, TTS, Image Captioning, Video Generation, Live AI, Translation)
 ├── icon/               # Icon management service
 ├── llm/                # Large Language Model integration for code generation, analysis, and repair
+├── llm-playwright/     # Playwright integration for browser automation and screen recording
 ├── log/                # Application logging with persistence
+├── logs/               # Log file management
 ├── mail/               # Email sending (e.g., for verification)
 ├── manifest/           # Manifest generation service
 ├── media/              # Media file management and transcription
+├── metadata/           # Metadata management for various entities
 ├── module-control/     # Toggle modules on/off
+├── music-history/      # User music listening history
+├── openvidu/           # OpenVidu integration for video conferencing sessions and tokens
 ├── organization/       # Organization management
+├── planner/            # AI planner for task execution
 ├── playlist/           # Management of user-created media playlists
 ├── playlist-media-file/# Join table for playlists and media files
 ├── prisma/             # Prisma ORM setup and service

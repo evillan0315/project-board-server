@@ -25,7 +25,7 @@ import {
 } from '@/stores/spotifyStore';
 import { aiEditorStore, showGlobalSnackbar } from '@/stores/aiEditorStore';
 import { projectRootDirectoryStore } from '@/stores/fileTreeStore';
-import { DirectoryPickerDialog } from '@/components/dialogs';
+
 
 interface SpotifySettingsPageProps {}
 
@@ -165,12 +165,7 @@ const SpotifySettingsPage: React.FC<SpotifySettingsPageProps> = () => {
         </Button>
       </Box>
 
-      <DirectoryPickerDialog
-        open={isPickerDialogOpen}
-        onClose={() => setIsPickerDialogOpen(false)}
-        onSelect={handleDirectorySelected}
-        initialPath={currentProjectPath || '/'}
-      />
+
     </Paper>
   );
 };

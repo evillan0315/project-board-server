@@ -5,6 +5,7 @@ import {
   IsUUID,
   IsDateString,
   IsPositive,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -33,6 +34,31 @@ export class CreateRecordingDto {
   @ApiProperty({ description: 'ID of the user who created the recording' })
   @IsUUID()
   createdById: string;
+}
+
+export class StartRecordingDto {
+  @ApiPropertyOptional({ description: 'Recording name' })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether to enable audio recording during screen capture. Defaults to false.',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  enableAudio?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Specific audio input device to use (e.g., "default", "alsa_input.pci-...", "0" on macOS). Requires enableAudio to be true.',
+    example: 'default',
+  })
+  @IsOptional()
+  @IsString()
+  audioDevice?: string;
 }
 
 export class RecordingResultDto {

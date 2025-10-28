@@ -16,8 +16,18 @@ import ForumIcon from '@mui/icons-material/Forum';
 import DataObjectIcon from '@mui/icons-material/DataObject'; // For Schema Generator
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'; // NEW: For ChatApp (Direct)
 import WebAssetIcon from '@mui/icons-material/WebAsset'; // NEW: For Playwright
+import GroupIcon from '@mui/icons-material/Group'; // NEW: For Swingers App
 
 export const appDefinitions: AppDefinition[] = [
+  {
+    id: 'swingers',
+    title: 'Swingers App',
+    description: 'Connect with a community of like-minded individuals.',
+    link: '/apps/swingers',
+    linkText: 'Open Swingers App',
+    icon: GroupIcon,
+    category: 'Community',
+  },
   {
     id: 'ai-editor',
     title: 'AI Editor',
@@ -40,7 +50,8 @@ export const appDefinitions: AppDefinition[] = [
   {
     id: 'chat-component',
     title: 'Chat App (Direct)',
-    description: 'Direct access to the ChatApp component for testing or specific use.',
+    description:
+      'Direct access to the ChatApp component for testing or specific use.',
     link: '/apps/chat-component',
     linkText: 'Open Direct Chat',
     icon: ChatBubbleOutlineIcon,
@@ -58,7 +69,8 @@ export const appDefinitions: AppDefinition[] = [
   {
     id: 'llm-playwright',
     title: 'LLM Playwright',
-    description: 'Automate web tasks and generate insights with Playwright and AI.',
+    description:
+      'Automate web tasks and generate insights with Playwright and AI.',
     link: '/apps/llm-playwright',
     linkText: 'Open Playwright',
     icon: WebAssetIcon,

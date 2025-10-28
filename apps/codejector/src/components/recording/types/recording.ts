@@ -2,6 +2,8 @@ export interface IRecorderSettings {
   namePrefix: string;
   screenResolution: string;
   screenFramerate: number;
+  enableScreenAudio: boolean; // New field
+  screenAudioDevice: string; // New field
   cameraResolution: string;
   cameraFramerate: number;
   cameraVideoDevice: string;
@@ -23,6 +25,8 @@ export interface RecordingItem {
     duration?: number;
     fileSize?: number;
     animatedGif?: string;
+    enableAudio?: boolean; // New field
+    audioDevice?: string; // New field
     [key: string]: any;
   };
 }
@@ -76,6 +80,8 @@ export interface RecordingDataDto {
   stoppedAt?: string;
   capturedAt?: string;
   animatedGif?: string;
+  enableAudio?: boolean; // New field
+  audioDevice?: string; // New field
 }
 export interface TranscodeToGifDto {
   inputFilename: string;
@@ -105,8 +111,31 @@ export interface CameraRecordingResponseDto {
   pid?: string;
 }
 
+export interface StartScreenRecordingDto {
+  name?: string;
+  enableAudio?: boolean;
+  audioDevice?: string;
+}
+
 export interface UpdateRecordingDto {
   name?: string;
   type?: RecordingType; // Use the specific RecordingType union
   data?: any;
+}
+
+// Device listing types (moved from backend device.dto.ts for frontend usage)
+export enum DeviceType {
+  AUDIO_INPUT = 'audioinput',
+  VIDEO_INPUT = 'videoinput',
+}
+
+export interface DeviceDto {
+  id: string;
+  name: string;
+  type: DeviceType;
+}
+
+export interface DevicesListDto {
+  audioInputDevices: DeviceDto[];
+  videoInputDevices: DeviceDto[];
 }

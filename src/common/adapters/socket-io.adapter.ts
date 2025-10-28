@@ -28,21 +28,23 @@ export class SocketIoAdapter extends IoAdapter {
       'http://localhost:5173',
     ];
 
-    this.logger.log(`Configuring Socket.io with CORS origins: ${allowedOrigins.join(', ')}`);
+    this.logger.log(
+      `Configuring Socket.io with CORS origins: ${allowedOrigins.join(', ')}`,
+    );
 
     const corsOptions = {
       // Socket.io uses 'origin' to define the allowed handshake sources
-      origin: allowedOrigins, 
+      origin: allowedOrigins,
       methods: ['GET', 'POST'],
       credentials: true,
     };
 
     // Create the server, merging default options with our custom CORS settings
-    const server = super.createIOServer(port, { 
-        ...options, 
-        cors: corsOptions,
-        // Recommended: lower the maxHttpBufferSize if your application doesn't need huge payloads
-        maxHttpBufferSize: 1e8 // 100MB 
+    const server = super.createIOServer(port, {
+      ...options,
+      cors: corsOptions,
+      // Recommended: lower the maxHttpBufferSize if your application doesn't need huge payloads
+      maxHttpBufferSize: 1e8, // 100MB
     });
 
     return server;

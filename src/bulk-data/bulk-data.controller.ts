@@ -39,7 +39,8 @@ class ImportFileDto {
   @ApiProperty({
     type: 'string',
     example: 'User', // Added modelName to examples
-    description: 'The name of the Prisma model/database table to import data into.',
+    description:
+      'The name of the Prisma model/database table to import data into.',
   })
   modelName: string;
 
@@ -111,7 +112,8 @@ export class BulkDataController {
             modelName: {
               type: 'string',
               example: 'User',
-              description: 'The name of the Prisma model/database table to import data into.',
+              description:
+                'The name of the Prisma model/database table to import data into.',
             },
             data: {
               type: 'string',
@@ -133,7 +135,8 @@ export class BulkDataController {
             modelName: {
               type: 'string',
               example: 'User',
-              description: 'The name of the Prisma model/database table to import data into.',
+              description:
+                'The name of the Prisma model/database table to import data into.',
             },
             file: {
               type: 'string',
@@ -172,7 +175,8 @@ export class BulkDataController {
       dataToImport = file.buffer.toString('utf8');
     }
 
-    if (!dataToImport && importDto.format !== ImportFormat.SQL) { // SQL can be just schema changes without 'data'
+    if (!dataToImport && importDto.format !== ImportFormat.SQL) {
+      // SQL can be just schema changes without 'data'
       throw new BadRequestException(
         'No data provided for import. Provide data in the body or upload a file.',
       );
@@ -202,7 +206,8 @@ export class BulkDataController {
     name: 'modelName',
     type: 'string',
     example: 'User', // Added modelName to export query
-    description: 'The name of the Prisma model/database table to export data from.',
+    description:
+      'The name of the Prisma model/database table to export data from.',
   })
   @ApiResponse({
     status: 200,

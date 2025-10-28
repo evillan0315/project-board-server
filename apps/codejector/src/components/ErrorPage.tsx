@@ -62,7 +62,12 @@ export default function ErrorPage() {
             {error.statusText || error.message || 'Unknown Error'}
           </Typography>
           {error.status && (
-            <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+              mt={1}
+            >
               Status: {error.status}
             </Typography>
           )}

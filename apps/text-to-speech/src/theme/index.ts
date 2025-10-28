@@ -1,5 +1,5 @@
 import { createTheme } from '@mui/material/styles';
-import type { TextFieldProps } from '@mui/material/TextField'; // Import for type casting
+import type { TextFieldProps } from '@mui/material/TextField';
 
 // Common configurations regardless of theme mode
 const commonSettings = {
@@ -13,7 +13,7 @@ const commonSettings = {
     h6: { fontSize: '1rem', fontWeight: 500 },
     body1: { fontSize: '1rem' },
     body2: { fontSize: '0.875rem' },
-    button: { textTransform: 'none' as const, fontWeight: 600 }, // Added 'as const' for strict type checking
+    button: { textTransform: 'none' as const, fontWeight: 600 },
   },
   shape: {
     borderRadius: 8,
@@ -34,7 +34,7 @@ const commonSettings = {
       defaultProps: {
         variant: 'outlined',
         fullWidth: true,
-      } as Partial<TextFieldProps>, // Cast to Partial<TextFieldProps> to correctly type 'variant' literal
+      } as Partial<TextFieldProps>,
       styleOverrides: {
         root: {
           // Some global styles for text fields if needed
@@ -64,40 +64,48 @@ export const getMuiTheme = (mode: 'light' | 'dark') =>
     palette: {
       mode,
       primary: {
-        main: mode === 'light' ? '#075985' : '#7dd3fc', // Tailwind sky-900 / sky-300
-        light: mode === 'light' ? '#38bdf8' : '#e0f2fe', // Tailwind sky-500 / sky-100
-        dark: mode === 'light' ? '#0c4a6e' : '#0ea5e9', // Tailwind sky-950 / sky-400
-        contrastText: mode === 'light' ? '#ffffff' : '#0f172a', // White / slate-900
+        main: mode === 'light' ? '#4A3C32' : '#9E8C7F', // Dark Coffee / Light Mocha
+        light: mode === 'light' ? '#7A6A5E' : '#C2B5AA', // Muted Coffee / Pale Mocha
+        dark: mode === 'light' ? '#2A1C12' : '#7C6A5F', // Very Dark Coffee / Medium Mocha
+        contrastText: '#FFFFFF',
       },
       secondary: {
-        main: mode === 'light' ? '#2563eb' : '#93c5fd', // Tailwind blue-600 / blue-300
-        light: mode === 'light' ? '#60a5fa' : '#dbeafe', // Tailwind blue-400 / blue-100
-        dark: mode === 'light' ? '#1d4ed8' : '#3b82f6', // Tailwind blue-700 / blue-500
-        contrastText: mode === 'light' ? '#ffffff' : '#1e3a8a', // White / blue-900
+        main: mode === 'light' ? '#8B7D72' : '#E0D8D0', // Warm Gray-Brown / Very Light Tan
+        light: mode === 'light' ? '#AF9C90' : '#F0ECE8', // Pale Warm Gray-Brown / Almost White Tan
+        dark: mode === 'light' ? '#685C52' : '#BDB3AB', // Dark Warm Gray-Brown / Medium Light Tan
+        contrastText: '#210002', // Very dark almost black for contrast
       },
       error: {
-        main: '#ef4444', // Tailwind red-500
-        contrastText: '#ffffff',
+        main: '#D32F2F', // Default MUI Red for error
+        light: '#EF5350',
+        dark: '#C62828',
+        contrastText: '#FFFFFF',
       },
       warning: {
-        main: '#f97316', // Tailwind orange-500
-        contrastText: '#ffffff',
+        main: '#ED6C02', // Default MUI Orange for warning
+        light: '#FF9800',
+        dark: '#E65100',
+        contrastText: '#FFFFFF',
       },
       info: {
-        main: '#3b82f6', // Tailwind blue-500
-        contrastText: '#ffffff',
+        main: '#0288D1', // Default MUI Blue for info
+        light: '#03A9F4',
+        dark: '#01579B',
+        contrastText: '#FFFFFF',
       },
       success: {
-        main: '#22c55e', // Tailwind green-500
-        contrastText: '#ffffff',
+        main: '#2E7D32', // Default MUI Green for success
+        light: '#4CAF50',
+        dark: '#1B5E20',
+        contrastText: '#FFFFFF',
       },
       background: {
-        default: mode === 'light' ? '#f8fafc' : '#0f172a', // Tailwind slate-50 / slate-950
-        paper: mode === 'light' ? '#ffffff' : '#1e293b', // White / slate-800
+        default: mode === 'light' ? '#F8F5F2' : '#2A1C12', // Off-white creamy / Very dark coffee
+        paper: mode === 'light' ? '#FFFFFF' : '#4A3C32', // White / Dark coffee
       },
       text: {
-        primary: mode === 'light' ? '#1f2937' : '#f9fafb', // Gray-800 / Gray-50
-        secondary: mode === 'light' ? '#4b5563' : '#e5e7eb', // Gray-600 / Gray-200
+        primary: mode === 'light' ? '#333333' : '#F8F8F8', // Dark gray / Off-white
+        secondary: mode === 'light' ? '#666666' : '#E0E0E0', // Medium gray / Light gray
       },
     },
     ...commonSettings,

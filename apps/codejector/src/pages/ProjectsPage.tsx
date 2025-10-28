@@ -39,13 +39,17 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
+
+import ClearIcon from '@mui/icons-material/Clear';
+import CheckIcon from '@mui/icons-material/Check';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import WorkIcon from '@mui/icons-material/Work';
-import DirectoryPickerDialog from '@/components/dialogs/DirectoryPickerDialog';
-
+import DirectoryPickerDrawer from '@/components/code-generator/drawerContent/DirectoryPickerDrawer';
+import CustomDrawer from '@/components/Drawer/CustomDrawer';
+import { GlobalAction } from '@/types/app';
 // Interfaces for dialog forms
 interface ProjectFormDialogProps {
   open: boolean;
@@ -91,7 +95,29 @@ export const ProjectFormDialog: React.FC<ProjectFormDialogProps> = ({
     setRepositoryUrl(initialData?.repositoryUrl || '');
     setFormError(null);
   }, [initialData, open]);
-
+  // Action buttons for the DirectoryPickerDrawer
+  const DirectoryPickerDrawerActions: GlobalAction[] = [
+    {
+      label: 'Cancel',
+      color: 'text',
+      variant: 'outlined',
+      action: () => setIsDirectoryPickerOpen(false),
+      icon: <ClearIcon />,
+    },
+    {
+      label: 'Select',
+      color: 'primary',
+      variant: 'contained',
+      action: (path) => {
+        setPath(path);
+        handlePathSelect();
+        setIsDirectoryPickerOpen(false);
+      },
+      icon: <CheckIcon />,
+      // The disabled state should be managed by the DirectoryPickerDrawer content itself if it has internal validation
+      disabled: false,
+    },
+  ];
   const handleSubmit = async () => {
     if (!name.trim() || !path.trim()) {
       setFormError('Project Name and Path are required.');
@@ -247,12 +273,27 @@ export const ProjectFormDialog: React.FC<ProjectFormDialogProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-      <DirectoryPickerDialog
+
+      <CustomDrawer
         open={isDirectoryPickerOpen}
         onClose={() => setIsDirectoryPickerOpen(false)}
-        onSelect={handlePathSelect}
-        initialPath="/" // You might want to make this configurable
-      />
+        position="right"
+        size="normal"
+        title="Select Project Root Folder"
+        hasBackdrop={false}
+        footerActionButton={DirectoryPickerDrawerActions} // Pass the new actions
+      >
+        <DirectoryPickerDrawer
+          onSelect={(path) => {
+            //setCurrentProjectPath(path);
+            handlePathSelect();
+            setIsDirectoryPickerOpen(false); // Close drawer after selection
+          }}
+          onClose={() => setIsDirectoryPickerOpen(false)}
+          initialPath={path || '/'}
+          allowExternalPaths
+        />
+      </CustomDrawer>
     </>
   );
 };

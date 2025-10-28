@@ -11,14 +11,14 @@ import {
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
-import RestoreIcon from '@mui/icons-material/Restore';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+// import RestoreIcon from '@mui/icons-material/Restore'; // No longer needed directly here
+// import DeleteForeverIcon from '@mui/icons-material/DeleteForever'; // No longer needed directly here
 
 interface GitSnapshotsSectionProps {
   snapshots: string[];
   loading: boolean;
   onCreateSnapshotClick: () => void;
-  onRestoreSnapshot: (snapshotName: string) => Promise<void>;
+  onRestoreSnapshot: (snapshotName: string) => void;
   onDeleteSnapshot: (snapshotName: string) => void;
   onSnapshotContextMenu: (event: React.MouseEvent, snapshot: string) => void;
 }

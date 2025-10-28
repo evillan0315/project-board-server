@@ -12,6 +12,7 @@ import CustomSnackbar from '@/components/Snackbar';
 import { useStore } from '@nanostores/react';
 import { snackbarState, hideGlobalSnackbar } from '@/stores/snackbarStore';
 import { authStore } from '@/stores/authStore';
+import { GlobalDialog } from '@/components/dialogs'; 
 
 import '@xterm/xterm/css/xterm.css';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -53,6 +54,8 @@ const AIChatPage = lazy(() => import('./pages/AIChatPage'));
 const SchemeGeneratorPage = lazy(() => import('./pages/SchemeGeneratorPage')); // New: Lazy load SchemeGeneratorPage
 const ChatAppComponent = lazy(() => import('./components/chat/ChatApp')); // NEW: Lazy load ChatApp
 const PlaywrightPage = lazy(() => import('./pages/PlaywrightPage')); // NEW: Lazy load PlaywrightPage
+const SwingersRoomChatPage = lazy(() => import('./pages/SwingersRoomChatPage'));
+const SwingersPage = lazy(() => import('./pages/SwingersPage'));
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -266,6 +269,30 @@ const router = createBrowserRouter(
           </RequireAuth>
         }
       />
+      <Route
+        path="/apps/swingers"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <SwingersPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/apps/swingers/room/:roomId/chat"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <SwingersRoomChatPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
       {/* New: Route for Schema Generator Page */}
       <Route
         path="/apps/schema-generator"
@@ -390,6 +417,7 @@ function App() {
         onClose={handleSnackbarClose}
         autoHideDuration={3000}
       />
+      <GlobalDialog /> 
     </>
   );
 }

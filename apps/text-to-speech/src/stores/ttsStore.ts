@@ -20,8 +20,8 @@ export const ttsStore = atom<TtsState>({
   prompt: '',
   // Updated voice names to be supported by the backend based on the error message
   speakers: [
-    { id: nanoid(), speaker: 'Eddie', voiceName: 'en-US-Studio-F' },
-    { id: nanoid(), speaker: 'Marionette', voiceName: 'en-US-Studio-B' },
+    { id: nanoid(), speaker: 'Eddie', voiceName: 'kore' },
+    { id: nanoid(), speaker: 'Marionette', voiceName: 'puck' },
   ],
   languageCode: 'en-US',
   loading: false,
@@ -69,21 +69,25 @@ export const setError = (errorMessage: string | null) => {
 
 // Action to generate speech
 export const generateSpeech = async (request: TtsRequestDto) => {
-  ttsStore.set({
-    ...ttsStore.get(),
-    loading: true,
-    error: null,
-    audioUrl: null,
-  });
+  ttsStore.set(
+    {
+      ...ttsStore.get(),
+      loading: true,
+      error: null,
+      audioUrl: null,
+    },
+  );
   try {
     const audioBlob = await geminiTtsService.generateSpeech(request);
     const url = URL.createObjectURL(audioBlob);
     ttsStore.set({ ...ttsStore.get(), audioUrl: url, loading: false });
   } catch (err) {
-    ttsStore.set({
-      ...ttsStore.get(),
-      error: (err as Error).message || 'Failed to generate speech.',
-      loading: false,
-    });
+    ttsStore.set(
+      {
+        ...ttsStore.get(),
+        error: (err as Error).message || 'Failed to generate speech.',
+        loading: false,
+      },
+    );
   }
 };
