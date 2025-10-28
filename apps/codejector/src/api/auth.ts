@@ -6,7 +6,7 @@ import {
   getToken,
 } from '@/stores/authStore';
 import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api';
-import { UserProfile, LoginRequest, RegisterRequest } from '@/types/auth';
+import { UserProfile, LoginRequest, RegisterRequest, IResetPasswordRequest, IResetPasswordResponse } from '@/types/auth';
 
 export interface LoginLocalResponse {
   access_token: string;
@@ -120,12 +120,13 @@ export const registerLocal = async (
   try {
     const response = await fetchWithAuth(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
-      body: JSON.stringify(credentials),
+      body: JSON.stringify(userData),
     });
-    if (response && response.access_token) {
-      loginSuccess(response.user, response.access_token);
+    const authData = await handleResponse<RegisterLocalResponse>(response);
+    if (authData && authData.access_token) {
+      loginSuccess(authData.user, authData.access_token);
     }
-    return handleResponse<RegisterLocalResponse>(response);
+    return authData;
   } catch (error: ApiError) {
     console.error('Registration failed', error);
     setError(
@@ -133,5 +134,26 @@ export const registerLocal = async (
     );
   } finally {
     setLoading(false);
+  }
+};
+
+/**
+ * Handles password reset request.
+ * @param token The reset token received via email.
+ * @param newPassword The new password.
+ */
+export const resetPassword = async (
+  token: string,
+  newPassword: string,
+): Promise<IResetPasswordResponse> => {
+  try {
+    const response = await fetchWithAuth(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    });
+    return handleResponse<IResetPasswordResponse>(response);
+  } catch (error: ApiError) {
+    console.error('Password reset failed', error);
+    throw error; // Re-throw to be caught by the component
   }
 };

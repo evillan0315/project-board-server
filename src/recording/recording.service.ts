@@ -34,7 +34,7 @@ import {
   StartCameraRecordingDto,
   CameraRecordingResponseDto,
 } from '../ffmpeg/dto/camera-recording.dto';
-import sharp from 'sharp'; // Import sharp
+import sharp = require('sharp'); // Corrected import for sharp
 
 // --- Start of new/modified types ---
 interface ActiveRecording {
@@ -191,7 +191,9 @@ export class RecordingService {
     userId: string,
     days: number = 7,
   ):
-    Promise<{ deleted: string[] }> {
+    Promise<{
+    deleted: string[];
+  }> {
     const dir = join(process.cwd(), 'downloads', 'recordings', userId);
     const files = await readdir(dir);
     const now = Date.now();
@@ -506,7 +508,7 @@ export class RecordingService {
           const screenshot = await this.prisma.recording.create({
             data: {
               path: finalOutputPath,
-              type: 'screenshot',
+              type: 'screenShot',
               status: 'finished', // Screenshots are instant, so 'finished'
               pid: '', // No long-running process
               data: {
@@ -780,7 +782,7 @@ export class RecordingService {
         },
       });
       this.logger.log(
-        `Recording ${recordingId} metadata updated: status={${
+        `Recording ${recordingId} metadata updated: status={
           exitCode === 0 ? 'finished' : 'failed'
         }}, duration=${duration}s, fileSize=${fileSize} bytes`,
       );
@@ -844,7 +846,7 @@ export class RecordingService {
       try {
         const { execSync } = require('child_process');
         // Attempt to get full screen resolution via xrandr
-        const xrandrOutput = execSync('xrandr | grep "\\*" | cut -d" " -f4').toString().trim();
+        const xrandrOutput = execSync('xrandr | grep \"\\*\" | cut -d\" \" -f4').toString().trim();
         const fullResolution = xrandrOutput || '1920x1080';
         const display = process.env.DISPLAY || ':0.0';
 
@@ -899,7 +901,7 @@ export class RecordingService {
       try {
         const { execSync } = require('child_process');
         // Attempt to get full screen resolution via xrandr
-        const xrandrOutput = execSync('xrandr | grep "\\*" | cut -d" " -f4').toString().trim();
+        const xrandrOutput = execSync('xrandr | grep \"\\*\" | cut -d\" \" -f4').toString().trim();
         const fullResolution = xrandrOutput || '1920x1080';
         const display = process.env.DISPLAY || ':0.0';
 

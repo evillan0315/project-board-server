@@ -26,8 +26,52 @@ export interface IAuthUser {
   gitHubUser?: GitUser; // New field for GitHub user details
 }
 
+export interface AuthState {
+  isLoggedIn: boolean;
+  user: UserProfile | null;
+  loading: boolean;
+  error: string | null;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  username?: string;
+  name?: string;
+  image?: string;
+  phone_number?: string;
+  role: string;
+  provider?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  emailVerified?: Date | null;
+  passwordResetToken?: string | null;
+  passwordResetExpiresAt?: Date | null;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name?: string;
+  phone_number?: string;
+}
+
 export interface IAuthResponse {
   accessToken: string;
   refreshToken: string;
   user: IAuthUser;
+}
+
+export interface IResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface IResetPasswordResponse {
+  message: string;
 }

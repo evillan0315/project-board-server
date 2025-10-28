@@ -1,5 +1,13 @@
 import React, { useEffect } from 'react';
-import { Box, Typography, Alert, Card, CardContent, Divider, Button } from '@mui/material'; // Added Button for test message
+import {
+  Box,
+  Typography,
+  Alert,
+  Card,
+  CardContent,
+  Divider,
+  Button,
+} from '@mui/material'; // Added Button for test message
 import { useStore } from '@nanostores/react';
 import { useParams } from 'react-router-dom';
 
@@ -62,8 +70,16 @@ const OpenViduPage: React.FC = () => {
   };
 
   return (
-    <Box sx={containerSx} className="w-full flex flex-col items-center py-4 h-full">
-      <Typography variant="h4" component="h1" sx={titleSx} className="text-3xl md:text-4xl text-purple-600 dark:text-purple-400">
+    <Box
+      sx={containerSx}
+      className="w-full flex flex-col items-center py-4 h-full"
+    >
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={titleSx}
+        className="text-3xl md:text-4xl text-purple-600 dark:text-purple-400"
+      >
         OpenVidu Session Connector
       </Typography>
 
@@ -88,8 +104,15 @@ const OpenViduPage: React.FC = () => {
         {ovState.currentSessionId && (
           <Card className="mb-4 max-w-3xl w-full">
             <CardContent>
-              <Typography variant="h6" className="mb-2 font-semibold">Active Session: {ovState.currentSessionId}</Typography>
-              <Typography variant="body2" className="mb-2 text-gray-500 dark:text-gray-400">Participants: {connections.length}</Typography>
+              <Typography variant="h6" className="mb-2 font-semibold">
+                Active Session: {ovState.currentSessionId}
+              </Typography>
+              <Typography
+                variant="body2"
+                className="mb-2 text-gray-500 dark:text-gray-400"
+              >
+                Participants: {connections.length}
+              </Typography>
               <Divider className="mb-2" />
               <OpenViduControls
                 isCameraActive={isCameraActive}
@@ -98,12 +121,21 @@ const OpenViduPage: React.FC = () => {
                 toggleMic={toggleMic}
                 publisher={ovState.publisher}
               />
-              <Button onClick={handleSendTestMessage} variant="outlined" className="mt-4">Send Test Chat Message</Button>
+              <Button
+                onClick={handleSendTestMessage}
+                variant="outlined"
+                className="mt-4"
+              >
+                Send Test Chat Message
+              </Button>
             </CardContent>
           </Card>
         )}
 
-        <OpenViduVideoGrid publisher={ovState.publisher} subscribers={ovState.subscribers} />
+        <OpenViduVideoGrid
+          publisher={ovState.publisher}
+          subscribers={ovState.subscribers}
+        />
 
         {!ovState.currentSessionId && !isLoading && !error && (
           <Alert severity="info" className="max-w-3xl w-full mt-4">

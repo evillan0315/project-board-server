@@ -222,7 +222,6 @@ const HomePage: React.FC = () => {
             </div>
           ))}
         </div>
-  
       </Container>
     </Box>
   );

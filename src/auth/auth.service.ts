@@ -239,12 +239,12 @@ export class AuthService {
     });
 
     // Removed email sending as per request
-    // const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${plainTextToken}`;
-    // await this.mailService.sendPasswordResetEmail(
-    //   user.email,
-    //   user.name ?? 'User',
-    //   resetUrl,
-    // );
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${plainTextToken}`;
+     await this.mailService.sendPasswordResetEmail(
+       user.email,
+       user.name ?? 'User',
+       resetUrl,
+     );
 
     return {
       message:

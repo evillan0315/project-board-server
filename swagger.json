@@ -22066,7 +22066,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-10-28T05:12:10.988Z",
+            "example": "2025-10-28T09:16:43.067Z",
             "format": "date-time"
           },
           "requestType": {

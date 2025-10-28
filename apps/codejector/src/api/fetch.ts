@@ -1,6 +1,6 @@
 import { getToken } from '@/stores/authStore'; // Import getToken from authStore
 
-export const API_BASE_URL = `/api`; 
+export const API_BASE_URL = `/api`;
 
 export interface ApiError extends Error {
   statusCode?: number;
@@ -15,7 +15,7 @@ interface CustomRequestInit extends RequestInit {
 // Handles the response from a fetch call, checks for errors, and parses JSON or text.
 export const handleResponse = async <T>(response: Response): Promise<T> => {
   // Read the response body once as text to prevent 'Body has already been consumed' errors
-  const responseBody = await response.text(); 
+  const responseBody = await response.text();
 
   if (!response.ok) {
     let errorData: any;
@@ -27,9 +27,11 @@ export const handleResponse = async <T>(response: Response): Promise<T> => {
       errorData = responseBody;
     }
 
-    const errorMessage = typeof errorData === 'string'
-      ? errorData
-      : errorData.message || `API error: ${response.status} ${response.statusText}`;
+    const errorMessage =
+      typeof errorData === 'string'
+        ? errorData
+        : errorData.message ||
+          `API error: ${response.status} ${response.statusText}`;
 
     const error = new Error(errorMessage);
     error.statusCode = response.status;
@@ -45,7 +47,9 @@ export const handleResponse = async <T>(response: Response): Promise<T> => {
       return data as T;
     } catch (error) {
       console.error('Error parsing JSON for successful request:', error);
-      throw new Error('Failed to parse JSON response for a successful request.');
+      throw new Error(
+        'Failed to parse JSON response for a successful request.',
+      );
     }
   } else {
     // If not JSON, return the raw text
@@ -104,15 +108,20 @@ export async function fetchWithBasicAuth(
   init?: CustomRequestInit,
 ): Promise<Response> {
   const OPENVIDU_SERVER_SECRET = import.meta.env.VITE_SLS_API_KEY;
-  const OPENVIDU_SERVER_USERNAME = import.meta.env.VITE_SLS_USERNAME || 'OPENVIDUAPP'; // Default OpenVidu username
-  
+  const OPENVIDU_SERVER_USERNAME =
+    import.meta.env.VITE_SLS_USERNAME || 'OPENVIDUAPP'; // Default OpenVidu username
+
   if (!OPENVIDU_SERVER_SECRET) {
-    throw new Error('VITE_SLS_API_KEY is not defined in environment variables.');
+    throw new Error(
+      'VITE_SLS_API_KEY is not defined in environment variables.',
+    );
   }
 
-  const basicAuth = btoa(`${OPENVIDU_SERVER_USERNAME}:${OPENVIDU_SERVER_SECRET}`);
+  const basicAuth = btoa(
+    `${OPENVIDU_SERVER_USERNAME}:${OPENVIDU_SERVER_SECRET}`,
+  );
   const headers = {
-    'Authorization': `Basic ${basicAuth}`,
+    Authorization: `Basic ${basicAuth}`,
     'Content-Type': 'application/json',
     ...init?.headers,
   };
@@ -128,5 +137,3 @@ export async function fetchWithBasicAuth(
     body,
   });
 }
-
-

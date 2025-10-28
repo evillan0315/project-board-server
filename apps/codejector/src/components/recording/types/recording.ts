@@ -122,6 +122,15 @@ export interface UpdateRecordingDto {
   type?: RecordingType; // Use the specific RecordingType union
   data?: any;
 }
+export interface CaptureScreen {
+  format: 'jpeg' | 'png';
+  quality: number;
+}
+export interface CaptureScreenResponse {
+  id: string;
+  path: string; 
+  message?: string;
+}
 
 // Device listing types (moved from backend device.dto.ts for frontend usage)
 export enum DeviceType {

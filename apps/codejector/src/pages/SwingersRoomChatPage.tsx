@@ -10,7 +10,7 @@ interface SwingersRoomChatPageParams {
 
 const SwingersRoomChatPage: React.FC = () => {
   const { roomId } = useParams<SwingersRoomChatPageParams>();
-  console.log(roomId, 'roomId')
+  console.log(roomId, 'roomId');
   if (!roomId) {
     return (
       <PageLayout>
@@ -24,22 +24,21 @@ const SwingersRoomChatPage: React.FC = () => {
   }
 
   return (
-    <PageLayout header={
-      <Typography variant="h6" component="h1" className="font-bold">
-        Chat Room: {roomId}
-      </Typography>
-    }
+    <PageLayout
+      header={
+        <Typography variant="h6" component="h1" className="font-bold">
+          Chat Room: {roomId}
+        </Typography>
+      }
       body={
-
         <Box className="w-full max-w-screen-2xl mx-auto h-full p-0 pb-2">
-        <ChatRoom roomId={roomId} />
-      </Box>
+          <ChatRoom roomId={roomId} />
+        </Box>
       }
       bodyPosition={'top'}
       centerBodyPostition={false}
-      >
+    >
       {/* ChatRoom component is designed to take full width and height of its parent */}
-      
     </PageLayout>
   );
 };

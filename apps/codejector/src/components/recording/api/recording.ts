@@ -12,7 +12,9 @@ import {
   RecordingStatusDto,
   StartCameraRecordingDto,
   CameraRecordingResponseDto,
-  StartScreenRecordingDto, // Import the new DTO
+  StartScreenRecordingDto, 
+  CaptureScreen,
+  CaptureScreenResponse,
 } from '../types/recording';
 
 export const recordingApi = {
@@ -45,21 +47,22 @@ export const recordingApi = {
       throw error;
     }
   },
-  capture: async () => {
+  capture: async (dto: CaptureScreen): Promise<CaptureScreenResponse> => {
     try {
-      const response = await fetchWithAuth(
-        `${API_BASE_URL}/recording/capture`,
+      const response = await fetchWithAuth<CaptureScreen>(
+        `${API_BASE_URL}/recording/screenshot`,
         {
           method: 'POST',
+          body: JSON.stringify(dto),
         },
       );
-      return handleResponse<RecordingStopResponse>(response);
+      return handleResponse<CaptureScreenResponse>(response);
     } catch (error) {
       console.error('Error capturing screenshot:', error);
       throw error;
     }
   },
-  recordingStatus: async () => {
+  recordingStatus: async (): Promise<RecordingStatusDto> => {
     try {
       const response = await fetchWithAuth(`${API_BASE_URL}/recording/status`);
       return handleResponse<RecordingStatusDto>(response);
@@ -68,7 +71,7 @@ export const recordingApi = {
       throw error;
     }
   },
-  startCameraRecording: async (dto: StartCameraRecordingDto) => {
+  startCameraRecording: async (dto: StartCameraRecordingDto): Promise<CameraRecordingResponseDto> => {
     try {
       const response = await fetchWithAuth(
         `${API_BASE_URL}/recording/camera-record-start`,

@@ -5,14 +5,14 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+data
 node_modules
 dist
 dist-ssr
 *.local
 .env
 .env.local
-
+src/components/swingers/*
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,3 +1,8 @@
+/**
+ * FilePath: src/mail/mail.module.ts
+ * Title: MailerModule configuration for Gmail App Password
+ * Reason: Configures @nestjs-modules/mailer to use Gmail SMTP authentication via App Password and Handlebars templates
+ */
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { Module } from '@nestjs/common';
@@ -9,28 +14,28 @@ import { join } from 'path';
   imports: [
     MailerModule.forRootAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         transport: {
-          host: configService.get('MAIL_HOST'),
-          port: configService.get('MAIL_PORT'),
+          service: configService.get<string>('MAIL_SERVICE') || 'gmail',
           auth: {
-            user: configService.get('MAIL_USER'),
-            pass: configService.get('MAIL_PASS'),
+            user: configService.get<string>('MAIL_USER'),
+            pass: configService.get<string>('MAIL_PASS'), // App Password, not OAuth2
           },
         },
         defaults: {
-          from: `"No Reply" <${configService.get('MAIL_FROM')}>`,
+          from: configService.get<string>('MAIL_FROM') || `"Support" <${configService.get<string>('MAIL_USER')}>`,
         },
         template: {
-          dir: join(__dirname, 'templates'),
-          adapter: new HandlebarsAdapter(), // Add e.g., new HandlebarsAdapter() if needed
+          dir: join(__dirname, '../../views/mail'),
+          adapter: new HandlebarsAdapter(),
           options: { strict: true },
         },
       }),
-      inject: [ConfigService],
     }),
   ],
   providers: [MailService],
   exports: [MailService],
 })
 export class MailModule {}
+

@@ -18,61 +18,61 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 
 ### File & Folder Management
 
-- ✅ **Local File Operations:** Read, write, create, delete, rename, search, list files and folders.
-- ✅ **Media Streaming:** Stream audio/video files with HTTP range support.
-- ✅ **File Downloads:** Directly download files to the client.
-- ✅ **Content Resolution:** Read file content from uploaded files, local paths, or URLs.
-- ✅ **Multiple File Operations:** Upload and read content from multiple files.
-- ✅ **Project Scanning:** Recursively scan directories for relevant code files, useful for AI context building (with intelligent exclusion lists).
-- ✅ **Video Thumbnail Generation:** Automatically generate thumbnails for video files upon extraction from URLs or local scanning.
-- ✅ **Real-time Collaboration (WebSockets):** Open, close, update, create, and delete files with real-time notifications for collaborative editing.
-- ✅ **Remote File Management (SSH/SFTP):**
-  - List files and directories on remote servers.
-  - Create, update, and delete remote files.
-  - Download files from remote servers.
-  - Execute shell commands on remote servers.
-- ✅ **GitHub Repository Management:** Create, commit, delete, list, and view contents of GitHub repositories.
-- ✅ **Media Library Integration:** Automatically link scanned or extracted audio/video files to existing `Song` or `Video` entities in the media library, or create new ones if they don't exist, enriching the media collection.
+-   ✅ **Local File Operations:** Read, write, create, delete, rename, search, list files and folders.
+-   ✅ **Media Streaming:** Stream audio/video files with HTTP range support.
+-   ✅ **File Downloads:** Directly download files to the client.
+-   ✅ **Content Resolution:** Read file content from uploaded files, local paths, or URLs.
+-   ✅ **Multiple File Operations:** Upload and read content from multiple files.
+-   ✅ **Project Scanning:** Recursively scan directories for relevant code files, useful for AI context building (with intelligent exclusion lists).
+-   ✅ **Video Thumbnail Generation:** Automatically generate thumbnails for video files upon extraction from URLs or local scanning.
+-   ✅ **Real-time Collaboration (WebSockets):** Open, close, update, create, and delete files with real-time notifications for collaborative editing.
+-   ✅ **Remote File Management (SSH/SFTP):**
+    -   List files and directories on remote servers.
+    -   Create, update, and delete remote files.
+    -   Download files from remote servers.
+    -   Execute shell commands on remote servers.
+-   ✅ **GitHub Repository Management:** Create, commit, delete, list, and view contents of GitHub repositories.
+-   ✅ **Media Library Integration:** Automatically link scanned or extracted audio/video files to existing `Song` or `Video` entities in the media library, or create new ones if they don't exist, enriching the media collection.
 
 ### Generative AI (Google Gemini & Translator)
 
-- ✅ **Text Generation:** General purpose text generation from prompts.
-- ✅ **Image Captioning:** Generate descriptions for images from URLs or local files.
-- ✅ **Text-to-Speech (TTS):** Convert text to natural-sounding speech audio (single and multi-speaker).
-- ✅ **Code Generation:** Generate code snippets based on natural language instructions.
-- ✅ **Code Documentation:** Generate documentation for code snippets (e.g., JSDoc, Markdown).
-- ✅ **Code Optimization:** Improve code for performance and readability.
-- ✅ **Code Analysis:** Identify issues, improvements, and best practices in code.
-- ✅ **Code Repair:** Fix syntax or logical errors in code.
-- ✅ **File Content Analysis:** Analyze content from uploaded files (e.g., SQL schemas, text documents).
-- ✅ **Video Generation:** Generate videos from text prompts using the Veo model.
-- ✅ **Live Conversational AI:** Real-time, streaming interactions with Gemini models for dynamic dialogue.
-- ✅ **Text Translation:** Translate text or file content to various languages using Google Cloud Translation API.
-- ✅ **Resume Tools:**
-  - Generate new resumes based on detailed prompts.
-  - Optimize existing resumes against job descriptions.
-  - Enhance specific resume sections for impact.
+-   ✅ **Text Generation:** General purpose text generation from prompts.
+-   ✅ **Image Captioning:** Generate descriptions for images from URLs or local files.
+-   ✅ **Text-to-Speech (TTS):** Convert text to natural-sounding speech audio (single and multi-speaker).
+-   ✅ **Code Generation:** Generate code snippets based on natural language instructions.
+-   ✅ **Code Documentation:** Generate documentation for code snippets (e.g., JSDoc, Markdown).
+-   ✅ **Code Optimization:** Improve code for performance and readability.
+-   ✅ **Code Analysis:** Identify issues, improvements, and best practices in code.
+-   ✅ **Code Repair:** Fix syntax or logical errors in code.
+-   ✅ **File Content Analysis:** Analyze content from uploaded files (e.g., SQL schemas, text documents).
+-   ✅ **Video Generation:** Generate videos from text prompts using the Veo model.
+-   ✅ **Live Conversational AI:** Real-time, streaming interactions with Gemini models for dynamic dialogue.
+-   ✅ **Text Translation:** Translate text or file content to various languages using Google Cloud Translation API.
+-   ✅ **Resume Tools:**
+    -   Generate new resumes based on detailed prompts.
+    -   Optimize existing resumes against job descriptions.
+    -   Enhance specific resume sections for impact.
 
 ### Developer Utilities
 
-- ✅ **Image Conversion:** Convert images (PNG, JPG) to SVG (Vector graphics).
-- ✅ **Code Formatting:** Format source code using Prettier (supports various languages).
-- ✅ **JSDoc to Markdown:** Generate Markdown documentation directly from JSDoc comments in TypeScript/TSX files.
-- ✅ **Markdown Conversions:**
-  - Convert Markdown to plain text.
-  - Convert Markdown to HTML (with global CSS styling).
-  - Convert Markdown to JSON AST (Abstract Syntax Tree).
-  - Convert Markdown to DOCX (Microsoft Word Document).
-- ✅ **HTML to DOCX:** Convert HTML content to a DOCX document.
-- ✅ **SQL Utilities:** Parse `SELECT` and `INSERT` statements to JSON, and generate `INSERT` SQL from JSON.
-- ✅ **String Utilities:** Capitalize, kebab-case, reverse, truncate text, unique array filter, time ago formatting, Unix timestamp conversion.
-- ✅ **Environment Variable Handling:** Convert `.env` files to JSON and JSON objects to `.env` strings.
-- ✅ **JSON/YAML Conversion:** Bidirectional conversion between JSON objects and YAML strings.
-- ✅ **Encoding/Decoding:** Base64 and URL encoding/decoding.
-- ✅ **Code Highlighting:** Syntax highlighting for various programming languages.
-- ✅ **ESLint Integration:** Lint code strings and retrieve detailed diagnostics (errors, warnings, fixes).
-- ✅ **Code Transpilation:** Transpile JavaScript/TypeScript, React JSX, SolidJS JSX using ESBuild, supporting single files, multiple files, and ZIP archives.
-- ✅ **Interactive Terminal & Remote Shell:** Execute local terminal commands and establish persistent SSH sessions to remote servers with real-time input/output (via WebSockets), **including command history persistence and session logging.**
+-   ✅ **Image Conversion:** Convert images (PNG, JPG) to SVG (Vector graphics).
+-   ✅ **Code Formatting:** Format source code using Prettier (supports various languages).
+-   ✅ **JSDoc to Markdown:** Generate Markdown documentation directly from JSDoc comments in TypeScript/TSX files.
+-   ✅ **Markdown Conversions:**
+    -   Convert Markdown to plain text.
+    -   Convert Markdown to HTML (with global CSS styling).
+    -   Convert Markdown to JSON AST (Abstract Syntax Tree).
+    -   Convert Markdown to DOCX (Microsoft Word Document).
+-   ✅ **HTML to DOCX:** Convert HTML content to a DOCX document.
+-   ✅ **SQL Utilities:** Parse `SELECT` and `INSERT` statements to JSON, and generate `INSERT` SQL from JSON.
+-   ✅ **String Utilities:** Capitalize, kebab-case, reverse, truncate text, unique array filter, time ago formatting, Unix timestamp conversion.
+-   ✅ **Environment Variable Handling:** Convert `.env` files to JSON and JSON objects to `.env` strings.
+-   ✅ **JSON/YAML Conversion:** Bidirectional conversion between JSON objects and YAML strings.
+-   ✅ **Encoding/Decoding:** Base64 and URL encoding/decoding.
+-   ✅ **Code Highlighting:** Syntax highlighting for various programming languages.
+-   ✅ **ESLint Integration:** Lint code strings and retrieve detailed diagnostics (errors, warnings, fixes).
+-   ✅ **Code Transpilation:** Transpile JavaScript/TypeScript, React JSX, SolidJS JSX using ESBuild, supporting single files, multiple files, and ZIP archives.
+-   ✅ **Interactive Terminal & Remote Shell:** Execute local terminal commands and establish persistent SSH sessions to remote servers with real-time input/output (via WebSockets), **including command history persistence and session logging.**
 
 ### Screen Recording & Screenshots
 
@@ -136,6 +136,16 @@ GOOGLE_GEMINI_LIVE_MODEL='gemini-live-2.5-flash-preview' # Specific model for li
 # Google Cloud Translation API Key
 GOOGLE_TRANSLATION_API_KEY='your_translation_api_key' # NEW: API Key for Google Cloud Translation
 
+# Mailer Configuration (for Gmail OAuth2)
+# To use Gmail with OAuth2, you need to obtain specific credentials from the Google Cloud Console.
+# See 'Google OAuth2 Credentials Setup' in the documentation for detailed instructions.
+MAIL_SERVICE='gmail'
+GOOGLE_EMAIL_USER='your-gmail-account@gmail.com' # The Gmail address to send emails from
+GOOGLE_CLIENT_ID='your_google_oauth_client_id' # OAuth Client ID for Gmail
+GOOGLE_CLIENT_SECRET='your_google_oauth_client_secret' # OAuth Client Secret for Gmail
+GOOGLE_REFRESH_TOKEN='your_google_oauth_refresh_token' # OAuth Refresh Token for Gmail
+MAIL_FROM='"My App" <your-gmail-account@gmail.com>' # Display name and sender email (should match GOOGLE_EMAIL_USER)
+
 # Base URL for API (for email verification links, etc.)
 BASE_URL='http://localhost:3000'
 BACKEND_URL='http://localhost:3000'
@@ -151,14 +161,14 @@ ALLOWED_PROXY_DOMAINS=''
 SSH_HOST='your_remote_server_ip_or_hostname'
 SSH_PORT=22
 SSH_USERNAME='your_ssh_username'
-SSH_PRIVATE_KEY_PATH='/path/to/your/ssh/private_key' # e.g., ~/.ssh/id_rsa
+SSH_PRIVATE_KEY_PATH='/path/to/your/ssh/private_key' # e.g., ~/.ssh/id_rsa'
 SSH_PASSPHRASE='your_private_key_passphrase' # Optional, if your key is encrypted
 
 # Base Directory for Local File Operations (optional, defaults to CWD)
 BASE_DIR='/path/to/your/project_root'
 
 # Playwright Configuration
-PLAYWRIGHT_BROWSER_TYPE='chromium' # e.g., chromium, firefox, webkit
+PLAYWRIGHT_BROWSER_TYPE='chromium' # e.g., chromium, firefox, webkit'
 PLAYWRIGHT_HEADLESS='true' # true or false
 PLAYWRIGHT_TIMEOUT_MS='30000' # Default timeout in milliseconds for Playwright page actions (e.g., navigation, selector waits).
 ```
@@ -443,3 +453,27 @@ This works in conjunction with the `libs/protected-models.ts` configuration, whi
 
 Made with love by [Eddie Villanueva](https://github.com/evillan0315)
 📧 [evillan0315@gmail.com](mailto:evillan0315@gmail.com)
+
+### Google OAuth2 Credentials Setup
+
+To use Gmail with OAuth2 for sending emails, you need to obtain specific credentials from the Google Cloud Console. Follow these steps:
+
+1.  **Go to Google Cloud Console**: Navigate to [https://console.cloud.google.com/](https://console.cloud.google.com/).
+2.  **Create/Select a Project**: Either create a new project or select an existing one.
+3.  **Enable Gmail API**: In the 'APIs & Services' -> 'Library' section, search for and enable the 'Gmail API'.
+4.  **Create OAuth Client ID**: Go to 'APIs & Services' -> 'Credentials'.
+    *   Click 'CREATE CREDENTIALS' and choose 'OAuth client ID'.
+    *   Select 'Web application' (for a server-side application) or 'Desktop app' (if you're running a local script to get the refresh token).
+    *   **For Web application**: Add `https://developers.google.com/oauthplayground` to 'Authorized redirect URIs'. You might also need your actual frontend redirect URI if your application directly handles the OAuth flow for user consent.
+    *   **For Desktop app**: No redirect URIs are strictly required for generating a refresh token via the OAuth Playground, but `urn:ietf:wg:oauth:2.0:oob` is a common placeholder.
+    *   Take note of your `client ID` and `client secret`.
+5.  **Obtain a Refresh Token (using OAuth 2.0 Playground)**:
+    *   Go to [https://developers.google.com/oauthplayground](https://developers.google.com/oauthplayground).
+    *   Click the gear icon in the top right corner and check 'Use your own OAuth credentials'. Enter your `client ID` and `client secret`.
+    *   In Step 1, under 'Select & authorize APIs', add the scope `https://mail.google.com/` (or `https://www.googleapis.com/auth/gmail.send` if you only need to send emails).
+    *   Click 'Authorize APIs'. You will be prompted to log in to your Google account and grant permissions.
+    *   In Step 2, click 'Exchange authorization code for tokens'.
+    *   The response will include a `refresh_token`. Copy this value.
+    *   **Important**: Refresh tokens are long-lived but can be revoked. Store it securely in your `.env` file.
+
+Now you have all the necessary values (`GOOGLE_EMAIL_USER`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`) to configure the secure Gmail transport.
