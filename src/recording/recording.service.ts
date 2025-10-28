@@ -12,9 +12,8 @@ import {
   ChildProcessWithoutNullStreams,
   spawnSync,
 } from 'child_process';
-import * as screenshot from 'screenshot-desktop';
 import { join, dirname } from 'path';
-import { writeFile, stat, unlink, mkdir, readdir } from 'fs/promises';
+import { stat, unlink, mkdir, readdir } from 'fs/promises';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { TerminalService } from '../terminal/terminal.service';
@@ -284,49 +283,6 @@ export class RecordingService {
     return this.prisma.recording.delete({ where: { id } });
   }
 
-  async captureScreen(
-    userId: string,
-  ):
-    Promise<{
-    id: string;
-    status: string;
-    path: string;
-  }> {
-    const outputPath = join(
-      process.cwd(),
-      'downloads',
-      'screenshots',
-      userId,
-      `captured-${Date.now()}.png`,
-    );
-
-    await mkdir(dirname(outputPath), { recursive: true });
-
-    const imgBuffer = await screenshot({ format: 'png' });
-    await writeFile(outputPath, imgBuffer);
-
-    this.logger.log(`Screenshot saved to ${outputPath}`);
-
-    const recording = await this.prisma.recording.create({
-      data: {
-        path: outputPath,
-        type: 'screenShot',
-        status: 'finished',
-        pid: '0', // No process ID for a screenshot
-        data: {
-          capturedAt: new Date().toISOString(),
-        } as RecordingData,
-        createdBy: { connect: { id: userId } },
-      },
-    });
-
-    return {
-      id: recording.id,
-      status: recording.status,
-      path: recording.path,
-    };
-  }
-
   async startRecording(
     userId: string,
     dto: StartRecordingDto, // Accept DTO with audio options
@@ -449,8 +405,6 @@ export class RecordingService {
     // and removing the recording from activeRecordings map once the process fully exits.
     // We do not delete from the map here to ensure _handleRecordingExit has access to activeRecord data.
 
-    // Fetch the recording from DB to return its current state. Note that this might return
-    // 'recording' status if the async _handleRecordingExit hasn't completed its DB update yet.
     const updatedRecording = await this.prisma.recording.findUnique({
       where: { id, createdById: userId },
     });
@@ -695,7 +649,7 @@ export class RecordingService {
         },
       });
       this.logger.log(
-        `Recording ${recordingId} metadata updated: status=${
+        `Recording ${recordingId} metadata updated: status={
           exitCode === 0 ? 'finished' : 'failed'
         }, duration=${duration}s, fileSize=${fileSize} bytes`,
       );

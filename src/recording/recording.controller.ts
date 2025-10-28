@@ -124,19 +124,6 @@ export class RecordingController {
     return this.recordingService.cleanupOld(userId, days);
   }
 
-  @Post('capture')
-  @Roles(UserRole.ADMIN, UserRole.USER)
-  @ApiOperation({ summary: 'Take a screenshot of the current screen.' })
-  @ApiOkResponse({
-    description: 'Screen captured.',
-    type: StopRecordingResponse,
-  })
-  async capture(
-    @CurrentUser('id') userId: string,
-  ): Promise<StopRecordingResponse> {
-    return this.recordingService.captureScreen(userId);
-  }
-
   @Post('record-start')
   @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({ summary: 'Start screen recording with optional audio.' })
