@@ -19,7 +19,7 @@ import * as fs from 'fs';
       },
     }),
   ],
-  providers: [FfmpegService, SubtitleService],
+  providers: [FfmpegService, SubtitleService, FfmpegGateway],
   exports: [FfmpegService, SubtitleService],
   controllers: [FfmpegController],
 })

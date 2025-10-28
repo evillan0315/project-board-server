@@ -508,7 +508,7 @@ export class RecordingService {
               path: finalOutputPath,
               type: 'screenshot',
               status: 'finished', // Screenshots are instant, so 'finished'
-              pid: null, // No long-running process
+              pid: '', // No long-running process
               data: {
                 capturedAt: new Date().toISOString(),
                 resolution: resolution,

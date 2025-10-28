@@ -80,9 +80,8 @@ A comprehensive backend application built with **NestJS**, providing robust auth
 | -------- | ----------------------------------- | ----------------------------------------- |
 | `GET`    | `/api/recording/status`             | Get current recording status              |
 | `GET`    | `/api/recording/metadata`           | Get metadata for a recording file         |
-| `GET`    | `/api/recording/list`               | List all saved recording files            |
+| `GET`    | `/api/recording/list`               | List all saved recordings                 |
 | `DELETE` | `/api/recording/recordings/cleanup` | Delete recordings older than N days       |
-| `POST`   | `/api/recording/capture`            | Take a screenshot of the screen           |
 | `POST`   | `/api/recording/record-start`       | Start screen recording                    |
 | `POST`   | `/api/recording/record-stop`        | Stop screen recording                     |
 | `POST`   | `/api/llm-playwright/start-recording` | Start screen recording of a URL (via Playwright). Recording runs until `stop-recording` is called. |
@@ -126,7 +125,7 @@ GOOGLE_CALLBACK_URL='http://localhost:3000/api/auth/google/callback'
 
 # GitHub OAuth2 Credentials
 GITHUB_CLIENT_ID='your_github_client_id'
-GITHUB_CLIENT_SECRET='your_github_client_secret'
+HUB_CLIENT_SECRET='your_github_client_secret'
 GITHUB_CALLBACK_URL='http://localhost:3000/api/auth/github/callback'
 
 # Google Gemini AI Credentials
@@ -173,7 +172,7 @@ npx prisma migrate dev --name init
 
 ### 4. Install External System Dependencies (if needed)
 
--   **FFmpeg:** Required for screen recording, screenshots, **and video thumbnail generation**. [Download & Install FFmpeg](https://ffmpeg.org/download.html)
+-   **FFmpeg:** Required for screen recording, **and video thumbnail generation**. [Download & Install FFmpeg](https://ffmpeg.org/download.html)
 -   **Pandoc:** Required for converting Markdown/HTML to DOCX. [Download & Install Pandoc](https://pandoc.org/installing.html)
 -   **ffprobe-client (npm package):** Required for extracting metadata (e.g., duration) from scanned local media files.
 
@@ -307,7 +306,7 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `POST` | `/api/utils/json-yaml/to-yaml` | Convert JSON to YAML                    |
 | `POST` | `/api/encoding/base64/encode`  | Encode text to Base64                   |
 
-### Screen Recording & Screenshots
+### Screen Recording
 
 | Method   | Endpoint                            | Description                               |
 | -------- | ----------------------------------- | ----------------------------------------- |
@@ -315,7 +314,6 @@ Visit [http://localhost:3000/api](http://localhost:3000/api) for the full intera
 | `GET`    | `/api/recording/metadata`           | Get metadata for a recording file         |
 | `GET`    | `/api/recording/list`               | List all saved recordings                 |
 | `DELETE` | `/api/recording/recordings/cleanup` | Delete recordings older than N days       |
-| `POST`   | `/api/recording/capture`            | Take a screenshot of the screen           |
 | `POST`   | `/api/recording/record-start`       | Start screen recording                    |
 | `POST`   | `/api/recording/record-stop`        | Stop screen recording                     |
 | `POST`   | `/api/llm-playwright/start-recording` | Start screen recording of a URL (via Playwright). Recording runs until `stop-recording` is called. |

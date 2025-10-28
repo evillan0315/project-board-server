@@ -61,6 +61,41 @@ export class StartRecordingDto {
   audioDevice?: string;
 }
 
+export class ScreenshotDto {
+  @ApiPropertyOptional({
+    description: 'Output format for the screenshot. Defaults to jpeg.',
+    enum: ['jpeg', 'png', 'webp'],
+    example: 'jpeg',
+  })
+  @IsOptional()
+  @IsString()
+  format?: 'jpeg' | 'png' | 'webp';
+
+  @ApiPropertyOptional({
+    description: 'Quality for JPEG/WebP output (1-100). Defaults to 90.',
+    minimum: 1,
+    maximum: 100,
+    example: 90,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsPositive()
+  quality?: number;
+}
+
+export class ScreenshotResponseDto {
+  @ApiProperty({ description: 'The ID of the recording entry in the database.' })
+  id: string;
+
+  @ApiProperty({
+    description: 'The full path to the captured screenshot file on the server.',
+  })
+  path: string;
+
+  @ApiProperty({ description: 'A status message for the operation.' })
+  message: string;
+}
+
 export class RecordingResultDto {
   @ApiProperty()
   @IsUUID()

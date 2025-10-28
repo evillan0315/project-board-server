@@ -36,7 +36,9 @@ import {
   CreateRecordingDto,
   PaginationRecordingResultDto,
   PaginationRecordingQueryDto,
-  StartRecordingDto, // Import the updated DTO
+  StartRecordingDto,
+  ScreenshotDto,
+  ScreenshotResponseDto, // Import new DTOs
 } from './dto/create-recording.dto';
 import { UpdateRecordingDto } from './dto/update-recording.dto';
 import { StartRecordingResponseDto } from './dto/start-recording-response.dto';
@@ -104,7 +106,10 @@ export class RecordingController {
   async getMetadata(
     @CurrentUser('id') userId: string,
     @Query('file') file: string,
-  ): Promise<{ size: number; modified: string }> {
+  ): Promise<{
+    size: number;
+    modified: string;
+  }> {
     return this.recordingService.getMetadata(userId, file);
   }
 
@@ -134,7 +139,7 @@ export class RecordingController {
   @ApiBadRequestResponse({ description: 'Invalid input.' })
   async start(
     @CurrentUser('id') userId: string,
-    @Body() dto: StartRecordingDto, // Accept StartRecordingDto
+    @Body() dto: StartRecordingDto,
   ): Promise<StartRecordingResponseDto> {
     return this.recordingService.startRecording(userId, dto);
   }
@@ -154,6 +159,25 @@ export class RecordingController {
       throw new BadRequestException('Recording ID is required.');
     }
     return this.recordingService.stopRecording(userId, id);
+  }
+
+  @Post('screenshot')
+  @Roles(UserRole.ADMIN, UserRole.USER)
+  @ApiOperation({ summary: 'Capture a screenshot of the desktop window screen.' })
+  @ApiCreatedResponse({
+    description: 'Screenshot captured and saved successfully.',
+    type: ScreenshotResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid input or screenshot failed.' })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to capture screenshot.',
+  })
+  async captureScreenshot(
+    @CurrentUser('id') userId: string,
+    @Body() dto: ScreenshotDto,
+  ): Promise<ScreenshotResponseDto> {
+    return this.recordingService.captureScreenshot(userId, dto);
   }
 
   @Post('camera-record-start')

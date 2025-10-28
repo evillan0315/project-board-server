@@ -9273,42 +9273,6 @@
         ]
       }
     },
-    "/api/recording/capture": {
-      "post": {
-        "operationId": "RecordingController_capture",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Screen captured.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StopRecordingResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - insufficient role"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          },
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Take a screenshot of the current screen.",
-        "tags": [
-          "Recording"
-        ]
-      }
-    },
     "/api/recording/record-start": {
       "post": {
         "operationId": "RecordingController_start",
@@ -9390,6 +9354,58 @@
           }
         ],
         "summary": "Stop screen recording.",
+        "tags": [
+          "Recording"
+        ]
+      }
+    },
+    "/api/recording/screenshot": {
+      "post": {
+        "operationId": "RecordingController_captureScreenshot",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreenshotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Screenshot captured and saved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreenshotResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or screenshot failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to capture screenshot."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Capture a screenshot of the desktop window screen.",
         "tags": [
           "Recording"
         ]
@@ -22050,7 +22066,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-10-27T23:49:04.740Z",
+            "example": "2025-10-28T05:12:10.988Z",
             "format": "date-time"
           },
           "requestType": {
@@ -23134,10 +23150,6 @@
           }
         }
       },
-      "StopRecordingResponse": {
-        "type": "object",
-        "properties": {}
-      },
       "StartRecordingDto": {
         "type": "object",
         "properties": {
@@ -23172,6 +23184,54 @@
         "required": [
           "path",
           "id"
+        ]
+      },
+      "StopRecordingResponse": {
+        "type": "object",
+        "properties": {}
+      },
+      "ScreenshotDto": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "description": "Output format for the screenshot. Defaults to jpeg.",
+            "enum": [
+              "jpeg",
+              "png",
+              "webp"
+            ],
+            "example": "jpeg"
+          },
+          "quality": {
+            "type": "number",
+            "description": "Quality for JPEG/WebP output (1-100). Defaults to 90.",
+            "minimum": 1,
+            "maximum": 100,
+            "example": 90
+          }
+        }
+      },
+      "ScreenshotResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID of the recording entry in the database."
+          },
+          "path": {
+            "type": "string",
+            "description": "The full path to the captured screenshot file on the server."
+          },
+          "message": {
+            "type": "string",
+            "description": "A status message for the operation."
+          }
+        },
+        "required": [
+          "id",
+          "path",
+          "message"
         ]
       },
       "StartCameraRecordingDto": {

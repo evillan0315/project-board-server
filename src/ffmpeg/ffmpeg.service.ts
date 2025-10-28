@@ -415,7 +415,8 @@ export class FfmpegService {
       ffmpeg.on('close', (code) => {
         if (code === 0) {
           resolve();
-        } else {
+        }
+        else {
           reject(new Error(`FFmpeg exited with code ${code}`));
         }
       });
