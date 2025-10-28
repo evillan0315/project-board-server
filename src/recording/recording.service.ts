@@ -20,6 +20,8 @@ import { TerminalService } from '../terminal/terminal.service';
 import {
   CreateRecordingDto,
   StartRecordingDto, // Import the StartRecordingDto for screen recording options
+  ScreenshotDto,
+  ScreenshotResponseDto, // Import new DTOs
 } from './dto/create-recording.dto';
 import { UpdateRecordingDto } from './dto/update-recording.dto';
 import { StartRecordingResponseDto } from './dto/start-recording-response.dto';
@@ -32,6 +34,7 @@ import {
   StartCameraRecordingDto,
   CameraRecordingResponseDto,
 } from '../ffmpeg/dto/camera-recording.dto';
+import sharp from 'sharp'; // Import sharp
 
 // --- Start of new/modified types ---
 interface ActiveRecording {
@@ -52,7 +55,8 @@ interface RecordingData {
   cameraDevice?: string;
   resolution?: string;
   fps?: number;
-  capturedAt?: string;
+  capturedAt?: string; // New field for screenshot capture time
+  format?: string; // New field for screenshot format (e.g., 'jpeg', 'png')
   enableAudio?: boolean; // New field
   audioDevice?: string; // New field
   // Add other potential properties from the `data` JSON field
@@ -186,7 +190,8 @@ export class RecordingService {
   async cleanupOld(
     userId: string,
     days: number = 7,
-  ): Promise<{ deleted: string[] }> {
+  ):
+    Promise<{ deleted: string[] }> {
     const dir = join(process.cwd(), 'downloads', 'recordings', userId);
     const files = await readdir(dir);
     const now = Date.now();
@@ -421,6 +426,132 @@ export class RecordingService {
     };
   }
 
+  /**
+   * Captures a screenshot of the desktop window screen.
+   * @param userId The ID of the user.
+   * @param dto Screenshot options (format, quality).
+   * @returns A promise that resolves with the screenshot details.
+   */
+  async captureScreenshot(
+    userId: string,
+    dto: ScreenshotDto,
+  ): Promise<ScreenshotResponseDto> {
+    const { format = 'jpeg', quality = 90 } = dto;
+
+    const screenshotsDir = join(
+      process.cwd(),
+      'downloads',
+      'recordings',
+      userId,
+      'screenshots',
+    );
+    await mkdir(screenshotsDir, { recursive: true });
+
+    const tempPngPath = join(screenshotsDir, `temp_screenshot_${Date.now()}.png`);
+    const outputFileName = `screenshot_${Date.now()}.${format}`;
+    const finalOutputPath = join(screenshotsDir, outputFileName);
+
+    const ffmpegCheck = spawnSync('ffmpeg', ['-version']);
+    if (ffmpegCheck.error) {
+      throw new InternalServerErrorException(
+        'FFmpeg is not installed or not in PATH.',
+      );
+    }
+
+    const ffmpegArgs = this._getScreenshotFfmpegArgs(tempPngPath);
+    this.logger.log(
+      `Capturing screenshot with command: ffmpeg ${ffmpegArgs.join(' ')}`,
+    );
+
+    return new Promise((resolve, reject) => {
+      const screenshotProcess = spawn('ffmpeg', ffmpegArgs);
+      let stderrOutput = '';
+
+      screenshotProcess.stderr.on('data', (data) => {
+        stderrOutput += data.toString();
+      });
+
+      screenshotProcess.on('close', async (code) => {
+        if (code !== 0) {
+          this.logger.error(
+            `FFmpeg screenshot failed with code ${code}: ${stderrOutput}`,
+          );
+          // Attempt to clean up the temporary file if it was created before failing
+          try { await unlink(tempPngPath); } catch (e) { /* ignore */ }
+          return reject(
+            new InternalServerErrorException(
+              `Failed to capture screenshot: ${stderrOutput}`,
+            ),
+          );
+        }
+
+        try {
+          const image = sharp(tempPngPath);
+          const metadata = await image.metadata();
+          const resolution = `${metadata.width}x${metadata.height}`;
+
+          if (format === 'jpeg') {
+            await image.jpeg({ quality }).toFile(finalOutputPath);
+          } else if (format === 'png') {
+            await image.png().toFile(finalOutputPath);
+          } else if (format === 'webp') {
+            await image.webp({ quality }).toFile(finalOutputPath);
+          } else {
+            // Fallback for unknown formats, should not happen with validation
+            await image.toFile(finalOutputPath);
+          }
+
+          await unlink(tempPngPath); // Clean up temp PNG
+
+          const screenshot = await this.prisma.recording.create({
+            data: {
+              path: finalOutputPath,
+              type: 'screenshot',
+              status: 'finished', // Screenshots are instant, so 'finished'
+              pid: null, // No long-running process
+              data: {
+                capturedAt: new Date().toISOString(),
+                resolution: resolution,
+                format: format,
+              } as RecordingData,
+              createdBy: { connect: { id: userId } },
+            },
+          });
+
+          resolve({
+            id: screenshot.id,
+            path: screenshot.path,
+            message: 'Screenshot captured successfully.',
+          });
+        } catch (err) {
+          this.logger.error(
+            `Error processing screenshot or saving to DB: ${err.message}`,
+            err.stack,
+          );
+          // Attempt to clean up temp file if conversion failed
+          try { await unlink(tempPngPath); } catch (e) { /* ignore */ }
+          reject(
+            new InternalServerErrorException(
+              `Failed to process screenshot: ${err.message}`,
+            ),
+          );
+        }
+      });
+
+      screenshotProcess.on('error', (err) => {
+        this.logger.error(
+          `Failed to spawn FFmpeg for screenshot: ${err.message}`,
+          err.stack,
+        );
+        reject(
+          new InternalServerErrorException(
+            `Failed to capture screenshot: ${err.message}`,
+          ),
+        );
+      });
+    });
+  }
+
   async startCameraRecording(
     userId: string,
     dto: StartCameraRecordingDto,
@@ -649,9 +780,9 @@ export class RecordingService {
         },
       });
       this.logger.log(
-        `Recording ${recordingId} metadata updated: status={
+        `Recording ${recordingId} metadata updated: status={${
           exitCode === 0 ? 'finished' : 'failed'
-        }, duration=${duration}s, fileSize=${fileSize} bytes`,
+        }}, duration=${duration}s, fileSize=${fileSize} bytes`,
       );
     }
   }
@@ -746,5 +877,45 @@ export class RecordingService {
       }
     }
     return [...ffmpegInputArgs, ...ffmpegOutputArgs];
+  }
+
+  /**
+   * Constructs FFmpeg arguments for capturing a single screenshot.
+   * @param outputFile The path to the output image file (e.g., .png).
+   * @returns An array of FFmpeg arguments.
+   */
+  private _getScreenshotFfmpegArgs(outputFile: string): string[] {
+    const platform = process.platform;
+    const ffmpegArgs: string[] = [];
+
+    if (platform === 'darwin') {
+      // macOS - Use avfoundation for screen capture. Display '1' usually refers to the main screen.
+      // It captures one frame and outputs to file.
+      ffmpegArgs.push('-f', 'avfoundation', '-i', '1', '-vframes', '1', '-y', outputFile);
+    } else if (platform === 'win32') {
+      // Windows - Use gdigrab for screen capture. 'desktop' captures the entire desktop.
+      ffmpegArgs.push('-f', 'gdigrab', '-i', 'desktop', '-vframes', '1', '-y', outputFile);
+    } else { // Linux
+      try {
+        const { execSync } = require('child_process');
+        // Attempt to get full screen resolution via xrandr
+        const xrandrOutput = execSync('xrandr | grep "\\*" | cut -d" " -f4').toString().trim();
+        const fullResolution = xrandrOutput || '1920x1080';
+        const display = process.env.DISPLAY || ':0.0';
+
+        ffmpegArgs.push(
+          '-f', 'x11grab',
+          '-video_size', fullResolution,
+          '-i', `${display}`,
+          '-vframes', '1',
+          '-y', outputFile,
+        );
+      } catch (e) {
+        this.logger.warn(`Failed to detect display resolution with xrandr for screenshot: ${e.message}. Using default.`);
+        // Fallback for Linux if xrandr fails or is not available
+        ffmpegArgs.push('-f', 'x11grab', '-i', ':0.0', '-vframes', '1', '-y', outputFile);
+      }
+    }
+    return ffmpegArgs;
   }
 }
