@@ -12,48 +12,39 @@ import {
   IsUUID,
   IsObject,
   IsPositive,
+  IsDefined, // Keep IsDefined for explicit usage if ever needed, though often implied
 } from 'class-validator';
+import { Type } from 'class-transformer'; // Needed for @Type
 export type RelationType = 'one-to-many' | 'many-to-one' | 'one-to-one';
-import { Type } from 'class-transformer';
-
 export interface BaseField {
   name: string;
   prismaType: string;
   tsType: string;
-  type: string; // Keeping for backward compatibility if template relies on it
   isOptional: boolean;
   validators: string[];
 }
-
 export interface ScalarField extends BaseField {
   isRelation: false;
-  relationType: null;
 }
-
 export interface RelationField extends BaseField {
   isRelation: true;
   relationType: RelationType;
   targetModel: string; // The name of the related Prisma model (e.g., 'User')
   isList: boolean; // True if it's a list (e.g., `posts Post[]`)
 }
-
 export type AnyParsedField = ScalarField | RelationField;
-
 export interface ModelParseResult {
   fields: ScalarField[]; // For DTOs
   hasCreatedBy: boolean;
-  hasSubmittedById: boolean;
-  relations: { name: string; type: string; isList: boolean }[]; // For module imports
+    hasSubmittedById: boolean;
+  relations: { name: string; type: string; isList: boolean }[]; // For module imports and @Type() decorator
 }
-
 export function parseModel(modelName: string): ModelParseResult {
   const schemaPath = path.resolve(process.cwd(), 'prisma/schema.prisma');
   const content = fs.readFileSync(schemaPath, 'utf8');
   const modelRegex = new RegExp(`model\\s+${modelName}\\s+\{([\\s\\S]*?)\}`, 'm');
   const match = content.match(modelRegex);
-
   if (!match) throw new Error(`Model ${modelName} not found.`);
-
   const SCALAR_TYPES = [
     'String',
     'Int',
@@ -65,96 +56,83 @@ export function parseModel(modelName: string): ModelParseResult {
     'Decimal',
     'BigInt',
   ];
-
   const allParsedFields: AnyParsedField[] = [];
   let hasCreatedBy = false;
   let hasSubmittedById = false;
-
   match[1]
     .trim()
     .split('\n')
     .forEach((line) => {
-      ///const cleanedLine = line.trim().replace(/\\/\\/.*/, '');
-      const cleanedLine = line.trim().replace(/\/\/.*/, '');
+      const cleanedLine = line.trim().replace(/\/\/.*/, ''); // Remove comments
       if (!cleanedLine || cleanedLine.startsWith('@@')) return; // Ignore empty lines and model-level attributes
-
-      const parts = cleanedLine.split(/\\s+/);
+      const parts = cleanedLine.split(/\s+/);
       if (parts.length < 2) return;
-
       const [name, rawType] = parts;
       const isOptional = rawType.endsWith('?');
       const isArray = rawType.includes('[]');
       const cleanType = rawType.replace('?', '').replace('[]', '');
       const isPrismaScalar = SCALAR_TYPES.includes(cleanType);
       const isRelation = !isPrismaScalar;
-
       if (name === 'createdBy' || name === 'createdById') {
         hasCreatedBy = true;
       }
       if (name === 'submittedById') {
         hasSubmittedById = true;
       }
-
       const { tsType, validators } = mapPrismaTypeToTsType(
         cleanType,
         isOptional,
         isArray,
         name,
       );
-
       if (isRelation) {
-        // Determine relation type based on array nature
-        // The original logic tried to distinguish 'one-to-one' vs 'many-to-one' for non-arrays.
-        // We'll preserve this intent, but note that precise determination often requires parsing @relation attributes.
+        // A non-array relation field like `author User` implies a Many-to-One relation
+        // from the current model's perspective (many posts belong to one author).
+        // A list relation field like `posts Post[]` implies a One-to-Many relation.
         const relationType: RelationType = isArray
           ? 'one-to-many'
-          : 'one-to-one'; // Assuming non-array relation is 'one-to-one' as per original failing code intent.
-
+          : 'many-to-one'; // Default to many-to-one for single relations
+        const relationModelClassName = cleanType; // e.g., 'User'
+        const relationDtoClassName = `Create${relationModelClassName}Dto`; // e.g., 'CreateUserDto'
         allParsedFields.push({
           name,
           prismaType: cleanType,
-          tsType,
-          type: tsType,
+          tsType: isArray ? `${relationDtoClassName}[]` : relationDtoClassName, // Set tsType to DTO class name for relations
           isOptional,
           isRelation: true,
           relationType,
-          targetModel: cleanType, // The related model name
+          targetModel: relationModelClassName, // Keep original model name for generating import path
           isList: isArray,
-          validators: [], // Validators typically not applied directly to relation fields in DTOs
+          validators: [], // Validators for relation fields are handled by @Type and nested DTOs
         });
       } else {
         allParsedFields.push({
           name,
           prismaType: cleanType,
-          tsType: isArray ? `${tsType}[]` : tsType,
-          type: isArray ? `${tsType}[]` : tsType,
+          tsType: isArray ? `${tsType}[]` : tsType, // For scalar arrays
           isOptional,
           isRelation: false,
-          relationType: null,
           validators,
         });
       }
     });
-
   const scalarFields = allParsedFields.filter(
     (f): f is ScalarField => !f.isRelation,
   );
   const relationFields = allParsedFields.filter(
     (f): f is RelationField => f.isRelation,
   );
-
   return {
     fields: scalarFields, // for DTO generation
     relations: relationFields.map((f) => ({
       name: f.name,
-      type: f.targetModel,
+      type: f.targetModel, // Pass the original model name for DTO import paths
       isList: f.isList,
-    })), // for module imports
+    })),
     hasCreatedBy,
     hasSubmittedById,
   };
 }
-
 function mapPrismaTypeToTsType(
   prismaType: string,
   isOptional: boolean,
@@ -164,67 +142,72 @@ function mapPrismaTypeToTsType(
   tsType: string;
   validators: string[];
 } {
-  let tsType = 'any';
+  let tsType = 'any'; // Default to 'any' for safety, though it should always be overridden
   const validators: string[] = [];
+  // Capitalize field name for better error messages
   const label = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
-
   const decorate = (
     decorator: string,
-    message?: string, // message can be optional if not all decorators need it
-    options?: Record<string, any>,
+    message?: string,
+    options?: Record<string, any>, // options can now contain strings that represent code
   ): string => {
-    const decoratorOptions: Record<string, any> = {};
-
+    let optionsParts: string[] = [];
     if (message) {
-      decoratorOptions.message = message;
+      optionsParts.push(`message: '${message}'`); // Use single quotes for consistency in template
     }
-
     if (options) {
-      Object.assign(decoratorOptions, options);
+      for (const key in options) {
+        if (Object.prototype.hasOwnProperty.call(options, key)) {
+          const value = options[key];
+          // Special handling for class-transformer's @Type and other raw code strings
+          if (key === 'type' && typeof value === 'string' && value.startsWith('() =>')) {
+            optionsParts.push(`${key}: ${value}`); // Pass as raw code, e.g., '() => Date'
+          } else {
+            optionsParts.push(`${key}: ${JSON.stringify(value)}`); // Stringify other values
+          }
+        }
+      }
     }
-
-    if (Object.keys(decoratorOptions).length > 0) {
-      const optionsString = Object.entries(decoratorOptions)
-        .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-        .join(', ');
-      return `@${decorator}({ ${optionsString} })`;
+    if (optionsParts.length > 0) {
+      return `@${decorator}({ ${optionsParts.join(', ')} })`;
     } else {
       return `@${decorator}()`;
     }
   };
-
+  // Helper to correctly add IsOptional, ensuring it's first if present
+  const addOptional = (validator: string) => {
+    if (isOptional && !validators.some(v => v.includes('@IsOptional')) ) {
+      validators.push(decorate('IsOptional'));
+    }
+    validators.push(validator);
+  }
   const isEmailField = fieldName.toLowerCase().includes('email');
-
   switch (prismaType) {
     case 'String':
       tsType = 'string';
       if (!isArray) {
         if (isEmailField) {
-          validators.push(
-            decorate('IsEmail', `${label} must be a valid email address.`),
-          );
+          addOptional(decorate('IsEmail', `'${label}' must be a valid email address.`));
         } else {
-          validators.push(decorate('IsString', `${label} must be a string.`));
+          addOptional(decorate('IsString', `'${label}' must be a string.`));
         }
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
-          decorate(
-            'IsString',
-            `${label} must be an array of strings.`,
-            { each: true },
-          ),
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
+          decorate('IsString', `'${label}' must be an array of strings.`, {
+            each: true,
+          }),
         );
       }
       break;
     case 'Int':
       tsType = 'number';
       if (!isArray) {
-        validators.push(decorate('IsInt', `${label} must be an integer.`));
+        addOptional(decorate('IsInt', `'${label}' must be an integer.`));
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
-          decorate('IsInt', `${label} must be an array of integers.`, {
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
+          decorate('IsInt', `'${label}' must be an array of integers.`, {
             each: true,
           }),
         );
@@ -233,11 +216,11 @@ function mapPrismaTypeToTsType(
     case 'Float':
       tsType = 'number';
       if (!isArray) {
-        validators.push(decorate('IsNumber', `${label} must be a float.`));
+        addOptional(decorate('IsNumber', `'${label}' must be a float number.`));
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
-          decorate('IsNumber', `${label} must be an array of floats.`, {
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
+          decorate('IsNumber', `'${label}' must be an array of float numbers.`, {
             each: true,
           }),
         );
@@ -246,13 +229,13 @@ function mapPrismaTypeToTsType(
     case 'Boolean':
       tsType = 'boolean';
       if (!isArray) {
-        validators.push(
-          decorate('IsBoolean', `${label} must be true or false. `),
+        addOptional(
+          decorate('IsBoolean', `'${label}' must be a boolean value. `),
         );
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
-          decorate('IsBoolean', `${label} must be an array of booleans.`, {
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
+          decorate('IsBoolean', `'${label}' must be an array of boolean values.`, {
             each: true,
           }),
         );
@@ -261,92 +244,91 @@ function mapPrismaTypeToTsType(
     case 'DateTime':
       tsType = 'Date';
       if (!isArray) {
-        validators.push(decorate('IsDate', `${label} must be a date.`));
+        addOptional(decorate('IsDate', `'${label}' must be a valid date instance.`));
+        validators.push(decorate('Type', undefined, { type: '() => Date' }));
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
-          decorate('IsDate', `${label} must be an array of dates.`, {
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
+          decorate('IsDate', `'${label}' must be an array of valid date instances.`, {
             each: true,
           }),
         );
+        validators.push(decorate('Type', undefined, { type: '() => Date', each: true }));
       }
       break;
     case 'Json':
-      tsType = 'any';
+      tsType = 'any'; // Or a more specific interface if known
       if (!isArray) {
-        validators.push(decorate('IsObject', `${label} must be an object.`));
+        addOptional(decorate('IsObject', `'${label}' must be an object.`));
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
-          decorate('IsObject', `${label} must be an array of objects.`, {
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
+          decorate('IsObject', `'${label}' must be an array of objects.`, {
             each: true,
           }),
         );
       }
       break;
     case 'Decimal':
-      tsType = 'string';
+      tsType = 'string'; // Represent Decimal as string to avoid precision issues
       if (!isArray) {
-        validators.push(
+        addOptional(
           decorate(
             'IsString',
-            `${label} must be a string representing a decimal number.`,
+            `'${label}' must be a string representing a decimal number.`,
           ),
         );
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
           decorate(
             'IsString',
-            `${label} must be an array of decimal strings.`,
+            `'${label}' must be an array of decimal strings.`,
             { each: true },
           ),
         );
       }
       break;
     case 'BigInt':
-      tsType = 'bigint | number';
+      tsType = 'string'; // Represent BigInt as string for consistent JSON serialization/deserialization
       if (!isArray) {
-        validators.push(decorate('IsDefined', `${label} must be defined.`));
+        addOptional(decorate('IsString', `'${label}' must be a string representing a big integer.`));
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
-          decorate('IsDefined', `${label} must be an array of big integers.`, {
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
+          decorate('IsString', `'${label}' must be an array of big integer strings.`, {
             each: true,
           }),
         );
       }
       break;
     case 'Bytes':
-      tsType = 'Buffer | string';
+      tsType = 'string'; // Represent Bytes as base64 string
       if (!isArray) {
-        validators.push(decorate('IsDefined', `${label} must be defined.`));
+        addOptional(decorate('IsString', `'${label}' must be a base64 encoded string.`));
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
-          decorate('IsDefined', `${label} must be an array of bytes.`, {
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
+          decorate('IsString', `'${label}' must be an array of base64 encoded strings.`, {
             each: true,
           }),
         );
       }
       break;
     default:
-      tsType = 'string';
+      // Handle Enums or other custom types. For now, treat as string.
+      tsType = 'string'; // Default to string if not a known scalar type or relation.
       if (!isArray) {
-        validators.push(decorate('IsString', `${label} must be a string.`));
+        addOptional(decorate('IsString', `'${label}' must be a string.`));
       } else {
-        validators.push(decorate('IsArray', `The field ${label} must be an array.`));
-        validators.push(
-          decorate('IsString', `${label} must be an array of strings.`, {
+        addOptional(decorate('IsArray', `The field '${label}' must be an array.`));
+        addOptional(
+          decorate('IsString', `'${label}' must be an array of strings.`, {
             each: true,
           }),
         );
       }
       break;
-  }
-
-  if (isOptional) {
-    validators.unshift(decorate('IsOptional', `${label} is optional.`));
   }
   return { tsType, validators };
 }
