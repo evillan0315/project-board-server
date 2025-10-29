@@ -71,8 +71,8 @@ export function parseModel(modelName: string): ModelParseResult {
         isRelation && isArray
           ? 'one-to-many'
           : isRelation && !isArray
-            ? 'many-to-one'
-            : null;
+            ? 'one-to-one'
+            : 'many-to-one';
 
       if (name === 'createdBy' || name === 'createdById') {
         hasCreatedBy = true;
@@ -82,11 +82,11 @@ export function parseModel(modelName: string): ModelParseResult {
       }
       if (isRelation && relationType === 'many-to-one') {
         relations.push({ name, type: cleanType });
-        return null; // skip relational fields from scalar list
+        //return null; // skip relational fields from scalar list
       }
 
       if (isRelation) {
-        return null;
+        //return null;
       }
 
       const { tsType, validators } = mapPrismaTypeToTsType(
@@ -102,8 +102,8 @@ export function parseModel(modelName: string): ModelParseResult {
         tsType: isArray ? `${tsType}[]` : tsType,
         type: isArray ? `${tsType}[]` : tsType,
         isOptional,
-        isRelation: false,
-        relationType: null,
+        isRelation: isRelation,
+        relationType: relationType,
         validators,
       } satisfies ScalarField;
     })
