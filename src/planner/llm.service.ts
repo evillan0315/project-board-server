@@ -1,7 +1,6 @@
 // FilePath: src/planner/llm.service.ts
 // Title: LLMService extended with Google Gemini support
 // Reason: Provide the same functionality as GoogleGeminiFileService for text and file prompts.
-
 import {
   Injectable,
   InternalServerErrorException,
@@ -10,11 +9,9 @@ import {
 import fetch from 'node-fetch';
 import { FileChangeDto, CreatePlannerDto as PlanDto } from './dto';
 import { FileAction, RequestType } from '@prisma/client';
-
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
-
   private openaiKey = process.env.OPENAI_API_KEY;
   private geminiKey = process.env.GOOGLE_GEMINI_API_KEY;
   private geminiModel = process.env.GOOGLE_GEMINI_MODEL || 'gemini-2.0-flash';
@@ -26,7 +23,6 @@ export class LlmService {
     if (match && match[1]) {
       return match[1].trim();
     }
-
     return text.trim();
   }
   /**
@@ -42,7 +38,6 @@ export class LlmService {
     // fallback
     return this.mockPlan(prompt);
   }
-
   /**
    * ✅ Existing OpenAI logic preserved
    */
@@ -56,7 +51,6 @@ export class LlmService {
       ],
       temperature: 0,
     };
-
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -73,7 +67,6 @@ export class LlmService {
       return this.mockPlan(prompt);
     }
   }
-
   /**
    * ✅ New Google Gemini implementation
    */
@@ -83,7 +76,6 @@ export class LlmService {
         'GOOGLE_GEMINI_API_KEY is not configured.',
       );
     }
-
     const systemInstruction = `You are an AI Planner. Return ONLY a JSON object matching:
 {
   "title": string,
@@ -113,23 +105,18 @@ export class LlmService {
         //temperature: 0,
       },
     };
-
     const apiUrl = `${this.geminiBaseUrl}/${this.geminiModel}:generateContent?key=${this.geminiKey}`;
-
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-
     if (!response.ok) {
       const error = await response.text();
       this.logger.error(`Gemini API error: ${response.status} - ${error}`);
       throw new InternalServerErrorException(`Gemini API error: ${error}`);
     }
-
     const result = await response.json();
-
     const candidate = result.candidates?.[0];
     const parts = candidate?.content?.parts ?? [];
     const generatedText = parts.map((p: any) => p.text ?? '').join('');
@@ -137,7 +124,6 @@ export class LlmService {
       LlmService.extractJsonFromMarkdown(generatedText),
       'generatedText',
     );
-
     try {
       // Ensure Prisma FileAction enum is used
       const plan = JSON.parse(
@@ -153,7 +139,6 @@ export class LlmService {
       return this.mockPlan(prompt);
     }
   }
-
   /**
    * ✅ mock now uses Prisma.$Enums.FileAction values
    */
@@ -169,7 +154,6 @@ export class LlmService {
             newContent: `export function hello() {
   return "Hello world";
 }
-
 export function ping() {
   return "pong";
 }`,
@@ -178,7 +162,6 @@ export function ping() {
         ],
       };
     }
-
     if (prompt.includes('add file')) {
       return {
         title: 'Add readme',
@@ -193,7 +176,6 @@ export function ping() {
         ],
       };
     }
-
     return {
       title: 'No-op',
       summary: 'No changes',

@@ -1,7 +1,6 @@
 // FilePath: src/modules/planner/planner.controller.ts
 // Title: REST controller for planner endpoints
 // Reason: Expose endpoints to create, retrieve and apply plans and plan chunks
-
 import { Controller, Post, Body, Param, Get } from '@nestjs/common';
 import { PlannerService } from './planner.service';
 import { CreatePlannerDto as PlanDto } from './dto';
@@ -12,12 +11,10 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-
-@ApiTags('api/planner')
-@Controller('plan')
+@ApiTags('AI Planner')
+@Controller('api/plan')
 export class PlannerController {
   constructor(private readonly planner: PlannerService) {}
-
   @ApiOperation({ summary: 'Create a new plan from a prompt' })
   @ApiBody({
     schema: {
@@ -55,7 +52,6 @@ export class PlannerController {
     const result = await this.planner.planFromPrompt(body.prompt);
     return result;
   }
-
   @ApiOperation({ summary: 'Get a plan by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the plan' })
   @ApiResponse({ status: 200, description: 'The plan details.' })
@@ -64,7 +60,6 @@ export class PlannerController {
     const plan = await this.planner.getPlan(id);
     return { plan };
   }
-
   @ApiOperation({ summary: 'Get chunks of a plan by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the plan' })
   @ApiResponse({ status: 200, description: 'The chunks of the plan.' })
@@ -73,7 +68,6 @@ export class PlannerController {
     const chunks = await this.planner.chunkPlan(id);
     return { chunks };
   }
-
   @ApiOperation({ summary: 'Apply a chunk of a plan by ID and index' })
   @ApiParam({ name: 'id', description: 'The ID of the plan' })
   @ApiParam({ name: 'index', description: 'The index of the chunk to apply' })
@@ -87,7 +81,6 @@ export class PlannerController {
     const res = await this.planner.applyChunk(id, idx);
     return res;
   }
-
   @ApiOperation({ summary: 'Apply a plan' })
   @ApiBody({
     type: PlanDto,
