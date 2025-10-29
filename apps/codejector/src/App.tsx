@@ -12,22 +12,24 @@ import CustomSnackbar from '@/components/Snackbar';
 import { useStore } from '@nanostores/react';
 import { snackbarState, hideGlobalSnackbar } from '@/stores/snackbarStore';
 import { authStore } from '@/stores/authStore';
-import { GlobalDialog } from '@/components/dialogs'; 
-
+import { GlobalDialog } from '@/components/dialogs';
 import '@xterm/xterm/css/xterm.css';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorPage from './components/ErrorPage';
-
+// Import new page components
+const AIPlaygroundPage = lazy(() => import('./pages/AIChatPage')); // Generic AI Assistant/Chat
+const DocumentationEditorPage = lazy(() => import('./pages/AiEditorPage')); // Using AI Editor for docs
+const TaskManagerPage = lazy(() => import('./pages/KanbanBoardPage')); // Using Kanban for tasks
+const CodePlaygroundPage = lazy(() => import('./pages/AiEditorPage')); // Using AI Editor for code playground
+const FileExplorerPage = lazy(() => import('./pages/AiEditorPage')); // Using AI Editor for file explorer
+const NetworkMonitorPage = lazy(() => import('./pages/TerminalPage')); // Using Terminal for network monitor
 // ✅ Route guard component
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { isLoggedIn, loading } = useStore(authStore);
-
   // Show nothing or a loading spinner while checking auth state
   if (loading) return <Loading message="Checking authentication..." />;
-
   return isLoggedIn ? children : <Navigate to="/login" replace />;
 }
-
 const HomePage = lazy(() => import('./pages/HomePage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AppsPage = lazy(() => import('./pages/AppsPage'));
@@ -35,6 +37,7 @@ const AiEditorPage = lazy(() => import('./pages/AiEditorPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage')); // New: Lazy load ForgotPasswordPage
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage')); // New: Lazy load ResetPasswordPage
 const SpotifyAppPage = lazy(() => import('./pages/SpotifyAppPage'));
 const TranslatorAppPage = lazy(() => import('./pages/TranslatorAppPage'));
@@ -50,14 +53,17 @@ const LlmGenerationPage = lazy(() => import('./pages/LlmGenerationPage'));
 const ResumeBuilderPage = lazy(() => import('./pages/ResumeBuilderPage'));
 const RecordingPage = lazy(() => import('./pages/RecordingPage'));
 const KanbanBoardPage = lazy(() => import('./pages/KanbanBoardPage'));
-const GitPage = lazy(() =>  import('@/components/git/GitPage'));
+const GitPage = lazy(() => import('@/components/git/GitPage'));
 const AIChatPage = lazy(() => import('./pages/AIChatPage'));
 const SchemeGeneratorPage = lazy(() => import('./pages/SchemeGeneratorPage')); // New: Lazy load SchemeGeneratorPage
+const CodeMirrorInstancesPage = lazy(() => import('./pages/CodeMirrorInstancesPage'));
+
 const ChatAppComponent = lazy(() => import('./components/chat/ChatApp')); // NEW: Lazy load ChatApp
 const PlaywrightPage = lazy(() => import('./pages/PlaywrightPage')); // NEW: Lazy load PlaywrightPage
-const SwingersRoomChatPage = lazy(() => import('./pages/SwingersRoomChatPage'));
+const SwingersRoomChatPage = lazy(
+  () => import('./pages/SwingersRoomChatPage'),
+);
 const SwingersPage = lazy(() => import('./pages/SwingersPage'));
-
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route
@@ -75,7 +81,6 @@ const router = createBrowserRouter(
           </Suspense>
         }
       />
-
       {/* ✅ Protected Routes */}
       <Route
         path="/dashboard"
@@ -108,6 +113,78 @@ const router = createBrowserRouter(
             <Suspense fallback={<Loading />}>
               <ErrorBoundary>
                 <AppsPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/apps/ai-assistant"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <AIPlaygroundPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/apps/editor"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <CodeMirrorInstancesPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/apps/documentation-editor"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <DocumentationEditorPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/apps/code-playground"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <CodePlaygroundPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/apps/file-explorer"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <FileExplorerPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/apps/network-monitor"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <NetworkMonitorPage />
               </ErrorBoundary>
             </Suspense>
           </RequireAuth>
@@ -259,6 +336,18 @@ const router = createBrowserRouter(
         }
       />
       <Route
+        path="/apps/task-manager"
+        element={
+          <RequireAuth>
+            <Suspense fallback={<Loading />}>
+              <ErrorBoundary>
+                <TaskManagerPage />
+              </ErrorBoundary>
+            </Suspense>
+          </RequireAuth>
+        }
+      />
+      <Route
         path="/apps/simple-git"
         element={
           <RequireAuth>
@@ -320,7 +409,6 @@ const router = createBrowserRouter(
           </RequireAuth>
         }
       />
-
       <Route
         path="/organizations"
         element={
@@ -345,7 +433,6 @@ const router = createBrowserRouter(
           </RequireAuth>
         }
       />
-
       <Route
         path="/profile"
         element={
@@ -370,7 +457,6 @@ const router = createBrowserRouter(
           </RequireAuth>
         }
       />
-
       {/* Public routes */}
       <Route
         path="/login"
@@ -385,6 +471,14 @@ const router = createBrowserRouter(
         element={
           <Suspense fallback={<Loading />}>
             <RegisterPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <Suspense fallback={<Loading />}>
+            <ForgotPasswordPage />
           </Suspense>
         }
       />
@@ -405,20 +499,16 @@ const router = createBrowserRouter(
         }
       />
     </Route>,
-  ),
+  )
 );
-
-function App() {
+const App: React.FC = () => {
   const snackbar = useStore(snackbarState);
-
   const handleSnackbarClose = () => {
     hideGlobalSnackbar();
   };
-
   return (
     <>
       <RouterProvider router={router} />
-
       <CustomSnackbar
         open={snackbar.open}
         message={snackbar.message}
@@ -426,9 +516,8 @@ function App() {
         onClose={handleSnackbarClose}
         autoHideDuration={3000}
       />
-      <GlobalDialog /> 
+      <GlobalDialog />
     </>
   );
 }
-
 export default App;

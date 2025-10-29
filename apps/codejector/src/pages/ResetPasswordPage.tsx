@@ -51,7 +51,10 @@ const ResetPasswordPage: React.FC = () => {
 
     try {
       const response = await resetPassword(token, newPassword);
-      setSuccess(response.message || 'Your password has been reset successfully. Redirecting to login...');
+      setSuccess(
+        response.message ||
+          'Your password has been reset successfully. Redirecting to login...',
+      );
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => {
@@ -91,12 +94,26 @@ const ResetPasswordPage: React.FC = () => {
   }
 
   return (
-    <Box sx={containerSx} className="flex flex-col items-center justify-center min-h-screen p-4">
+    <Box
+      sx={containerSx}
+      className="flex flex-col items-center justify-center min-h-screen p-4"
+    >
       <Paper sx={paperSx} className="flex flex-col gap-4 w-full max-w-md">
-        <Typography variant="h5" component="h1" align="center" gutterBottom sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
+        <Typography
+          variant="h5"
+          component="h1"
+          align="center"
+          gutterBottom
+          sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}
+        >
           Reset Password
         </Typography>
-        <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography
+          variant="body2"
+          align="center"
+          color="text.secondary"
+          sx={{ mb: 2 }}
+        >
           Enter your new password below.
         </Typography>
 
@@ -105,7 +122,9 @@ const ResetPasswordPage: React.FC = () => {
         {success && <Alert severity="success">{success}</Alert>}
 
         {!token && !error && (
-          <Alert severity="warning">Invalid or missing password reset token. Please request a new link.</Alert>
+          <Alert severity="warning">
+            Invalid or missing password reset token. Please request a new link.
+          </Alert>
         )}
 
         {token && !success && !error && (

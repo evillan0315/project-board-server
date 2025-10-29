@@ -58,51 +58,43 @@ import {
   LlmOutputFormat,
 } from '@/types/llm';
 import { generateCode, extractCodeFromMarkdown } from '@/api/llm';
-
 import * as path from 'path-browserify';
-
 // New import for the refactored ScanPathsDrawer
 import ScanPathsDrawer from '@/components/code-generator/drawerContent/ScanPathsDrawer';
 // New import for the refactored DirectoryPickerDrawer
 import DirectoryPickerDrawer from '@/components/code-generator/drawerContent/DirectoryPickerDrawer';
 // New import for the relocated PromptGeneratorSettings
 import PromptGeneratorSettings from '@/components/code-generator/drawerContent/PromptGeneratorSettings';
-
 interface BottomToolbarProps {
   scanPathAutocompleteOptions: string[];
   currentScanPathsArray: string[]; // Current paths from llmStore
   projectInput: string;
   setProjectInput: (value: string) => void;
   handleLoadProject: () => void;
-
   isImportDialogOpen: boolean;
   setIsImportDialogOpen: (open: boolean) => void;
   isProjectRootPickerDialogOpen: boolean;
   setIsProjectRootPickerDialogOpen: (open: boolean) => void;
   isScanPathsDialogOpen: boolean;
   setIsScanPathsDialogOpen: (open: boolean) => void;
-
   updateScanPaths: (paths: string[]) => void; // Function to update the llmStore.scanPathsInput
   requestType: RequestType;
   handleSave: () => void;
   commonDisabled?: boolean;
 }
-
 const BottomToolbar: React.FC<BottomToolbarProps> = ({
   scanPathAutocompleteOptions,
   currentScanPathsArray,
   projectInput,
   setProjectInput,
   handleLoadProject,
-
   isImportDialogOpen,
   setIsImportDialogOpen,
   isProjectRootPickerDialogOpen,
   setIsProjectRootPickerDialogOpen,
   isScanPathsDialogOpen,
   setIsScanPathsDialogOpen,
-
-  updateScanPaths, // This now updates the llmStore
+  updateScanPaths,
   requestType,
   handleSave,
   commonDisabled,
@@ -114,16 +106,12 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
   const { response, aiInstruction, expectedOutputInstruction, scanPathsInput, loading } = useStore(llmStore);
   const { flatFileList } = useStore(fileTreeStore);
   const currentProjectPath = useStore(projectRootDirectoryStore);
-
   // New local state to hold changes made within the ScanPathsDrawer before confirming
   const [localScanPaths, setLocalScanPaths] = useState<string[]>(currentScanPathsArray);
-
   // New state for the PromptGeneratorSettingsDrawer
   const [isPromptGeneratorSettingsDrawerOpen, setIsPromptGeneratorSettingsDrawerOpen] = useState(false);
-
   // New state to hold the currently browsed path in DirectoryPickerDrawer
   const [selectedDirectoryPathForDrawer, setSelectedDirectoryPathForDrawer] = useState<string>(projectInput || '/');
-
   // Sync localScanPaths with currentScanPathsArray when the drawer is opened or parent changes it
   useEffect(() => {
     if (isScanPathsDialogOpen) {
@@ -133,20 +121,16 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
       setLocalScanPaths(currentScanPathsArray);
     }
   }, [isScanPathsDialogOpen, currentScanPathsArray]);
-
   // Sync selectedDirectoryPathForDrawer with projectInput if projectInput changes externally
   useEffect(() => {
     setSelectedDirectoryPathForDrawer(projectInput || '/');
   }, [projectInput]);
-
   const toggleCodeRepair = useCallback(() => {
     setIsCodeRepairOpen((open) => !open);
   }, []);
-
   const handleImport = useCallback(() => {
     try {
       const parsedData: unknown = JSON.parse(importContentString);
-
       // Attempt to treat it as a full ModelResponse (CodeGeneratorData)
       // Check for key properties of CodeGeneratorData
       if (
@@ -172,23 +156,19 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
       showGlobalSnackbar('Data imported successfully!', 'success');
       setIsImportDialogOpen(false);
     } catch (err) {
-      console.error(err, 'err');
       setLastLlmResponse(null);
       const msg = `Invalid JSON: ${err instanceof Error ? err.message : String(err)}`;
       showGlobalSnackbar(msg, 'error');
     }
   }, [importContentString, setIsImportDialogOpen]);
-
   // Helper to get relevant files for payload
   const getRelevantFiles = useCallback(() => {
     const projectRoot = currentProjectPath;
     if (!projectRoot) return [];
-
     const scannedPaths = scanPathsInput
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
-
     // Filter flatFileList based on scanPaths
     return flatFileList
       .filter((file) => {
@@ -207,7 +187,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
         content: '', // Content will be fetched on backend
       }));
   }, [currentProjectPath, scanPathsInput, flatFileList]);
-
   const handleRepair = useCallback(async () => {
     if (!response) {
       showGlobalSnackbar('No content in Code Repair editor to process.', 'error');
@@ -224,7 +203,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
     setLastLlmResponse(null); // Clear previous AI response
     setCurrentDiff(null, null); // Clear current diff display
     setIsBuilding(false); // Ensure build state is reset
-
     try {
       const payload: LlmGeneratePayload = {
         userPrompt: response, // The content currently in the CodeRepair editor
@@ -237,12 +215,9 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
         requestType: RequestType.CODE_REPAIR, // Set request type to CODE_REPAIR
         output: LlmOutputFormat.JSON, // Always expect JSON for structured responses
       };
-
       setLastLlmGeneratePayload(payload);
       addLog('Code Repair', 'Sending CODE_REPAIR request to AI...', 'info');
-
       const aiResponse: ModelResponse = await generateCode(payload);
-
       let errorMessage: string | null = null;
       if (aiResponse.error) {
         errorMessage =
@@ -255,11 +230,9 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
         setLlmError(errorMessage);
         showGlobalSnackbar(`AI Error: ${errorMessage}`, 'error');
       }
-
       if (aiResponse.rawResponse) {
         setLlmResponse(aiResponse.rawResponse); // Update the CodeRepair editor with the new raw response
       }
-
       if (!errorMessage) {
         setLastLlmResponse(aiResponse); // Set the structured response for ChangesList
         showGlobalSnackbar('Code Repair response received. Review changes.', 'success');
@@ -283,7 +256,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
     scanPathsInput,
     getRelevantFiles,
   ]);
-
   // GlobalAction for PromptGeneratorSettingsDrawer footer
   const PromptGeneratorSettingsDrawerActions: GlobalAction[] = [
     {
@@ -294,7 +266,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
       variant: 'outlined'
     },
   ];
-
   const ImportDataActions = useMemo<GlobalAction[]>(() => [
     {
       label: 'Cancel',
@@ -312,7 +283,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
       disabled: !importContentString, // Disable if no content to import
     },
   ], [handleImport, importContentString, setIsImportDialogOpen]);
-
   // Action buttons for the ScanPathsDrawer
   const ScanPathsDrawerActions: GlobalAction[] = [
     {
@@ -335,7 +305,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
       disabled: false,
     },
   ];
-
   // Action buttons for the DirectoryPickerDrawer
   const DirectoryPickerDrawerActions: GlobalAction[] = [
     {
@@ -353,18 +322,14 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
         // 1. Update the parent component's local state (PromptGenerator's projectInput)
         // so the TextField reflects the newly selected path when the drawer closes.
         setProjectInput(selectedDirectoryPathForDrawer);
-
         // 2. Directly update the global project root store.
         setCurrentProjectPath(selectedDirectoryPathForDrawer);
-
         // 3. Trigger the file tree loading for the newly selected project root.
         // This ensures the tree updates immediately with the correct path selected in the drawer,
         // bypassing any stale `handleLoadProject` closures.
         loadInitialTree(selectedDirectoryPathForDrawer);
-
         // 4. Log the action.
         addLog('Directory Picker', `Project root selected: ${selectedDirectoryPathForDrawer}`, 'success');
-
         // 5. Close the drawer.
         setIsProjectRootPickerDialogOpen(false);
       },
@@ -372,7 +337,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
       disabled: !selectedDirectoryPathForDrawer, // Disable if no path is selected
     },
   ];
-
   // Action buttons for the CodeRepair drawer, including an "Import Data" button
   const CodeRepairActions: GlobalAction[] = [
     { label: 'Cancel', action: toggleCodeRepair, icon: <ClearIcon />, color: 'text', variant: 'outlined' },
@@ -385,8 +349,7 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
           if (!response) {
             showGlobalSnackbar('No content in Code Repair editor to import.', 'warning');
             return;
-          }
-          
+          } 
           const parsedData: unknown = JSON.parse(extractCodeFromMarkdown(response));
           if (
             typeof parsedData === 'object' &&
@@ -422,7 +385,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
       disabled: commonDisabled || loading || !response, // Disable if no content or already loading
     },
   ];
-
   return (
     <Box className="flex items-center justify-between gap-2 ">
       <Box className="flex flex-wrap gap-2 ">
@@ -445,7 +407,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
             <DriveFolderUploadIcon />
           </IconButton>
         </Tooltip>
-
         <Tooltip title="Pick project root directory" aria-label="Pick project root directory">
           <IconButton
             color="primary"
@@ -455,7 +416,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
             <FolderOpenIcon />
           </IconButton>
         </Tooltip>
-
         <Tooltip title="Manage scan paths for the AI search" aria-label="Manage scan paths for the AI search">
           <IconButton
             color="primary"
@@ -465,7 +425,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
             <AddRoadIcon />
           </IconButton>
         </Tooltip>
-
         {requestType === RequestType.LLM_GENERATION && (
           <Tooltip
             title="Import prompt data from JSON file"
@@ -503,7 +462,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
               <ClearIcon />
             </IconButton>
           </Tooltip>
-
           <FormControlLabel
             control={
               <Switch
@@ -517,8 +475,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
           />
         </Box>
       )}
-      {/* Dialogs */}
-      {/* PromptGeneratorSettings now wrapped in CustomDrawer */}
       <CustomDrawer
         open={isPromptGeneratorSettingsDrawerOpen}
         onClose={() => setIsPromptGeneratorSettingsDrawerOpen(false)}
@@ -530,8 +486,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
       >
         <PromptGeneratorSettings />
       </CustomDrawer>
-
-      {/* ScanPathsDrawer now wrapped in CustomDrawer */}
       <CustomDrawer
         open={isScanPathsDialogOpen}
         onClose={() => setIsScanPathsDialogOpen(false)}
@@ -548,8 +502,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
           onLocalPathsChange={setLocalScanPaths}
         />
       </CustomDrawer>
-
-      {/* DirectoryPickerDrawer now wrapped in CustomDrawer */}
       <CustomDrawer
         open={isProjectRootPickerDialogOpen}
         onClose={() => setIsProjectRootPickerDialogOpen(false)}
@@ -573,7 +525,6 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
           onPathUpdate={setSelectedDirectoryPathForDrawer} // Pass the new callback
         />
       </CustomDrawer>
-
       <CustomDrawer
         open={isImportDialogOpen}
         onClose={() => setIsImportDialogOpen(false)}
@@ -604,5 +555,4 @@ const BottomToolbar: React.FC<BottomToolbarProps> = ({
     </Box>
   );
 };
-
 export default BottomToolbar;

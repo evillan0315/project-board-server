@@ -3,8 +3,7 @@ import { Box, LinearProgress } from '@mui/material';
 import { RecordingControls } from './RecordingControls';
 import { RecordingStatus } from './RecordingStatus';
 import { RecordingsTable } from './RecordingsTable';
-import { RecordingsPagination } from './RecordingsPagination';
-import { RecordingSearchBar } from './RecordingSearchBar';
+// import { RecordingSearchBar } from './RecordingSearchBar'; // Removed
 import { RecordingInfoDrawer } from './RecordingInfoDrawer';
 import { RecordingSettingsDialog } from './RecordingSettingsDialog';
 import {
@@ -69,6 +68,8 @@ import VideoModal from '@/components/VideoModal';
 import path from 'path-browserify';
 import { showDialog, hideDialog } from '@/stores/dialogStore';
 import AudioDeviceSelector from './AudioDeviceSelector';
+import { TableListToolbar, FilterOption } from '@/components/ui/views/table/TableListToolbar'; // Added
+import SettingsIcon from '@mui/icons-material/Settings'; // Added for settings button
 
 const RECORDING_TYPES: RecordingType[] = ['screenRecord', 'screenShot', 'cameraRecord'];
 
@@ -96,6 +97,7 @@ export function Recording() {
   const currentPlayingVideoSrc = useStore(currentPlayingVideoSrcStore);
   const currentPlayingMediaType = useStore(currentPlayingMediaTypeStore);
   const availableAudioInputDevices = useStore(availableAudioInputDevicesStore);
+  const availableVideoInputDevices = useStore(availableVideoInputDevicesStore);
 
   // Ref for media element
   const mediaElementRef = useRef<HTMLVideoElement | HTMLImageElement>(null);
@@ -371,15 +373,6 @@ export function Recording() {
     [],
   );
 
-  const handlePageChange = (_: unknown, newPage: number) =>
-    setRecordingsPage(newPage);
-  const handleRowsPerPageChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setRecordingsRowsPerPage(parseInt(event.target.value, 10));
-    setRecordingsPage(0);
-  };
-
   const handleSort = (field: SortField) => {
     if (sortBy === field) {
       setRecordingsSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -424,6 +417,12 @@ export function Recording() {
     setIsRecordingSettingsDialogOpen(false);
   };
 
+  // Prepare filter options for TableListToolbar
+  const typeFilterOptions: FilterOption[] = RECORDING_TYPES.map((type) => ({
+    value: type,
+    label: type,
+  }));
+
   return (
     <Box className="flex flex-col gap-6 p-6">
       {(isLoading('recordingsList') ||
@@ -447,23 +446,36 @@ export function Recording() {
           onStartCameraRecording={handleStartCameraRecording}
           onStopCameraRecording={handleStopCameraRecording}
           onCapture={handleCaptureScreenshot}
-          onOpenSettings={handleOpenSettingsDialog}
         />
-        <RecordingStatus />
       </Box>
 
-      <RecordingSearchBar
+      <TableListToolbar
+        title="Recordings"
         searchQuery={searchQuery}
         onSearchChange={setRecordingsSearchQuery}
-        onSearch={handleSearch}
-        typeFilter={typeFilter}
-        onTypeFilterChange={setRecordingTypeFilter}
-        typeOptions={RECORDING_TYPES}
+        onApplySearch={handleSearch}
+        filterBy={typeFilter}
+        onFilterChange={setRecordingTypeFilter}
+        filterOptions={typeFilterOptions}
         onRefresh={fetchRecordings}
+        rightActions={[
+          {
+            id: 'recording-settings',
+            label: 'Recording Settings',
+            icon: <SettingsIcon />,
+            action: handleOpenSettingsDialog,
+            tooltip: 'Open recording settings',
+          },
+        ]}
       />
 
       <RecordingsTable
         recordings={recordings}
+        total={totalRecordings}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        onPageChange={setRecordingsPage}
+        onRowsPerPageChange={setRecordingsRowsPerPage}
         onPlay={handlePlay}
         onDelete={handleDelete}
         onView={openDrawer}
@@ -474,13 +486,6 @@ export function Recording() {
         onStopRecording={handleStopRecording} // New prop
       />
 
-      <RecordingsPagination
-        total={totalRecordings}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
       <RecordingInfoDrawer
         open={drawerOpen}
         onClose={closeDrawer}

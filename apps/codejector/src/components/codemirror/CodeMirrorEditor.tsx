@@ -1,18 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useStore } from '@nanostores/react';
-import { EditorView, Line } from '@codemirror/view'; // Import Line type
+import { EditorView, Line } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
 import CodeMirror from '@uiw/react-codemirror';
 import { getCodeMirrorLanguage, createCodeMirrorTheme, getFileExtension } from '@/utils/index';
 import { Box, useTheme } from '@mui/material';
 import { themeStore } from '@/stores/themeStore';
 import { LanguageSupport, syntaxTree } from '@codemirror/language';
-import CodeMirrorStatus from './CodeMirrorStatus';
-import { Extension, EditorState } from '@codemirror/state';
+import { Extension, EditorState, ChangeSpec } from '@codemirror/state';
 import { linter, lintGutter, Diagnostic } from '@codemirror/lint';
+import {
+  undo,
+  redo,
+  selectAll,
+  indentSelection,
+  historyField,
+  history,
+} from '@codemirror/commands';
 import { llmStore } from '@/stores/llmStore';
 import { fileStore } from '@/stores/fileStore';
+import CodeMirrorStatus from './CodeMirrorStatus';
+import CodeMirrorContextMenu from './CodeMirrorContextMenu';
+import { codeMirrorContextMenuStore, showCodeMirrorContextMenu, hideCodeMirrorContextMenu } from './stores/codeMirrorContextMenuStore';
+import { ICodeMirrorContextMenuItem } from './types';
+// CodeMirror commands for the context menu
 
+// Material Icons for context menu
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ContentCutIcon from '@mui/icons-material/ContentCut';
+import ContentPasteIcon from '@mui/icons-material/ContentPaste';
+import UndoIcon from '@mui/icons-material/Undo';
+import RedoIcon from '@mui/icons-material/Redo';
+import SelectAllIcon from '@mui/icons-material/SelectAll';
+import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
 interface CodeMirrorEditorProps {
   value: string;
   onChange: (value: string) => void;
@@ -25,93 +45,52 @@ interface CodeMirrorEditorProps {
   onEditorViewChange?: (view: EditorView) => void;
   additionalExtensions?: Extension[];
 }
-
-// Function to generate diagnostics, extracted from basicLinter
+// Function to generate basic diagnostics for production-level checks
 const generateBasicDiagnostics = (view: EditorView): Diagnostic[] => {
   const diagnostics: Diagnostic[] = [];
+  const doc = view.state.doc;
   try {
-    // === ADDED DEFENSIVE CHECK ===
-    // Ensure view.state.doc and its iterLines method are valid before attempting iteration.
-    // The 'child is undefined' error can originate from CodeMirror's internal Text object
-    // if it's in an inconsistent state, especially during rapid updates.
-    if (!view.state || !view.state.doc || typeof view.state.doc.iterLines !== 'function') {
-      console.warn("generateBasicDiagnostics: Invalid view.state.doc encountered, skipping linter pass.", view.state.doc);
-      return [];
-    }
-
-    const tree = syntaxTree(view.state);
-
-    view.state.doc.iterLines((lineObj: Line) => {
-      // Defensive check for lineObj and its text property
-      if (!lineObj || typeof lineObj.text !== 'string') {
-        console.warn("generateBasicDiagnostics: Invalid line object encountered during iteration.", lineObj);
-        return; // Skip this line if invalid
-      }
-      const lineText = lineObj.text;
-      const lineNumber = lineObj.number; // Use lineObj.number directly for 1-based line number
-      console.log(lineText);
-      const todoMatch = lineText.match(/TODO/i);
-      if (todoMatch) {
-        
+    for (let i = 1; i <= doc.lines; i++) {
+      const line = doc.line(i);
+      const lineText = line.text;
+      // 1. Detect empty lines
+      if (lineText.trim().length === 0) {
         diagnostics.push({
-          from: lineObj.from + (todoMatch.index || 0),
-          to: lineObj.from + (todoMatch.index || 0) + todoMatch[0].length,
-          severity: 'warning',
-          message: 'Todo item found',
-          source: 'codejector-linter', // Changed source
-        });
-      }
-
-      // NEW: Check for console statements
-      const consoleLogMatch = lineText.match(/console\.(log|warn|error|info|debug)\s*\(/);
-      console.log(consoleLogMatch);
-      if (consoleLogMatch) {
-        diagnostics.push({
-          from: lineObj.from + (consoleLogMatch.index || 0),
-          to: lineObj.from + (consoleLogMatch.index || 0) + consoleLogMatch[0].length,
-          severity: 'warning',
-          message: 'Avoid console statements in production code',
-          source: 'codejector-linter',
-        });
-      }
-
-      // NEW: Check for debugger statements
-      const debuggerMatch = lineText.match(/\bdebugger\b/);
-      if (debuggerMatch) {
-        diagnostics.push({
-          from: lineObj.from + (debuggerMatch.index || 0),
-          to: lineObj.from + (debuggerMatch.index || 0) + debuggerMatch[0].length,
-          severity: 'error', // Often treated as an error in production environments
-          message: 'Debugger statement found',
-          source: 'codejector-linter',
-        });
-      }
-
-      // Example: Basic check for empty lines (can be expanded)
-      // Avoid marking the very last empty line or first empty line unless specifically desired
-      // doc.lines gives total number of lines (1-based count)
-      if (
-        lineText.trim() === '' &&
-        lineNumber > 1 && // Not the first line if empty
-        lineNumber < view.state.doc.lines // Not the very last line if empty
-      ) {
-        diagnostics.push({
-          from: lineObj.from,
-          to: lineObj.from + lineText.length,
+          from: line.from,
+          to: line.to,
           severity: 'info',
           message: 'Empty line',
-          source: 'codejector-linter', // Changed source
+          source: 'editor-linter',
         });
       }
-    });
-
-    tree.iterate({
+      // 2. Detect console statements
+      const consoleRegex = /console\.(log|warn|error|info|debug)\(.+\);?/g;
+      let match;
+      while ((match = consoleRegex.exec(lineText)) !== null) {
+        diagnostics.push({
+          from: line.from + match.index,
+          to: line.from + match.index + match[0].length,
+          severity: 'warning',
+          message: 'Avoid console statements in production code',
+          source: 'editor-linter',
+        });
+      }
+     // Detect  statements
+const debuggerRegex = /\bdebugger\b/g;
+while ((match = debuggerRegex.exec(lineText)) !== null) {
+  diagnostics.push({
+    from: line.from + match.index,
+    to: line.from + match.index + match[0].length,
+    severity: 'warning',
+    message: 'Debugger statement found',
+    source: 'editor-linter',
+  });
+}
+    }
+    // 4. Detect generic syntax errors from CodeMirror's language parser
+    syntaxTree(view.state).iterate({
       enter: (node) => {
-        // Added defensive check for node validity
-        if (!node || !node.type || !node.type.name) {
-          console.warn("generateBasicDiagnostics: Invalid syntax tree node encountered.", node);
-          return;
-        }
+        if (!node?.type?.name) return;
         if (node.type.name === '⚠') {
           diagnostics.push({
             from: node.from,
@@ -124,19 +103,16 @@ const generateBasicDiagnostics = (view: EditorView): Diagnostic[] => {
       },
     });
   } catch (e) {
-    console.error("Error within generateBasicDiagnostics linter function:", e);
     diagnostics.push({
       from: 0,
-      to: view.state.doc.length, // Report error over the entire document
+      to: doc.length,
       severity: 'error',
       message: `Linter internal error: ${e instanceof Error ? e.message : String(e)}`,
       source: 'custom-linter-error',
     });
   }
-
   return diagnostics;
 };
-
 const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   value,
   onChange,
@@ -151,76 +127,214 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 }) => {
   const muiTheme = useTheme();
   const { mode } = useStore(themeStore);
-  const { buildOutput } = useStore(llmStore); // Get buildOutput from llmStore
-  const { saveFileContentError } = useStore(fileStore); // Get saveFileContentError from fileStore
-
+  const { buildOutput } = useStore(llmStore);
+  const { saveFileContentError } = useStore(fileStore);
+  const editorRef = useRef<HTMLDivElement>(null);
   const [editorViewInstance, setEditorViewInstance] = useState<EditorView | null>(null);
-
-  // State for CodeMirrorStatus
   const [currentLine, setCurrentLine] = useState(1);
   const [currentColumn, setCurrentColumn] = useState(1);
   const [currentLanguageName, setCurrentLanguageName] = useState('Plain Text');
-  const [lintIssuesCount, setLintIssuesCount] = useState(0); // State for lint issues count
-
-  const handleChange = React.useCallback(
-    (val: string) => {
-      onChange(val);
-    },
+  const [lintIssuesCount, setLintIssuesCount] = useState(0);
+  const [allDiagnostics, setAllDiagnostics] = useState<Diagnostic[]>([]);
+  const { visible: contextMenuVisible } = useStore(codeMirrorContextMenuStore);
+  const handleChange = useCallback(
+    (val: string) => onChange(val),
     [onChange],
   );
-
-  // Memoize the linter extension itself
+  // Custom linter with direct count tracking
   const basicLinterExtension = React.useMemo(() => {
-    return linter(generateBasicDiagnostics);
-  }, []); // Empty dependency array as generateBasicDiagnostics is a pure function
-
-
-  const handleUpdate = React.useCallback(
+    return linter((view) => {
+      const diagnostics = generateBasicDiagnostics(view);
+      setLintIssuesCount(diagnostics.length);
+      setAllDiagnostics(diagnostics);
+      return diagnostics;
+    });
+  }, []);
+  const handleUpdate = useCallback(
     (viewUpdate: { view: EditorView; state: EditorState }) => {
-      const { view, state } = viewUpdate;
-
-      // Pass the EditorView to the parent component via callback on every update
-      if (onEditorViewChange && view) {
-        onEditorViewChange(view);
-      }
-      // Also store it locally for CodeMirrorStatus if it's a new view instance
-      if (view && view !== editorViewInstance) {
-        setEditorViewInstance(view);
-      }
-
-      // Update line and column for status bar
-      if (view) {
-        const selection = view.state.selection.main;
-        const line = view.state.doc.lineAt(selection.head);
-        setCurrentLine(line.number);
-        setCurrentColumn(selection.head - line.from + 1);
-
-        // Update language name for status bar
-        const languageData = view.state.languageDataAt(selection.head);
-        const detectedLangName = languageData.find((data: any) => data.name)?.name;
-
-        if (detectedLangName) {
-          setCurrentLanguageName(
-            detectedLangName.charAt(0).toUpperCase() + detectedLangName.slice(1),
-          );
-        } else if (language) {
-          setCurrentLanguageName(language.charAt(0).toUpperCase() + language.slice(1));
-        } else if (filePath) {
-          const ext = getFileExtension(filePath);
-          setCurrentLanguageName(ext ? ext.toUpperCase() : 'Plain Text');
-        } else {
-          setCurrentLanguageName('Plain Text');
-        }
-
-        // --- CORRECTED: Update lint issues count from the editor state's diagnostics --- 
-        // Get all diagnostics currently in the editor state, managed by lint extensions.
-        //const diagnostics = getDiagnostics(state);
-        //setLintIssuesCount(diagnostics.length);
+      const { view } = viewUpdate;
+      if (!view) return;
+      if (onEditorViewChange) onEditorViewChange(view);
+      if (view !== editorViewInstance) setEditorViewInstance(view);
+      const selection = view.state.selection.main;
+      const line = view.state.doc.lineAt(selection.head);
+      setCurrentLine(line.number);
+      setCurrentColumn(selection.head - line.from + 1);
+      const languageData = view.state.languageDataAt(selection.head);
+      const detectedLangName = languageData.find((data: any) => data.name)?.name;
+      if (detectedLangName) {
+        setCurrentLanguageName(
+          detectedLangName.charAt(0).toUpperCase() + detectedLangName.slice(1),
+        );
+      } else if (language) {
+        setCurrentLanguageName(language.charAt(0).toUpperCase() + language.slice(1));
+      } else if (filePath) {
+        const ext = getFileExtension(filePath);
+        setCurrentLanguageName(ext ? ext.toUpperCase() : 'Plain Text');
+      } else {
+        setCurrentLanguageName('Plain Text');
       }
     },
-    [onEditorViewChange, editorViewInstance, language, filePath], // basicLinter is not a dependency now
+    [onEditorViewChange, editorViewInstance, language, filePath],
   );
-
+  // Function to scroll to a specific line in the editor
+  const handleGoToLine = useCallback(
+    (lineNumber: number) => {
+      if (!editorViewInstance) return;
+      const line = editorViewInstance.state.doc.line(lineNumber);
+      editorViewInstance.dispatch({
+        selection: { anchor: line.from },
+        effects: EditorView.scrollIntoView(line.from, {
+          y: 'center',
+        }),
+      });
+    },
+    [editorViewInstance],
+  );
+  // Function to automatically fix issues
+  const handleAutoFix = useCallback(
+    (fixableDiagnostics: Diagnostic[]) => {
+      if (!editorViewInstance) return;
+      const changes: ChangeSpec[] = [];
+      // Sort diagnostics in reverse order of their 'from' position to apply changes safely
+      const sortedDiagnostics = [...fixableDiagnostics].sort((a, b) => b.from - a.from);
+      for (const diag of sortedDiagnostics) {
+        const line = editorViewInstance.state.doc.lineAt(diag.from);
+        let change: ChangeSpec | null = null;
+        if (diag.message.includes('Avoid console statements')) {
+          // Comment out the entire line containing the console statement
+          const lineContent = editorViewInstance.state.doc.sliceString(line.from, line.to);
+          change = { from: line.from, to: line.to, insert: `// ${lineContent}` };
+        } else if (diag.message.includes('Debugger statement found')) {
+          // Remove the statement
+          change = { from: diag.from, to: diag.to, insert: '' };
+        } else if (diag.message.includes('Empty line')) {
+          // Remove the entire empty line, including the newline character if not the last line
+          const isLastLine = line.number === editorViewInstance.state.doc.lines;
+          change = { from: line.from, to: isLastLine ? line.to : line.to + 1, insert: '' };
+        }
+        if (change) {
+          changes.push(change);
+        }
+      }
+      if (changes.length > 0) {
+        editorViewInstance.dispatch({ changes });
+        // The editor's onUpdate and onChange handlers will be triggered automatically.
+      }
+    },
+    [editorViewInstance],
+  );
+  // Helper functions for clipboard operations using document.execCommand
+  const handleCopy = useCallback(() => {
+    if (editorViewInstance) {
+      
+      editorViewInstance.focus(); // Ensure the editor has focus
+      console.log(editorViewInstance, 'editorViewInstance');
+      document.execCommand('copy');
+    }
+  }, [editorViewInstance]);
+  const handleCut = useCallback(() => {
+    if (editorViewInstance) {
+      editorViewInstance.focus(); // Ensure the editor has focus
+      document.execCommand('cut');
+    }
+  }, [editorViewInstance]);
+  const handlePaste = useCallback(() => {
+    if (editorViewInstance) {
+      editorViewInstance.focus(); // Ensure the editor has focus
+      // Note: document.execCommand('paste') is often blocked by browsers
+      // for security reasons when not directly triggered by a user's
+      // keyboard shortcut (Ctrl+V/Cmd+V) or native context menu.
+      // It might not work reliably in all environments.
+      document.execCommand('paste');
+    }
+  }, [editorViewInstance]);
+  // NEW: Context menu handler
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!editorViewInstance || isDisabled) return;
+      event.preventDefault(); // Prevent default browser context menu
+      const { clientX, clientY } = event;
+      // Check history state for undo/redo
+      const historyState = editorViewInstance.state.field(historyField, false);
+      const canUndo = historyState ? historyState.done.length > 0 : false;
+      const canRedo = historyState ? historyState.undone.length > 0 : false;
+      const isSelectionEmpty = editorViewInstance.state.selection.main.empty;
+      const items: ICodeMirrorContextMenuItem[] = [
+        {
+          id: 'undo',
+          label: 'Undo',
+          icon: <UndoIcon fontSize="small" />,
+          onClick: (view: EditorView) => undo(view),
+          disabled: !canUndo,
+        },
+        {
+          id: 'redo',
+          label: 'Redo',
+          icon: <RedoIcon fontSize="small" />,
+          onClick: (view) => redo(view),
+          disabled: !canRedo,
+        },
+        { id: 'divider-1', isDivider: true },
+        {
+          id: 'cut',
+          label: 'Cut',
+          icon: <ContentCutIcon fontSize="small" />,
+          onClick: handleCut, // Use the new helper
+          disabled: isSelectionEmpty,
+        },
+        {
+          id: 'copy',
+          label: 'Copy',
+          icon: <ContentCopyIcon fontSize="small" />,
+          onClick: handleCopy, // Use the new helper
+          disabled: isSelectionEmpty,
+        },
+        {
+          id: 'paste',
+          label: 'Paste',
+          icon: <ContentPasteIcon fontSize="small" />,
+          onClick: handlePaste, // Use the new helper
+          // It's hard to reliably check if paste is possible or if clipboard has text
+          // via CodeMirror API directly due to browser security. We rely on editor focus.
+          disabled: isDisabled,
+        },
+        { id: 'divider-2', isDivider: true },
+        {
+          id: 'selectAll',
+          label: 'Select All',
+          icon: <SelectAllIcon fontSize="small" />,
+          onClick: (view) => selectAll(view),
+        },
+        {
+          id: 'formatSelection',
+          label: 'Format Selection',
+          icon: <FormatAlignLeftIcon fontSize="small" />,
+          onClick: (view:  EditorView) => {
+            alert(view);
+            // This is a basic indent. For full "format document"
+            // a language-specific formatter extension would be needed.
+            indentSelection(view);
+          },
+          disabled: isSelectionEmpty,
+        },
+      ];
+      showCodeMirrorContextMenu(clientX, clientY, items);
+    },
+    [editorViewInstance, isDisabled, handleCopy, handleCut, handlePaste],
+  ); // Add handleCopy, handleCut, handlePaste to dependencies
+  // NEW: Global click listener to hide context menu
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (contextMenuVisible) {
+        hideCodeMirrorContextMenu();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [contextMenuVisible]);
   const extensions = React.useMemo(() => {
     const langExtensions: LanguageSupport[] = [];
     if (language) {
@@ -232,27 +346,23 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     } else if (filePath) {
       langExtensions.push(...getCodeMirrorLanguage(filePath, false));
     }
-
     return [
       ...langExtensions,
+      history(),
       createCodeMirrorTheme(muiTheme),
       EditorView.lineWrapping,
-      //lintGutter(), // Add lint gutter
-      //basicLinterExtension, // Add custom linter extension
+      lintGutter(),
+      basicLinterExtension,
       ...(additionalExtensions || []),
     ];
-  }, [language, filePath, muiTheme, additionalExtensions, basicLinterExtension]); // basicLinterExtension is a dependency now
-
-  // Determine the build error message to display
+  }, [language, filePath, muiTheme, additionalExtensions, basicLinterExtension]);
   const buildErrorMessage = buildOutput?.stderr || saveFileContentError || null;
-
   return (
     <Box
+      ref={editorRef}
       className={`flex flex-col ${classNames || ''}`}
-      sx={{
-        height: height || '100%',
-        width: width || '100%',
-      }}
+      sx={{ height: height || '100%', width: width || '100%' }}
+      onContextMenu={handleContextMenu}
     >
       <Box className="flex-grow overflow-auto">
         <CodeMirror
@@ -273,9 +383,13 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         lintIssuesCount={lintIssuesCount}
         buildErrorMessage={buildErrorMessage}
         filePath={filePath}
+        diagnostics={allDiagnostics}
+        editorViewInstance={editorViewInstance}
+        onGoToLine={handleGoToLine}
+        onAutoFix={handleAutoFix}
       />
+      <CodeMirrorContextMenu editorView={editorViewInstance} />
     </Box>
   );
 };
-
 export default CodeMirrorEditor;

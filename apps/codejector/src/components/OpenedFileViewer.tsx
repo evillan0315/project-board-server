@@ -1,7 +1,19 @@
 import React, { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { themeStore } from '@/stores/themeStore';
-import { useTheme } from '@mui/material';
+
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Alert,
+  Paper,
+  useTheme,
+} from '@mui/material';
+
+import { Extension } from '@codemirror/state';
+import { keymap, EditorView } from '@codemirror/view';
+import CodeMirrorEditor from '@/components/codemirror/CodeMirrorEditor';
+
 import {
   fileStore,
   setOpenedFileContent,
@@ -13,13 +25,10 @@ import {
   openedFileContent,
   openedFile,
 } from '@/stores/fileStore';
+import { themeStore } from '@/stores/themeStore';
 import { readFileContent } from '@/api/file';
-import { Box, Typography, CircularProgress, Alert, Paper } from '@mui/material';
 
-import CodeMirrorEditor from './codemirror/CodeMirrorEditor'; // Import the shared CodeMirrorEditor
-import { keymap, EditorView } from '@codemirror/view'; // Keep keymap and EditorView for extensions
-import { Extension } from '@codemirror/state'; // Import Extension type for type safety
-import InitialEditorViewer from './InitialEditorViewer';
+import InitialEditorViewer from '@/components/InitialEditorViewer';
 import MarkdownEditor from '@/components/MarkdownEditor';
 
 interface OpenedFileViewerProps {}

@@ -32,6 +32,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import CircularProgress from '@mui/material/CircularProgress';
+import Avatar from '@mui/material/Avatar'; // NEW: Import Avatar
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import VerticalSplitOutlinedIcon from '@mui/icons-material/WebAssetOutlined';
 import WebAssetOutlinedIcon from '@mui/icons-material/WebAssetOutlined';
@@ -428,7 +429,20 @@ const Navbar: React.FC = () => {
                   color="inherit"
                   sx={{ p: 0, color: theme.palette.text.primary }}
                 >
-                  <AccountCircle sx={{ fontSize: 32 }} />
+                  {user?.image ? (
+                    <Avatar
+                      src={user.image}
+                      alt={
+                        user.name ||
+                        user.username ||
+                        user.email ||
+                        'User Avatar'
+                      }
+                      sx={{ width: 32, height: 32 }}
+                    />
+                  ) : (
+                    <AccountCircle sx={{ fontSize: 32 }} />
+                  )}
                   <KeyboardArrowDownIcon />
                 </IconButton>
                 <Menu

@@ -24,12 +24,10 @@ import { FileService } from '../file/file.service';
 import { UtilsService } from '../utils/utils.service';
 import { JsonFixService } from '../utils/json-fix/json-fix.service';
 import { RequestType } from '@prisma/client';
-
 @Injectable()
 export class LlmService implements OnModuleInit {
   private readonly logger = new Logger(LlmService.name);
   private readonly LOGS_DIR: string;
-
   constructor(
     private readonly configService: ConfigService,
     private readonly googleGeminiFileService: GoogleGeminiFileService,
@@ -40,7 +38,6 @@ export class LlmService implements OnModuleInit {
   ) {
     this.LOGS_DIR = path.join(process.cwd(), '.ai-editor-logs');
   }
-
   onModuleInit() {
     if (!this.moduleControlService.isModuleEnabled('LlmModule')) {
       this.logger.warn(
@@ -48,7 +45,6 @@ export class LlmService implements OnModuleInit {
       );
     }
   }
-
   private ensureLlmModuleEnabled(): void {
     if (!this.moduleControlService.isModuleEnabled('LlmModule')) {
       throw new ForbiddenException(
@@ -56,7 +52,6 @@ export class LlmService implements OnModuleInit {
       );
     }
   }
-
   private async buildLLMPrompt(
     llmInput: LlmInputDto,
     scannedFiles: ScannedFileDto[], // Use the scanned files directly
@@ -75,32 +70,21 @@ export class LlmService implements OnModuleInit {
       \`\`\`
       `;
     });
-
     // Wait for all promises to resolve, then join the resulting array of strings
     const formattedRelevantFiles = (
       await Promise.all(fileContentPromises)
     ).join('\n\n');
-
     const prompt = `
-
 # ${this.utilsService.truncateText(llmInput.userPrompt, 50)} - AI Code Generation Request
-
 ## User Request
-
 ${llmInput.userPrompt}\n\n
-
 ## Project Context
 ${projectStructure}\n\n
-
 ### Relevant Files (for analysis)
-
 ${formattedRelevantFiles}\n\n
-
 `;
-
     return prompt.trim();
   }
-
   private async buildErrorReportPrompt(
     errorReport: LlmReportErrorDto,
     scannedFiles: ScannedFileDto[],
@@ -116,7 +100,6 @@ ${formattedRelevantFiles}\n\n
     const formattedRelevantFiles = (
       await Promise.all(fileContentPromises)
     ).join('\n\n');
-
     let failedChangesDescription = '';
     if (
       errorReport.context?.failedChanges && // Added optional chaining
@@ -139,38 +122,25 @@ ${formattedRelevantFiles}\n\n
         )
         .join('\n\n');
     }
-
     const prompt = `
 # AI Error Report Analysis Request
-
 ## Error Details
-
 The following error occurred after applying some changes or attempting an operation:
 \`\`\`
 ${errorReport.errorDetails}
 \`\`\`
-
 ## Project Context
 ${projectStructure}
-
 ## Original Request Context (leading to the error)
-
 ${errorReport.context?.originalUserPrompt ? `**Original User Prompt:**\n\`\`\`\n${errorReport.context.originalUserPrompt}\n\`\`\`\n` : ''}
 ${errorReport.context?.systemInstruction ? `**System Instruction used:**\n\`\`\`\n${errorReport.context.systemInstruction}\n\`\`\`\n` : ''}
-
 ${failedChangesDescription}
-
 ### Relevant Files (for analysis of the error)
-
 ${formattedRelevantFiles}
-
 ## Task for AI
-
 Analyze the provided error details, the project context, and the original request context. Identify the root cause of the error. Then, propose a solution or set of changes to fix the problem.
-
 **Expected Output Format:**
 Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` schema. If no specific file changes are needed, provide a detailed analysis and recommendations in the \`summary\` and \`thoughtProcess\` fields, and include an \`ANALYZE\` action for a dummy file like \`error-analysis.md\` with the explanation as content.
-
 \`\`\`json
 {
   "title": "Error Analysis and Proposed Fix",
@@ -196,19 +166,16 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
 `;
     return prompt.trim();
   }
-
   private static repairJsonBadEscapes(jsonString: string): string {
     //return jsonString.replace(/\"/g, '"');
     return jsonString;
   }
-
   private static extractJsonFromMarkdown(text: string): string {
     const jsonBlockRegex = /```json\n([\s\S]*?)\n```/;
     const match = text.match(jsonBlockRegex);
     if (match && match[1]) {
       return match[1].trim();
     }
-
     return text.trim();
   }
   async generateProjectStructure(
@@ -226,17 +193,14 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
     const walk = async (dir: string, depth = 0): Promise<string> => {
       const entries = await fs.readdir(dir, { withFileTypes: true });
       entries.sort((a, b) => a.name.localeCompare(b.name)); // keep deterministic order
-
       const lines: string[] = [];
       for (const entry of entries) {
         // skip ignored directories
         if (ignorePatterns.some((pattern) => entry.name.includes(pattern))) {
           continue;
         }
-
         const indent = '  '.repeat(depth);
         lines.push(`${indent}- ${entry.name}`);
-
         if (entry.isDirectory()) {
           const subDir = path.join(dir, entry.name);
           const subTree = await walk(subDir, depth + 1);
@@ -247,7 +211,6 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
       }
       return lines.join('\n');
     };
-
     try {
       const structure = await walk(rootPath, 0);
       return `\nProject Structure (root: ${path.basename(rootPath)})\n${structure}`;
@@ -262,10 +225,8 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
   }
   async generateContent(llmInput: LlmInputDto): Promise<any> {
     this.ensureLlmModuleEnabled();
-
     const projectRoot = llmInput.projectRoot; // Get projectRoot from DTO
     const scanPaths = llmInput.scanPaths;
-
     // 1. Scan files based on the provided projectRoot and scanPaths
     const scannedFiles = await this.fileService.scan(
       scanPaths,
@@ -273,7 +234,6 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
       false,
     ); // verbose false by default
     const projectStructure = await this.generateProjectStructure(projectRoot); // Generate project structure
-
     // 2. Build the LLM prompt with the dynamically scanned files and project structure
     const fullPrompt = await this.buildLLMPrompt(
       llmInput,
@@ -281,23 +241,18 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
       projectStructure,
     );
     const systemInstructionForLLM = `${llmInput.additionalInstructions}\n\n${llmInput.expectedOutputFormat}`;
-
     this.logger.log('\n--- Prompt sent to LLM ---');
-
     this.logger.log(`Prompt size: ${fullPrompt.length} characters.`);
     this.logger.log('--------------------------\n');
-
     try {
       const payload: GenerateTextDto = {
         prompt: fullPrompt,
         systemInstruction: systemInstructionForLLM,
       };
-
       const response = await this.googleGeminiFileService.generateText(
         payload,
         llmInput.requestType || RequestType.LLM_GENERATION, // Use requestType from input, fallback to LLM_GENERATION
       );
-
       if (!response) {
         this.logger.error(`Google Gemini API Error (via NestJS)`);
         throw new InternalServerErrorException(
@@ -315,7 +270,6 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
       ) {
         throw error;
       }
-
       this.logger.error(
         `Error calling LLM (via GoogleGeminiFileService): ${(error as Error).message}`,
         (error as Error).stack,
@@ -325,15 +279,12 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
       );
     }
   }
-
   async reportErrorToLlm(
     errorReport: LlmReportErrorDto,
   ): Promise<LlmOutputDto> {
     this.ensureLlmModuleEnabled();
-
     const projectRoot = errorReport.projectRoot;
     const scanPaths = errorReport.scanPaths || [];
-
     // Add original file paths from context to scan paths
     if (
       errorReport.context?.originalFilePaths && // FIX: Added optional chaining here
@@ -341,10 +292,8 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
     ) {
       scanPaths.push(...errorReport.context.originalFilePaths);
     }
-
     // Ensure unique paths
     const uniqueScanPaths = Array.from(new Set(scanPaths));
-
     // 1. Scan files based on the provided projectRoot and scanPaths
     const scannedFiles = await this.fileService.scan(
       uniqueScanPaths,
@@ -352,14 +301,12 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
       false,
     );
     const projectStructure = await this.generateProjectStructure(projectRoot);
-
     // 2. Build the LLM prompt specifically for error reporting
     const fullPrompt = await this.buildErrorReportPrompt(
       errorReport,
       scannedFiles,
       projectStructure,
     );
-
     // Define the expected output format for error analysis, which is LlmOutputDto
     const systemInstructionForLLM = `
 You are an expert AI assistant tasked with analyzing errors in codebases and providing solutions.
@@ -367,22 +314,18 @@ Your response MUST be a JSON object adhering to the LlmOutputDto schema, which i
 If you recommend file modifications, use 'add', 'modify', 'delete', or 'repair' actions.
 If your primary output is an analysis or explanation without direct code changes, use the 'analyze' action for a file named 'error-analysis.md' and put your detailed analysis and recommendations in its 'newContent' field.
 `;
-
     this.logger.log('\n--- Error Report Prompt sent to LLM ---');
     this.logger.log(`Prompt size: ${fullPrompt.length} characters.`);
     this.logger.log('--------------------------------------\n');
-
     try {
       const payload: GenerateTextDto = {
         prompt: fullPrompt,
         systemInstruction: systemInstructionForLLM,
       };
-
       const response = await this.googleGeminiFileService.generateText(
         payload,
         RequestType.LLM_GENERATION,
       );
-
       if (!response) {
         this.logger.error(
           `Google Gemini API Error (via NestJS) for error reporting`,
@@ -391,7 +334,6 @@ If your primary output is an analysis or explanation without direct code changes
           `Failed to get response from Google Gemini API for error report`,
         );
       }
-
       let cleanedJsonString = LlmService.extractJsonFromMarkdown(response);
       return JSON.parse(cleanedJsonString) as LlmOutputDto;
     } catch (error: unknown) {

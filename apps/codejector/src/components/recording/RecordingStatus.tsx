@@ -20,7 +20,7 @@ export function RecordingStatus() {
     <Box className="flex flex-col gap-1">
       {isScreenRecording && (
         <Tooltip title={`Screen Recording in progress (ID: ${currentScreenRecordingId || 'N/A'})`}>
-          <Typography variant="body1" color="error" noWrap>
+          <Typography variant="body1" color="error" noWrap className="truncate">
             ● Screen Recording in progress
             {currentScreenRecordingId && ` (ID: ${currentScreenRecordingId})`}
           </Typography>
@@ -28,20 +28,20 @@ export function RecordingStatus() {
       )}
       {isCameraRecording && (
         <Tooltip title={`Camera Recording in progress (ID: ${currentCameraRecordingId || 'N/A'})`}>
-          <Typography variant="body1" color="error" noWrap>
+          <Typography variant="body1" color="error" noWrap className="truncate">
             ● Camera Recording in progress
             {currentCameraRecordingId && ` (ID: ${currentCameraRecordingId})`}
           </Typography>
         </Tooltip>
       )}
 
-      {!isAnyRecordingActive && (
+      {/*!isAnyRecordingActive && (
         <Tooltip title="No active recording">
-          <Typography variant="body1" color="text.secondary" noWrap>
+          <Typography variant="body1" color="text.secondary" noWrap className="truncate">
             No active recording
           </Typography>
         </Tooltip>
-      )}
+      )*/}
     </Box>
   );
 }

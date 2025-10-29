@@ -1,19 +1,21 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Box, IconButton, Typography, useTheme, SxProps } from '@mui/material';
-import { FavoriteBorder, Album, Movie } from '@mui/icons-material';
+import { CloudDownload, Album, Movie } from '@mui/icons-material'; // Changed from FavoriteBorder to CloudDownload
 import { useStore } from '@nanostores/react';
 import {
   currentTrackAtom,
-  $mediaStore,
+  fetchingMediaFiles, // Import to re-fetch media after extraction
 } from '@/stores/mediaStore';
 import { FileType } from '@/types/refactored/media';
+import { showDialog } from '@/stores/dialogStore'; // Import showDialog
+import MediaExtractionFormDialogContent from '@/components/media/dialogs/MediaExtractionFormDialog'; // Import the content component
 
 // Define styles outside the component for memoization and clean JSX
 const trackInfoWrapperStyles: SxProps = {
   display: 'flex',
   alignItems: 'center',
   minWidth: 0,
-  width: '30%',
+  width: 250,
   overflow: 'hidden',
   flexShrink: 0,
 };
@@ -32,6 +34,23 @@ const MediaPlayerTrackInfo: React.FC = () => {
 
   const titleText = currentTrack?.song?.title || currentTrack?.video?.title || 'Unknown Title';
   const artistText = currentTrack?.metadata?.[0]?.tags?.join(', ') || 'Unknown Artist';
+
+  const handleOpenMediaExtractor = useCallback(() => {
+    showDialog({
+      title: 'Extract Audio/Video from URL',
+      content: (
+        <MediaExtractionFormDialogContent
+          onExtractSuccess={() => {
+            // Re-fetch all media files after successful extraction
+            fetchingMediaFiles();
+          }}
+        />
+      ),
+      maxWidth: 'sm',
+      fullWidth: true,
+      showCloseButton: true,
+    });
+  }, []);
 
   return (
     <Box sx={trackInfoWrapperStyles}>
@@ -69,9 +88,10 @@ const MediaPlayerTrackInfo: React.FC = () => {
       <IconButton
         size="small"
         sx={{ ml: 0, color: theme.palette.text.secondary, flexShrink: 0 }}
-        disabled
+        onClick={handleOpenMediaExtractor} // New onClick handler
+        // disabled={!currentTrack} // Decided to always enable for extraction regardless of current playback
       >
-        <FavoriteBorder fontSize="small" />
+        <CloudDownload fontSize="small" /> {/* Replaced FavoriteBorder with CloudDownload */}
       </IconButton>
     </Box>
   );

@@ -10,7 +10,7 @@ import {
 import {
   INSTRUCTION,
   ADDITIONAL_INSTRUCTION_EXPECTED_OUTPUT,
-} from '@/constants/instruction';
+} from '@/constants/instructions';
 import { applyProposedChanges } from '@/api/llm';
 import { addLog } from '@/stores/logStore';
 import { ErrorStoreState, errorStore, setError } from '@/stores/errorStore';

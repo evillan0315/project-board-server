@@ -36,8 +36,8 @@ All endpoints are prefixed with `/api/auth`.
 - **Description:** This is the callback URL registered with GitHub. After successful authentication with GitHub, this endpoint processes the GitHub profile, validates it, issues a JWT, sets it as a cookie, and redirects the user (either to a frontend URL or a CLI callback).
 - **Guards:** [`GitHubAuthGuard`](./Guards.md)
 - **Query Parameters:**
-  - `state` (optional): State parameter for CSRF protection and passing custom data.
-  - `cli_port` (optional): Port for CLI specific callback redirection.
+  - `state` (optional): State parameter for CSRF protection and passing custom data (e.g., `cli_port`). The `state` parameter should be a JSON string like `{"csrf_token":"YOUR_CSRF_TOKEN","cli_port":"OPTIONAL_CLI_PORT"}`.
+  - `cli_port` (optional): Port for CLI specific callback redirection. *Note: this is part of the `state` parameter, but often also passed directly for convenience.*
 - **Responses:**
   - `200 OK`: GitHub login successful with JWT issued.
   - `401 Unauthorized`: Unauthorized or failed login attempt.
@@ -56,7 +56,7 @@ All endpoints are prefixed with `/api/auth`.
 - **Description:** This is the callback URL registered with Google. After successful authentication with Google, this endpoint processes the Google profile, validates it, issues a JWT, sets it as a cookie, and redirects the user (either to a frontend URL or a CLI callback).
 - **Guards:** [`GoogleAuthGuard`](./Guards.md)
 - **Query Parameters:**
-  - `state` (optional): State parameter for CSRF protection and passing custom data (e.g., `cli_port`, `csrf_token`).
+  - `state` (optional): State parameter for CSRF protection and passing custom data (e.g., `cli_port`). The `state` parameter should be a JSON string like `{"csrf_token":"YOUR_CSRF_TOKEN","cli_port":"OPTIONAL_CLI_PORT"}`.
 - **Responses:**
   - `200 OK`: Google login successful with JWT issued.
   - `401 Unauthorized`: Unauthorized or failed login attempt.

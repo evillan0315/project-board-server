@@ -19,7 +19,6 @@ import { useStore } from '@nanostores/react';
 import { themeStore } from '@/stores/themeStore';
 import { GlobalAction } from '@/types';
 import GlobalActionButton from '@/components/ui/GlobalActionButton';
-
 // Define the types for the drawer
 interface CustomDrawerProps {
   open: boolean;
@@ -33,14 +32,12 @@ interface CustomDrawerProps {
   children: ReactNode;
   title?: string;
 }
-
 const drawerWidthPercentage: Record<CustomDrawerProps['size'], number> = {
   normal: 1 / 3,
   medium: 1 / 2,
   large: 3 / 4,
   fullscreen: 1,
 };
-
 // Drawer component
 const CustomDrawer: React.FC<CustomDrawerProps> = ({
   open,
@@ -58,7 +55,6 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
   const { mode } = useStore(themeStore);
   const drawerWidth = `${drawerWidthPercentage[size] * 100}%`;
   const isFullScreen = size === 'fullscreen';
-
   // Styles for the drawer based on the position
   const drawerPaperStyle = {
     ...(position === 'left' || position === 'right'
@@ -69,12 +65,9 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
     color: theme.palette.text.primary,
     overflow: 'auto',
   };
-
   const backdrop = hasBackdrop ? true : false;
   const closeOnKey = closeOnEscape ? undefined : 'escapeKeyDown';
-
   const container = isFullScreen ? Dialog : Slide;
-
   return (
     <Drawer
       anchor={position}
@@ -176,7 +169,6 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
                 borderTop: `1px solid ${theme.palette.divider}`,
                 justifyContent: `${position === 'left' ? 'flex-end' : 'flex-start' }`,
               }}>
-
               <GlobalActionButton globalActions={footerActionButton} />
             </DialogActions>
           )}
@@ -185,5 +177,4 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
     </Drawer>
   );
 };
-
 export default CustomDrawer;

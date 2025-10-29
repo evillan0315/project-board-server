@@ -43,7 +43,7 @@ const progressContainerStyles = {
   display: 'flex',
   alignItems: 'center',
   gap: 1,
-  width: '100%',
+  minWidth: '140px',
 };
 
 const progressSliderStyles = (theme: any) => ({
@@ -115,7 +115,7 @@ const MediaPlayerControls: React.FC<MediaPlayerControlsProps> = () => {
     [mediaElement, setTrackProgress],
   );
 
-  const isPlayerDisabled = !currentTrack || !mediaElement || isFetchingMedia; // Corrected: use isFetchingMedia
+  const isPlayerDisabled = false; //!currentTrack || !mediaElement || isFetchingMedia; // Corrected: use isFetchingMedia
 
   return (
     <Box

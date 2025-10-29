@@ -47,7 +47,7 @@ import { addLog } from '@/stores/logStore';
 import {
   INSTRUCTION,
   ADDITIONAL_INSTRUCTION_EXPECTED_OUTPUT,
-} from '@/constants/instruction';
+} from '@/constants/instructions';
 import { generateCode, applyProposedChanges } from '@/api/llm';
 import { LlmOutputFormat, LlmGeneratePayload, ModelResponse } from '@/types';
 import BottomToolbar from './BottomToolbar';

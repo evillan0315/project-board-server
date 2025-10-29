@@ -330,14 +330,22 @@ export class MediaService {
         where: { title: albumTitle, artistId: artist.id, createdById: userId },
       });
       if (!album) {
+        let releaseDate: Date | null = null;
+        if (metadata?.release_date) {
+          const parsedDate = new Date(metadata.release_date);
+          if (!isNaN(parsedDate.getTime())) {
+            releaseDate = parsedDate;
+          } else {
+            this.logger.warn(`Invalid release_date for album '${albumTitle}': ${metadata.release_date}`);
+          }
+        }
+
         album = await this.prisma.album.create({
           data: {
             title: albumTitle,
             artistId: artist.id,
             createdById: userId,
-            releaseDate: metadata?.release_date
-              ? new Date(metadata.release_date)
-              : null,
+            releaseDate: releaseDate,
           },
         });
         this.logger.log(`Created new Album: ${album.title}`);
@@ -839,7 +847,7 @@ export class MediaService {
       try {
         const ffmpegVersion = await this.checkVersion('ffmpeg', ['-version']);
         this.logger.debug(
-          `FFmpeg version for scan: ${ffmpegVersion.split('\n')[0]}`,
+          `FFmpeg version for scan: ${ffmpegVersion.split('\n')[0]} `,
         );
         ffmpegAvailable = true;
       } catch (err) {
@@ -941,7 +949,7 @@ export class MediaService {
             existingVideoMetadata.data !== null &&
             !Array.isArray(existingVideoMetadata.data) && // Ensure it's not an array
             'thumbnail' in existingVideoMetadata.data &&
-            (existingVideoMetadata.data as Prisma.JsonObject).thumbnail; // Cast for explicit access
+            (existingVideoMetadata.data as Prisma.JsonObject).thumbnail;
 
           if (!hasThumbnailInMetadata) {
             this.logger.log(
@@ -984,7 +992,7 @@ export class MediaService {
                       data: {
                         ...currentMetadataData,
                         thumbnail: thumbnailUrl,
-                      } as Prisma.JsonValue, // Cast back to JsonValue for the property type
+                      } as Prisma.JsonValue,
                     }
                   : m,
               );

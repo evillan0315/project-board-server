@@ -7,7 +7,7 @@ import {
 } from '../common/services/endpoint-discovery.service';
 
 @ApiTags('endpoints')
-@Controller('endpoints')
+@Controller('api/endpoints')
 export class EndpointsController {
   constructor(
     private readonly endpointDiscoveryService: EndpointDiscoveryService,

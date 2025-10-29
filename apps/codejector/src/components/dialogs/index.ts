@@ -6,5 +6,5 @@ export { default as FileUploaderDialog } from './FileUploaderDialog';
 export { default as FilePickerDialog } from './FilePickerDialog';
 // REMOVED: ScanPathsDialog moved to code-generator/drawerContent and is now a Drawer
 // export { default as ScanPathsDialog } from './ScanPathsDialog';
-export { default as TerminalSettingsDialog } from './TerminalSettingsDialog';
+
 export { default as GlobalDialog } from '@/components/ui/dialogs/GlobalDialog';

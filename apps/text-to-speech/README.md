@@ -37,21 +37,16 @@ Before you begin, ensure you have the following installed:
 
 1.  **Clone the repository (if you haven't already):**
     ```bash
-    git clone https://github.com/evillan0315/project-board-server.git
-    cd project-board-server
+    git clone [https://github.com/evillan0315/project-board-server.git](https://github.com/evillan0315/text-to-speech)
+    cd text-to-speech)
     ```
 
-2.  **Navigate to the frontend application directory:**
-    ```bash
-    cd apps/text-to-speech
-    ```
-
-3.  **Install dependencies:**
+2.  **Install dependencies:**
     ```bash
     pnpm install
     ```
 
-4.  **Initialize Tailwind CSS (if not already done by script):**
+3.  **Initialize Tailwind CSS (if not already done by script):**
     ```bash
     pnpm run tailwind:init
     ```
@@ -157,7 +152,7 @@ This frontend interacts with the following backend endpoints (assuming `VITE_APP
 -   `GET /api/auth/google`: Initiates Google OAuth2 login redirect.
 -   `GET /api/auth/github`: Initiates GitHub OAuth2 login redirect.
 -   `GET /api/auth/me`: Fetches the profile of the currently authenticated user.
--   `POST /api/google-tts/generate`: Generates speech audio from text (requires authentication).
+-   `POST /api/google-tts/generate`: Generates speech audio from a structured dialogue `prompt` using Google Gemini's TTS model, supporting multiple named speakers and their voice profiles (requires authentication).
     -   **Description:** Generates speech audio from text using Google Gemini's TTS model, supporting multiple speakers.
     -   **Request Body (JSON):**
         ```json

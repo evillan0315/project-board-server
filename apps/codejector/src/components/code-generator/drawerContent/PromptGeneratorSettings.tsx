@@ -8,7 +8,7 @@ import { useStore } from '@nanostores/react';
 import {
   INSTRUCTION_SCHEMA_OUTPUT,
   INSTRUCTION_EXAMPLE_OUTPUT,
-} from '@/constants/instruction';
+} from '@/constants/instructions';
 import {
   llmStore,
   setAiInstruction,

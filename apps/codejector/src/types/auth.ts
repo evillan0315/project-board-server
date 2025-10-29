@@ -61,6 +61,14 @@ export interface RegisterRequest {
   phone_number?: string;
 }
 
+export interface IForgotPasswordRequest {
+  email: string;
+}
+
+export interface IForgotPasswordResponse {
+  message: string;
+}
+
 export interface IAuthResponse {
   accessToken: string;
   refreshToken: string;

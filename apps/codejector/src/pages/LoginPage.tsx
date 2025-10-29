@@ -6,8 +6,8 @@ import {
   loginSuccess,
   setError as setAuthError,
 } from '@/stores/authStore';
-import { loginLocal } from '@/services/authService';
-import { APP_NAME } from '@/constants'; // Import APP_NAME
+import { loginLocal } from '@/api/auth'; // Changed to '@/api/auth'
+import { APP_NAME } from '@/constants/app'; // Import APP_NAME from app.ts
 
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -108,14 +108,13 @@ const LoginPage: React.FC = () => {
       return;
     }
 
-    const result = await loginLocal({ email, password });
-
-    if (result.success) {
+    try {
+      await loginLocal({ email, password });
       // Login successful, authStore should be updated and redirected by useEffect
       // No explicit navigate here, let useEffect handle it for consistency
-    } else {
+    } catch (e) {
       // Error message is already set in authStore via loginLocal
-      setLocalError(authStoreError); // Use authStoreError which is updated by the service
+      // No need to setLocalError here, as authStoreError will be updated and reflected
     }
   };
 
@@ -206,16 +205,28 @@ const LoginPage: React.FC = () => {
               'Sign In'
             )}
           </Button>
-          <Link
-            to="/register"
-            className="block text-center mt-2"
-            style={{
-              color: theme.palette.text.secondary,
-              textDecoration: 'underline',
-            }}
-          >
-            Don't have an account? Register
-          </Link>
+          <Box className="flex justify-between items-center w-full">
+            <Link
+              to="/register"
+              className="block text-center mt-2"
+              style={{
+                color: theme.palette.text.secondary,
+                textDecoration: 'underline',
+              }}
+            >
+              Don't have an account? Register
+            </Link>
+            <Link
+              to="/forgot-password"
+              className="block text-center mt-2"
+              style={{
+                color: theme.palette.text.secondary,
+                textDecoration: 'underline',
+              }}
+            >
+              Forgot password?
+            </Link>
+          </Box>
         </Box>
 
         <Divider

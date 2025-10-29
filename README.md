@@ -136,15 +136,13 @@ GOOGLE_GEMINI_LIVE_MODEL='gemini-live-2.5-flash-preview' # Specific model for li
 # Google Cloud Translation API Key
 GOOGLE_TRANSLATION_API_KEY='your_translation_api_key' # NEW: API Key for Google Cloud Translation
 
-# Mailer Configuration (for Gmail OAuth2)
-# To use Gmail with OAuth2, you need to obtain specific credentials from the Google Cloud Console.
-# See 'Google OAuth2 Credentials Setup' in the documentation for detailed instructions.
+# Mailer Configuration (for Gmail App Password)
+# Ensure your Gmail account has 2-Step Verification enabled to generate an App Password.
+# See Google's documentation for 'App passwords' for detailed instructions.
 MAIL_SERVICE='gmail'
-GOOGLE_EMAIL_USER='your-gmail-account@gmail.com' # The Gmail address to send emails from
-GOOGLE_CLIENT_ID='your_google_oauth_client_id' # OAuth Client ID for Gmail
-GOOGLE_CLIENT_SECRET='your_google_oauth_client_secret' # OAuth Client Secret for Gmail
-GOOGLE_REFRESH_TOKEN='your_google_oauth_refresh_token' # OAuth Refresh Token for Gmail
-MAIL_FROM='"My App" <your-gmail-account@gmail.com>' # Display name and sender email (should match GOOGLE_EMAIL_USER)
+MAIL_USER='your-gmail-account@gmail.com' # The Gmail address to send emails from
+MAIL_PASS='your-gmail-app-password' # The generated App Password, NOT your regular Gmail password
+MAIL_FROM='"My App" <your-gmail-account@gmail.com>' # Display name and sender email (should match MAIL_USER)
 
 # Base URL for API (for email verification links, etc.)
 BASE_URL='http://localhost:3000'
@@ -453,27 +451,3 @@ This works in conjunction with the `libs/protected-models.ts` configuration, whi
 
 Made with love by [Eddie Villanueva](https://github.com/evillan0315)
 📧 [evillan0315@gmail.com](mailto:evillan0315@gmail.com)
-
-### Google OAuth2 Credentials Setup
-
-To use Gmail with OAuth2 for sending emails, you need to obtain specific credentials from the Google Cloud Console. Follow these steps:
-
-1.  **Go to Google Cloud Console**: Navigate to [https://console.cloud.google.com/](https://console.cloud.google.com/).
-2.  **Create/Select a Project**: Either create a new project or select an existing one.
-3.  **Enable Gmail API**: In the 'APIs & Services' -> 'Library' section, search for and enable the 'Gmail API'.
-4.  **Create OAuth Client ID**: Go to 'APIs & Services' -> 'Credentials'.
-    *   Click 'CREATE CREDENTIALS' and choose 'OAuth client ID'.
-    *   Select 'Web application' (for a server-side application) or 'Desktop app' (if you're running a local script to get the refresh token).
-    *   **For Web application**: Add `https://developers.google.com/oauthplayground` to 'Authorized redirect URIs'. You might also need your actual frontend redirect URI if your application directly handles the OAuth flow for user consent.
-    *   **For Desktop app**: No redirect URIs are strictly required for generating a refresh token via the OAuth Playground, but `urn:ietf:wg:oauth:2.0:oob` is a common placeholder.
-    *   Take note of your `client ID` and `client secret`.
-5.  **Obtain a Refresh Token (using OAuth 2.0 Playground)**:
-    *   Go to [https://developers.google.com/oauthplayground](https://developers.google.com/oauthplayground).
-    *   Click the gear icon in the top right corner and check 'Use your own OAuth credentials'. Enter your `client ID` and `client secret`.
-    *   In Step 1, under 'Select & authorize APIs', add the scope `https://mail.google.com/` (or `https://www.googleapis.com/auth/gmail.send` if you only need to send emails).
-    *   Click 'Authorize APIs'. You will be prompted to log in to your Google account and grant permissions.
-    *   In Step 2, click 'Exchange authorization code for tokens'.
-    *   The response will include a `refresh_token`. Copy this value.
-    *   **Important**: Refresh tokens are long-lived but can be revoked. Store it securely in your `.env` file.
-
-Now you have all the necessary values (`GOOGLE_EMAIL_USER`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`) to configure the secure Gmail transport.

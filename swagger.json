@@ -112,7 +112,7 @@
         ]
       }
     },
-    "/endpoints": {
+    "/api/endpoints": {
       "get": {
         "operationId": "EndpointsController_getAllEndpoints",
         "parameters": [],
@@ -137,7 +137,7 @@
         ]
       }
     },
-    "/endpoints/{controllerName}": {
+    "/api/endpoints/{controllerName}": {
       "get": {
         "description": "Retrieves all registered API endpoints associated with a given controller name (e.g., \"FileController\").",
         "operationId": "EndpointsController_getEndpointsByController",
@@ -22066,7 +22066,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-10-28T09:16:43.067Z",
+            "example": "2025-10-28T19:21:10.511Z",
             "format": "date-time"
           },
           "requestType": {

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Chosen Palette: Calm Neutrals & Slate Blue -->
+    <!-- Application Structure Plan: The SPA is designed as a multi-tabbed dashboard, with each tab representing a distinct phase of the research plan (Overview, Discovery, Tech Analysis, Design, Implementation). This structure was chosen because a research plan is a phased, linear process. A tabbed interface allows the user to intuitively navigate this process step-by-step, focusing on one phase at a time without being overwhelmed by a long, scrolling document. Key interactions include: 1) Main tab navigation to swap entire content views. 2) Sub-tab navigation within the "Tech Analysis" phase to drill down into Frontend/Backend details. 3) Interactive charts (Donut, Bar) to visualize data-driven parts of the plan like feature priority and project timelines. This goal-oriented flow (from concept to implementation) directly supports a user's need to understand, review, and "buy into" the proposed plan. -->
+    <!-- Visualization & Content Choices: 
+        1. Report Info: Feature Prioritization (Generated MVP list) -> Goal: Inform/Prioritize -> Viz: Donut Chart + HTML List -> Interaction: Hover tooltips on chart -> Justification: Instantly shows proportional breakdown of feature effort (Must-Have, Should-Have). -> Library: Chart.js (Canvas).
+        2. Report Info: Project Timeline (Generated Phases) -> Goal: Show Change/Progression -> Viz: Horizontal Bar Chart -> Interaction: Hover tooltips for duration -> Justification: Clearest way to visualize a project schedule and relative phase durations. -> Library: Chart.js (Canvas).
+        3. Report Info: Tech Stack Rationale (User-provided stack) -> Goal: Organize/Inform -> Viz: HTML/Tailwind Sub-Tabs & Lists -> Interaction: Click to toggle between Frontend/Backend details -> Justification: Organizes complex technical details into clean, digestible sections. -> Library: Vanilla JS.
+        4. Report Info: High-Level System Architecture (Generated) -> Goal: Organize/Relate -> Viz: HTML/Tailwind Diagram (flexbox boxes & arrows) -> Interaction: Static visual -> Justification: Provides a clear, simple component diagram without using SVG or Mermaid. -> Library: HTML/Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Research Plan: PM System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .nav-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-btn.active {
+            color: #2563eb; 
+            border-bottom-color: #2563eb;
+            font-weight: 600;
+        }
+        .nav-btn.inactive {
+            color: #64748b;
+            border-bottom-color: transparent;
+        }
+        .tech-tab-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .tech-tab-btn.active {
+            background-color: #e0f2fe;
+            color: #0284c7;
+            font-weight: 500;
+        }
+        .tech-tab-btn.inactive {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+
+    <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-slate-900">Project Management System</h1>
+            <p class="text-xl text-slate-600 mt-2">Interactive Research & Development Plan</p>
+        </header>
+
+        <nav class="border-b border-slate-200 mb-8">
+            <div class="flex flex-wrap -mb-px space-x-2 sm:space-x-6">
+                <button class="nav-btn active text-sm sm:text-base py-4 px-1 border-b-2" data-tab="overview">Overview</button>
+                <button class="nav-btn inactive text-sm sm:text-base py-4 px-1 border-b-2" data-tab="discovery">Phase 1: Discovery</button>
+                <button class="nav-btn inactive text-sm sm:text-base py-4 px-1 border-b-2" data-tab="tech">Phase 2: Tech Analysis</button>
+                <button class="nav-btn inactive text-sm sm:text-base py-4 px-1 border-b-2" data-tab="design">Phase 3: Design & Arch.</button>
+                <button class="nav-btn inactive text-sm sm:text-base py-4 px-1 border-b-2" data-tab="implementation">Phase 4: Implementation</button>
+            </div>
+        </nav>
+
+        <main>
+            <!-- Overview Section -->
+            <section id="overview" class="tab-content space-y-6">
+                <p class="mb-6 text-lg text-slate-700">This interactive plan outlines the research and development phases for building a modern, full-stack Project Management System. The goal is to create a scalable, high-performance application leveraging a TypeScript/React frontend and a Python/FastAPI backend. This dashboard allows you to explore each phase of the plan, from initial discovery to implementation.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-3">Project Goals</h3>
+                        <ul class="list-disc list-outside pl-5 space-y-2 text-slate-700">
+                            <li>Define a clear MVP (Minimum Viable Product) scope.</li>
+                            <li>Validate the chosen technology stack (React/TS, Python/FastAPI).</li>
+                            <li>Design a scalable system architecture.</li>
+                            <li>Establish a component-based UI/UX design system.</li>
+                            <li>Create a modular implementation plan and timeline.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-3">Core Technologies</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <h4 class="font-semibold text-slate-800">Frontend</h4>
+                                <p class="text-slate-700">React, TypeScript, MUI & Tailwind CSS</p>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-slate-800">Backend</h4>
+                                <p class="text-slate-700">Python, FastAPI, PostgreSQL (recommended)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Discovery Section -->
+            <section id="discovery" class="tab-content hidden space-y-8">
+                <p class="mb-6 text-lg text-slate-700">Phase 1 focuses on user and stakeholder research to define the core problem and establish a clear set of requirements. This involves competitor analysis, defining user personas, and outlining the MVP feature set.</p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-4">Key Research Questions</h3>
+                        <ul class="list-disc list-outside pl-5 space-y-2 text-slate-700">
+                            <li>Who are the target users (e.g., small teams, enterprise, freelancers)?</li>
+                            <li>What are the primary "jobs to be done" for these users?</li>
+                            <li>What core features exist in successful competitors (e.g., Asana, Trello, Jira)?</li>
+                            <li>What is the simplest "critical path" a user can take to find value?</li>
+                            <li>What are the key data models? (e.g., Users, Workspaces, Projects, Tasks, Comments).</li>
+                        </ul>
+                        
+                        <h3 class="text-xl font-semibold mt-8 mb-4">Core MVP Feature Set</h3>
+                        <ul class="list-disc list-outside pl-5 space-y-2 text-slate-700">
+                            <li><strong>User Authentication:</strong> Secure sign-up, login, and password reset.</li>
+                            <li><strong>Workspace/Project Creation:</strong> Ability to create and manage distinct projects.</li>
+                            <li><strong>Task Management:</strong> Create, assign, update status (e.g., ToDo, In-Progress, Done), and delete tasks.</li>
+                            <li><strong>Basic Collaboration:</strong> Commenting on tasks.</li>
+                            <li><strong>Dashboard:</strong> A simple overview of user's assigned tasks.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-4 text-center">MVP Feature Prioritization</h3>
+                        <p class="text-center text-slate-600 mb-4">Estimated breakdown of development effort for the MVP.</p>
+                        <div class="chart-container relative w-full max-w-sm mx-auto h-72 sm:h-80 max-h-80">
+                            <canvas id="priorityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tech Analysis Section -->
+            <section id="tech" class="tab-content hidden space-y-6">
+                <p class="mb-6 text-lg text-slate-700">Phase 2 involves a deep dive into the proposed technology stack to confirm its suitability, identify best practices, and define our development patterns. We will research libraries, data access patterns, and integration methods.</p>
+                
+                <div class="flex space-x-2 rounded-lg bg-slate-100 p-1 mb-6 max-w-md">
+                    <button class="tech-tab-btn active w-full py-2 px-4 rounded-md" data-tech-tab="frontend">Frontend Stack</button>
+                    <button class="tech-tab-btn inactive w-full py-2 px-4 rounded-md" data-tech-tab="backend">Backend Stack</button>
+                </div>
+
+                <div id="frontend" class="tech-tab-content bg-white p-6 rounded-lg shadow-sm border border-slate-200 space-y-4">
+                    <h3 class="text-2xl font-semibold mb-4">Frontend: React, TypeScript, MUI & Tailwind</h3>
+                    <h4 class="text-lg font-semibold">Key Research Areas:</h4>
+                    <ul class="list-disc list-outside pl-5 space-y-2 text-slate-700">
+                        <li><strong>React & TypeScript:</strong> Establish strict TS configs, component structure (e.g., atomic design), and state management (Context API for simple state, Zustand/Redux for complex).</li>
+                        <li><strong>MUI vs. Tailwind CSS:</strong> Research best methods for using them together. Use MUI for core components (Buttons, Modals, Forms) and Tailwind for custom layout and utility styling.</li>
+                        <li><strong>Data Fetching:</strong> Standardize on `fetch` API or a library like `react-query` for caching, mutation, and re-fetching.</li>
+                        <li><strong>Form Handling:</strong> Evaluate `react-hook-form` for performance and validation.</li>
+                        <li><strong>Testing:</strong> Define testing strategy using Jest and React Testing Library.</li>
+                    </ul>
+                </div>
+
+                <div id="backend" class="tech-tab-content hidden bg-white p-6 rounded-lg shadow-sm border border-slate-200 space-y-4">
+                    <h3 class="text-2xl font-semibold mb-4">Backend: Python, FastAPI & PostgreSQL</h3>
+                    <h4 class="text-lg font-semibold">Key Research Areas:</h4>
+                    <ul class="list-disc list-outside pl-5 space-y-2 text-slate-700">
+                        <li><strong>FastAPI:</strong> Leverage Pydantic for automatic data validation and OpenAPI doc generation. Establish project structure (e.g., routers, services, models).</li>
+                        <li><strong>Database (PostgreSQL):</strong> Choose an ORM. `SQLAlchemy 2.0` (async) or a simpler query builder like `Databases`. Define core schema and relationships.</li>
+                        <li><strong>Authentication:</strong> Implement OAuth2 (Password flow) with JWT tokens for secure, stateless auth.</li>
+                        <li><strong>Async Operations:</strong> Identify long-running tasks (e.g., email notifications) to be handled by a task queue like Celery.</li>
+                        <li><strong>Testing:</strong> Use `pytest` with `TestClient` for comprehensive API endpoint testing.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Design & Arch. Section -->
+            <section id="design" class="tab-content hidden space-y-8">
+                <p class="mb-6 text-lg text-slate-700">Phase 3 translates our research into concrete plans. This includes creating low-fidelity wireframes for the UI, defining the user flow, and designing the high-level system architecture and database schema.</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-4">UI/UX Design Research</h3>
+                        <ul class="list-disc list-outside pl-5 space-y-2 text-slate-700">
+                            <li>Create low-fidelity wireframes for all MVP screens (Login, Dashboard, Project View, Task Modal).</li>
+                            <li>Define the primary user flow (e.g., Sign up -> Create Project -> Create Task -> Assign Task).</li>
+                            <li>Establish a basic design system (typography, colors, spacing) using Tailwind's config and MUI's theme provider.</li>
+                            <li>Focus on a clean, responsive, and intuitive interface.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-6 text-center">High-Level System Architecture</h3>
+                        <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 text-center">
+                            <div class="w-40 p-4 bg-sky-100 text-sky-800 rounded-lg shadow-sm">
+                                <h4 class="font-semibold">User (Browser)</h4>
+                                <p class="text-sm">React/TS Client</p>
+                            </div>
+                            <span class="text-2xl font-semibold text-slate-500 transform rotate-90 sm:rotate-0">&rarr;</span>
+                            <div class="w-40 p-4 bg-indigo-100 text-indigo-800 rounded-lg shadow-sm">
+                                <h4 class="font-semibold">Backend API</h4>
+                                <p class="text-sm">Python / FastAPI</p>
+                            </div>
+                            <span class="text-2xl font-semibold text-slate-500 transform rotate-90 sm:rotate-0">&rarr;</span>
+                            <div class="w-40 p-4 bg-emerald-100 text-emerald-800 rounded-lg shadow-sm">
+                                <h4 class="font-semibold">Database</h4>
+                                <p class="text-sm">PostgreSQL</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Implementation Section -->
+            <section id="implementation" class="tab-content hidden space-y-8">
+                <p class="mb-6 text-lg text-slate-700">The final phase involves creating a concrete implementation plan. We'll break down the MVP into milestones, establish a realistic timeline, and set up the development environment, CI/CD pipeline, and version control (Git).</p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-4">Milestone Breakdown</h3>
+                        <ul class="list-decimal list-outside pl-5 space-y-2 text-slate-700">
+                            <li><strong>M1: Setup & Foundations:</strong> Project scaffolding (React/FastAPI), CI/CD, DB setup, User Auth API.</li>
+                            <li><strong>M2: Core API:</strong> CRUD operations for Workspaces, Projects, and Tasks.</li>
+                            <li><strong>M3: Core UI:</strong> Build React components for Login, Dashboard, and Project/Task views. Integrate with API.</li>
+                            <li><strong>M4: Collaboration Features:</strong> Implement task commenting system.</li>
+                            <li><strong>M5: Testing & Deployment:</strong> End-to-end testing, bug fixing, and initial deployment.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-4 text-center">Proposed MVP Timeline</h3>
+                        <p class="text-center text-slate-600 mb-4">Estimated duration for each development phase.</p>
+                        <div class="chart-container relative w-full max-w-2xl mx-auto h-80 sm:h-96 max-h-96">
+                            <canvas id="timelineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.nav-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.getAttribute('data-tab');
+
+                    tabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.classList.add('inactive');
+                    });
+                    tab.classList.remove('inactive');
+                    tab.classList.add('active');
+
+                    tabContents.forEach(content => {
+                        if (content.id === target) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            const techTabs = document.querySelectorAll('.tech-tab-btn');
+            const techTabContents = document.querySelectorAll('.tech-tab-content');
+
+            techTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.getAttribute('data-tech-tab');
+
+                    techTabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.classList.add('inactive');
+                    });
+                    tab.classList.remove('inactive');
+                    tab.classList.add('active');
+
+                    techTabContents.forEach(content => {
+                        if (content.id === target) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            function initCharts() {
+                const priorityCtx = document.getElementById('priorityChart')?.getContext('2d');
+                if (priorityCtx) {
+                    new Chart(priorityCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Must-Have (Core)', 'Should-Have (UX)', 'Nice-to-Have (Polish)'],
+                            datasets: [{
+                                label: 'Feature Priority',
+                                data: [65, 25, 10],
+                                backgroundColor: [
+                                    '#0ea5e9',
+                                    '#6366f1',
+                                    '#a78bfa',
+                                ],
+                                borderColor: '#ffffff',
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.label}: ${context.raw}%`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                const timelineCtx = document.getElementById('timelineChart')?.getContext('2d');
+                if (timelineCtx) {
+                    new Chart(timelineCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['M1: Setup & Auth', 'M2: Core API', 'M3: Core UI', 'M4: Collaboration', 'M5: Testing & Deploy'],
+                            datasets: [{
+                                label: 'Duration (Weeks)',
+                                data: [2, 3, 4, 2, 1],
+                                backgroundColor: '#2563eb',
+                                borderRadius: 4,
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Duration (Weeks)'
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false,
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.dataset.label}: ${context.raw} weeks`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            initCharts();
+        });
+    </script>
+</body>
+</html>

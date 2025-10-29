@@ -316,55 +316,9 @@ const MediaPlayerContainer: React.FC = () => {
 
 
   return (
-    <Box className="flex justify-start items-center flex-col"> { /* Fixed height for consistency, removed sticky for parent control */ }
+    <Box className="flex justify-start items-center w-full"> { /* Fixed height for consistency, removed sticky for parent control */ }
       {/* Transcription Highlights (conditionally rendered at the top) */}
-      {showTranscription && (
-        <Paper
-          elevation={6}
-          sx={transcriptionPanelSx}
-        >
-          {isTranscribing && (
-            <Box className='flex justify-center items-center gap-2'>
-              <CircularProgress size={20} />
-            </Box>
-          )}
-          {transcriptionError && (
-            <Alert severity="error" sx={{ mb: 1 }}>
-              {transcriptionError}
-            </Alert>
-          )}
-          {currentTrack?.fileType !== FileType.AUDIO && (
-            <Alert severity="info" sx={{ mb: 1 }}>
-              Transcription is currently only supported for audio files.
-            </Alert>
-          )}
-          {currentTrack?.fileType === FileType.AUDIO &&
-            !transcriptionResult &&
-            !isTranscribing && (
-              <Button
-                variant="contained"
-                onClick={() =>
-                  currentTrack?.id && transcribeCurrentAudio(currentTrack.id)
-                }
-                disabled={!currentTrack?.id || isTranscribing}
-                sx={{ width: '100%' }}
-              >
-                Transcribe Audio
-              </Button>
-            )}
-
-          {transcriptionResult && transcriptionSyncData ? (
-            <TranscriptionHighlight
-              syncData={transcriptionSyncData}
-              currentTime={progress}
-              fullTranscription={transcriptionResult} // Pass full transcription here
-              onSeek={handleTranscriptionSeek}
-            />
-          ) : (currentTrack?.fileType === FileType.AUDIO && transcriptionResult && !isTranscribing) ? (
-            <Alert severity="info">Transcription loaded, waiting for sync data. Play audio to see highlights.</Alert>
-          ) : null}
-        </Paper>
-      )}
+      
 
       {/* Only render an audio element within this container. Video is handled by VideoModal. */}
       {currentTrack?.fileType === FileType.AUDIO && currentTrack?.streamUrl ? (

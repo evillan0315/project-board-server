@@ -29,5 +29,5 @@ The module relies on the following key dependencies:
 - `@nestjs/passport` & `passport-*` strategies: For OAuth2 and JWT authentication.
 - `bcrypt`: For password hashing.
 - `PrismaService`: For database interactions with the `User` and `Account` models.
-- `MailService`: For sending email verification links.
+- [`MailService`](../mail/MailService.md): For sending email verification links.
 - `ConfigService`: For accessing environment-specific configurations like JWT secrets and OAuth credentials.

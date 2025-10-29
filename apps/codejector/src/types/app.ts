@@ -3,6 +3,14 @@ import { SvgIconComponent } from '@mui/icons-material';
 import { RequestType, LlmOutputFormat } from './llm';
 import { FileEntry } from './refactored/fileTree';
 import { ButtonColor, ButtonVariant } from '@mui/material/Button';
+import { SvgIconTypeMap } from '@mui/material';
+import { OverridableComponent } from '@mui/material/OverridableComponent';
+
+export type MuiIconComponent = OverridableComponent<
+  SvgIconTypeMap<{}, 'svg'>
+> & {
+  muiName: string;
+};
 
 // =========================================================================
 // App & UI Component Types
@@ -14,8 +22,9 @@ export interface AppDefinition {
   description: string;
   link: string;
   linkText: string;
-  icon: SvgIconComponent;
+  icon: MuiIconComponent;
   category: string;
+  tags?: string[];
   requestType?: RequestType; // Optional, for apps that pre-configure AI editor
   llmOutputFormat?: LlmOutputFormat;
 }

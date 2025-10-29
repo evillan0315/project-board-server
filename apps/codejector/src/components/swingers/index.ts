@@ -21,4 +21,8 @@ export * from './StreamerList'; // Export the new StreamerList component
 export * from './StreamerCard'; // Export the new StreamerCard component
 export * from './StreamerHeader'; // Export the new StreamerHeader component
 export * from './RoomConnectionsTable'; // New export: RoomConnectionsTable
-export * from './ChatRoom'; // NEW: Export ChatRoom component
+export * from './ChatRoom'; // Re-export ChatRoom component (now with internal sub-components)
+
+// Export the new chatroom components if needed directly by other modules,
+// otherwise, they are internal to ChatRoom and do not need to be exported here.
+// For now, assuming they are internal to ChatRoom and not directly consumed elsewhere.

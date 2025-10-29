@@ -16,16 +16,17 @@ Authentication Guards in this module are responsible for protecting routes and W
 
 - **Purpose:** Initiates and handles the callback for the Google OAuth2 authentication flow.
 - **Extends:** `AuthGuard('google')` from `@nestjs/passport`.
-- **Dynamic State:** Overrides `getAuthenticateOptions` to dynamically generate a `state` parameter. This `state` includes:
-  - `cli_port` (optional): Passed from query parameters, used for redirecting to a CLI's local server after authentication.
-  - `csrf_token`: A cryptographically strong token generated for CSRF protection. **Important:** The callback handler (e.g., `AuthController.googleAuthRedirect`) is responsible for validating this `csrf_token` against a securely stored original token.
+- **Dynamic State & CSRF Protection:** Overrides `getAuthenticateOptions` to dynamically generate a `state` parameter. This `state` is a JSON string that *must* include a `csrf_token` and *may* include an optional `cli_port`.
+    - **`csrf_token`**: A cryptographically strong token generated to prevent Cross-Site Request Forgery (CSRF) attacks. This token is securely stored (e.g., in session or a temporary cookie) before the redirect and validated upon callback.
+    - **`cli_port`** (optional): Passed from query parameters, used for redirecting to a CLI's local server after authentication.
 - **Request Handling:** Its `handleRequest` method performs the CSRF validation on the returned state parameter and handles authentication success or failure.
 
 ### `GitHubAuthGuard`
 
 - **Purpose:** Initiates and handles the callback for the GitHub OAuth2 authentication flow.
 - **Extends:** `AuthGuard('github')` from `@nestjs/passport`.
-- **Behavior:** Similar to `GoogleAuthGuard` but configured for GitHub. It also supports passing a `cli_port` for CLI-specific redirects.
+- **Dynamic State & CSRF Protection:** Similar to `GoogleAuthGuard`, it uses a `state` parameter (JSON string containing `csrf_token` and optional `cli_port`) for CSRF protection and CLI-specific redirects.
+- **Behavior:** Its `handleRequest` method performs the CSRF validation on the returned state parameter and handles authentication success or failure.
 
 ### `RolesGuard`
 

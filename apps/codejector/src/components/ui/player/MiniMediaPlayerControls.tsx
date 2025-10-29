@@ -34,7 +34,7 @@ import {
 } from '@/stores/mediaStore';
 
 interface MiniMediaPlayerControlsProps {
-  mediaElementRef: React.RefObject<HTMLMediaElement>; // Changed to HTMLMediaElement
+  // mediaElementRef: React.RefObject<HTMLMediaElement>; // Remove this prop
 }
 
 const formatTime = (time: number): string => {
@@ -44,11 +44,9 @@ const formatTime = (time: number): string => {
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 };
 
-const MiniMediaPlayerControls: React.FC<MiniMediaPlayerControlsProps> = ({
-  mediaElementRef,
-}) => {
+const MiniMediaPlayerControls: React.FC<MiniMediaPlayerControlsProps> = () => {
   const theme = useTheme();
-  const { isFetchingMedia } = useStore($mediaStore); // Corrected: use isFetchingMedia
+  const { isFetchingMedia, mediaElement } = useStore($mediaStore); // Get mediaElement directly from store
   const isPlaying = useStore(isPlayingAtom);
   const trackProgress = useStore(progressAtom);
   const duration = useStore(durationAtom);
@@ -71,8 +69,8 @@ const MiniMediaPlayerControls: React.FC<MiniMediaPlayerControlsProps> = ({
 
   const handleTimeChange = (event: Event, newValue: number | number[]) => {
     const newTime = typeof newValue === 'number' ? newValue : 0;
-    if (mediaElementRef?.current) {
-      mediaElementRef.current.currentTime = newTime;
+    if (mediaElement) {
+      mediaElement.currentTime = newTime;
       setTrackProgress(newTime);
     }
   };
@@ -80,12 +78,12 @@ const MiniMediaPlayerControls: React.FC<MiniMediaPlayerControlsProps> = ({
   const handleTimeChangeCommitted = useCallback(
     (_event: Event | SyntheticEvent, newValue: number | number[]) => {
       const newTime = typeof newValue === 'number' ? newValue : 0;
-      if (mediaElementRef?.current) {
-        mediaElementRef.current.currentTime = newTime;
+      if (mediaElement) {
+        mediaElement.currentTime = newTime;
         setTrackProgress(newTime);
       }
     },
-    [mediaElementRef, setTrackProgress],
+    [mediaElement, setTrackProgress],
   );
 
   const isPlayerDisabled = !currentTrack || isFetchingMedia; // Corrected: use isFetchingMedia

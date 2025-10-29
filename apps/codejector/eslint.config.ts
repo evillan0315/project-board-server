@@ -6,7 +6,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import eslintPluginReactHooks from 'eslint-plugin-react-hooks';
 import eslintPluginReactRefresh from 'eslint-plugin-react-refresh';
 import eslintPluginUnusedImports from 'eslint-plugin-unused-imports';
-import pluginPrettier from 'eslint-plugin-prettier'; // <-- Uncommented
+import pluginPrettier from 'eslint-plugin-prettier';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -46,7 +46,7 @@ export default tseslint.config(
       'react-hooks': eslintPluginReactHooks,
       'react-refresh': eslintPluginReactRefresh,
       'unused-imports': eslintPluginUnusedImports,
-      prettier: pluginPrettier, // <-- Uncommented
+      prettier: pluginPrettier,
     },
     languageOptions: {
       parser: tseslint.parser,
@@ -90,7 +90,6 @@ export default tseslint.config(
 
       // React rules – import recommended sets directly from plugin
       ...pluginReact.configs.recommended.rules,
-      //...pluginReact.configs['jsx-runtime'].rules,
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
 
@@ -106,13 +105,14 @@ export default tseslint.config(
       // TypeScript rules
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
+      // Re-enable unused vars rule from TypeScript plugin
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
 
       // Unused imports
-      'unused-imports/no-unused-imports': 'off',
-      'unused-imports/no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'warn',
+      'unused-imports/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
 
-      // Prettier <-- Uncommented
+      // Prettier
       'prettier/prettier': [
         'warn',
         {

@@ -32,7 +32,7 @@ export const TranscriptionHighlight: React.FC<TranscriptionHighlightProps> = ({
                               // This ensures scrolling for distinct segments.
 
   return (
-    <Box>
+    <Box className="flex flex-col items-start">
       {/* Previous Segments */}
       {previousSegments.map((segment, index) => (
         <Typography

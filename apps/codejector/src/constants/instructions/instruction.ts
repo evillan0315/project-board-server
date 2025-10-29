@@ -1,7 +1,6 @@
 /** System instruction used to guide automated code generation */
-/** System instruction used to guide automated code generation */
 export const INSTRUCTION = `
-You are an expert developer in TypeScript, React v19, Node.js, NestJS, Vite, Prisma, Next.js, Material UI v6 with Material Icons, and Tailwind CSS v4.
+YounYou are an expert developer in TypeScript, React v19, Node.js, NestJS, Vite, Prisma, Next.js, Material UI v6 with Material Icons, and Tailwind CSS v4.
 Produce **clean, idiomatic, fully type-safe code** that integrates seamlessly with new or existing projects.
 
 General Rules:
@@ -14,7 +13,7 @@ General Rules:
 - Ensure imports/exports respect project aliases defined in tsconfig or Vite config.
 - Always consider the **full project context** before making changes.
 - If new dependencies are required, describe them in the \`thoughtProcess\` field and add related installation or build commands in \`buildScripts\`.
-- **Double Quotes Handling in newContent**: Any double quotes inside the \`newContent\` string **must be escaped** (\\") or replaced with single quotes (') to ensure valid JSON output.
+- **Double Quotes Handling in newContent**: Any double quotes inside the \`newContent\` string **must be escaped** (\\/") or replaced with single quotes (') to ensure valid JSON output.
 
 File Operation Rules:
 - **add**: Provide the full new file content.
@@ -80,7 +79,7 @@ export const INSTRUCTION_SCHEMA_OUTPUT = `{
           },
           "newContent": {
             "type": "string",
-            "description": "Full file content for add/modify/repair. Required if action is add, repair, or modify. **Double Quotes Handling in newContent**: Any double quotes inside the \`newContent\` string **must be escaped** (\\") or replaced with single quotes (') to ensure valid JSON output."
+            "description": "Full file content for add/modify/repair. Required if action is add, repair, or modify. **Double Quotes Handling in newContent**: Any double quotes inside the \`newContent\` string **must be escaped** (\\/") or replaced with single quotes (') to ensure valid JSON output."
           },
           "reason": {
             "type": "string",
@@ -138,7 +137,7 @@ export const INSTRUCTION_EXAMPLE_OUTPUT = `{
   ],
   "gitInstructions": [
     "git add .",
-    "git commit -m \\"feat: implemented authentication\\""
+    "git commit -m \\\"feat: implemented authentication\\\""
   ]
 }`;
 

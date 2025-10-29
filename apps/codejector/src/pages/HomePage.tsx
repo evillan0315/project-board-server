@@ -18,7 +18,7 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows'; // For diff/c
 import FolderOpenIcon from '@mui/icons-material/FolderOpenOutlined'; // For file tree
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'; // For file upload
 import EditNoteIcon from '@mui/icons-material/EditNote'; // For instructions
-import { APP_NAME, APP_DESCRIPTION } from '@/constants'; // Import APP_NAME and APP_DESCRIPTION
+import { APP_NAME, APP_DESCRIPTION } from '@/constants/app'; // Import APP_NAME and APP_DESCRIPTION from app.ts
 
 interface FeatureCardProps {
   title: string;
