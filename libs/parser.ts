@@ -63,9 +63,9 @@ export function parseModel(modelName: string): ModelParseResult {
     .trim()
     .split('\n')
     .forEach((line) => {
-      const cleanedLine = line.trim().replace(/\/\/.*/, ''); // Remove comments
+      const cleanedLine = line.trim().replace(/\/\/.*/, '');
       if (!cleanedLine || cleanedLine.startsWith('@@')) return; // Ignore empty lines and model-level attributes
-      const parts = cleanedLine.split(/\s+/);
+      const parts = cleanedLine.split(/\\s+/);
       if (parts.length < 2) return;
       const [name, rawType] = parts;
       const isOptional = rawType.endsWith('?');
@@ -153,7 +153,7 @@ function mapPrismaTypeToTsType(
   ): string => {
     let optionsParts: string[] = [];
     if (message) {
-      optionsParts.push(`message: '${message}'`); // Use single quotes for consistency in template
+      optionsParts.push(`description: \"\`${message.replace(/`/g, '\\`')}\`\"`); // Use backticks for message
     }
     if (options) {
       for (const key in options) {
