@@ -34,6 +34,7 @@ import { EosIconsEnv } from '@/components/icons/EosIconsEnv';
 import { SimpleIconsGitignoredotio } from '@/components/icons/SimpleIconsGitignoredotio';
 import { FxemojiFolder } from '@/components/icons/FxemojiFolder';
 import { FxemojiOpenfolder } from '@/components/icons/FxemojiOpenfolder';
+import { LogsIcon } from '@/components/icons/LogsIcon';
 
 type IconComponent =
   | React.ElementType

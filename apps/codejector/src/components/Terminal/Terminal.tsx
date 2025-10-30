@@ -6,6 +6,11 @@
  *         Refactored to use a dedicated terminalSocketService for socket communication
  *         and terminalStore for state management. XTerminal now owns the XTerm.js instance
  *         and handles direct writing of output, while updating the store with plain text.
+ *         FIX: Updated input handling to correctly forward arrow keys and control
+ *         characters to the backend PTY, enabling interactive prompts and shell history.
+ *         FIX: Enabled full copy/paste by correctly utilizing ClipboardAddon and term.onData.
+ *         MOD: Removed `terminalHeight` prop in favor of `ResizeObserver` for dynamic sizing.
+ *         MOD: Added `onCloseDrawer` prop to align `TerminalToolbar`'s close behavior with parent drawer.
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -22,13 +27,12 @@ import { TerminalToolbar } from './TerminalToolbar';
 import TerminalSettingsDialog from './TerminalSettingsDialog';
 import {
   terminalStore,
-  connectTerminal,       // Use store's connect/disconnect orchestrators
+  connectTerminal, // Use store's connect/disconnect orchestrators
   disconnectTerminal,
-  executeCommand,
-  appendOutput,          // Used by XTerminal to update store with plain text
-  setSystemInfo,         // Used by XTerminal to update store with system info
-  setCurrentPath,        // Used by XTerminal to update store with current path
-  setConnected,          // Used by XTerminal for immediate state update from socket events
+  appendOutput, // Used by XTerminal to update store with plain text
+  setSystemInfo, // Used by XTerminal to update store with system info
+  setCurrentPath, // Used by XTerminal to update store with current path
+  setConnected, // Used by XTerminal for immediate state update from socket events
 } from '@/components/Terminal/stores/terminalStore';
 import { terminalSocketService } from '@/components/Terminal/services/terminalSocketService'; // NEW: Use specific terminal socket service
 import { handleLogout } from '@/services/authService';
@@ -38,12 +42,12 @@ import { SystemInfo, PromptData } from './types/terminal'; // For type safety
 
 interface XTerminalProps {
   onLogout: () => void;
-  terminalHeight: number;
+  onCloseDrawer?: () => void; // NEW: Callback to close a parent drawer/modal
 }
 
 export const XTerminal: React.FC<XTerminalProps> = ({
   onLogout,
-  terminalHeight,
+  onCloseDrawer,
 }) => {
   const { isConnected } = useStore(terminalStore);
   const navigate = useNavigate();
@@ -53,7 +57,7 @@ export const XTerminal: React.FC<XTerminalProps> = ({
   const terminalContainerRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // State for TerminalSettingsDialog
 
   // ──────────────────────────────────────────────
   // Initialize terminal with WebGL + Clipboard
@@ -98,124 +102,74 @@ export const XTerminal: React.FC<XTerminalProps> = ({
         try {
           const webglAddon = new WebglAddon();
           term.loadAddon(webglAddon);
-          console.log('[XTerminal] WebGL renderer enabled.');
+          //console.log('[XTerminal] WebGL renderer enabled.');
         } catch (err) {
-          console.warn('[XTerminal] WebGL not available:', err);
+          //console.warn('[XTerminal] WebGL not available:', err);
         }
 
         setTimeout(() => {
           try {
             fitAddon.fit();
           } catch (err) {
-            console.warn('[XTerminal] Fit skipped:', err);
+            //console.warn('[XTerminal] Fit skipped:', err);
           }
         }, 100);
 
         xtermRef.current = term;
         fitAddonRef.current = fitAddon;
 
-        // The initial 'Project Terminal Ready' message is now handled by connectTerminal/appendOutput
-        // The prompt is also handled by socket events and terminalStore state updates
-        // term.writeln('\x1b[36mProject Terminal Ready\x1b[0m');
-        // term.writeln('---------------------------------------');
-        // term.write('$ ');
+        // The initial 'Project Terminal Ready' message and prompt are now handled by
+        // connectTerminal/appendOutput and the PTY itself, respectively.
+        // The frontend no longer manages a local command buffer or writes a '$ ' prompt.
 
         // ──────────────────────────────────────────────
-        // Input Handling + Command History (local to XTerminal) and sending commands
+        // Input Handling: Use onData for all raw input (characters, pastes)
+        // and onKey for specific control sequences.
         // ──────────────────────────────────────────────
-        let commandBuffer = '';
-        const history: string[] = [];
-        let historyIndex = -1;
-
-        const redrawCommandLine = (currentTerm: Terminal, buffer: string) => {
-            // Clear current line after '$ '
-            currentTerm.write('\x1b[2K\r$ ' + buffer);
-        };
-
-        term.onKey(({ key, domEvent }) => {
-          const { key: pressedKey, ctrlKey } = domEvent;
-
-          // Handle Ctrl+C for copy (if selection) or interrupt (if no selection)
-          if (ctrlKey && pressedKey.toLowerCase() === 'c') {
-            if (term.hasSelection()) {
-              navigator.clipboard.writeText(term.getSelection() ?? '').catch(() => {});
-              term.clearSelection();
-            } else {
-              // If no selection, send Ctrl+C to terminal (interrupt)
-              terminalSocketService.sendInput('\x03'); // ASCII for Ctrl+C
-            }
-            return;
-          }
-
-          // Handle Ctrl+V for paste
-          if (ctrlKey && pressedKey.toLowerCase() === 'v') {
-            navigator.clipboard
-              .readText()
-              .then((clipText) => {
-                if (clipText) {
-                  commandBuffer += clipText;
-                  term.write(clipText);
-                }
-              })
-              .catch(() => {});
-            return;
-          }
-
-          switch (pressedKey) {
-            case 'Enter':
-              term.write('\r\n'); // Display newline in terminal
-              const trimmed = commandBuffer.trim();
-              if (trimmed.length > 0) {
-                executeCommand(trimmed); // Use store action to send command via service
-                history.unshift(trimmed); // Add to local history
-              }
-              commandBuffer = '';
-              historyIndex = -1;
-              term.write('$ '); // Display prompt immediately for responsiveness
-              break;
-
-            case 'Backspace':
-              if (commandBuffer.length > 0) {
-                commandBuffer = commandBuffer.slice(0, -1);
-                term.write('\b \b'); // Erase character in terminal: backspace, space, backspace
-              }
-              break;
-
-            case 'ArrowUp':
-              if (history.length > 0 && historyIndex < history.length - 1) {
-                historyIndex++;
-                commandBuffer = history[historyIndex];
-                redrawCommandLine(term, commandBuffer);
-              }
-              break;
-
-            case 'ArrowDown':
-              if (historyIndex > 0) {
-                historyIndex--;
-                commandBuffer = history[historyIndex];
-              } else {
-                historyIndex = -1;
-                commandBuffer = '';
-              }
-              redrawCommandLine(term, commandBuffer);
-              break;
-
-            case 'Tab':
-              // Basic tab handling, actual completion would require backend interaction
-              commandBuffer += '\t';
-              term.write('  '); // Simulate tab space in terminal for visual feedback
-              break;
-
-            default:
-              // Only process single characters that are not control characters
-              if (pressedKey.length === 1 && !ctrlKey) {
-                commandBuffer += pressedKey;
-                term.write(pressedKey);
-              }
-              break;
-          }
+        term.onData((data) => {
+          terminalSocketService.sendInput(data);
         });
 
+        term.onKey(({ domEvent }) => {
+          // Prevent default browser behavior for keys we handle to avoid conflicts
+          if (
+            domEvent.key === 'Tab' ||
+            domEvent.key === 'Enter' ||
+            domEvent.key === 'Backspace' ||
+            domEvent.key.startsWith('Arrow') ||
+            (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'c')
+          ) {
+            domEvent.preventDefault();
+          }
+
+          // ClipboardAddon automatically handles Ctrl+C (copy selection) and Ctrl+V (paste).
+          // Pasted text from ClipboardAddon will flow through term.onData.
+          // We only need to handle explicit control sequences here.
+
+          if (domEvent.key === 'Enter') {
+            terminalSocketService.sendInput('\r'); // Send Carriage Return to PTY
+          } else if (domEvent.key === 'Backspace') {
+            //terminalSocketService.sendInput('\x7F'); // Send ASCII DELETE to PTY
+          } else if (domEvent.key === 'Tab') {
+            terminalSocketService.sendInput('\t'); // Send Tab to PTY
+          } else if (domEvent.key === 'ArrowUp') {
+            terminalSocketService.sendInput('\x1b[A'); // ANSI escape for ArrowUp
+          } else if (domEvent.key === 'ArrowDown') {
+            terminalSocketService.sendInput('\x1b[B'); // ANSI escape for ArrowDown
+          } else if (domEvent.key === 'ArrowLeft') {
+            terminalSocketService.sendInput('\x1b[D'); // ANSI escape for ArrowLeft
+          } else if (domEvent.key === 'ArrowRight') {
+            terminalSocketService.sendInput('\x1b[C'); // ANSI escape for ArrowRight
+          } else if (domEvent.ctrlKey && domEvent.key.toLowerCase() === 'c') {
+            // If no text is selected, Ctrl+C should act as an interrupt.
+            // ClipboardAddon handles copying selected text automatically.
+            if (!term.hasSelection()) {
+              terminalSocketService.sendInput('\x03'); // ASCII for Ctrl+C (ETX) for interrupt
+            }
+          }
+          // All other printable characters are automatically captured by term.onData
+          // and sent to the backend. We do not need a 'default' case here.
+        });
       } else {
         requestAnimationFrame(waitForContainerReady);
       }
@@ -230,6 +184,35 @@ export const XTerminal: React.FC<XTerminalProps> = ({
       fitAddonRef.current = null;
     };
   }, [mode]); // Re-run if theme mode changes to update terminal theme
+
+  // ──────────────────────────────────────────────
+  // ResizeObserver for dynamic fitting
+  // ──────────────────────────────────────────────
+  useEffect(() => {
+    const container = terminalContainerRef.current;
+    const fitAddon = fitAddonRef.current;
+
+    if (!container || !fitAddon) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === container) {
+          try {
+            fitAddon.fit();
+          } catch (err) {
+            console.warn('[XTerminal] Fit on resize skipped:', err);
+          }
+        }
+      }
+    });
+
+    observer.observe(container);
+
+    return () => {
+      observer.unobserve(container);
+      observer.disconnect();
+    };
+  }, []);
 
   // ──────────────────────────────────────────────
   // Socket Event Handling (via terminalSocketService)
@@ -260,26 +243,22 @@ export const XTerminal: React.FC<XTerminalProps> = ({
     };
 
     const handlePrompt = (data: PromptData) => {
-      setCurrentPath(data.cwd); // Update nanostore
-      // No direct write to term here, terminal will eventually show the prompt
+      // Update CWD in store. PTY itself will print the prompt via `handleOutput`.
+      setCurrentPath(data.cwd);
     };
 
     // Listeners for internal connection/disconnection state changes of the underlying socket
     // These update the global `isConnected` state directly and write messages to XTerm
     const handleSocketConnect = () => {
       setConnected(true);
-      // Initial connection messages are now handled by terminalStore.connectTerminal
-      // and XTerminal's initial setup. No need to re-write on every socket reconnect.
     };
 
     const handleSocketDisconnect = (reason: string) => {
       setConnected(false);
-      // Disconnection messages are handled by terminalStore.disconnectTerminal
     };
 
     const handleSocketConnectError = (error: Error) => {
       setConnected(false);
-      // Connection error messages are handled by terminalStore.connectTerminal
     };
 
     // Attach listeners to the terminalSocketService instance
@@ -337,44 +316,11 @@ export const XTerminal: React.FC<XTerminalProps> = ({
   }, []); // Empty dependency array ensures this effect runs once on mount/unmount
 
   // ──────────────────────────────────────────────
-  // Dynamic height refit for XTerm.js instance
-  // ──────────────────────────────────────────────
-  useEffect(() => {
-    // RequestAnimationFrame ensures refit happens after DOM layout is stable
-    requestAnimationFrame(() => {
-      try {
-        fitAddonRef.current?.fit();
-      } catch {
-        /* Ignore errors if renderer is not yet ready, common during rapid updates */
-      }
-    });
-  }, [terminalHeight]); // Re-fit whenever the provided terminalHeight changes
-
-  // ──────────────────────────────────────────────
   // Context menu for copy/paste functionality
+  // The ClipboardAddon provides native context menu copy/paste automatically.
+  // Removing custom contextmenu handler.
   // ──────────────────────────────────────────────
-  useEffect(() => {
-  const container = terminalContainerRef.current;
-  const term = xtermRef.current;
-  if (!container || !term) return;
 
-  const handleContextMenu = async (event: MouseEvent) => {
-    event.preventDefault(); // Prevent default browser context menu
-    if (term.hasSelection()) {
-      // If text is selected, copy it to clipboard
-      const selectedText = term.getSelection();
-      await navigator.clipboard.writeText(selectedText);
-      term.clearSelection(); // Clear selection after copying
-    } else {
-      // If no text selected, paste from clipboard
-      const text = await navigator.clipboard.readText();
-      term.paste(text); // Paste directly into XTerm.js
-    }
-  };
-
-  container.addEventListener('contextmenu', handleContextMenu);
-  return () => container.removeEventListener('contextmenu', handleContextMenu);
-}, []); // Empty dependency array ensures this runs once on mount/unmount
   // ──────────────────────────────────────────────
   // Render
   // ──────────────────────────────────────────────
@@ -384,7 +330,7 @@ export const XTerminal: React.FC<XTerminalProps> = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
+        height: '100%', // Take full height of parent container
         border: 0,
         overflow: 'hidden',
         position: 'relative',
@@ -401,15 +347,14 @@ export const XTerminal: React.FC<XTerminalProps> = ({
         onDisconnect={disconnectTerminal} // Use store's disconnect action for consistency
         onSettings={() => setOpen(true)}
         onLogout={onLogout}
-        sx={{ position: 'sticky', top: 0, zIndex: 1 }} // Keeps toolbar at top on scroll
+        onCloseDrawer={onCloseDrawer} // NEW: Pass the drawer close handler
+        sx={{ position: 'sticky', top: 0, zIndex: 1 }}
       />
 
       <Box
         ref={terminalContainerRef}
-        // onClick={() => terminalContainerRef.current?.focus()} // XTerm handles its own focus logic internally
         sx={{
-          flexGrow: 1,
-          height: `${terminalHeight}px`, // Dynamic height based on prop
+          flexGrow: 1, // This will make it take all available vertical space
           overflow: 'hidden',
           '.xterm': { padding: '8px' }, // Padding inside the terminal view
         }}

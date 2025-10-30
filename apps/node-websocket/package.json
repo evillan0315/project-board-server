@@ -5,25 +5,38 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "build": "npx prisma generate && tsc",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "prisma:migrate:dev": "npx prisma migrate dev"
   },
   "keywords": [
     "websocket",
     "socket.io",
     "node",
-    "express"
+    "express",
+    "terminal",
+    "ssh"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Eddie Villanueva <evillan0315@gmail.com>",
+  "license": "MIT",
   "dependencies": {
+    "@prisma/client": "^5",
+    "dotenv": "^16",
     "express": "^4.19.2",
-    "socket.io": "^4.7.5"
+    "jsonwebtoken": "^9",
+    "node-fetch": "2",
+    "node-pty": "^1.0.0",
+    "socket.io": "^4.8.1",
+    "ssh2": "^1"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9",
     "@types/node": "^20.14.9",
+    "@types/ssh2": "^1",
+    "prisma": "^5",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.3"
-  }
+  },
+  "repository": "git@github.com:evillan0315/node-websocket.git"
 }

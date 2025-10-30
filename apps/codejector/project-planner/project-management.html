@@ -10,7 +10,6 @@
         4. Report Info: High-Level System Architecture (Generated) -> Goal: Organize/Relate -> Viz: HTML/Tailwind Diagram (flexbox boxes & arrows) -> Interaction: Static visual -> Justification: Provides a clear, simple component diagram without using SVG or Mermaid. -> Library: HTML/Tailwind.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Research Plan: PM System</title>
@@ -48,14 +47,11 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased">
-
     <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        
         <header class="mb-8">
             <h1 class="text-4xl font-bold text-slate-900">Project Management System</h1>
             <p class="text-xl text-slate-600 mt-2">Interactive Research & Development Plan</p>
         </header>
-
         <nav class="border-b border-slate-200 mb-8">
             <div class="flex flex-wrap -mb-px space-x-2 sm:space-x-6">
                 <button class="nav-btn active text-sm sm:text-base py-4 px-1 border-b-2" data-tab="overview">Overview</button>
@@ -65,12 +61,10 @@
                 <button class="nav-btn inactive text-sm sm:text-base py-4 px-1 border-b-2" data-tab="implementation">Phase 4: Implementation</button>
             </div>
         </nav>
-
         <main>
             <!-- Overview Section -->
             <section id="overview" class="tab-content space-y-6">
                 <p class="mb-6 text-lg text-slate-700">This interactive plan outlines the research and development phases for building a modern, full-stack Project Management System. The goal is to create a scalable, high-performance application leveraging a TypeScript/React frontend and a Python/FastAPI backend. This dashboard allows you to explore each phase of the plan, from initial discovery to implementation.</p>
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                         <h3 class="text-xl font-semibold mb-3">Project Goals</h3>
@@ -97,11 +91,9 @@
                     </div>
                 </div>
             </section>
-
             <!-- Discovery Section -->
             <section id="discovery" class="tab-content hidden space-y-8">
                 <p class="mb-6 text-lg text-slate-700">Phase 1 focuses on user and stakeholder research to define the core problem and establish a clear set of requirements. This involves competitor analysis, defining user personas, and outlining the MVP feature set.</p>
-                
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                         <h3 class="text-xl font-semibold mb-4">Key Research Questions</h3>
@@ -112,7 +104,6 @@
                             <li>What is the simplest "critical path" a user can take to find value?</li>
                             <li>What are the key data models? (e.g., Users, Workspaces, Projects, Tasks, Comments).</li>
                         </ul>
-                        
                         <h3 class="text-xl font-semibold mt-8 mb-4">Core MVP Feature Set</h3>
                         <ul class="list-disc list-outside pl-5 space-y-2 text-slate-700">
                             <li><strong>User Authentication:</strong> Secure sign-up, login, and password reset.</li>
@@ -131,16 +122,13 @@
                     </div>
                 </div>
             </section>
-
             <!-- Tech Analysis Section -->
             <section id="tech" class="tab-content hidden space-y-6">
                 <p class="mb-6 text-lg text-slate-700">Phase 2 involves a deep dive into the proposed technology stack to confirm its suitability, identify best practices, and define our development patterns. We will research libraries, data access patterns, and integration methods.</p>
-                
                 <div class="flex space-x-2 rounded-lg bg-slate-100 p-1 mb-6 max-w-md">
                     <button class="tech-tab-btn active w-full py-2 px-4 rounded-md" data-tech-tab="frontend">Frontend Stack</button>
                     <button class="tech-tab-btn inactive w-full py-2 px-4 rounded-md" data-tech-tab="backend">Backend Stack</button>
                 </div>
-
                 <div id="frontend" class="tech-tab-content bg-white p-6 rounded-lg shadow-sm border border-slate-200 space-y-4">
                     <h3 class="text-2xl font-semibold mb-4">Frontend: React, TypeScript, MUI & Tailwind</h3>
                     <h4 class="text-lg font-semibold">Key Research Areas:</h4>
@@ -152,7 +140,6 @@
                         <li><strong>Testing:</strong> Define testing strategy using Jest and React Testing Library.</li>
                     </ul>
                 </div>
-
                 <div id="backend" class="tech-tab-content hidden bg-white p-6 rounded-lg shadow-sm border border-slate-200 space-y-4">
                     <h3 class="text-2xl font-semibold mb-4">Backend: Python, FastAPI & PostgreSQL</h3>
                     <h4 class="text-lg font-semibold">Key Research Areas:</h4>
@@ -165,11 +152,9 @@
                     </ul>
                 </div>
             </section>
-
             <!-- Design & Arch. Section -->
             <section id="design" class="tab-content hidden space-y-8">
                 <p class="mb-6 text-lg text-slate-700">Phase 3 translates our research into concrete plans. This includes creating low-fidelity wireframes for the UI, defining the user flow, and designing the high-level system architecture and database schema.</p>
-
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                         <h3 class="text-xl font-semibold mb-4">UI/UX Design Research</h3>
@@ -180,7 +165,6 @@
                             <li>Focus on a clean, responsive, and intuitive interface.</li>
                         </ul>
                     </div>
-                    
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                         <h3 class="text-xl font-semibold mb-6 text-center">High-Level System Architecture</h3>
                         <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 text-center">
@@ -202,11 +186,9 @@
                     </div>
                 </div>
             </section>
-
             <!-- Implementation Section -->
             <section id="implementation" class="tab-content hidden space-y-8">
                 <p class="mb-6 text-lg text-slate-700">The final phase involves creating a concrete implementation plan. We'll break down the MVP into milestones, establish a realistic timeline, and set up the development environment, CI/CD pipeline, and version control (Git).</p>
-                
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                         <h3 class="text-xl font-semibold mb-4">Milestone Breakdown</h3>
@@ -229,23 +211,19 @@
             </section>
         </main>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const tabs = document.querySelectorAll('.nav-btn');
             const tabContents = document.querySelectorAll('.tab-content');
-
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     const target = tab.getAttribute('data-tab');
-
                     tabs.forEach(t => {
                         t.classList.remove('active');
                         t.classList.add('inactive');
                     });
                     tab.classList.remove('inactive');
                     tab.classList.add('active');
-
                     tabContents.forEach(content => {
                         if (content.id === target) {
                             content.classList.remove('hidden');
@@ -255,21 +233,17 @@
                     });
                 });
             });
-
             const techTabs = document.querySelectorAll('.tech-tab-btn');
             const techTabContents = document.querySelectorAll('.tech-tab-content');
-
             techTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     const target = tab.getAttribute('data-tech-tab');
-
                     techTabs.forEach(t => {
                         t.classList.remove('active');
                         t.classList.add('inactive');
                     });
                     tab.classList.remove('inactive');
                     tab.classList.add('active');
-
                     techTabContents.forEach(content => {
                         if (content.id === target) {
                             content.classList.remove('hidden');
@@ -279,7 +253,6 @@
                     });
                 });
             });
-
             function initCharts() {
                 const priorityCtx = document.getElementById('priorityChart')?.getContext('2d');
                 if (priorityCtx) {
@@ -317,7 +290,6 @@
                         }
                     });
                 }
-
                 const timelineCtx = document.getElementById('timelineChart')?.getContext('2d');
                 if (timelineCtx) {
                     new Chart(timelineCtx, {
@@ -360,7 +332,6 @@
                     });
                 }
             }
-
             initCharts();
         });
     </script>

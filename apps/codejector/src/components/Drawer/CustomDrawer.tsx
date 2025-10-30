@@ -61,9 +61,13 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
       ? { width: isFullScreen ? '100%' : drawerWidth }
       : { height: isFullScreen ? '100%' : drawerWidth }),
     bgcolor: theme.palette.background.default,
-    border: `1px solid ${theme.palette.divider}`,
     color: theme.palette.text.primary,
     overflow: 'auto',
+    borderLeft: `${position === 'right' ? '1px solid' : ''}`,
+    borderRight: `${position === 'left' ? '1px solid' : ''}`,
+    borderTop: `${position === 'bottom' ? '1px solid' : ''}`,
+    borderBottom: `${position === 'top' ? '1px solid' : ''}`,
+    borderColor: theme.palette.divider,
   };
   const backdrop = hasBackdrop ? true : false;
   const closeOnKey = closeOnEscape ? undefined : 'escapeKeyDown';
@@ -78,6 +82,7 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
         ...(position === 'left' || position === 'right'
           ? { width: isFullScreen ? '100%' : drawerWidth }
           : { height: isFullScreen ? '100%' : drawerWidth }),
+        top: `${position === 'bottom' ? '100%' : 0}`,
       }}
       PaperProps={{ sx: drawerPaperStyle }}
     >
@@ -117,6 +122,7 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                
               }}
             >
               {stickyHeader}
@@ -139,6 +145,7 @@ const CustomDrawer: React.FC<CustomDrawerProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                maxHeight: '48px',
               }}
             >
               <Typography variant="h6" component="div">

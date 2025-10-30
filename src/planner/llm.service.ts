@@ -9,12 +9,14 @@ import {
 import fetch from 'node-fetch';
 import { FileChangeDto, CreatePlannerDto as PlanDto } from './dto';
 import { FileAction, RequestType } from '@prisma/client';
+import { LlmInputDto } from '@/llm/dto/llm-input.dto';
+import { ScannedFileDto } from '@/file/dto/scan-file.dto';
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
   private openaiKey = process.env.OPENAI_API_KEY;
   private geminiKey = process.env.GOOGLE_GEMINI_API_KEY;
-  private geminiModel = process.env.GOOGLE_GEMINI_MODEL || 'gemini-2.0-flash';
+  private geminiModel = process.env.GOOGLE_GEMINI_MODEL || 'gemini-1.5-flash';
   private geminiBaseUrl =
     'https://generativelanguage.googleapis.com/v1beta/models';
   private static extractJsonFromMarkdown(text: string): string {
@@ -28,27 +30,40 @@ export class LlmService {
   /**
    * Generate a planning DTO using either OpenAI or Google Gemini depending on environment variables.
    */
-  async generatePlan(prompt: string): Promise<PlanDto> {
+  async generatePlan(llmInput: LlmInputDto): Promise<PlanDto> {
     if (this.geminiKey) {
-      return this.generatePlanWithGemini(prompt);
+      return this.generatePlanWithGemini(llmInput);
     }
     if (this.openaiKey) {
-      return this.generatePlanWithOpenAI(prompt);
+      return this.generatePlanWithOpenAI(llmInput);
     }
     // fallback
-    return this.mockPlan(prompt);
+    return this.mockPlan(llmInput);
   }
   /**
-   * ✅ Existing OpenAI logic preserved
+   * \u2705 Existing OpenAI logic preserved
    */
-  private async generatePlanWithOpenAI(prompt: string): Promise<PlanDto> {
-    const system = `You are an AI Planner. Return ONLY a JSON object matching: { title, summary, changes: [{filePath, action, newContent?, diff?, reason?}] }`;
+  private async generatePlanWithOpenAI(llmInput: LlmInputDto): Promise<PlanDto> {
+    const { userPrompt, projectStructure, relevantFiles, additionalInstructions, expectedOutputFormat } = llmInput;
+    const promptMessages: { role: 'system' | 'user'; content: string }[] = [
+      { role: 'system', content: expectedOutputFormat },
+      { role: 'user', content: userPrompt },
+    ];
+    if (projectStructure) {
+      promptMessages.push({ role: 'user', content: `\nProject Structure:\n${projectStructure}` });
+    }
+    if (relevantFiles && relevantFiles.length > 0) {
+      const filesContent = relevantFiles.map(
+        (file: ScannedFileDto) => `\nFile: ${file.relativePath}\nContent:\n${file.content}`,
+      ).join('\n');
+      promptMessages.push({ role: 'user', content: `\nRelevant Files:\n${filesContent}` });
+    }
+    if (additionalInstructions) {
+      promptMessages.push({ role: 'user', content: `\nAdditional Instructions:\n${additionalInstructions}` });
+    }
     const body = {
       model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: prompt },
-      ],
+      messages: promptMessages,
       temperature: 0,
     };
     const resp = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -64,41 +79,43 @@ export class LlmService {
     try {
       return JSON.parse(txt) as PlanDto;
     } catch {
-      return this.mockPlan(prompt);
+      return this.mockPlan(llmInput);
     }
   }
   /**
-   * ✅ New Google Gemini implementation
+   * \u2705 New Google Gemini implementation
    */
-  private async generatePlanWithGemini(prompt: string): Promise<PlanDto> {
+  private async generatePlanWithGemini(llmInput: LlmInputDto): Promise<PlanDto> {
     if (!this.geminiKey) {
       throw new InternalServerErrorException(
         'GOOGLE_GEMINI_API_KEY is not configured.',
       );
     }
-    const systemInstruction = `You are an AI Planner. Return ONLY a JSON object matching:
-{
-  "title": string,
-  "summary": string,
-  "changes": [
-    {
-      "filePath": string,
-      "action": "ADD" | "MODIFY" | "DELETE" | "REPAIR" | "ANALYZE" | "INSTALL" | "RUN",
-      "newContent"?: string,
-      "diff"?: string,
-      "reason"?: string
+    const { userPrompt, projectStructure, relevantFiles, additionalInstructions, expectedOutputFormat } = llmInput;
+    const parts: { text: string }[] = [
+      { text: userPrompt },
+    ];
+    if (projectStructure) {
+      parts.push({ text: `\nProject Structure:\n${projectStructure}` });
     }
-  ]
-}`;
+    if (relevantFiles && relevantFiles.length > 0) {
+      const filesContent = relevantFiles.map(
+        (file: ScannedFileDto) => `\nFile: ${file.relativePath}\nContent:\n${file.content}`,
+      ).join('\n');
+      parts.push({ text: `\nRelevant Files:\n${filesContent}` });
+    }
+    if (additionalInstructions) {
+      parts.push({ text: `\nAdditional Instructions:\n${additionalInstructions}` });
+    }
     const payload = {
       contents: [
         {
           role: 'user',
-          parts: [{ text: prompt }],
+          parts: parts,
         },
       ],
       systemInstruction: {
-        parts: [{ text: systemInstruction }],
+        parts: [{ text: expectedOutputFormat }],
       },
       generationConfig: {
         //maxOutputTokens: 2000,
@@ -118,12 +135,8 @@ export class LlmService {
     }
     const result = await response.json();
     const candidate = result.candidates?.[0];
-    const parts = candidate?.content?.parts ?? [];
-    const generatedText = parts.map((p: any) => p.text ?? '').join('');
-    console.log(
-      LlmService.extractJsonFromMarkdown(generatedText),
-      'generatedText',
-    );
+    const responseParts = candidate?.content?.parts ?? [];
+    const generatedText = responseParts.map((p: any) => p.text ?? '').join('');
     try {
       // Ensure Prisma FileAction enum is used
       const plan = JSON.parse(
@@ -136,14 +149,14 @@ export class LlmService {
       return plan;
     } catch (e) {
       this.logger.error(`Failed to parse Gemini response: ${e.message}`);
-      return this.mockPlan(prompt);
+      return this.mockPlan(llmInput);
     }
   }
   /**
-   * ✅ mock now uses Prisma.$Enums.FileAction values
+   * \u2705 mock now uses Prisma.$Enums.FileAction values
    */
-  mockPlan(prompt: string): PlanDto {
-    if (prompt.includes('add route')) {
+  mockPlan(llmInput: LlmInputDto): PlanDto {
+    if (llmInput.userPrompt.includes('add route')) {
       return {
         title: 'Add /ping route',
         summary: 'Adds ping function to hello.ts',
@@ -155,14 +168,13 @@ export class LlmService {
   return "Hello world";
 }
 export function ping() {
-  return "pong";
-}`,
+  return "pong";}`,
             reason: 'Add ping function',
           },
         ],
       };
     }
-    if (prompt.includes('add file')) {
+    if (llmInput.userPrompt.includes('add file')) {
       return {
         title: 'Add readme',
         summary: 'Adds README.md to fixture-repo',

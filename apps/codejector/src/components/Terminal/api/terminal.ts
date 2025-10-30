@@ -4,11 +4,9 @@
  * Reason: Update logging and response handling to support JSON-based stdout/stderr
  *         structure from TerminalCommandResponse.
  */
-
 import { API_BASE_URL, ApiError, handleResponse, fetchWithAuth } from '@/api/fetch';
 import { TerminalCommandResponse, ProjectScriptsResponse } from '../types/terminal';
 import { addLog } from '@/stores/logStore';
-
 /**
  * Executes a terminal command on the backend.
  * @param command The shell command string to execute.
@@ -20,15 +18,12 @@ export const runTerminalCommand = async (
   cwd: string,
 ): Promise<TerminalCommandResponse> => {
   addLog('Terminal API', `Executing command: \`${command}\` in \`${cwd}\``, 'info');
-
   try {
     const response = await fetchWithAuth(`${API_BASE_URL}/terminal/run`, {
       method: 'POST',
       body: JSON.stringify({ command, cwd }),
     });
-
     const result = await handleResponse<TerminalCommandResponse>(response);
-
     const formattedStdout =
       result.stdout.length > 0
         ? JSON.stringify(result.stdout, null, 2)
@@ -37,7 +32,6 @@ export const runTerminalCommand = async (
       result.stderr.length > 0
         ? JSON.stringify(result.stderr, null, 2)
         : '(no stderr)';
-
     addLog(
       'Terminal API',
       `Command executed successfully: \`${command}\``,
@@ -45,7 +39,6 @@ export const runTerminalCommand = async (
       `Stdout: ${formattedStdout}\nStderr: ${formattedStderr}\nExit Code: ${result.exitCode}`,
       result,
     );
-
     return result;
   } catch (error) {
     const errorMessage = `Failed to execute command: \`${command}\`\nError: ${
@@ -55,7 +48,6 @@ export const runTerminalCommand = async (
     throw error;
   }
 };
-
 /**
  * Fetches package.json scripts and detects the package manager from the project root.
  * This conceptually calls a backend endpoint that reads package.json and lock files.
@@ -70,7 +62,6 @@ export const fetchProjectScripts = async (
     `Fetching package scripts for project root: \`${projectRoot}\``,
     'info',
   );
-
   try {
     const response = await fetchWithAuth(
       `${API_BASE_URL}/terminal/package-scripts`,
@@ -79,16 +70,13 @@ export const fetchProjectScripts = async (
         body: JSON.stringify({ projectRoot }),
       },
     );
-
     const result = await handleResponse<ProjectScriptsResponse>(response);
-
     addLog(
       'Terminal API',
       `Successfully fetched package scripts for \`${projectRoot}\``,
       'success',
       `Manager: ${result.packageManager}, Scripts found: ${result.scripts.length}`,
     );
-
     return result;
   } catch (error) {
     const errorMessage = `Failed to fetch package scripts for \`${projectRoot}\`\nError: ${

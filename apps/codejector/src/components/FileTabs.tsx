@@ -18,6 +18,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import UndoIcon from '@mui/icons-material/Undo';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import CodeIcon from '@mui/icons-material/Code'; // New import for code view
+
 import CloseMultipleIcon from '@mui/icons-material/Close';
 import SubtitlesOutlinedIcon from '@mui/icons-material/SubtitlesOutlined';
 import TerminalOutlinedIcon from '@mui/icons-material/TerminalOutlined';
@@ -40,7 +42,9 @@ import {
   openedFile,
   openedFileContent,
   isOpenedFileDirty,
-  openedTabs, // import openedTabs
+  openedTabs,
+  openedFileViewMode,
+  setOpenedFileViewMode,
 } from '@/stores/fileStore';
 import * as path from 'path-browserify';
 
@@ -61,6 +65,7 @@ const FileTabs: React.FC<FileTabsProps> = ({ sx, ...otherProps }) => {
   const $openedFileContent = useStore(openedFileContent);
   const $isOpenedFileDirty = useStore(isOpenedFileDirty);
   const $openedTabs = useStore(openedTabs); // get openedTabs from persistentAtom
+  const $openedFileViewMode = useStore(openedFileViewMode); // Get openedFileViewMode from store
   const theme = useTheme();
   const showTerminal = useStore(isTerminalVisible);
   const activeTabIndex = $openedTabs.indexOf($openedFile || '');
@@ -83,7 +88,12 @@ const FileTabs: React.FC<FileTabsProps> = ({ sx, ...otherProps }) => {
     //removeAllOpenedTabs();
   };
 
-  const isDisabled = isSavingFileContent;
+  const isHtmlFile =
+    $openedFile?.toLowerCase().endsWith('.html') ||
+    $openedFile?.toLowerCase().endsWith('.htm');
+
+  // Disable save/discard buttons if currently in preview mode
+  const isDisabled = isSavingFileContent || $openedFileViewMode === 'preview';
 
   return (
     <Paper
@@ -142,7 +152,7 @@ const FileTabs: React.FC<FileTabsProps> = ({ sx, ...otherProps }) => {
         allowScrollButtonsMobile
         sx={{
           flexGrow: 1, // Allow tabs to grow
-          maxWidth: 'calc(100% - 160px)', // Reserve space for buttons
+          maxWidth: isHtmlFile ? 'calc(100% - 200px)' : 'calc(100% - 160px)', // Reserve space for buttons, more if HTML preview button is visible
           '& .MuiTabs-indicator': {
             backgroundColor: theme.palette.primary.main,
           },
@@ -235,12 +245,41 @@ const FileTabs: React.FC<FileTabsProps> = ({ sx, ...otherProps }) => {
             pr: 1,
           }}
         >
+          {isHtmlFile && (
+            <Tooltip
+              title={
+                $openedFileViewMode === 'code' ? 'Show HTML Preview' : 'Show Code'
+              }
+            >
+              <IconButton
+                onClick={() =>
+                  setOpenedFileViewMode(
+                    $openedFileViewMode === 'code' ? 'preview' : 'code',
+                  )
+                }
+                size="small"
+                sx={{
+                  color: theme.palette.text.secondary,
+                  '&:hover': {
+                    color: theme.palette.text.primary,
+                  },
+                }}
+              >
+                {$openedFileViewMode === 'code' ? (
+                  <VisibilityIcon />
+                ) : (
+                  <CodeIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+          )}
+
           {$isOpenedFileDirty && (
             <Tooltip title="Discard unsaved changes">
               <span>
                 <IconButton
                   disabled={isDisabled}
-                  onClick={saveActiveFile}
+                  onClick={discardActiveFileChanges}
                   size="small"
                   sx={{
                     color: theme.palette.error.main,

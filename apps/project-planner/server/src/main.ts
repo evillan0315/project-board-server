@@ -1,4 +1,4 @@
-import Fastify from 'fastify';
+import Fastify, { FastifyRequest } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import fastifyPassport from '@fastify/passport';
@@ -36,19 +36,19 @@ const build = async () => {
   });
 
   fastify.register(fastifyPassport.initialize());
-  fastify.register(fastifyPassport.session());
+  fastify.register(fastifyPassport.session); // Corrected: `session` is a plugin function, not a method call
 
   // Register Passport strategies
   fastifyPassport.use('google', googleStrategy);
   fastifyPassport.use('github', githubStrategy);
 
   // Passport serialization/deserialization for sessions
-  fastifyPassport.serializer(async (user: any, request) => {
+  fastifyPassport.serializeUser(async (user: any, request: FastifyRequest) => { // Corrected: `serializer` to `serializeUser`, added `FastifyRequest` type
     // console.log('Serializer user:', user); // Debugging line
     return user.id;
   });
 
-  fastifyPassport.deserializer(async (id: string, request) => {
+  fastifyPassport.deserializeUser(async (id: string, request: FastifyRequest) => { // Corrected: `deserializer` to `deserializeUser`, added `FastifyRequest` type
     // In a real app, you might fetch the user from the database
     // console.log('Deserializer ID:', id); // Debugging line
     return { id };

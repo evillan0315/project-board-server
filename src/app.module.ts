@@ -80,6 +80,11 @@ import { GitModule } from './git/git.module';
 import { ChatModule } from './chat/chat.module';
 import { OpenviduModule } from './openvidu/openvidu.module';
 import { MemberModule } from './member/member.module';
+import { DiffModule } from './diff/diff.module';
+import { ProposedFileChangeModule } from './proposed-file-change/proposed-file-change.module';
+import { LlmResponseModule } from './llm-response/llm-response.module';
+import { LlmRequestModule } from './llm-request/llm-request.module';
+import { ExecutionSnapshotModule } from './execution-snapshot/execution-snapshot.module';
 /**
  * The root module of the NestJS application.
  *
@@ -244,6 +249,11 @@ import { MemberModule } from './member/member.module';
     ChatModule,
     OpenviduModule,
     MemberModule,
+    DiffModule,
+    ProposedFileChangeModule,
+    LlmResponseModule,
+    LlmRequestModule,
+    ExecutionSnapshotModule,
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.

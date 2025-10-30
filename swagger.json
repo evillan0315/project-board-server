@@ -18001,33 +18001,24 @@
         ]
       }
     },
-    "/plan": {
+    "/api/plan": {
       "post": {
-        "operationId": "PlannerController_createPlan",
+        "operationId": "PlannerController_generatePlan",
         "parameters": [],
         "requestBody": {
           "required": true,
+          "description": "The structured input for generating a plan.",
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "prompt": {
-                    "type": "string",
-                    "description": "The prompt to generate the plan from",
-                    "example": "Implement user authentication with Google OAuth"
-                  }
-                },
-                "required": [
-                  "prompt"
-                ]
+                "$ref": "#/components/schemas/LlmInputDto"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "The plan has been successfully created.",
+            "description": "The plan has been successfully generated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18048,13 +18039,13 @@
             }
           }
         },
-        "summary": "Create a new plan from a prompt",
+        "summary": "Generate a new plan from a structured LLM input",
         "tags": [
-          "api/planner"
+          "AI Planner"
         ]
       }
     },
-    "/plan/{id}": {
+    "/api/plan/{id}": {
       "get": {
         "operationId": "PlannerController_getPlan",
         "parameters": [
@@ -18075,11 +18066,11 @@
         },
         "summary": "Get a plan by ID",
         "tags": [
-          "api/planner"
+          "AI Planner"
         ]
       }
     },
-    "/plan/{id}/chunks": {
+    "/api/plan/{id}/chunks": {
       "get": {
         "operationId": "PlannerController_getChunks",
         "parameters": [
@@ -18100,11 +18091,11 @@
         },
         "summary": "Get chunks of a plan by ID",
         "tags": [
-          "api/planner"
+          "AI Planner"
         ]
       }
     },
-    "/plan/{id}/apply-chunk/{index}": {
+    "/api/plan/{id}/apply-chunk/{index}": {
       "post": {
         "operationId": "PlannerController_applyChunk",
         "parameters": [
@@ -18134,11 +18125,11 @@
         },
         "summary": "Apply a chunk of a plan by ID and index",
         "tags": [
-          "api/planner"
+          "AI Planner"
         ]
       }
     },
-    "/plan/apply": {
+    "/api/plan/apply": {
       "post": {
         "operationId": "PlannerController_applyPlan",
         "parameters": [],
@@ -18160,532 +18151,7 @@
         },
         "summary": "Apply a plan",
         "tags": [
-          "api/planner"
-        ]
-      }
-    },
-    "/api/logs": {
-      "post": {
-        "operationId": "LogsController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateLogsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successfully created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateLogsDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation failed."
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "403": {
-            "description": "Forbidden."
-          }
-        },
-        "summary": "Create a new Logs",
-        "tags": [
-          "Logs"
-        ]
-      },
-      "get": {
-        "operationId": "LogsController_findAll",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of Logs records.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CreateLogsDto"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "403": {
-            "description": "Forbidden."
-          }
-        },
-        "summary": "Retrieve all Logs records",
-        "tags": [
-          "Logs"
-        ]
-      }
-    },
-    "/api/logs/paginated": {
-      "get": {
-        "operationId": "LogsController_findAllPaginated",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": 1,
-              "type": "number"
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": 10,
-              "type": "number"
-            }
-          },
-          {
-            "name": "type",
-            "required": false,
-            "in": "query",
-            "description": "Filter by type",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "level",
-            "required": false,
-            "in": "query",
-            "description": "Filter by level",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "data",
-            "required": false,
-            "in": "query",
-            "description": "Filter by data",
-            "schema": {
-              "$ref": "#/components/schemas/Object"
-            }
-          },
-          {
-            "name": "tags",
-            "required": false,
-            "in": "query",
-            "description": "Filter by tags",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Paginated results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginationLogsResultDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Paginated Logs records",
-        "tags": [
-          "Logs"
-        ]
-      }
-    },
-    "/api/logs/{id}": {
-      "get": {
-        "operationId": "LogsController_findOne",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Record found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateLogsDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "403": {
-            "description": "Forbidden."
-          },
-          "404": {
-            "description": "Record not found."
-          }
-        },
-        "summary": "Find Logs by ID",
-        "tags": [
-          "Logs"
-        ]
-      },
-      "patch": {
-        "operationId": "LogsController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLogsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateLogsDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid data."
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "403": {
-            "description": "Forbidden."
-          },
-          "404": {
-            "description": "Record not found."
-          }
-        },
-        "summary": "Update Logs by ID",
-        "tags": [
-          "Logs"
-        ]
-      },
-      "delete": {
-        "operationId": "LogsController_remove",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully deleted."
-          },
-          "401": {
-            "description": "Unauthorized."
-          },
-          "403": {
-            "description": "Forbidden."
-          },
-          "404": {
-            "description": "Record not found."
-          }
-        },
-        "summary": "Delete Logs by ID",
-        "tags": [
-          "Logs"
-        ]
-      }
-    },
-    "/api/llm-playwright/scrape": {
-      "post": {
-        "operationId": "LlmPlaywrightController_scrapeUrl",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScrapeUrlDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Scraped content and optional Gemini analysis results.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlaywrightOutputDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid URL or selector."
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - insufficient role"
-          },
-          "500": {
-            "description": "Failed to scrape or analyze."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          },
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Scrape content from a URL and optionally analyze with Gemini AI",
-        "tags": [
-          "LLM Playwright Operations"
-        ]
-      }
-    },
-    "/api/llm-playwright/screenshot": {
-      "post": {
-        "operationId": "LlmPlaywrightController_takeScreenshot",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScreenshotUrlDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Base64 encoded screenshot and optional Gemini analysis results.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlaywrightOutputDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid URL or selector."
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - insufficient role"
-          },
-          "500": {
-            "description": "Failed to take screenshot or analyze."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          },
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Take a screenshot of a URL and optionally analyze with Gemini AI",
-        "tags": [
-          "LLM Playwright Operations"
-        ]
-      }
-    },
-    "/api/llm-playwright/start-recording": {
-      "post": {
-        "description": "Initiates a new Playwright screen recording session for the specified URL. The recording will continue indefinitely until `stop-recording` is explicitly called.",
-        "operationId": "LlmPlaywrightController_startRecording",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RecordScreenDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Recording initiated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlaywrightOutputDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "A recording is already active, or invalid input."
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - insufficient role"
-          },
-          "500": {
-            "description": "Failed to start recording."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          },
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Start screen recording of a URL",
-        "tags": [
-          "LLM Playwright Operations"
-        ]
-      }
-    },
-    "/api/llm-playwright/stop-recording": {
-      "post": {
-        "description": "Stops the currently active Playwright screen recording session and returns the path to the saved video file.",
-        "operationId": "LlmPlaywrightController_stopRecording",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Recording stopped successfully, and video path returned.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlaywrightOutputDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "No active recording session found."
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - insufficient role"
-          },
-          "500": {
-            "description": "Failed to stop recording or save video."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          },
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Stop active screen recording",
-        "tags": [
-          "LLM Playwright Operations"
-        ]
-      }
-    },
-    "/api/llm-playwright/perform-tasks": {
-      "post": {
-        "description": "Navigates to a URL, performs specified scraping and/or screenshotting tasks, and then sends the collected data for an optional Gemini AI analysis based on the provided instruction. If screen recording is enabled, it will start at the beginning of the tasks and continue until all tasks are complete.",
-        "operationId": "LlmPlaywrightController_performTasks",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PerformMultipleTasksDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Results from performed Playwright tasks and optional Gemini analysis.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlaywrightOutputDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid URL or task parameters."
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - insufficient role"
-          },
-          "500": {
-            "description": "Failed to perform tasks or analyze."
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          },
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Perform multiple Playwright tasks and optionally analyze results with Gemini AI",
-        "tags": [
-          "LLM Playwright Operations"
+          "AI Planner"
         ]
       }
     },
@@ -19440,6 +18906,531 @@
         ]
       }
     },
+    "/api/logs": {
+      "post": {
+        "operationId": "LogsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLogsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateLogsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          }
+        },
+        "summary": "Create a new Logs",
+        "tags": [
+          "Logs"
+        ]
+      },
+      "get": {
+        "operationId": "LogsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Logs records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateLogsDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          }
+        },
+        "summary": "Retrieve all Logs records",
+        "tags": [
+          "Logs"
+        ]
+      }
+    },
+    "/api/logs/paginated": {
+      "get": {
+        "operationId": "LogsController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "level",
+            "required": false,
+            "in": "query",
+            "description": "Filter by level",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "data",
+            "required": false,
+            "in": "query",
+            "description": "Filter by data",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "tags",
+            "required": false,
+            "in": "query",
+            "description": "Filter by tags",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationLogsResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Paginated Logs records",
+        "tags": [
+          "Logs"
+        ]
+      }
+    },
+    "/api/logs/{id}": {
+      "get": {
+        "operationId": "LogsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateLogsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "summary": "Find Logs by ID",
+        "tags": [
+          "Logs"
+        ]
+      },
+      "patch": {
+        "operationId": "LogsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLogsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateLogsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "summary": "Update Logs by ID",
+        "tags": [
+          "Logs"
+        ]
+      },
+      "delete": {
+        "operationId": "LogsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden."
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "summary": "Delete Logs by ID",
+        "tags": [
+          "Logs"
+        ]
+      }
+    },
+    "/api/llm-playwright/scrape": {
+      "post": {
+        "operationId": "LlmPlaywrightController_scrapeUrl",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScrapeUrlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scraped content and optional Gemini analysis results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaywrightOutputDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid URL or selector."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to scrape or analyze."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Scrape content from a URL and optionally analyze with Gemini AI",
+        "tags": [
+          "LLM Playwright Operations"
+        ]
+      }
+    },
+    "/api/llm-playwright/screenshot": {
+      "post": {
+        "operationId": "LlmPlaywrightController_takeScreenshot",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreenshotUrlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Base64 encoded screenshot and optional Gemini analysis results.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaywrightOutputDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid URL or selector."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to take screenshot or analyze."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take a screenshot of a URL and optionally analyze with Gemini AI",
+        "tags": [
+          "LLM Playwright Operations"
+        ]
+      }
+    },
+    "/api/llm-playwright/start-recording": {
+      "post": {
+        "description": "Initiates a new Playwright screen recording session for the specified URL. The recording will continue indefinitely until `stop-recording` is explicitly called.",
+        "operationId": "LlmPlaywrightController_startRecording",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordScreenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recording initiated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaywrightOutputDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A recording is already active, or invalid input."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to start recording."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start screen recording of a URL",
+        "tags": [
+          "LLM Playwright Operations"
+        ]
+      }
+    },
+    "/api/llm-playwright/stop-recording": {
+      "post": {
+        "description": "Stops the currently active Playwright screen recording session and returns the path to the saved video file.",
+        "operationId": "LlmPlaywrightController_stopRecording",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Recording stopped successfully, and video path returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaywrightOutputDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No active recording session found."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to stop recording or save video."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stop active screen recording",
+        "tags": [
+          "LLM Playwright Operations"
+        ]
+      }
+    },
+    "/api/llm-playwright/perform-tasks": {
+      "post": {
+        "description": "Navigates to a URL, performs specified scraping and/or screenshotting tasks, and then sends the collected data for an optional Gemini AI analysis based on the provided instruction. If screen recording is enabled, it will start at the beginning of the tasks and continue until all tasks are complete.",
+        "operationId": "LlmPlaywrightController_performTasks",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerformMultipleTasksDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Results from performed Playwright tasks and optional Gemini analysis.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaywrightOutputDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid URL or task parameters."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "500": {
+            "description": "Failed to perform tasks or analyze."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Perform multiple Playwright tasks and optionally analyze results with Gemini AI",
+        "tags": [
+          "LLM Playwright Operations"
+        ]
+      }
+    },
     "/api/chat/conversations": {
       "post": {
         "operationId": "ChatController_create",
@@ -20150,6 +20141,1681 @@
         "summary": "Delete Member by ID",
         "tags": [
           "Member"
+        ]
+      }
+    },
+    "/api/diff": {
+      "post": {
+        "operationId": "DiffController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDiffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateDiffDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Diff",
+        "tags": [
+          "Diff"
+        ]
+      },
+      "get": {
+        "operationId": "DiffController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Diff records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateDiffDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Diff records",
+        "tags": [
+          "Diff"
+        ]
+      }
+    },
+    "/api/diff/paginated": {
+      "get": {
+        "operationId": "DiffController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "filePath",
+            "required": false,
+            "in": "query",
+            "description": "Filter by filePath",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "diff",
+            "required": false,
+            "in": "query",
+            "description": "Filter by diff",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "proposedFileChangeId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by proposedFileChangeId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationDiffResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Diff records",
+        "tags": [
+          "Diff"
+        ]
+      }
+    },
+    "/api/diff/{id}": {
+      "get": {
+        "operationId": "DiffController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateDiffDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Diff by ID",
+        "tags": [
+          "Diff"
+        ]
+      },
+      "patch": {
+        "operationId": "DiffController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDiffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateDiffDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Diff by ID",
+        "tags": [
+          "Diff"
+        ]
+      },
+      "delete": {
+        "operationId": "DiffController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Diff by ID",
+        "tags": [
+          "Diff"
+        ]
+      }
+    },
+    "/api/proposed-file-change": {
+      "post": {
+        "operationId": "ProposedFileChangeController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProposedFileChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateProposedFileChangeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new ProposedFileChange",
+        "tags": [
+          "ProposedFileChange"
+        ]
+      },
+      "get": {
+        "operationId": "ProposedFileChangeController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of ProposedFileChange records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateProposedFileChangeDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all ProposedFileChange records",
+        "tags": [
+          "ProposedFileChange"
+        ]
+      }
+    },
+    "/api/proposed-file-change/paginated": {
+      "get": {
+        "operationId": "ProposedFileChangeController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "filePath",
+            "required": false,
+            "in": "query",
+            "description": "Filter by filePath",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "newContent",
+            "required": false,
+            "in": "query",
+            "description": "Filter by newContent",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reason",
+            "required": false,
+            "in": "query",
+            "description": "Filter by reason",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "responseId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by responseId",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationProposedFileChangeResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated ProposedFileChange records",
+        "tags": [
+          "ProposedFileChange"
+        ]
+      }
+    },
+    "/api/proposed-file-change/{id}": {
+      "get": {
+        "operationId": "ProposedFileChangeController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateProposedFileChangeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find ProposedFileChange by ID",
+        "tags": [
+          "ProposedFileChange"
+        ]
+      },
+      "patch": {
+        "operationId": "ProposedFileChangeController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProposedFileChangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateProposedFileChangeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update ProposedFileChange by ID",
+        "tags": [
+          "ProposedFileChange"
+        ]
+      },
+      "delete": {
+        "operationId": "ProposedFileChangeController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete ProposedFileChange by ID",
+        "tags": [
+          "ProposedFileChange"
+        ]
+      }
+    },
+    "/api/llm-response": {
+      "post": {
+        "operationId": "LlmResponseController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLlmResponseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateLlmResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new LlmResponse",
+        "tags": [
+          "LlmResponse"
+        ]
+      },
+      "get": {
+        "operationId": "LlmResponseController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of LlmResponse records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateLlmResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all LlmResponse records",
+        "tags": [
+          "LlmResponse"
+        ]
+      }
+    },
+    "/api/llm-response/paginated": {
+      "get": {
+        "operationId": "LlmResponseController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "title",
+            "required": false,
+            "in": "query",
+            "description": "Filter by title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summary",
+            "required": false,
+            "in": "query",
+            "description": "Filter by summary",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "thoughtProcess",
+            "required": false,
+            "in": "query",
+            "description": "Filter by thoughtProcess",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectRoot",
+            "required": false,
+            "in": "query",
+            "description": "Filter by projectRoot",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "requestId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by requestId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentationId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by documentationId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "gitInstructions",
+            "required": false,
+            "in": "query",
+            "description": "Filter by gitInstructions",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationLlmResponseResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated LlmResponse records",
+        "tags": [
+          "LlmResponse"
+        ]
+      }
+    },
+    "/api/llm-response/{id}": {
+      "get": {
+        "operationId": "LlmResponseController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateLlmResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find LlmResponse by ID",
+        "tags": [
+          "LlmResponse"
+        ]
+      },
+      "patch": {
+        "operationId": "LlmResponseController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLlmResponseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateLlmResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update LlmResponse by ID",
+        "tags": [
+          "LlmResponse"
+        ]
+      },
+      "delete": {
+        "operationId": "LlmResponseController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete LlmResponse by ID",
+        "tags": [
+          "LlmResponse"
+        ]
+      }
+    },
+    "/api/llm-request": {
+      "post": {
+        "operationId": "LlmRequestController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLlmRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateLlmRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new LlmRequest",
+        "tags": [
+          "LlmRequest"
+        ]
+      },
+      "get": {
+        "operationId": "LlmRequestController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of LlmRequest records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateLlmRequestDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all LlmRequest records",
+        "tags": [
+          "LlmRequest"
+        ]
+      }
+    },
+    "/api/llm-request/paginated": {
+      "get": {
+        "operationId": "LlmRequestController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "userPrompt",
+            "required": false,
+            "in": "query",
+            "description": "Filter by userPrompt",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectRoot",
+            "required": false,
+            "in": "query",
+            "description": "Filter by projectRoot",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scanPaths",
+            "required": false,
+            "in": "query",
+            "description": "Filter by scanPaths",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "additionalInstructions",
+            "required": false,
+            "in": "query",
+            "description": "Filter by additionalInstructions",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expectedOutputFormat",
+            "required": false,
+            "in": "query",
+            "description": "Filter by expectedOutputFormat",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "schemaId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by schemaId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "schemaVersion",
+            "required": false,
+            "in": "query",
+            "description": "Filter by schemaVersion",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationLlmRequestResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated LlmRequest records",
+        "tags": [
+          "LlmRequest"
+        ]
+      }
+    },
+    "/api/llm-request/{id}": {
+      "get": {
+        "operationId": "LlmRequestController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateLlmRequestDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find LlmRequest by ID",
+        "tags": [
+          "LlmRequest"
+        ]
+      },
+      "patch": {
+        "operationId": "LlmRequestController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLlmRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateLlmRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update LlmRequest by ID",
+        "tags": [
+          "LlmRequest"
+        ]
+      },
+      "delete": {
+        "operationId": "LlmRequestController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete LlmRequest by ID",
+        "tags": [
+          "LlmRequest"
+        ]
+      }
+    },
+    "/api/execution-snapshot": {
+      "post": {
+        "operationId": "ExecutionSnapshotController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateExecutionSnapshotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateExecutionSnapshotDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new ExecutionSnapshot",
+        "tags": [
+          "ExecutionSnapshot"
+        ]
+      },
+      "get": {
+        "operationId": "ExecutionSnapshotController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of ExecutionSnapshot records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreateExecutionSnapshotDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all ExecutionSnapshot records",
+        "tags": [
+          "ExecutionSnapshot"
+        ]
+      }
+    },
+    "/api/execution-snapshot/paginated": {
+      "get": {
+        "operationId": "ExecutionSnapshotController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "planId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by planId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "success",
+            "required": false,
+            "in": "query",
+            "description": "Filter by success",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "error",
+            "required": false,
+            "in": "query",
+            "description": "Filter by error",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "commitHash",
+            "required": false,
+            "in": "query",
+            "description": "Filter by commitHash",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appliedChanges",
+            "required": false,
+            "in": "query",
+            "description": "Filter by appliedChanges",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationExecutionSnapshotResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated ExecutionSnapshot records",
+        "tags": [
+          "ExecutionSnapshot"
+        ]
+      }
+    },
+    "/api/execution-snapshot/{id}": {
+      "get": {
+        "operationId": "ExecutionSnapshotController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateExecutionSnapshotDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find ExecutionSnapshot by ID",
+        "tags": [
+          "ExecutionSnapshot"
+        ]
+      },
+      "patch": {
+        "operationId": "ExecutionSnapshotController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExecutionSnapshotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateExecutionSnapshotDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update ExecutionSnapshot by ID",
+        "tags": [
+          "ExecutionSnapshot"
+        ]
+      },
+      "delete": {
+        "operationId": "ExecutionSnapshotController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete ExecutionSnapshot by ID",
+        "tags": [
+          "ExecutionSnapshot"
         ]
       }
     }
@@ -22066,7 +23732,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-10-28T19:21:10.511Z",
+            "example": "2025-10-30T07:26:11.069Z",
             "format": "date-time"
           },
           "requestType": {
@@ -26088,357 +27754,6 @@
           "changes"
         ]
       },
-      "CreateLogsDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "type field"
-          },
-          "level": {
-            "type": "string",
-            "description": "level field"
-          },
-          "data": {
-            "type": "object",
-            "description": "data field"
-          },
-          "tags": {
-            "description": "tags field",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "type",
-          "level",
-          "data",
-          "tags"
-        ]
-      },
-      "PaginationLogsResultDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateLogsDto"
-            }
-          },
-          "total": {
-            "type": "number"
-          },
-          "page": {
-            "type": "number"
-          },
-          "pageSize": {
-            "type": "number"
-          },
-          "totalPages": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "items",
-          "total",
-          "page",
-          "pageSize",
-          "totalPages"
-        ]
-      },
-      "UpdateLogsDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "type field"
-          },
-          "level": {
-            "type": "string",
-            "description": "level field"
-          },
-          "data": {
-            "type": "object",
-            "description": "data field"
-          },
-          "tags": {
-            "description": "tags field",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "ScrapeUrlDto": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "The URL to scrape.",
-            "example": "https://www.example.com"
-          },
-          "selector": {
-            "type": "string",
-            "description": "CSS selector to target specific content. If not provided, the entire visible text content will be scraped.",
-            "example": "#main-content h1"
-          },
-          "returnHtml": {
-            "type": "boolean",
-            "description": "Whether to return the full HTML of the selected element(s) instead of just text content.",
-            "example": false
-          },
-          "geminiPrompt": {
-            "type": "string",
-            "description": "Optional prompt to send the scraped content to Gemini for analysis.",
-            "example": "Summarize the key information on this page."
-          },
-          "takeScreenshot": {
-            "type": "boolean",
-            "description": "Whether to take a screenshot along with scraping the page. The screenshot will be base64 encoded.",
-            "example": false
-          }
-        },
-        "required": [
-          "url"
-        ]
-      },
-      "PlaywrightOutputDto": {
-        "type": "object",
-        "properties": {
-          "scrapedText": {
-            "type": "string",
-            "description": "The raw text content scraped from the page."
-          },
-          "scrapedHtml": {
-            "type": "string",
-            "description": "The raw HTML content scraped from the page."
-          },
-          "screenshotBase64": {
-            "type": "string",
-            "description": "Base64 encoded string of the screenshot image (PNG).",
-            "example": "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAA..."
-          },
-          "recordedVideoPath": {
-            "type": "string",
-            "description": "The path to the recorded video file on the server, relative to the project root.",
-            "example": "downloads/recordings/my-session-12345.webm"
-          },
-          "geminiAnalysis": {
-            "type": "object",
-            "description": "Results of the Gemini AI analysis on the scraped content or screenshot."
-          },
-          "success": {
-            "type": "boolean",
-            "description": "Indicates if the operation was successful."
-          },
-          "errorMessage": {
-            "type": "string",
-            "description": "Error message if the operation failed."
-          }
-        },
-        "required": [
-          "success"
-        ]
-      },
-      "ScreenshotUrlDto": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "The URL to take a screenshot of.",
-            "example": "https://www.google.com"
-          },
-          "fullPage": {
-            "type": "boolean",
-            "description": "Whether to capture a full-page screenshot. Defaults to true.",
-            "example": true
-          },
-          "selector": {
-            "type": "string",
-            "description": "CSS selector for an element to screenshot. If provided, only this element will be screenshotted. Overrides `fullPage` if present.",
-            "example": ".my-component"
-          },
-          "geminiPrompt": {
-            "type": "string",
-            "description": "Optional prompt to send the screenshot image to Gemini for analysis.",
-            "example": "Describe what you see in this image."
-          }
-        },
-        "required": [
-          "url"
-        ]
-      },
-      "RecordScreenDto": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "The URL to navigate to and start recording from.",
-            "example": "https://www.google.com"
-          },
-          "outputFileName": {
-            "type": "string",
-            "description": "Optional desired file name for the output video (e.g., \"my-session-recording.webm\"). If not provided, a timestamp-based unique name will be used.",
-            "example": "my-custom-recording.webm"
-          }
-        },
-        "required": [
-          "url"
-        ]
-      },
-      "LoginCredentialsDto": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "description": "The username or email for login.",
-            "example": "user@example.com"
-          },
-          "password": {
-            "type": "string",
-            "description": "The password for login.",
-            "example": "mysecretpassword"
-          },
-          "usernameSelector": {
-            "type": "string",
-            "description": "CSS selector for the username/email input field.",
-            "example": "#usernameInput"
-          },
-          "passwordSelector": {
-            "type": "string",
-            "description": "CSS selector for the password input field.",
-            "example": "#passwordInput"
-          },
-          "submitSelector": {
-            "type": "string",
-            "description": "CSS selector for the login submit button.",
-            "example": "#loginButton"
-          }
-        },
-        "required": [
-          "username",
-          "password",
-          "usernameSelector",
-          "passwordSelector",
-          "submitSelector"
-        ]
-      },
-      "NavigationStepDto": {
-        "type": "object",
-        "properties": {
-          "action": {
-            "type": "string",
-            "description": "The type of action to perform.",
-            "enum": [
-              "navigate",
-              "click",
-              "type",
-              "login",
-              "wait"
-            ],
-            "example": "click"
-          },
-          "url": {
-            "type": "string",
-            "description": "The URL to navigate to. Required if action is NAVIGATE.",
-            "example": "https://www.example.com/login"
-          },
-          "selector": {
-            "type": "string",
-            "description": "CSS selector for the element to interact with. Required for CLICK, TYPE actions, or to wait for in WAIT action.",
-            "example": "#myButton"
-          },
-          "value": {
-            "type": "string",
-            "description": "Value to type into the input field. Required for TYPE action.",
-            "example": "Hello World"
-          },
-          "loginCredentials": {
-            "description": "Login credentials and selectors. Required for LOGIN action.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LoginCredentialsDto"
-              }
-            ]
-          },
-          "durationMs": {
-            "type": "number",
-            "description": "Duration in milliseconds to wait. Required if action is WAIT and no selector is provided. Minimum 0.",
-            "example": 5000
-          }
-        },
-        "required": [
-          "action"
-        ]
-      },
-      "PerformMultipleTasksDto": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "The URL to navigate to and perform tasks on.",
-            "example": "https://www.example.com"
-          },
-          "llmInstruction": {
-            "type": "string",
-            "description": "A natural language instruction. This can either be a Playwright instruction (e.g., \"Enter Email:x in (selector) and Password:y in (selector) and click button (selector)\") which will be parsed into navigation steps, OR a high-level prompt for the LLM to guide the overall task analysis (e.g., \"Summarize the key information on this page.\"). If it matches a known Playwright instruction pattern, it will be executed as such. Otherwise, it will be treated as a Gemini prompt for analysis.",
-            "example": "Enter Email address:evillan0315@gmail.com in the (input#email) and Password:Chuk0y#031582 in the (input#password) field and click the Sign in (#login-submit-btn) button"
-          },
-          "navigationSteps": {
-            "description": "An ordered list of specific navigation steps (navigate, login, click, type) to perform before other tasks. Instructions from `llmInstruction` (if parsed as Playwright commands) will be prepended to this list.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NavigationStepDto"
-            }
-          },
-          "shouldScrape": {
-            "type": "boolean",
-            "description": "Whether to perform a web scraping operation on the page. Defaults to true if no specific scrape/screenshot/recording is requested.",
-            "example": true
-          },
-          "scrapeSelector": {
-            "type": "string",
-            "description": "CSS selector to target specific content for scraping. If `shouldScrape` is true and this is not provided, the entire visible text content will be scraped.",
-            "example": "#main-content"
-          },
-          "returnHtmlForScrape": {
-            "type": "boolean",
-            "description": "Whether to return the full HTML of the scraped content instead of just text content. Only applicable if `shouldScrape` is true.",
-            "example": false
-          },
-          "shouldTakeScreenshot": {
-            "type": "boolean",
-            "description": "Whether to take a screenshot of the page. Defaults to true if no specific scrape/screenshot/recording is requested.",
-            "example": true
-          },
-          "screenshotFullPage": {
-            "type": "boolean",
-            "description": "Whether to capture a full-page screenshot. Only applicable if `shouldTakeScreenshot` is true. Defaults to true.",
-            "example": true
-          },
-          "screenshotSelector": {
-            "type": "string",
-            "description": "CSS selector for an element to screenshot. Only applicable if `shouldTakeScreenshot` is true. If provided, only this element will be screenshotted and overrides `screenshotFullPage`.",
-            "example": ".header-banner"
-          },
-          "shouldRecordScreen": {
-            "type": "boolean",
-            "description": "Whether to record the screen during the tasks. If true, recording starts at the beginning and stops automatically at the end of all tasks.",
-            "example": false
-          },
-          "recordOutputFileName": {
-            "type": "string",
-            "description": "Optional desired file name for the output video (e.g., \"my-task-recording.webm\"). Only applicable if `shouldRecordScreen` is true. If not provided, a timestamp-based unique name will be used.",
-            "example": "my-orchestrated-recording.webm"
-          }
-        },
-        "required": [
-          "url"
-        ]
-      },
       "GitStatusFileDto": {
         "type": "object",
         "properties": {
@@ -26903,6 +28218,357 @@
           "diff"
         ]
       },
+      "CreateLogsDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "type field"
+          },
+          "level": {
+            "type": "string",
+            "description": "level field"
+          },
+          "data": {
+            "type": "object",
+            "description": "data field"
+          },
+          "tags": {
+            "description": "tags field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "level",
+          "data",
+          "tags"
+        ]
+      },
+      "PaginationLogsResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateLogsDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateLogsDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "type field"
+          },
+          "level": {
+            "type": "string",
+            "description": "level field"
+          },
+          "data": {
+            "type": "object",
+            "description": "data field"
+          },
+          "tags": {
+            "description": "tags field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ScrapeUrlDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to scrape.",
+            "example": "https://www.example.com"
+          },
+          "selector": {
+            "type": "string",
+            "description": "CSS selector to target specific content. If not provided, the entire visible text content will be scraped.",
+            "example": "#main-content h1"
+          },
+          "returnHtml": {
+            "type": "boolean",
+            "description": "Whether to return the full HTML of the selected element(s) instead of just text content.",
+            "example": false
+          },
+          "geminiPrompt": {
+            "type": "string",
+            "description": "Optional prompt to send the scraped content to Gemini for analysis.",
+            "example": "Summarize the key information on this page."
+          },
+          "takeScreenshot": {
+            "type": "boolean",
+            "description": "Whether to take a screenshot along with scraping the page. The screenshot will be base64 encoded.",
+            "example": false
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "PlaywrightOutputDto": {
+        "type": "object",
+        "properties": {
+          "scrapedText": {
+            "type": "string",
+            "description": "The raw text content scraped from the page."
+          },
+          "scrapedHtml": {
+            "type": "string",
+            "description": "The raw HTML content scraped from the page."
+          },
+          "screenshotBase64": {
+            "type": "string",
+            "description": "Base64 encoded string of the screenshot image (PNG).",
+            "example": "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAA..."
+          },
+          "recordedVideoPath": {
+            "type": "string",
+            "description": "The path to the recorded video file on the server, relative to the project root.",
+            "example": "downloads/recordings/my-session-12345.webm"
+          },
+          "geminiAnalysis": {
+            "type": "object",
+            "description": "Results of the Gemini AI analysis on the scraped content or screenshot."
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the operation was successful."
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message if the operation failed."
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "ScreenshotUrlDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to take a screenshot of.",
+            "example": "https://www.google.com"
+          },
+          "fullPage": {
+            "type": "boolean",
+            "description": "Whether to capture a full-page screenshot. Defaults to true.",
+            "example": true
+          },
+          "selector": {
+            "type": "string",
+            "description": "CSS selector for an element to screenshot. If provided, only this element will be screenshotted. Overrides `fullPage` if present.",
+            "example": ".my-component"
+          },
+          "geminiPrompt": {
+            "type": "string",
+            "description": "Optional prompt to send the screenshot image to Gemini for analysis.",
+            "example": "Describe what you see in this image."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "RecordScreenDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to navigate to and start recording from.",
+            "example": "https://www.google.com"
+          },
+          "outputFileName": {
+            "type": "string",
+            "description": "Optional desired file name for the output video (e.g., \"my-session-recording.webm\"). If not provided, a timestamp-based unique name will be used.",
+            "example": "my-custom-recording.webm"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "LoginCredentialsDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username or email for login.",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "The password for login.",
+            "example": "mysecretpassword"
+          },
+          "usernameSelector": {
+            "type": "string",
+            "description": "CSS selector for the username/email input field.",
+            "example": "#usernameInput"
+          },
+          "passwordSelector": {
+            "type": "string",
+            "description": "CSS selector for the password input field.",
+            "example": "#passwordInput"
+          },
+          "submitSelector": {
+            "type": "string",
+            "description": "CSS selector for the login submit button.",
+            "example": "#loginButton"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "usernameSelector",
+          "passwordSelector",
+          "submitSelector"
+        ]
+      },
+      "NavigationStepDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "The type of action to perform.",
+            "enum": [
+              "navigate",
+              "click",
+              "type",
+              "login",
+              "wait"
+            ],
+            "example": "click"
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL to navigate to. Required if action is NAVIGATE.",
+            "example": "https://www.example.com/login"
+          },
+          "selector": {
+            "type": "string",
+            "description": "CSS selector for the element to interact with. Required for CLICK, TYPE actions, or to wait for in WAIT action.",
+            "example": "#myButton"
+          },
+          "value": {
+            "type": "string",
+            "description": "Value to type into the input field. Required for TYPE action.",
+            "example": "Hello World"
+          },
+          "loginCredentials": {
+            "description": "Login credentials and selectors. Required for LOGIN action.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LoginCredentialsDto"
+              }
+            ]
+          },
+          "durationMs": {
+            "type": "number",
+            "description": "Duration in milliseconds to wait. Required if action is WAIT and no selector is provided. Minimum 0.",
+            "example": 5000
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "PerformMultipleTasksDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to navigate to and perform tasks on.",
+            "example": "https://www.example.com"
+          },
+          "llmInstruction": {
+            "type": "string",
+            "description": "A natural language instruction. This can either be a Playwright instruction (e.g., \"Enter Email:x in (selector) and Password:y in (selector) and click button (selector)\") which will be parsed into navigation steps, OR a high-level prompt for the LLM to guide the overall task analysis (e.g., \"Summarize the key information on this page.\"). If it matches a known Playwright instruction pattern, it will be executed as such. Otherwise, it will be treated as a Gemini prompt for analysis.",
+            "example": "Enter Email address:evillan0315@gmail.com in the (input#email) and Password:Chuk0y#031582 in the (input#password) field and click the Sign in (#login-submit-btn) button"
+          },
+          "navigationSteps": {
+            "description": "An ordered list of specific navigation steps (navigate, login, click, type) to perform before other tasks. Instructions from `llmInstruction` (if parsed as Playwright commands) will be prepended to this list.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NavigationStepDto"
+            }
+          },
+          "shouldScrape": {
+            "type": "boolean",
+            "description": "Whether to perform a web scraping operation on the page. Defaults to true if no specific scrape/screenshot/recording is requested.",
+            "example": true
+          },
+          "scrapeSelector": {
+            "type": "string",
+            "description": "CSS selector to target specific content for scraping. If `shouldScrape` is true and this is not provided, the entire visible text content will be scraped.",
+            "example": "#main-content"
+          },
+          "returnHtmlForScrape": {
+            "type": "boolean",
+            "description": "Whether to return the full HTML of the scraped content instead of just text content. Only applicable if `shouldScrape` is true.",
+            "example": false
+          },
+          "shouldTakeScreenshot": {
+            "type": "boolean",
+            "description": "Whether to take a screenshot of the page. Defaults to true if no specific scrape/screenshot/recording is requested.",
+            "example": true
+          },
+          "screenshotFullPage": {
+            "type": "boolean",
+            "description": "Whether to capture a full-page screenshot. Only applicable if `shouldTakeScreenshot` is true. Defaults to true.",
+            "example": true
+          },
+          "screenshotSelector": {
+            "type": "string",
+            "description": "CSS selector for an element to screenshot. Only applicable if `shouldTakeScreenshot` is true. If provided, only this element will be screenshotted and overrides `screenshotFullPage`.",
+            "example": ".header-banner"
+          },
+          "shouldRecordScreen": {
+            "type": "boolean",
+            "description": "Whether to record the screen during the tasks. If true, recording starts at the beginning and stops automatically at the end of all tasks.",
+            "example": false
+          },
+          "recordOutputFileName": {
+            "type": "string",
+            "description": "Optional desired file name for the output video (e.g., \"my-task-recording.webm\"). Only applicable if `shouldRecordScreen` is true. If not provided, a timestamp-based unique name will be used.",
+            "example": "my-orchestrated-recording.webm"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
       "CreateConversationDto": {
         "type": "object",
         "properties": {
@@ -27226,6 +28892,462 @@
           "terms": {
             "type": "object",
             "description": "terms field"
+          }
+        }
+      },
+      "CreateDiffDto": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "filePath field"
+          },
+          "diff": {
+            "type": "string",
+            "description": "diff field"
+          },
+          "proposedFileChangeId": {
+            "type": "string",
+            "description": "proposedFileChangeId field"
+          }
+        },
+        "required": [
+          "filePath",
+          "diff",
+          "proposedFileChangeId"
+        ]
+      },
+      "PaginationDiffResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateDiffDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateDiffDto": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "filePath field"
+          },
+          "diff": {
+            "type": "string",
+            "description": "diff field"
+          },
+          "proposedFileChangeId": {
+            "type": "string",
+            "description": "proposedFileChangeId field"
+          }
+        }
+      },
+      "CreateProposedFileChangeDto": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "filePath field"
+          },
+          "newContent": {
+            "type": "string",
+            "description": "newContent field"
+          },
+          "reason": {
+            "type": "string",
+            "description": "reason field"
+          },
+          "responseId": {
+            "type": "string",
+            "description": "responseId field"
+          }
+        },
+        "required": [
+          "filePath",
+          "newContent",
+          "reason",
+          "responseId"
+        ]
+      },
+      "PaginationProposedFileChangeResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateProposedFileChangeDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateProposedFileChangeDto": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "filePath field"
+          },
+          "newContent": {
+            "type": "string",
+            "description": "newContent field"
+          },
+          "reason": {
+            "type": "string",
+            "description": "reason field"
+          },
+          "responseId": {
+            "type": "string",
+            "description": "responseId field"
+          }
+        }
+      },
+      "CreateLlmResponseDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "summary": {
+            "type": "string",
+            "description": "summary field"
+          },
+          "thoughtProcess": {
+            "type": "string",
+            "description": "thoughtProcess field"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "projectRoot field"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "requestId field"
+          },
+          "documentationId": {
+            "type": "string",
+            "description": "documentationId field"
+          },
+          "gitInstructions": {
+            "description": "gitInstructions field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "title",
+          "summary",
+          "thoughtProcess",
+          "projectRoot",
+          "requestId",
+          "documentationId",
+          "gitInstructions"
+        ]
+      },
+      "PaginationLlmResponseResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateLlmResponseDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateLlmResponseDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "summary": {
+            "type": "string",
+            "description": "summary field"
+          },
+          "thoughtProcess": {
+            "type": "string",
+            "description": "thoughtProcess field"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "projectRoot field"
+          },
+          "requestId": {
+            "type": "string",
+            "description": "requestId field"
+          },
+          "documentationId": {
+            "type": "string",
+            "description": "documentationId field"
+          },
+          "gitInstructions": {
+            "description": "gitInstructions field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateLlmRequestDto": {
+        "type": "object",
+        "properties": {
+          "userPrompt": {
+            "type": "string",
+            "description": "userPrompt field"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "projectRoot field"
+          },
+          "scanPaths": {
+            "description": "scanPaths field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "additionalInstructions": {
+            "type": "string",
+            "description": "additionalInstructions field"
+          },
+          "expectedOutputFormat": {
+            "type": "string",
+            "description": "expectedOutputFormat field"
+          },
+          "schemaId": {
+            "type": "string",
+            "description": "schemaId field"
+          },
+          "schemaVersion": {
+            "type": "number",
+            "description": "schemaVersion field"
+          }
+        },
+        "required": [
+          "userPrompt",
+          "projectRoot",
+          "scanPaths",
+          "additionalInstructions",
+          "expectedOutputFormat",
+          "schemaId",
+          "schemaVersion"
+        ]
+      },
+      "PaginationLlmRequestResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateLlmRequestDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateLlmRequestDto": {
+        "type": "object",
+        "properties": {
+          "userPrompt": {
+            "type": "string",
+            "description": "userPrompt field"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "projectRoot field"
+          },
+          "scanPaths": {
+            "description": "scanPaths field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "additionalInstructions": {
+            "type": "string",
+            "description": "additionalInstructions field"
+          },
+          "expectedOutputFormat": {
+            "type": "string",
+            "description": "expectedOutputFormat field"
+          },
+          "schemaId": {
+            "type": "string",
+            "description": "schemaId field"
+          },
+          "schemaVersion": {
+            "type": "number",
+            "description": "schemaVersion field"
+          }
+        }
+      },
+      "CreateExecutionSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": "string",
+            "description": "planId field"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "success field"
+          },
+          "error": {
+            "type": "string",
+            "description": "error field"
+          },
+          "commitHash": {
+            "type": "string",
+            "description": "commitHash field"
+          },
+          "appliedChanges": {
+            "type": "object",
+            "description": "appliedChanges field"
+          }
+        },
+        "required": [
+          "planId",
+          "success",
+          "error",
+          "commitHash",
+          "appliedChanges"
+        ]
+      },
+      "PaginationExecutionSnapshotResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateExecutionSnapshotDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdateExecutionSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": "string",
+            "description": "planId field"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "success field"
+          },
+          "error": {
+            "type": "string",
+            "description": "error field"
+          },
+          "commitHash": {
+            "type": "string",
+            "description": "commitHash field"
+          },
+          "appliedChanges": {
+            "type": "object",
+            "description": "appliedChanges field"
           }
         }
       }

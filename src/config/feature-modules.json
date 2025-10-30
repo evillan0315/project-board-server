@@ -33,6 +33,11 @@
     { "name": "ArtistModule", "enabled": true },
     { "name": "MetadataModule", "enabled": true },
     { "name": "LlmPlaywrightModule", "enabled": true },
-    { "name": "MemberModule", "enabled": true }
+    { "name": "MemberModule", "enabled": true },
+    { "name": "ProposedFileChangeModule", "enabled": true },
+    { "name": "LlmResponseModule", "enabled": true },
+    { "name": "LlmRequestModule", "enabled": true },
+    { "name": "DiffModule", "enabled": true },
+    { "name": "ExecutionSnapshotModule", "enabled": true }
   ]
 }

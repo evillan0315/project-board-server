@@ -26,16 +26,37 @@ export class TerminalService {
 
   constructor() {}
 
+  private async ensureUserExists(userId: string) {
+    let userRecord = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!userRecord) {
+      // Create a placeholder user if not found. This is crucial for FK constraints.
+      userRecord = await prisma.user.create({
+        data: {
+          id: userId,
+          username: `user_${userId.substring(0, 8)}`, // Placeholder username
+        },
+      });
+      this.logger.debug(`Created placeholder user for ID: ${userId}`);
+    }
+    return userRecord;
+  }
+
   async initializePtySession(
     sessionId: string,
     clientSocket: import('socket.io').Socket,
     cwd: string,
-    userId: string,
+    userId: string, // userId is now explicitly passed by index.ts
   ): Promise<string> {
     // If a session already exists, dispose of it first (e.g., on reconnect/re-init)
     if (this.sessions.has(sessionId)) {
       this.dispose(sessionId);
     }
+
+    // Ensure the user exists in the database before creating session/history
+    const userRecord = await this.ensureUserExists(userId);
 
     const shell = pty.spawn(this.defaultShell, [], {
       name: 'xterm-color',
@@ -48,7 +69,7 @@ export class TerminalService {
     // Create a new TerminalSession record in the database
     const dbSession = await prisma.terminalSession.create({
       data: {
-        createdById: userId,
+        createdById: userRecord.id,
         ipAddress: clientSocket.handshake.address,
         userAgent: clientSocket.handshake.headers['user-agent'],
         clientInfo: {
@@ -56,7 +77,7 @@ export class TerminalService {
           cwd: cwd,
         },
         status: 'ACTIVE',
-        name: `Session for User ${userId} (${sessionId})`,
+        name: `Session for User ${userRecord.username} (${sessionId})`,
       },
     });
 
@@ -128,14 +149,17 @@ export class TerminalService {
 
   async saveCommandHistoryEntry(
     dbSessionId: string,
-    userId: string,
+    userId: string, // userId is now explicitly passed by index.ts
     commandData: CreateCommandHistoryDto,
   ) {
     try {
+      // Ensure the user exists (though index.ts should ensure for session creation)
+      await this.ensureUserExists(userId);
+
       await prisma.commandHistory.create({
         data: {
           terminalSessionId: dbSessionId,
-          createdById: userId,
+          createdById: userId, // Link to the existing User ID
           command: commandData.command,
           workingDirectory: commandData.workingDirectory,
           status: commandData.status,
@@ -157,7 +181,7 @@ export class TerminalService {
   ): Promise<{ stdout: any[]; stderr: any[]; exitCode: number }> {
     return new Promise((resolve, reject) => {
       const shell = spawn(command, { // Explicitly define the shell
-        shell: SHELL_DEFAULT, 
+        shell: SHELL_DEFAULT,
         cwd,
       });
 
@@ -172,29 +196,29 @@ export class TerminalService {
         }
       };
 
-      shell.stdout.on('data', (data) => {
+      shell.stdout.on('data', (data: Buffer) => {
         const text = data.toString().trim();
         if (text) {
           text
             .split('\n')
-            .map((line) => line.trim())
+            .map((line: string) => line.trim())
             .filter(Boolean)
-            .forEach((line) => stdoutChunks.push(tryParseJson(line)));
+            .forEach((line: string) => stdoutChunks.push(tryParseJson(line)));
         }
       });
 
-      shell.stderr.on('data', (data) => {
+      shell.stderr.on('data', (data: Buffer) => {
         const text = data.toString().trim();
         if (text) {
           text
             .split('\n')
-            .map((line) => line.trim())
+            .map((line: string) => line.trim())
             .filter(Boolean)
-            .forEach((line) => stderrChunks.push(tryParseJson(line)));
+            .forEach((line: string) => stderrChunks.push(tryParseJson(line)));
         }
       });
 
-      shell.on('close', (code) => {
+      shell.on('close', (code: number, signal: string | null) => {
         resolve({
           stdout: stdoutChunks,
           stderr: stderrChunks,
@@ -246,7 +270,7 @@ export class TerminalService {
             }
 
             stream
-              .on('close', (code, signal) => {
+              .on('close', (code: number, signal: string | null) => {
                 conn.end();
                 if (code !== 0 && errorOutput) {
                   // If there was stderr and exit code is not 0, reject with stderr
@@ -315,7 +339,8 @@ export class TerminalService {
       return 'yarn';
     }
     if (existsSync(pnpmLockPath)) {
-      return 'pnpm';}
+      return 'pnpm';
+    } // Fixed missing closing brace
     if (existsSync(npmLockPath)) {
       return 'npm';
     }

@@ -9,6 +9,7 @@ import { LlmService } from './llm.service';
 import { ExecutorService } from './executor.service';
 import { FileChangeDto, CreatePlannerDto as PlanDto } from './dto';
 import { validatePlan } from './validator';
+import { LlmInputDto } from '@/llm/dto/llm-input.dto';
 
 @Injectable()
 export class PlannerService {
@@ -23,9 +24,9 @@ export class PlannerService {
    * Generate a plan from a free-form prompt using the LLM and validate the result.
    */
   async planFromPrompt(
-    prompt: string,
+    llmInput: LlmInputDto,
   ): Promise<{ planId: string; plan: PlanDto }> {
-    const raw = await this.llm.generatePlan(prompt);
+    const raw = await this.llm.generatePlan(llmInput);
     validatePlan(raw as unknown); // Throws on invalid
     const id = uuidv4();
     this.plans.set(id, raw);

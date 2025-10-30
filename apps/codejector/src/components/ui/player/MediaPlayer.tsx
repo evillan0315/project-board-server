@@ -68,7 +68,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = () => {
         width: '100%',
         px: 2,
         // Added minHeight to ensure it doesn't collapse
-        minHeight: '48px', // Base height for controls
+        //minHeight: '48px', // Base height for controls
       }}
       className='flex-grow-0' // Ensure it doesn't grow unnecessarily in a flex parent
     >
@@ -78,7 +78,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = () => {
           display: 'flex',
           alignItems: 'center',
           //justifyContent: 'space-between',
-          py: 0.5, // Small padding top/bottom for this row
+          //py: 0.5, // Small padding top/bottom for this row
         }}
       >
         <MediaPlayerTrackInfo />
@@ -93,7 +93,7 @@ const MediaPlayer: React.FC<MediaPlayerProps> = () => {
 
 
 
-      {/* Transcription Highlight (conditionally rendered below visualizer/controls) */}
+
       {showTranscription && isTranscriptionAvailable && transcriptionSyncData && (
         <Paper
           elevation={1}

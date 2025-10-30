@@ -5,6 +5,9 @@
  *         clean deduplication logic for spinner frames and repetitive socket output.
  *         Refactored to use `terminalSocketService` for all direct socket interactions,
  *         focusing this store on managing the UI-related state of the terminal session.
+ *         Note: Client-side command history (addCommandToHistory, browseHistory) and
+ *         `executeCommand` are now intended for programmatic interaction or a separate
+ *         command palette, as XTerminal itself now forwards raw input directly to the PTY.
  */
 
 import { map } from 'nanostores';
@@ -57,6 +60,10 @@ export const setConnected = (isConnected: boolean) => {
   terminalStore.setKey('isConnected', isConnected);
 };
 
+/**
+ * Adds a command to the client-side history. Note: XTerminal no longer directly uses this
+ * for interactive input, but it can be used for other UI elements (e.g., a command palette).
+ */
 export const addCommandToHistory = (command: string) => {
   const state = terminalStore.get();
   const updatedHistory = [...state.commandHistory, command];
@@ -67,6 +74,9 @@ export const addCommandToHistory = (command: string) => {
   });
 };
 
+/**
+ * Navigates client-side command history. Note: XTerminal no longer directly uses this.
+ */
 export const browseHistory = (direction: 'up' | 'down') => {
   const state = terminalStore.get();
   let newIndex = state.historyIndex;
@@ -164,9 +174,15 @@ export const disconnectTerminal = () => {
   appendOutput('\x1b[33mDisconnected from terminal server.\x1b[0m\n');
 };
 
+/**
+ * Sends a command to the terminal backend for semantic execution.
+ * Note: XTerminal now primarily sends raw input. This function can be used
+ * by other UI elements (e.g., a command input box or script runner) if a
+ * higher-level command submission is needed that bypasses raw PTY input.
+ */
 export const executeCommand = (command: string) => {
   if (!command.trim()) return;
-  addCommandToHistory(command);
+  addCommandToHistory(command); // Still adds to client-side history for programmatic use
   terminalSocketService.execCommand(command); // Use new service for command execution
 };
 

@@ -4,6 +4,12 @@ import { z } from 'zod';
 
 export type Role = PrismaRole;
 
+// New interface for OAuth query parameters
+export interface OAuthQuerystring {
+  cli_port?: string;
+  state?: string;
+}
+
 // DTOs for authentication
 export interface RegisterDto {
   email: string;

@@ -1,7 +1,10 @@
-export type FileAction = 'add' | 'modify' | 'delete';
+import { FileAction as PrismaFileAction } from '@prisma/client';
+
+export type FileAction = 'add' | 'modify' | 'delete' | 'repair' | 'analyze' | 'install' | 'run';
+
 export interface FileChangeDto {
   filePath: string;
-  action: FileAction;
+  action: PrismaFileAction;
   newContent?: string;
   diff?: string;
   reason?: string;

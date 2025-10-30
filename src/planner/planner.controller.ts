@@ -11,27 +11,21 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
+import { LlmInputDto } from '@/llm/dto/llm-input.dto';
+
 @ApiTags('AI Planner')
 @Controller('api/plan')
 export class PlannerController {
   constructor(private readonly planner: PlannerService) {}
-  @ApiOperation({ summary: 'Create a new plan from a prompt' })
+
+  @ApiOperation({ summary: 'Generate a new plan from a structured LLM input' })
   @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        prompt: {
-          type: 'string',
-          description: 'The prompt to generate the plan from',
-          example: 'Implement user authentication with Google OAuth',
-        },
-      },
-      required: ['prompt'],
-    },
+    type: LlmInputDto,
+    description: 'The structured input for generating a plan.',
   })
   @ApiResponse({
     status: 201,
-    description: 'The plan has been successfully created.',
+    description: 'The plan has been successfully generated.',
     schema: {
       type: 'object',
       properties: {
@@ -48,10 +42,11 @@ export class PlannerController {
     },
   })
   @Post()
-  async createPlan(@Body() body: { prompt: string }) {
-    const result = await this.planner.planFromPrompt(body.prompt);
+  async generatePlan(@Body() llmInput: LlmInputDto) {
+    const result = await this.planner.planFromPrompt(llmInput);
     return result;
   }
+
   @ApiOperation({ summary: 'Get a plan by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the plan' })
   @ApiResponse({ status: 200, description: 'The plan details.' })
@@ -60,6 +55,7 @@ export class PlannerController {
     const plan = await this.planner.getPlan(id);
     return { plan };
   }
+
   @ApiOperation({ summary: 'Get chunks of a plan by ID' })
   @ApiParam({ name: 'id', description: 'The ID of the plan' })
   @ApiResponse({ status: 200, description: 'The chunks of the plan.' })
@@ -68,6 +64,7 @@ export class PlannerController {
     const chunks = await this.planner.chunkPlan(id);
     return { chunks };
   }
+
   @ApiOperation({ summary: 'Apply a chunk of a plan by ID and index' })
   @ApiParam({ name: 'id', description: 'The ID of the plan' })
   @ApiParam({ name: 'index', description: 'The index of the chunk to apply' })
@@ -81,6 +78,7 @@ export class PlannerController {
     const res = await this.planner.applyChunk(id, idx);
     return res;
   }
+
   @ApiOperation({ summary: 'Apply a plan' })
   @ApiBody({
     type: PlanDto,

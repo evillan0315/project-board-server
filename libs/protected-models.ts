@@ -32,4 +32,9 @@ export const protectedModels = [
   'FavoriteSong',
   'FavoriteVideo',
   'Member',
+  'ProposedFileChange',
+  'LlmResponse',
+  'LlmRequest',
+  'Diff',
+  'ExecutionSnapshot',
 ];

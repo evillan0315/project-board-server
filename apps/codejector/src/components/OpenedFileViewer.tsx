@@ -24,12 +24,14 @@ import {
   saveActiveFile,
   openedFileContent,
   openedFile,
+  openedFileViewMode,
 } from '@/stores/fileStore';
 import { themeStore } from '@/stores/themeStore';
 import { readFileContent } from '@/api/file';
 
 import InitialEditorViewer from '@/components/InitialEditorViewer';
 import MarkdownEditor from '@/components/MarkdownEditor';
+import HtmlFilePreviewer from '@/components/preview/HtmlFilePreviewer'; // New import for HTML preview
 
 interface OpenedFileViewerProps {}
 
@@ -43,6 +45,7 @@ const OpenedFileViewer: React.FC<OpenedFileViewerProps> = () => {
   } = useStore(fileStore);
   const $openedFileContent = useStore(openedFileContent);
   const $openedFile = useStore(openedFile);
+  const $openedFileViewMode = useStore(openedFileViewMode);
   const muiTheme = useTheme();
   // const { mode } = useStore(themeStore); // Not needed here, handled by CodeMirrorEditor
 
@@ -122,8 +125,22 @@ const OpenedFileViewer: React.FC<OpenedFileViewerProps> = () => {
   const isLoadingContent = isFetchingFileContent;
   const isDisabled = isLoadingContent || isSavingFileContent;
 
-  // Detect markdown files by extension
+  // Detect markdown and HTML files by extension
   const isMarkdownFile = $openedFile?.toLowerCase().endsWith('.md');
+  const isHtmlFile =
+    $openedFile?.toLowerCase().endsWith('.html') ||
+    $openedFile?.toLowerCase().endsWith('.htm');
+
+  // Conditional rendering for HTML files, passing common states to the previewer
+  if (isHtmlFile && $openedFileViewMode === 'preview') {
+    return (
+      <HtmlFilePreviewer
+        content={$openedFileContent}
+        isLoading={isFetchingFileContent}
+        fetchError={fetchFileContentError}
+      />
+    );
+  }
 
   return (
     <Box

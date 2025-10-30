@@ -26,6 +26,7 @@ interface TerminalToolbarProps {
   onDisconnect: () => void;
   onSettings: () => void;
   onLogout: () => void;
+  onCloseDrawer?: () => void; // NEW: Optional callback to close a parent drawer/modal
   sx?: any;
 }
 
@@ -36,18 +37,25 @@ export const TerminalToolbar: React.FC<TerminalToolbarProps> = ({
   onDisconnect,
   onSettings,
   onLogout,
+  onCloseDrawer, // NEW: Destructure the prop
   sx,
 }) => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const showTerminal = useStore(isTerminalVisible);
 
-  /** ✅ Disconnect socket session first, then hide terminal */
+  /**
+   * ✅ Disconnect socket session first, then hide terminal or close parent drawer.
+   */
   const handleCloseTerminal = () => {
     if (isConnected) {
       disconnectTerminal();
     }
-    setShowTerminal(!showTerminal);
+    if (onCloseDrawer) {
+      onCloseDrawer(); // Call the parent drawer's close handler if available
+    } else {
+      setShowTerminal(!showTerminal); // Fallback to global visibility toggle
+    }
   };
 
   return (
@@ -60,9 +68,13 @@ export const TerminalToolbar: React.FC<TerminalToolbarProps> = ({
         backgroundColor: theme.palette.background.paper,
         color: theme.palette.text.primary,
         border: 0,
-        borderBottom: `1px solid ${theme.palette.divider}`,
+        borderBottom: `1px solid`,
+        
         borderRadius: 0,
         boxShadow: 0,
+        borderTop: '1px solid',
+        borderColor: theme.palette.divider,
+        height: '36px',
         ...sx,
       }}
     >

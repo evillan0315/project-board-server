@@ -10,48 +10,27 @@ import {
   IsUUID,
   IsObject,
   IsPositive,
-  IsDefined
 } from 'class-validator';
-import { Type } from 'class-transformer'; // Needed for @Type
-
-<% 
-  const imports = new Set();
-  for (const rel of relations) {
-    // Use targetModel (original model name) for generating import paths
-    imports.add(rel.type);
-  }
-%>
-<% for (const relName of Array.from(imports)) { %>
-import { Create<%= relName %>Dto } from './create-<%= relName.charAt(0).toLowerCase() + relName.slice(1) %>.dto';
-<% } %>
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class Create<%= className %>Dto {
-  <% for (const field of fields) { %>
-  <%- field.validators.join('\n  ') %>
-  <%- field.name %><%- field.isOptional ? '?' : '' %>: <%- field.tsType %>;
-  <% } %>
-  <% for (const field of relations) { %>
-  <%- field.isOptional ? '  @IsOptional()' : '' %>
-  <% if (field.isList) { %>
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => Create<%= field.targetModel %>Dto)
-  <%- field.name %><%- field.isOptional ? '?' : '' %>: <%- field.tsType %>;
-  <% } else { %>
-  @ValidateNested()
-  @Type(() => Create<%= field.targetModel %>Dto)
-  <%- field.name %><%- field.isOptional ? '?' : '' %>: <%- field.tsType %>;
-  <% } %>
-  <% } %>
-  <% if (hasCreatedBy) { %>
-  // createdBy and createdById are typically handled by the service and not directly exposed in CreateDto
-  // createdById?: string;
-  <% } %>
-  <% if (hasSubmittedById) { %>
-  // submittedById is typically handled by the service and not directly exposed in CreateDto
-  // submittedById?: string;
-  <% } %>
+<% fields
+  .filter(field =>
+    field.relationType !== 'one-to-many' &&
+    !['id', 'createdAt', 'updatedAt', 'createdById', 'deletedAt'].includes(field.name)
+  )
+  .forEach(field => { -%>
+  @ApiProperty({ description: '<%= field.name %> field' })
+  <% field.validators.forEach(validator => { -%>
+  <%= validator %>
+  <% }) -%>
+  <%= field.name %>: <%= field.type %>;
+<% }) %>
+
+
 }
+
 export class Pagination<%= className %>ResultDto {
   @ApiProperty({ type: [Create<%= className %>Dto] })
   items: Create<%= className %>Dto[];
@@ -105,3 +84,4 @@ export class Pagination<%= className %>QueryDto {
 
 
 }
+

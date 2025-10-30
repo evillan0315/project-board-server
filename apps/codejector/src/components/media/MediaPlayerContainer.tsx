@@ -316,11 +316,7 @@ const MediaPlayerContainer: React.FC = () => {
 
 
   return (
-    <Box className="flex justify-start items-center w-full"> { /* Fixed height for consistency, removed sticky for parent control */ }
-      {/* Transcription Highlights (conditionally rendered at the top) */}
-      
-
-      {/* Only render an audio element within this container. Video is handled by VideoModal. */}
+    <Box className="flex justify-start items-center w-full h-full"> 
       {currentTrack?.fileType === FileType.AUDIO && currentTrack?.streamUrl ? (
         <audio
           ref={internalMediaElementRef}

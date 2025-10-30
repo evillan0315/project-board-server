@@ -105,7 +105,7 @@ export default tseslint.config(
       // TypeScript rules
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
-      // Re-enable unused vars rule from TypeScript plugin
+      // Re-enable unused vars rule from TypeScript plugin, allowing leading underscores
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
 
       // Unused imports

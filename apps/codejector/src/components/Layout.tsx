@@ -56,8 +56,9 @@ const Layout: React.FC<LayoutProps> = ({ footer }) => {
   const theme = useTheme();
 
   // ✅ consider both existing loaders and global request loaders
-  const isAnyGlobalRequestLoading =
-    Object.values(globalLoadingState).some(Boolean);
+  const isAnyGlobalRequestLoading = Object.values(globalLoadingState).some(
+    Boolean,
+  );
   const layoutLoader =
     authLoading ||
     llmLoading ||

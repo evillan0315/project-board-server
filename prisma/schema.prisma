@@ -63,43 +63,44 @@ model User {
   Message            Message[]
   PlaywrightTask     PlaywrightTask[]
   members            Member[] // Add reverse relation from Member
+  Diff               Diff[]
 }
 
 // New Member model based on IMemberFull interface
 model Member {
-  id                     String              @id @default(uuid())
-  username        String
-  email           String    @unique
-  provider        String?   
-  confirmed       Boolean   
-  blocked         Boolean   
-  role            Int       // IMemberFull.role (number)
-  memberSystemId  Int       @unique @map("userId") // IMemberFull.userId. Unique identifier from the external member system.
-  jsonData        Json      @map("json_data") // Stores the entire IMemberJsonData structure as JSON
-  blockedExpire   DateTime? // IMemberFull.blockedExpire (string | null)
-  blockedStart    DateTime? // IMemberFull.blockedStart (string | null)
-  isPaid          Boolean   @map("PAID") // IMemberFull.PAID (boolean)
-  createGroup     Boolean   
-  isEmployee      Boolean   @map("EMPLOYEE") // IMemberFull.EMPLOYEE (boolean)
-  isOnline        Boolean   @map("ONLINE") // IMemberFull.ONLINE (boolean)
-  memberType      String    @map("MEMBERTYPE") // IMemberFull.MEMBERTYPE (string)
-  picture         String?   @map("PICTURE") // IMemberFull.PICTURE (string)
-  adminUser       Json?     @map("admin_user") // IMemberFull.admin_user (any | null)
-  createdAt       DateTime  @default(now()) @map("created_at") // IMemberFull.created_at (string)
-  updatedAt       DateTime  @updatedAt @map("updated_at") // IMemberFull.updated_at (string)
-  latString       String?   @map("LAT") // IMemberFull.LAT (string)
-  lonString       String?   @map("LON") // IMemberFull.LON (string)
-  userSetting     Json?     @map("usetting") // IMemberFull.usetting (any | null)
-  terms           Json?     // IMemberFull.terms (any | null)
+  id             String    @id @default(uuid())
+  username       String
+  email          String    @unique
+  provider       String?
+  confirmed      Boolean
+  blocked        Boolean
+  role           Int // IMemberFull.role (number)
+  memberSystemId Int       @unique @map("userId") // IMemberFull.userId. Unique identifier from the external member system.
+  jsonData       Json      @map("json_data") // Stores the entire IMemberJsonData structure as JSON
+  blockedExpire  DateTime? // IMemberFull.blockedExpire (string | null)
+  blockedStart   DateTime? // IMemberFull.blockedStart (string | null)
+  isPaid         Boolean   @map("PAID") // IMemberFull.PAID (boolean)
+  createGroup    Boolean
+  isEmployee     Boolean   @map("EMPLOYEE") // IMemberFull.EMPLOYEE (boolean)
+  isOnline       Boolean   @map("ONLINE") // IMemberFull.ONLINE (boolean)
+  memberType     String    @map("MEMBERTYPE") // IMemberFull.MEMBERTYPE (string)
+  picture        String?   @map("PICTURE") // IMemberFull.PICTURE (string)
+  adminUser      Json?     @map("admin_user") // IMemberFull.admin_user (any | null)
+  createdAt      DateTime  @default(now()) @map("created_at") // IMemberFull.created_at (string)
+  updatedAt      DateTime  @updatedAt @map("updated_at") // IMemberFull.updated_at (string)
+  latString      String?   @map("LAT") // IMemberFull.LAT (string)
+  lonString      String?   @map("LON") // IMemberFull.LON (string)
+  userSetting    Json?     @map("usetting") // IMemberFull.usetting (any | null)
+  terms          Json? // IMemberFull.terms (any | null)
 
   // Standard creator relation for audit trails
-  createdById     String
-  createdBy       User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
-  @@map("members") // Map table name to "members"
   @@index([createdById])
   @@index([email])
   @@index([memberSystemId]) // Add index for the external system's user ID
+  @@map("members") // Map table name to "members"
 }
 
 model Password {
@@ -443,7 +444,7 @@ model Form {
   id          String       @id @default(uuid())
   name        String
   fields      Json
-  createdAt   DateTime @default(now())
+  createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   createdById String
   createdBy   User         @relation(fields: [createdById], references: [id])
@@ -666,17 +667,6 @@ model VideoHistory {
   @@index([createdById, playedAt])
 }
 
-model Diff {
-  id           String     @id @default(uuid())
-  llmRequest   LlmRequest @relation(fields: [llmRequestId], references: [id])
-  llmRequestId String
-  filePath     String
-  diff         String // unified diff string
-  createdAt    DateTime   @default(now())
-
-  @@index([llmRequestId])
-}
-
 model LlmRequest {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -697,7 +687,6 @@ model LlmRequest {
 
   // relations
   response LlmResponse?
-  Diff     Diff[]
 }
 
 model LlmResponse {
@@ -708,9 +697,9 @@ model LlmResponse {
   title          String
   summary        String
   thoughtProcess String?
-
-  requestId String     @unique
-  request   LlmRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  projectRoot    String
+  requestId      String     @unique
+  request        LlmRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   changes ProposedFileChange[]
 
@@ -723,21 +712,34 @@ model LlmResponse {
   gitInstructions String[]
 }
 
+model Diff {
+  id                   String             @id @default(uuid())
+  filePath             String
+  diff                 String
+  createdAt            DateTime           @default(now())
+  proposedFileChangeId String             @unique
+  proposedFileChange   ProposedFileChange @relation(fields: [proposedFileChangeId], references: [id], onDelete: Cascade)
+  createdById          String
+  createdBy            User               @relation(fields: [createdById], references: [id])
+
+  @@index([filePath])
+}
+
 model ProposedFileChange {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  filePath   String
-  action     FileAction
-  newContent String?
-  reason     String?
-
-  responseId String
-  response   LlmResponse @relation(fields: [responseId], references: [id])
-
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  filePath    String
+  action      FileAction
+  newContent  String?
+  reason      String?
+  responseId  String
+  response    LlmResponse @relation(fields: [responseId], references: [id])
   createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdBy   User        @relation(fields: [createdById], references: [id])
+
+  // one-to-one relation with Diff
+  diff Diff?
 }
 
 model ExecutionSnapshot {
@@ -800,20 +802,20 @@ model Message {
 
 // Playwright Task Model
 model PlaywrightTask {
-  id               String                 @id @default(uuid())
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
-  createdById      String
-  createdBy        User                   @relation(fields: [createdById], references: [id])
-  url              String
-  actionType       PlaywrightActionType
-  llmInstruction   String?                @db.Text
-  status           PlaywrightTaskStatus   @default(PENDING)
-  errorMessage     String?                @db.Text
-  outputJson       Json?                  // Stores the detailed output (scraped text, screenshot base64, video path, gemini analysis)
-  durationMs       Int?
-  browserType      String?
-  headless         Boolean?
+  id             String               @id @default(uuid())
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  createdById    String
+  createdBy      User                 @relation(fields: [createdById], references: [id])
+  url            String
+  actionType     PlaywrightActionType
+  llmInstruction String?              @db.Text
+  status         PlaywrightTaskStatus @default(PENDING)
+  errorMessage   String?              @db.Text
+  outputJson     Json? // Stores the detailed output (scraped text, screenshot base64, video path, gemini analysis)
+  durationMs     Int?
+  browserType    String?
+  headless       Boolean?
 
   @@index([createdById])
   @@index([status])
@@ -866,9 +868,9 @@ enum RequestType {
   AUDIO_TRANSCRIPTION
   ERROR_ANALYSIS
   REFACTOR
-  IMAGE_CAPTIONING       @map("IMAGE_CAPTIONING")
-  SCREENSHOT_ANALYSIS    @map("SCREENSHOT_ANALYSIS")
-  WEB_SCRAPE_ANALYSIS    @map("WEB_SCRAPE_ANALYSIS")
+  IMAGE_CAPTIONING         @map("IMAGE_CAPTIONING")
+  SCREENSHOT_ANALYSIS      @map("SCREENSHOT_ANALYSIS")
+  WEB_SCRAPE_ANALYSIS      @map("WEB_SCRAPE_ANALYSIS")
   OTHER
   PLAYWRIGHT_TASK_ANALYSIS
 }

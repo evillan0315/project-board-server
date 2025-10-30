@@ -4,27 +4,7 @@
 
 This backend application provides the core logic for an AI-driven project planning tool. It features user authentication (local, Google, GitHub OAuth), email verification, password management, and an intelligent planner service that leverages AI models (Google Gemini or OpenAI) to generate and apply code changes directly to a Git repository.
 
-## Features
-
-- **User Authentication:** Secure local authentication with email verification and password reset functionality.
-- **OAuth Integrations:** Seamless login via Google and GitHub accounts.
-- **Role-Based Access Control:** Basic user roles defined ( extensible).
-- **AI-Powered Planning:** Integrates with Google Gemini or OpenAI to generate code changes based on user prompts.
-- **Git Operations:** Executes various Git commands to apply AI-generated changes, create snapshots, manage branches, and more.
-- **Database Management:** Uses Prisma ORM for type-safe database interactions (PostgreSQL).
-- **Email Service:** Nodemailer integration for sending verification and password reset emails.
-- **Configuration Management:** Environment variable validation using Zod.
-
-## Technology Stack
-
-- **Backend:** Node.js, Fastify
-- **Language:** TypeScript
-- **Database:** PostgreSQL (via Prisma ORM)
-- **Authentication:** Passport.js (JWT, Google OAuth2, GitHub OAuth2), bcrypt, jsonwebtoken
-- **AI:** Google Gemini API, OpenAI API (configurable)
-- **Version Control:** simple-git for Git operations
-- **Validation:** Zod, class-validator
-- **Utilities:** dotenv, uuid, nodemailer
+For a high-level overview of features and technology stack, see the [Overview Documentation](docs/Overview.md).
 
 ## Getting Started
 
@@ -119,30 +99,9 @@ This backend application provides the core logic for an AI-driven project planni
 
     The server will start on the port specified in your `.env` file (default: `4000`).
 
-## API Endpoints
+## Architecture and API Endpoints
 
-### Authentication (`/auth`)
-
--   `POST /auth/register`: Register a new user.
--   `POST /auth/login`: Log in a user and receive JWT tokens.
--   `POST /auth/logout`: Clear authentication cookies.
--   `GET /auth/google`: Initiate Google OAuth flow.
--   `GET /auth/google/callback`: Google OAuth callback endpoint.
--   `GET /auth/github`: Initiate GitHub OAuth flow.
--   `GET /auth/github/callback`: GitHub OAuth callback endpoint.
--   `POST /auth/resend-verification`: Resend email verification link.
--   `GET /auth/verify-email`: Verify user email with token.
--   `POST /auth/forgot-password`: Request a password reset link.
--   `POST /auth/reset-password`: Reset password with a token.
--   `GET /auth/me`: Get current user details (requires authentication).
-
-### AI Planner (`/api/plan`)
-
--   `POST /api/plan`: Generate an AI plan from a prompt.
--   `GET /api/plan/:id`: Retrieve a specific AI plan.
--   `GET /api/plan/:id/chunks`: Get plan changes chunked.
--   `POST /api/plan/:id/apply-chunk/:index`: Apply a specific chunk of a plan.
--   `POST /api/plan/apply`: Apply an entire AI plan.
+For a detailed explanation of the server's architecture and a comprehensive list of API endpoints, please refer to the [Architecture Documentation](docs/Architecture.md).
 
 ## Contributing
 

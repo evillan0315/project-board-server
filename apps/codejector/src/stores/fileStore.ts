@@ -38,6 +38,12 @@ export const isOpenedFileDirty = persistentAtom<boolean>(
 );
 export const openedTabs = persistentAtom<string[]>('openedTabs', []);
 
+// New: Atom for controlling the view mode of the currently opened file
+export const openedFileViewMode = persistentAtom<'code' | 'preview'>(
+  'openedFileViewMode',
+  'code',
+);
+
 export const setOpenedFile = (filePath: string | null) => {
   openedFile.set(filePath);
 
@@ -52,6 +58,7 @@ export const setOpenedFile = (filePath: string | null) => {
   // Clear transient states when changing file
   openedFileContent.set(null);
   isOpenedFileDirty.set(false);
+  openedFileViewMode.set('code'); // Reset view mode to code when opening a new file
   fileStore.setKey('initialFileContentSnapshot', null);
   fileStore.setKey('isFetchingFileContent', false);
   fileStore.setKey('fetchFileContentError', null);
@@ -274,6 +281,11 @@ export const fetchFileContent = async (filePath: string) => {
   } finally {
     setIsFetchingFileContent(false);
   }
+};
+
+export const setOpenedFileViewMode = (mode: 'code' | 'preview') => {
+  openedFileViewMode.set(mode);
+  addLog('File Editor', `Switched view mode to: ${mode}`, 'info');
 };
 
 // ────────────────────────────
