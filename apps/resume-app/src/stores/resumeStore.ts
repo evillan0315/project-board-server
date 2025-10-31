@@ -15,6 +15,7 @@ interface ResumeState {
     generate: boolean;
     enhance: boolean;
     portfolio: boolean; // New loading flag for portfolio generation
+    export: boolean; // New loading flag for export operations
   };
   error: {
     parse: string | null;
@@ -22,6 +23,7 @@ interface ResumeState {
     generate: string | null;
     enhance: string | null;
     portfolio: string | null; // New error flag for portfolio generation
+    export: string | null; // New error flag for export operations
     general: string | null;
   };
 }
@@ -40,6 +42,7 @@ export const resumeStore = map<ResumeState>({
     generate: false,
     enhance: false,
     portfolio: false, // Initialize new loading flag
+    export: false, // Initialize new loading flag
   },
   error: {
     parse: null,
@@ -47,6 +50,7 @@ export const resumeStore = map<ResumeState>({
     generate: null,
     enhance: null,
     portfolio: null, // Initialize new error flag
+    export: null, // Initialize new error flag
     general: null,
   },
 });
@@ -60,7 +64,8 @@ export const resetErrors = () => {
       optimize: null,
       generate: null,
       enhance: null,
-      portfolio: null, // Reset new error
+      portfolio: null,
+      export: null, // Reset new error
       general: null,
     },
   });

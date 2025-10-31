@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { resumeStore, resetErrors } from '@/stores/resumeStore';
 import { parseResumeFile, optimizeResume, generateResume, enhanceResume, generatePortfolio } from '@/api/resumeApi';
+import { exportResume } from '@/api/utilsApi'; // New import for utilsApi
 import ResumeForm from '@/components/ResumeForm';
 import OptimizationDisplaySection from '@/components/OptimizationDisplaySection';
 import GenerateEnhanceSection from '@/components/GenerateEnhanceSection';
 import ResumeDisplaySection from '@/components/ResumeDisplaySection';
-import PortfolioGeneratorSection from '@/components/PortfolioGeneratorSection'; // New import
-import PortfolioDisplaySection from '@/components/PortfolioDisplaySection'; // New import
+import PortfolioGeneratorSection from '@/components/PortfolioGeneratorSection';
+import PortfolioDisplaySection from '@/components/PortfolioDisplaySection';
+import ResumeExportSection from '@/components/ResumeExportSection'; // New import
 
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -17,6 +19,7 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
+import { OutputFormat } from '@/types/resume'; // Import OutputFormat
 
 // Define TabPanelProps for better type safety
 interface TabPanelProps {
@@ -189,13 +192,36 @@ const ResumeGeneratorPage: React.FC = () => {
     }
   };
 
+  const handleExport = async (
+    content: string,
+    format: OutputFormat,
+    filename: string,
+  ) => {
+    resumeStore.setKey('loading', { ...$resume.loading, export: true });
+    resumeStore.setKey('error', { ...$resume.error, export: null, general: null });
+    try {
+      if (!content.trim()) {
+        throw new Error('No content available to export.');
+      }
+      await exportResume({ content, format, filename });
+    } catch (err) {
+      resumeStore.setKey('error', {
+        ...$resume.error,
+        export: err instanceof Error ? err.message : 'Failed to export resume.',
+      });
+    } finally {
+      resumeStore.setKey('loading', { ...$resume.loading, export: false });
+    }
+  };
+
   const hasError = Object.values($resume.error).some((err) => err !== null);
   const currentErrorMessage =
     $resume.error.parse ||
     $resume.error.optimize ||
     $resume.error.generate ||
     $resume.error.enhance ||
-    $resume.error.portfolio || // Add new error to check
+    $resume.error.portfolio ||
+    $resume.error.export || // Add new error to check
     $resume.error.general;
 
   return (
@@ -237,9 +263,14 @@ const ResumeGeneratorPage: React.FC = () => {
                 {...a11yProps(1)}
                 className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
               />
-              <Tab // New Tab for Portfolio
+              <Tab
                 label="Generate Portfolio"
                 {...a11yProps(2)}
+                className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
+              />
+              <Tab // New Tab for Export
+                label="Export / Convert Resume"
+                {...a11yProps(3)}
                 className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
               />
             </Tabs>
@@ -294,6 +325,13 @@ const ResumeGeneratorPage: React.FC = () => {
             {$resume.generatedPortfolioHtml && (
               <PortfolioDisplaySection title="Generated Portfolio" htmlContent={$resume.generatedPortfolioHtml} />
             )}
+          </CustomTabPanel>
+          <CustomTabPanel value={currentTab} index={3}> {/* New Tab Panel for Export */}
+            <ResumeExportSection
+              onExport={handleExport}
+              loading={$resume.loading.export}
+              currentResumeContent={$resume.resumeContent}
+            />
           </CustomTabPanel>
         </Box>
       </Paper>
