@@ -107,6 +107,10 @@ export class LlmService {
     if (additionalInstructions) {
       parts.push({ text: `\nAdditional Instructions:\n${additionalInstructions}` });
     }
+
+    // Append the expected output format as a system instruction
+    const systemInstructionContent = expectedOutputFormat;
+
     const payload = {
       contents: [
         {
@@ -115,11 +119,12 @@ export class LlmService {
         },
       ],
       systemInstruction: {
-        parts: [{ text: expectedOutputFormat }],
+        parts: [{ text: systemInstructionContent }],
       },
       generationConfig: {
         //maxOutputTokens: 2000,
-        //temperature: 0,
+        temperature: 0.1, // Set a lower temperature for more predictable JSON output
+        responseMimeType: 'application/json', // Request JSON output directly
       },
     };
     const apiUrl = `${this.geminiBaseUrl}/${this.geminiModel}:generateContent?key=${this.geminiKey}`;
@@ -137,18 +142,31 @@ export class LlmService {
     const candidate = result.candidates?.[0];
     const responseParts = candidate?.content?.parts ?? [];
     const generatedText = responseParts.map((p: any) => p.text ?? '').join('');
+
     try {
-      // Ensure Prisma FileAction enum is used
-      const plan = JSON.parse(
-        LlmService.extractJsonFromMarkdown(generatedText),
-      ) as PlanDto;
-      plan.changes = plan.changes.map((c) => ({
+      let planData: PlanDto;
+      // If responseMimeType is honored, generatedText might already be pure JSON
+      // Otherwise, extract from markdown block
+      if (response.headers.get('Content-Type')?.includes('application/json')) {
+        planData = JSON.parse(generatedText) as PlanDto;
+      } else {
+        planData = JSON.parse(LlmService.extractJsonFromMarkdown(generatedText)) as PlanDto;
+      }
+
+      planData.changes = planData.changes.map((c) => ({
         ...c,
-        action: (FileAction as any)[c.action.toUpperCase()],
+        action: (FileAction as any)[(c.action as string).toUpperCase()],
       })) as FileChangeDto[];
-      return plan;
+
+      // Ensure summary, documentation, gitInstructions are present, even if empty
+      planData.summary = planData.summary || 'No summary provided.';
+      planData.documentation = planData.documentation || '';
+      planData.gitInstructions = planData.gitInstructions || [];
+      planData.thoughtProcess = planData.thoughtProcess || '';
+
+      return planData;
     } catch (e) {
-      this.logger.error(`Failed to parse Gemini response: ${e.message}`);
+      this.logger.error(`Failed to parse Gemini response: ${e.message}. Raw response: ${generatedText}`);
       return this.mockPlan(llmInput);
     }
   }
@@ -160,15 +178,14 @@ export class LlmService {
       return {
         title: 'Add /ping route',
         summary: 'Adds ping function to hello.ts',
+        thoughtProcess: 'Mock thought process for adding ping route.',
+        documentation: '## Ping Route\nThis adds a basic /ping route for health checks.',
+        gitInstructions: ['git add .', 'git commit -m "feat: add ping route"'],
         changes: [
           {
             filePath: 'fixture-repo/src/hello.ts',
             action: FileAction.MODIFY,
-            newContent: `export function hello() {
-  return "Hello world";
-}
-export function ping() {
-  return "pong";}`,
+            newContent: `export function hello() {\n  return "Hello world";\n}\nexport function ping() {\n  return "pong";}`,
             reason: 'Add ping function',
           },
         ],
@@ -178,6 +195,9 @@ export function ping() {
       return {
         title: 'Add readme',
         summary: 'Adds README.md to fixture-repo',
+        thoughtProcess: 'Mock thought process for adding README file.',
+        documentation: '## README.md\nThis file documents the fixture repository.',
+        gitInstructions: ['git add README.md', 'git commit -m "docs: add README"'],
         changes: [
           {
             filePath: 'fixture-repo/README.md',
@@ -191,6 +211,9 @@ export function ping() {
     return {
       title: 'No-op',
       summary: 'No changes',
+      thoughtProcess: 'No changes were deemed necessary based on the prompt.',
+      documentation: '',
+      gitInstructions: [],
       changes: [],
     };
   }

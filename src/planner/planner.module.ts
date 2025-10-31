@@ -5,9 +5,10 @@ import { ExecutorService } from './executor.service';
 import { LlmService } from './llm.service';
 import { ConfigModule } from '@nestjs/config';
 import { GitModule } from '@/git/git.module';
+import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
-  imports: [ConfigModule, GitModule],
+  imports: [ConfigModule, GitModule, PrismaModule],
   controllers: [PlannerController],
   providers: [PlannerService, ExecutorService, LlmService],
   exports: [PlannerService],

@@ -11,7 +11,11 @@ export interface FileChangeDto {
 }
 
 export interface PlanDto {
+  planId?: string; // Added for persistence
   title: string;
-  summary: string;
+  summary?: string; // Made optional
+  thoughtProcess?: string;
+  documentation?: string;
+  gitInstructions?: string[];
   changes: FileChangeDto[];
 }

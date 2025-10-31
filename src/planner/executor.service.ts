@@ -52,7 +52,7 @@ export class ExecutorService {
         // Map Prisma enum (e.g. 'ADD') to lower-case string ('add')
         const action = FileActionLabel[ch.action as PrismaFileAction];
         const abs = path.join(effectiveRepoPath, ch.filePath);
-        if (action === 'add' || action === 'modify') {
+        if (action === 'add' || action === 'modify' || action === 'repair') {
           await fs.promises.mkdir(path.dirname(abs), { recursive: true });
           if (ch.diff) {
             // Use GitService to apply the patch content
@@ -149,7 +149,7 @@ export class ExecutorService {
         await this.gitService.resetHard(snapshot, effectiveRepoPath);
       } catch (rollbackErr) {
         // Log if rollback itself fails
-//         console.error(`Failed to rollback to snapshot: ${rollbackErr.message}`);
+        //         console.error(`Failed to rollback to snapshot: ${rollbackErr.message}`);
       }
       return { ok: false, error: String(err), snapshot };
     }

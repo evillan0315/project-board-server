@@ -1,7 +1,7 @@
 // FilePath: src/modules/planner/planner.controller.ts
 // Title: REST controller for planner endpoints
 // Reason: Expose endpoints to create, retrieve and apply plans and plan chunks
-import { Controller, Post, Body, Param, Get } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, UseGuards } from '@nestjs/common';
 import { PlannerService } from './planner.service';
 import { CreatePlannerDto as PlanDto } from './dto';
 import {
@@ -10,11 +10,19 @@ import {
   ApiTags,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { LlmInputDto } from '@/llm/dto/llm-input.dto';
+import { JwtAuthGuard } from '@/auth/auth.guard';
+import { RolesGuard } from '@/auth/guards/roles.guard';
+import { Roles } from '@/auth/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('AI Planner')
 @Controller('api/plan')
+@Roles(Role.ADMIN, Role.DEVELOPER) // Restrict access to ADMIN and DEVELOPER users
 export class PlannerController {
   constructor(private readonly planner: PlannerService) {}
 

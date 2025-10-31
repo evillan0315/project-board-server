@@ -20,8 +20,12 @@ export const FileChangeSchema = z.object({
 });
 
 export const PlanSchema = z.object({
+  planId: z.string().optional(), // Added for database persistence
   title: z.string().min(1, 'title is required'),
   summary: z.string().optional(),
+  thoughtProcess: z.string().optional(),
+  documentation: z.string().optional(),
+  gitInstructions: z.array(z.string()).optional(),
   changes: z.array(FileChangeSchema).min(0),
 });
 
