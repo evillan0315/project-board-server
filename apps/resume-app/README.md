@@ -28,6 +28,12 @@ Welcome to the **Resume AI Assistant**, a powerful web application designed to h
 
 💡 **AI Enhancement**: Enhance specific sections or the entire resume with AI, making it more concise, impactful, and tailored to your goals.
 
+🌐 **AI Portfolio Generation**: Generate a professional portfolio webpage (HTML) based on your resume content and an optional prompt.
+
+✉️ **AI Cover Letter Generation**: Generate a tailored cover letter based on your resume and a job description.
+
+➡️ **Document Export**: Export your generated or enhanced documents (resume, portfolio, cover letter) into various formats like HTML, DOCX, PDF, and Plain Text.
+
 🔒 **User Authentication**: Securely log in using OAuth with Google or GitHub.
 
 ## Technologies Used
@@ -40,7 +46,7 @@ This project is built using modern web technologies to provide a fast, responsiv
 - **TypeScript**: A strongly typed superset of JavaScript that enhances code quality and developer experience.
 - **Vite**: A fast next-generation frontend tooling that provides an extremely quick development experience.
 - **Tailwind CSS v4 (upcoming)**: A utility-first CSS framework for rapidly building custom designs.
-- **Material-UI (MUI)**: A popular React UI framework for a consistent and accessible design system.
+- **Material-UI (MUI) v6 with Material Icons**: A popular React UI framework for a consistent and accessible design system.
 - **nanostores**: A tiny, efficient state management library for React and other frameworks.
 - **react-router-dom**: For declarative routing within the single-page application.
 
@@ -93,12 +99,12 @@ Before you begin, ensure you have the following installed:
 
     # Google OAuth credentials (get these from Google Cloud Console)
     VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
-    VITE_GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET # Not directly used by frontend, but good to have if needed
+    VITE_GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET # Not directly used by frontend; primarily for backend reference
     VITE_GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback # Must match backend and Google Console
 
     # GitHub OAuth credentials (get these from GitHub OAuth Apps)
     VITE_GITHUB_CLIENT_ID=YOUR_GITHUB_CLIENT_ID
-    VITE_GITHUB_CLIENT_SECRET=YOUR_GITHUB_CLIENT_SECRET # Not directly used by frontend
+    VITE_GITHUB_CLIENT_SECRET=YOUR_GITHUB_CLIENT_SECRET # Not directly used by frontend; primarily for backend reference
     VITE_GITHUB_CALLBACK_URL=http://localhost:3000/api/auth/github/callback # Must match backend and GitHub OAuth settings
     ```
 
@@ -119,10 +125,10 @@ This frontend application requires a running backend service to provide AI capab
 Once the frontend and backend servers are running, open your browser to `http://localhost:3001` (or your configured `VITE_FRONTEND_URL`).
 
 - **Login**: Use the Google or GitHub OAuth options to sign in.
-- **Resume Upload/Input**: Navigate to the 'Upload / Input Resume' tab to either upload a file or paste your resume content.
-- **Job Description**: Provide the job description you want to tailor your resume for.
-- **Optimize**: Click 'Optimize Resume' to get an optimization score and detailed suggestions.
-- **Generate/Enhance**: Switch to the 'Generate / Enhance Resume' tab to create a new resume from a prompt or enhance existing content.
+- **Resume Operations**: Navigate through the tabs to upload, parse, optimize, generate, or enhance your resume content.
+- **Portfolio Generation**: Create an AI-generated portfolio page based on your resume.
+- **Cover Letter Generation**: Get an AI-powered cover letter tailored to a job description.
+- **Export Documents**: Download your generated content in various formats (HTML, DOCX, PDF, TXT).
 
 For a more detailed guide on how to use the application, please refer to the [User Guide](#documentation).
 

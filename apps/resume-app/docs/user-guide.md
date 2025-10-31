@@ -1,6 +1,18 @@
 # User Guide: Resume AI Assistant
 
-Welcome to the Resume AI Assistant! This guide will walk you through how to effectively use the application to optimize, generate, and enhance your resume.
+Welcome to the Resume AI Assistant! This guide will walk you through how to effectively use the application to optimize, generate, and enhance your resume, create portfolios and cover letters, and export your documents.
+
+## Table of Contents
+
+- [1. Getting Started](#1-getting-started)
+  - [Signing In](#signing-in)
+- [2. Optimizing Your Existing Resume](#2-optimizing-your-existing-resume)
+- [3. Generating a New Resume](#3-generating-a-new-resume)
+- [4. Enhancing Existing Resume Sections](#4-enhancing-existing-resume-sections)
+- [5. Generating a Portfolio Page](#5-generating-a-portfolio-page)
+- [6. Generating a Cover Letter](#6-generating-a-cover-letter)
+- [7. Exporting Documents](#7-exporting-documents)
+- [Troubleshooting](#troubleshooting)
 
 ## 1. Getting Started
 
@@ -21,11 +33,11 @@ This feature helps you tailor your current resume to a specific job description 
 
 ### Steps:
 
-1.  **Navigate to 'Upload / Input Resume' Tab**: This is the default tab when you first arrive on the main page.
+1.  **Navigate to 'Upload / Optimize Resume' Tab**: This is the first tab on the main content area, usually the default when you first arrive on the page.
 
 2.  **Provide Your Resume Content** (Choose one):
-    - **Upload Resume File**: Click 'Choose File' under 'Upload Resume File'. Select your resume file (PDF or DOCX). Once selected, click 'Parse File to Text'. The parsed text will appear in the 'Resume Content' text area.
-    - **Enter Resume Text Manually**: Directly paste your resume's plain text content into the 'Resume Content' text area. If you uploaded a file, this text area will be pre-filled with the parsed content.
+    -   **Upload Resume File**: Click 'Choose File' under 'Upload Resume File'. Select your resume file (PDF or DOCX). Once selected, click 'Parse File to Text'. The parsed text will appear in the 'Resume Content' text area.
+    -   **Enter Resume Text Manually**: Directly paste your resume's plain text content into the 'Resume Content' text area. If you uploaded a file, this text area will be pre-filled with the parsed content. Any manual changes here will override the parsed content.
 
 3.  **Provide Job Description**: Paste the full job description you are applying for into the 'Job Description' text area.
 
@@ -35,10 +47,10 @@ This feature helps you tailor your current resume to a specific job description 
 
 After optimization, you will see a new section titled 'Resume Optimization Results' with:
 
-- **Optimization Score**: A percentage indicating how well your resume matches the job description.
-- **Tailored Summary**: An AI-generated summary of your qualifications, specifically highlighting your fit for the job.
-- **Detailed Suggestions**: A list of actionable recommendations for improving your resume, categorized by type (e.g., Keywords, Formatting, Content).
-- **Example Improved Section (Optional)**: In some cases, the AI may provide an example of how a specific section of your resume could be rephrased for better impact.
+-   **Optimization Score**: A percentage indicating how well your resume matches the job description.
+-   **Tailored Summary**: An AI-generated summary of your qualifications, specifically highlighting your fit for the job.
+-   **Detailed Suggestions**: A list of actionable recommendations for improving your resume, categorized by type (e.g., Keywords, Formatting, Content).
+-   **Example Improved Section (Optional)**: In some cases, the AI may provide an example of how a specific section of your resume could be rephrased for better impact.
 
 ## 3. Generating a New Resume
 
@@ -46,16 +58,16 @@ If you don't have an existing resume or want a fresh start, you can generate one
 
 ### Steps:
 
-1.  **Navigate to 'Generate / Enhance Resume' Tab**: Click on this tab at the top of the main content area.
+1.  **Navigate to 'Generate / Enhance Resume' Tab**: Click on this tab at the top of the main content area (second tab).
 
 2.  **Enter Generate Resume Prompt**: In the 'Generate New Resume' section, provide a detailed prompt describing the kind of resume you need. Be specific about your experience, skills, desired role, and any sections you want to include.
-    - _Example Prompt_: "Generate a resume for a junior full-stack developer with 2 years of experience in React and Node.js. Include a project section for an e-commerce site I built using MERN stack. I have a Bachelor's in Computer Science. Focus on problem-solving and collaboration."
+    -   _Example Prompt_: "Generate a resume for a junior full-stack developer with 2 years of experience in React and Node.js. Include a project section for an e-commerce site I built using MERN stack. I have a Bachelor's in Computer Science. Focus on problem-solving and collaboration."
 
 3.  **Generate Resume**: Click the 'Generate Resume' button.
 
 ### Viewing Generated Resume:
 
-The AI-generated resume will appear in the 'Generated Resume' section below the forms. This content will also automatically update the 'Current Resume Content' in the 'Upload / Input Resume' tab, allowing you to then optimize it.
+The AI-generated resume will appear in the 'Generated Resume' section below the forms. This content will also automatically update the 'Current Resume Content' which is used by other operations like optimization, enhancement, and generation of portfolios/cover letters.
 
 ## 4. Enhancing Existing Resume Sections
 
@@ -63,14 +75,14 @@ This feature allows you to refine specific parts of your resume or give general 
 
 ### Steps:
 
-1.  **Navigate to 'Generate / Enhance Resume' Tab**: Ensure you are on this tab.
+1.  **Navigate to 'Generate / Enhance Resume' Tab**: Ensure you are on this tab (second tab).
 
-2.  **Provide Resume Content to Enhance**: The 'Resume Content to Enhance' text area will automatically be pre-filled with your currently loaded resume content (either parsed from a file or generated by AI). You can also paste different content here if needed.
+2.  **Provide Resume Content to Enhance**: The 'Resume Content to Enhance' text area will automatically be pre-filled with your currently loaded resume content (either parsed from a file, generated by AI, or manually entered). You can also paste different content here if needed.
 
-3.  **Specify Section (Optional)**: If you want to enhance only a particular part of your resume (e.g., 'Summary', 'Experience', 'Skills'), enter the name of that section in the 'Specific Section to Enhance' field.
+3.  **Specify Section (Optional)**: If you want to enhance only a particular part of your resume (e.g., 'Summary', 'Experience', 'Skills'), enter the name of that section in the 'Specific Section to Enhance' field. This field may be pre-filled with a suggestion from the optimization results.
 
 4.  **Define Enhancement Goal (Optional)**: Describe what kind of improvement you're looking for. This helps the AI understand your intent.
-    - _Examples_: 'Make more concise with strong action verbs', 'Add quantifiable achievements', 'Target leadership roles', 'Improve readability'.
+    -   _Examples_: 'Make more concise with strong action verbs', 'Add quantifiable achievements', 'Target leadership roles', 'Improve readability'. This field may be pre-filled with the 'Tailored Summary' from the optimization results.
 
 5.  **Enhance Resume**: Click the 'Enhance Resume' button.
 
@@ -78,10 +90,77 @@ This feature allows you to refine specific parts of your resume or give general 
 
 The AI-enhanced resume (or enhanced section) will be displayed in the 'Enhanced Resume' section. This updated content will also replace the 'Current Resume Content' for further operations.
 
+## 5. Generating a Portfolio Page
+
+Create a personalized portfolio webpage to showcase your projects and skills.
+
+### Steps:
+
+1.  **Navigate to 'Generate Portfolio' Tab**: Click on this tab (third tab) at the top of the main content area.
+
+2.  **Resume Content for Portfolio**: The 'Resume Content for Portfolio' text area will be pre-filled with your current resume content. This is the primary source for the AI to understand your experience and projects.
+
+3.  **Portfolio Generation Prompt (Optional)**: Provide an optional prompt to guide the AI on the style, focus, or specific sections you'd like in your portfolio.
+    -   _Example Prompt_: "Generate a minimalist portfolio focusing on my engineering projects and include a contact form."
+
+4.  **Generate Portfolio**: Click the 'Generate Portfolio' button.
+
+### Viewing Generated Portfolio:
+
+The AI-generated portfolio will be rendered as an interactive webpage within the 'Generated Portfolio' section below the form. You can preview its look and feel directly in the application.
+
+## 6. Generating a Cover Letter
+
+Get a professionally written cover letter tailored to a specific job and your resume.
+
+### Steps:
+
+1.  **Navigate to 'Generate Cover Letter' Tab**: Click on this tab (fourth tab) at the top of the main content area.
+
+2.  **Resume Content (Used as Context)**: This text area will be pre-filled with your current resume content. It serves as the primary context for the AI to understand your qualifications.
+
+3.  **Job Description (Used as Context)**: This text area will be pre-filled with the job description you provided in the 'Upload / Optimize Resume' tab. The cover letter will be tailored to this description.
+
+4.  **Cover Letter Prompt (Optional)**: Provide an optional prompt to guide the AI on specific aspects to emphasize or a particular tone for the cover letter.
+    -   _Example Prompt_: "Write a cover letter emphasizing my leadership skills and experience with cloud platforms."
+
+5.  **Generate Cover Letter**: Click the 'Generate Cover Letter' button.
+
+### Viewing Generated Cover Letter:
+
+The AI-generated cover letter will be displayed in the 'Generated Cover Letter' section below the form.
+
+## 7. Exporting Documents
+
+Download any generated or processed content (resume, portfolio, cover letter) in various formats.
+
+### Steps:
+
+1.  **Navigate to 'Export / Convert Document' Tab**: Click on this tab (fifth tab) at the top of the main content area.
+
+2.  **Select Document Type to Export**: Choose which document you want to export using the radio buttons:
+    -   **Resume**: Exports the 'Current Resume Content' (parsed, generated, or enhanced resume).
+    -   **Portfolio**: Exports the 'Generated Portfolio' (HTML content).
+    -   **Cover Letter**: Exports the 'Generated Cover Letter'.
+    > _Note: Document types will be disabled if no content is available for them._
+
+3.  **Review Content**: The large text area will display the content of the currently selected document type. For PDF and DOCX (from HTML), it will show HTML. For others, it will show Markdown or Plain Text.
+
+4.  **Choose Export Format**: Select your desired output format using the radio buttons:
+    -   **HTML**: Exports content as an HTML file.
+    -   **DOCX**: Exports Markdown content to a Word Document.
+    -   **PDF**: Exports HTML content to a PDF document.
+    -   **TXT**: Exports Markdown content to a Plain Text file.
+
+5.  **Filename**: Enter your desired filename (without the extension). The application will suggest a filename based on the document type and job description.
+
+6.  **Export**: Click the 'Export to [FORMAT]' button to download the document.
+
 ## Troubleshooting
 
-- **Error Messages**: If an error occurs, a red alert message will appear at the top of the screen. Read the message for details, and try to adjust your input or action accordingly.
-- **Loading Indicators**: Look for circular progress indicators next to buttons or a linear progress bar at the top to see if an AI operation is still in progress.
-- **No Results**: If you don't see results, ensure all required fields (resume content, job description/prompt) are filled and that you've clicked the correct action button.
+-   **Error Messages**: If an error occurs, a red alert message will appear at the top of the screen. Read the message for details, and try to adjust your input or action accordingly. Specific errors related to parsing, optimization, generation, or export will be shown.
+-   **Loading Indicators**: Look for circular progress indicators next to buttons or a linear progress bar at the top of the screen to see if an AI operation or export is still in progress.
+-   **No Results**: If you don't see results, ensure all required fields (resume content, job description/prompt) are filled and that you've clicked the correct action button.
+-   **Disabled Buttons/Tabs**: If a button or tab is disabled, it usually means that a prerequisite (e.g., resume content for optimization, or a document for export) is missing or an operation is still ongoing.
 
 If you encounter persistent issues, please refer to the [Developer Guide](./developer-guide.md) or contact support (if applicable).
