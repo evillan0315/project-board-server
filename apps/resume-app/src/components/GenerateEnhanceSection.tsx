@@ -6,12 +6,14 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import GenerateIcon from '@mui/icons-material/AutoAwesome';
 import EnhanceIcon from '@mui/icons-material/Tune';
+import type { OptimizationResult } from '@/types/resume';
 
 interface GenerateEnhanceSectionProps {
   onGenerate: (prompt: string) => Promise<void>;
   onEnhance: (content: string, section?: string, goal?: string) => Promise<void>;
   loading: { generate: boolean; enhance: boolean };
   currentResumeContent: string;
+  optimizationResult?: OptimizationResult | null; // New prop for optimization results
 }
 
 const GenerateEnhanceSection: React.FC<GenerateEnhanceSectionProps> = ({
@@ -19,16 +21,36 @@ const GenerateEnhanceSection: React.FC<GenerateEnhanceSectionProps> = ({
   onEnhance,
   loading,
   currentResumeContent,
+  optimizationResult, // Destructure new prop
 }) => {
   const [generatePrompt, setGeneratePrompt] = useState('');
   const [enhanceContent, setEnhanceContent] = useState('');
   const [enhanceSection, setEnhanceSection] = useState('');
   const [enhancementGoal, setEnhancementGoal] = useState('');
 
-  // Sync enhanceContent with currentResumeContent from store
+  // Flags to track if user has manually modified the enhancement inputs
+  const [hasUserModifiedEnhanceSection, setHasUserModifiedEnhanceSection] = useState(false);
+  const [hasUserModifiedEnhancementGoal, setHasUserModifiedEnhancementGoal] = useState(false);
+
+  // Sync enhanceContent with currentResumeContent from store (always represents the full resume)
   useEffect(() => {
     setEnhanceContent(currentResumeContent);
   }, [currentResumeContent]);
+
+  // Pre-fill enhancement goal from optimization result if available and not modified by user
+  useEffect(() => {
+    if (!hasUserModifiedEnhancementGoal && optimizationResult?.tailoredSummary) {
+      setEnhancementGoal(optimizationResult.tailoredSummary);
+    }
+  }, [optimizationResult, hasUserModifiedEnhancementGoal]);
+
+  // Pre-fill enhance section from optimization result suggestions if available and not modified by user
+  useEffect(() => {
+    if (!hasUserModifiedEnhanceSection && optimizationResult?.suggestions?.length > 0) {
+      const firstSuggestionType = optimizationResult.suggestions[0].type;
+      setEnhanceSection(firstSuggestionType);
+    }
+  }, [optimizationResult, hasUserModifiedEnhanceSection]);
 
   const handleGenerateClick = useCallback(async () => {
     if (generatePrompt.trim()) {
@@ -39,10 +61,23 @@ const GenerateEnhanceSection: React.FC<GenerateEnhanceSectionProps> = ({
   const handleEnhanceClick = useCallback(async () => {
     if (enhanceContent.trim()) {
       await onEnhance(enhanceContent, enhanceSection || undefined, enhancementGoal || undefined);
+      // Reset user modification flags after successful enhancement
+      setHasUserModifiedEnhanceSection(false);
+      setHasUserModifiedEnhancementGoal(false);
     } else {
       alert('Please provide resume content to enhance.');
     }
   }, [enhanceContent, enhanceSection, enhancementGoal, onEnhance]);
+
+  const handleEnhanceSectionChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setEnhanceSection(e.target.value);
+    setHasUserModifiedEnhanceSection(true);
+  }, []);
+
+  const handleEnhancementGoalChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setEnhancementGoal(e.target.value);
+    setHasUserModifiedEnhancementGoal(true);
+  }, []);
 
   return (
     <Box className="flex flex-col gap-6">
@@ -93,7 +128,7 @@ const GenerateEnhanceSection: React.FC<GenerateEnhanceSectionProps> = ({
         <TextField
           label="Specific Section to Enhance (Optional)"
           value={enhanceSection}
-          onChange={(e) => setEnhanceSection(e.target.value)}
+          onChange={handleEnhanceSectionChange} // Use new handler
           placeholder="E.g., 'Summary', 'Experience', 'Skills'"
           className="w-full mb-4"
         />
@@ -102,7 +137,7 @@ const GenerateEnhanceSection: React.FC<GenerateEnhanceSectionProps> = ({
           multiline
           rows={3}
           value={enhancementGoal}
-          onChange={(e) => setEnhancementGoal(e.target.value)}
+          onChange={handleEnhancementGoalChange} // Use new handler
           placeholder="E.g., 'Make more concise with strong action verbs', 'Add quantifiable achievements', 'Target leadership roles'"
           className="w-full mb-4"
         />

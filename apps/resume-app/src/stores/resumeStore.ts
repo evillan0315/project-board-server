@@ -9,12 +9,14 @@ interface ResumeState {
   generatedResume: string;
   enhancedResume: string;
   generatedPortfolioHtml: string; // New field for generated portfolio HTML
+  generatedCoverLetter: string; // New field for generated cover letter
   loading: {
     parse: boolean;
     optimize: boolean;
     generate: boolean;
     enhance: boolean;
     portfolio: boolean; // New loading flag for portfolio generation
+    coverLetter: boolean; // New loading flag for cover letter generation
     export: boolean; // New loading flag for export operations
   };
   error: {
@@ -23,6 +25,7 @@ interface ResumeState {
     generate: string | null;
     enhance: string | null;
     portfolio: string | null; // New error flag for portfolio generation
+    coverLetter: string | null; // New error flag for cover letter generation
     export: string | null; // New error flag for export operations
     general: string | null;
   };
@@ -36,12 +39,14 @@ export const resumeStore = map<ResumeState>({
   generatedResume: '',
   enhancedResume: '',
   generatedPortfolioHtml: '', // Initialize new field
+  generatedCoverLetter: '', // Initialize new field
   loading: {
     parse: false,
     optimize: false,
     generate: false,
     enhance: false,
     portfolio: false, // Initialize new loading flag
+    coverLetter: false, // Initialize new loading flag
     export: false, // Initialize new loading flag
   },
   error: {
@@ -50,6 +55,7 @@ export const resumeStore = map<ResumeState>({
     generate: null,
     enhance: null,
     portfolio: null, // Initialize new error flag
+    coverLetter: null, // Initialize new error flag
     export: null, // Initialize new error flag
     general: null,
   },
@@ -65,6 +71,7 @@ export const resetErrors = () => {
       generate: null,
       enhance: null,
       portfolio: null,
+      coverLetter: null, // Reset new error
       export: null, // Reset new error
       general: null,
     },

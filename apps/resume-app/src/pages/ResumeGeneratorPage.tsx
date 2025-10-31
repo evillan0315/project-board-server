@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { resumeStore, resetErrors } from '@/stores/resumeStore';
-import { parseResumeFile, optimizeResume, generateResume, enhanceResume, generatePortfolio } from '@/api/resumeApi';
-import { exportResume } from '@/api/utilsApi'; // New import for utilsApi
+import { parseResumeFile, optimizeResume, generateResume, enhanceResume, generatePortfolio, generateCoverLetter } from '@/api/resumeApi';
+import { exportResume } from '@/api/utilsApi';
 import ResumeForm from '@/components/ResumeForm';
 import OptimizationDisplaySection from '@/components/OptimizationDisplaySection';
 import GenerateEnhanceSection from '@/components/GenerateEnhanceSection';
 import ResumeDisplaySection from '@/components/ResumeDisplaySection';
 import PortfolioGeneratorSection from '@/components/PortfolioGeneratorSection';
 import PortfolioDisplaySection from '@/components/PortfolioDisplaySection';
-import ResumeExportSection from '@/components/ResumeExportSection'; // New import
+import DocumentExportSection from '@/components/DocumentExportSection'; // Renamed and modified import
+import CoverLetterGeneratorSection from '@/components/CoverLetterGeneratorSection'; // New import
+import CoverLetterDisplaySection from '@/components/CoverLetterDisplaySection'; // New import
 
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -19,7 +21,7 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import { OutputFormat } from '@/types/resume'; // Import OutputFormat
+import { OutputFormat } from '@/types/resume';
 
 // Define TabPanelProps for better type safety
 interface TabPanelProps {
@@ -77,6 +79,7 @@ const ResumeGeneratorPage: React.FC = () => {
       resumeStore.setKey('generatedResume', '');
       resumeStore.setKey('enhancedResume', '');
       resumeStore.setKey('generatedPortfolioHtml', ''); // Clear portfolio on new parse
+      resumeStore.setKey('generatedCoverLetter', ''); // Clear cover letter on new parse
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
@@ -111,6 +114,7 @@ const ResumeGeneratorPage: React.FC = () => {
       resumeStore.setKey('generatedResume', ''); // Clear other generated content
       resumeStore.setKey('enhancedResume', '');
       resumeStore.setKey('generatedPortfolioHtml', '');
+      resumeStore.setKey('generatedCoverLetter', ''); // Clear cover letter
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
@@ -132,6 +136,7 @@ const ResumeGeneratorPage: React.FC = () => {
       resumeStore.setKey('optimizationResult', null);
       resumeStore.setKey('enhancedResume', '');
       resumeStore.setKey('generatedPortfolioHtml', ''); // Clear portfolio on new generation
+      resumeStore.setKey('generatedCoverLetter', ''); // Clear cover letter on new generation
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
@@ -158,6 +163,7 @@ const ResumeGeneratorPage: React.FC = () => {
       resumeStore.setKey('resumeContent', enhanced); // Update main content with enhanced version
       resumeStore.setKey('generatedResume', ''); // Clear other generated content
       resumeStore.setKey('generatedPortfolioHtml', ''); // Clear portfolio on new enhancement
+      resumeStore.setKey('generatedCoverLetter', ''); // Clear cover letter on new enhancement
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
@@ -181,7 +187,7 @@ const ResumeGeneratorPage: React.FC = () => {
       resumeStore.setKey('generatedResume', ''); // Clear other generated content
       resumeStore.setKey('enhancedResume', '');
       resumeStore.setKey('optimizationResult', null); // Clear other generated content
-
+      resumeStore.setKey('generatedCoverLetter', ''); // Clear cover letter
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
@@ -192,11 +198,43 @@ const ResumeGeneratorPage: React.FC = () => {
     }
   };
 
-  const handleExport = async (
-    content: string,
-    format: OutputFormat,
-    filename: string,
+  const handleGenerateCoverLetter = async (
+    resumeContent: string,
+    jobDescription: string,
+    prompt?: string,
   ) => {
+    resumeStore.setKey('loading', { ...$resume.loading, coverLetter: true });
+    resumeStore.setKey('error', { ...$resume.error, coverLetter: null, general: null });
+    try {
+      if (!resumeContent.trim()) {
+        throw new Error('Resume content is required to generate a cover letter.');
+      }
+      if (!jobDescription.trim()) {
+        throw new Error('Job description is required to generate a cover letter.');
+      }
+      const generated = await generateCoverLetter({
+        resumeContent: resumeContent,
+        jobDescription: jobDescription,
+        prompt: prompt,
+      });
+      resumeStore.setKey('generatedCoverLetter', generated);
+      // Clear other generated content when a cover letter is generated
+      resumeStore.setKey('generatedResume', '');
+      resumeStore.setKey('enhancedResume', '');
+      resumeStore.setKey('generatedPortfolioHtml', '');
+      resumeStore.setKey('optimizationResult', null);
+      resumeStore.setKey('resumeContent', ''); // Optionally clear main resume content if generating a new doc.
+    } catch (err) {
+      resumeStore.setKey('error', {
+        ...$resume.error,
+        coverLetter: err instanceof Error ? err.message : 'Failed to generate cover letter.',
+      });
+    } finally {
+      resumeStore.setKey('loading', { ...$resume.loading, coverLetter: false });
+    }
+  };
+
+  const handleExport = async (content: string, format: OutputFormat, filename: string) => {
     resumeStore.setKey('loading', { ...$resume.loading, export: true });
     resumeStore.setKey('error', { ...$resume.error, export: null, general: null });
     try {
@@ -207,7 +245,7 @@ const ResumeGeneratorPage: React.FC = () => {
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
-        export: err instanceof Error ? err.message : 'Failed to export resume.',
+        export: err instanceof Error ? err.message : 'Failed to export document.',
       });
     } finally {
       resumeStore.setKey('loading', { ...$resume.loading, export: false });
@@ -221,7 +259,8 @@ const ResumeGeneratorPage: React.FC = () => {
     $resume.error.generate ||
     $resume.error.enhance ||
     $resume.error.portfolio ||
-    $resume.error.export || // Add new error to check
+    $resume.error.coverLetter || // Add new error to check
+    $resume.error.export ||
     $resume.error.general;
 
   return (
@@ -268,9 +307,14 @@ const ResumeGeneratorPage: React.FC = () => {
                 {...a11yProps(2)}
                 className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
               />
-              <Tab // New Tab for Export
-                label="Export / Convert Resume"
+              <Tab // New Tab for Cover Letter
+                label="Generate Cover Letter"
                 {...a11yProps(3)}
+                className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
+              />
+              <Tab // New Tab for Export
+                label="Export / Convert Document"
+                {...a11yProps(4)}
                 className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
               />
             </Tabs>
@@ -308,6 +352,7 @@ const ResumeGeneratorPage: React.FC = () => {
                 enhance: $resume.loading.enhance,
               }}
               currentResumeContent={$resume.resumeContent}
+              optimizationResult={$resume.optimizationResult} // Pass optimization result here
             />
             {$resume.generatedResume && (
               <ResumeDisplaySection title="Generated Resume" content={$resume.generatedResume} />
@@ -316,7 +361,7 @@ const ResumeGeneratorPage: React.FC = () => {
               <ResumeDisplaySection title="Enhanced Resume" content={$resume.enhancedResume} />
             )}
           </CustomTabPanel>
-          <CustomTabPanel value={currentTab} index={2}> {/* New Tab Panel for Portfolio */}
+          <CustomTabPanel value={currentTab} index={2}> {/** Tab Panel for Portfolio */}
             <PortfolioGeneratorSection
               onGeneratePortfolio={handleGeneratePortfolio}
               loading={$resume.loading.portfolio}
@@ -326,11 +371,25 @@ const ResumeGeneratorPage: React.FC = () => {
               <PortfolioDisplaySection title="Generated Portfolio" htmlContent={$resume.generatedPortfolioHtml} />
             )}
           </CustomTabPanel>
-          <CustomTabPanel value={currentTab} index={3}> {/* New Tab Panel for Export */}
-            <ResumeExportSection
+          <CustomTabPanel value={currentTab} index={3}> {/** New Tab Panel for Cover Letter */}
+            <CoverLetterGeneratorSection
+              onGenerateCoverLetter={handleGenerateCoverLetter}
+              loading={$resume.loading.coverLetter}
+              currentResumeContent={$resume.resumeContent}
+              currentJobDescription={$resume.jobDescription}
+            />
+            {$resume.generatedCoverLetter && (
+              <CoverLetterDisplaySection title="Generated Cover Letter" content={$resume.generatedCoverLetter} />
+            )}
+          </CustomTabPanel>
+          <CustomTabPanel value={currentTab} index={4}> {/** New Tab Panel for Export */}
+            <DocumentExportSection
               onExport={handleExport}
               loading={$resume.loading.export}
-              currentResumeContent={$resume.resumeContent}
+              resumeContent={$resume.resumeContent}
+              portfolioContent={$resume.generatedPortfolioHtml}
+              coverLetterContent={$resume.generatedCoverLetter}
+              jobDescription={$resume.jobDescription}
             />
           </CustomTabPanel>
         </Box>

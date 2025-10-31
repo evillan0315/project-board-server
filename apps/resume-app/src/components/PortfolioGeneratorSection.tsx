@@ -61,7 +61,7 @@ const PortfolioGeneratorSection: React.FC<PortfolioGeneratorSectionProps> = ({
         onClick={handleGenerateClick}
         disabled={loading || !currentResumeContent.trim()}
         className="!bg-indigo-600 hover:!bg-indigo-700 !text-white !py-2 !text-md !font-bold"
-        startIcon={loading && <CircularProgress size={20} color="inherit" />}
+        startIcon={loading && <CircularProgress size={20} color="inherit" />} 
       >
         {loading ? 'Generating Portfolio...' : 'Generate Portfolio'}
       </Button>
