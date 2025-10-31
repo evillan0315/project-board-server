@@ -8,6 +8,8 @@
 /cookies
 /postgres
 /apps
+/faster-whisper-env
+/frontend
 # Logs
 logs
 .venv
