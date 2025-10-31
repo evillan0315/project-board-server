@@ -5,6 +5,7 @@ import type {
   OptimizeResumeDto,
   GenerateResumeDto,
   EnhanceResumeDto,
+  GeneratePortfolioDto,
 } from '@/types/resume'; // Make sure this path is correct for your frontend types
 
 const API_BASE_URL = '/api/resume';
@@ -111,6 +112,18 @@ export const generateResume = async (payload: GenerateResumeDto): Promise<string
 
 export const enhanceResume = async (payload: EnhanceResumeDto): Promise<string> => {
   const response = await fetch(`${API_BASE_URL}/enhance-resume`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse<string>(response);
+};
+
+export const generatePortfolio = async (payload: GeneratePortfolioDto): Promise<string> => {
+  const response = await fetch(`${API_BASE_URL}/generate-portfolio`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

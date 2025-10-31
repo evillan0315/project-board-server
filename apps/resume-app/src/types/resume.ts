@@ -33,6 +33,13 @@ export interface EnhanceResumeDto {
   conversationId?: string;
 }
 
+export interface GeneratePortfolioDto {
+  resumeContent: string;
+  prompt?: string;
+  systemInstruction?: string;
+  conversationId?: string;
+}
+
 export enum OutputFormat {
   HTML = "html", // Converts Markdown to HTML
   DOCX = "docx", // Converts Markdown to DOCX

@@ -8,17 +8,20 @@ interface ResumeState {
   optimizationResult: OptimizationResult | null;
   generatedResume: string;
   enhancedResume: string;
+  generatedPortfolioHtml: string; // New field for generated portfolio HTML
   loading: {
     parse: boolean;
     optimize: boolean;
     generate: boolean;
     enhance: boolean;
+    portfolio: boolean; // New loading flag for portfolio generation
   };
   error: {
     parse: string | null;
     optimize: string | null;
     generate: string | null;
     enhance: string | null;
+    portfolio: string | null; // New error flag for portfolio generation
     general: string | null;
   };
 }
@@ -30,17 +33,20 @@ export const resumeStore = map<ResumeState>({
   optimizationResult: null,
   generatedResume: '',
   enhancedResume: '',
+  generatedPortfolioHtml: '', // Initialize new field
   loading: {
     parse: false,
     optimize: false,
     generate: false,
     enhance: false,
+    portfolio: false, // Initialize new loading flag
   },
   error: {
     parse: null,
     optimize: null,
     generate: null,
     enhance: null,
+    portfolio: null, // Initialize new error flag
     general: null,
   },
 });
@@ -54,6 +60,7 @@ export const resetErrors = () => {
       optimize: null,
       generate: null,
       enhance: null,
+      portfolio: null, // Reset new error
       general: null,
     },
   });

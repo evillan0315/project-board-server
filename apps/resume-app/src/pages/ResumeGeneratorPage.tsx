@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { resumeStore, resetErrors } from '@/stores/resumeStore';
-import { parseResumeFile, optimizeResume, generateResume, enhanceResume } from '@/api/resumeApi';
+import { parseResumeFile, optimizeResume, generateResume, enhanceResume, generatePortfolio } from '@/api/resumeApi';
 import ResumeForm from '@/components/ResumeForm';
 import OptimizationDisplaySection from '@/components/OptimizationDisplaySection';
 import GenerateEnhanceSection from '@/components/GenerateEnhanceSection';
 import ResumeDisplaySection from '@/components/ResumeDisplaySection';
+import PortfolioGeneratorSection from '@/components/PortfolioGeneratorSection'; // New import
+import PortfolioDisplaySection from '@/components/PortfolioDisplaySection'; // New import
+
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
@@ -70,6 +73,7 @@ const ResumeGeneratorPage: React.FC = () => {
       resumeStore.setKey('optimizationResult', null); // Clear previous results
       resumeStore.setKey('generatedResume', '');
       resumeStore.setKey('enhancedResume', '');
+      resumeStore.setKey('generatedPortfolioHtml', ''); // Clear portfolio on new parse
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
@@ -101,6 +105,9 @@ const ResumeGeneratorPage: React.FC = () => {
       });
       resumeStore.setKey('optimizationResult', result);
       resumeStore.setKey('jobDescription', jobDescription); // Store for persistence
+      resumeStore.setKey('generatedResume', ''); // Clear other generated content
+      resumeStore.setKey('enhancedResume', '');
+      resumeStore.setKey('generatedPortfolioHtml', '');
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
@@ -121,6 +128,7 @@ const ResumeGeneratorPage: React.FC = () => {
       resumeStore.setKey('parsedResumeText', ''); // Clear parsed if generating new
       resumeStore.setKey('optimizationResult', null);
       resumeStore.setKey('enhancedResume', '');
+      resumeStore.setKey('generatedPortfolioHtml', ''); // Clear portfolio on new generation
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
@@ -145,6 +153,8 @@ const ResumeGeneratorPage: React.FC = () => {
       });
       resumeStore.setKey('enhancedResume', enhanced);
       resumeStore.setKey('resumeContent', enhanced); // Update main content with enhanced version
+      resumeStore.setKey('generatedResume', ''); // Clear other generated content
+      resumeStore.setKey('generatedPortfolioHtml', ''); // Clear portfolio on new enhancement
     } catch (err) {
       resumeStore.setKey('error', {
         ...$resume.error,
@@ -155,12 +165,37 @@ const ResumeGeneratorPage: React.FC = () => {
     }
   };
 
+  const handleGeneratePortfolio = async (resumeContent: string, prompt?: string) => {
+    resumeStore.setKey('loading', { ...$resume.loading, portfolio: true });
+    resumeStore.setKey('error', { ...$resume.error, portfolio: null, general: null });
+    try {
+      const generated = await generatePortfolio({
+        resumeContent: resumeContent || $resume.parsedResumeText || $resume.resumeContent, // Ensure resume content is passed
+        prompt: prompt, // Pass optional prompt
+        // conversationId: $resume.generatedPortfolioHtml ? $resume.optimizationResult?.conversationId : undefined, // Optional: reuse conversation ID
+      });
+      resumeStore.setKey('generatedPortfolioHtml', generated);
+      resumeStore.setKey('generatedResume', ''); // Clear other generated content
+      resumeStore.setKey('enhancedResume', '');
+      resumeStore.setKey('optimizationResult', null); // Clear other generated content
+
+    } catch (err) {
+      resumeStore.setKey('error', {
+        ...$resume.error,
+        portfolio: err instanceof Error ? err.message : 'Failed to generate portfolio.',
+      });
+    } finally {
+      resumeStore.setKey('loading', { ...$resume.loading, portfolio: false });
+    }
+  };
+
   const hasError = Object.values($resume.error).some((err) => err !== null);
   const currentErrorMessage =
     $resume.error.parse ||
     $resume.error.optimize ||
     $resume.error.generate ||
     $resume.error.enhance ||
+    $resume.error.portfolio || // Add new error to check
     $resume.error.general;
 
   return (
@@ -193,13 +228,18 @@ const ResumeGeneratorPage: React.FC = () => {
               indicatorColor="primary"
             >
               <Tab
-                label="Upload / Input Resume"
+                label="Upload / Optimize Resume"
                 {...a11yProps(0)}
                 className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
               />
               <Tab
                 label="Generate / Enhance Resume"
                 {...a11yProps(1)}
+                className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
+              />
+              <Tab // New Tab for Portfolio
+                label="Generate Portfolio"
+                {...a11yProps(2)}
                 className="!text-gray-700 dark:!text-gray-300 !font-semibold data-[selected=true]:!text-blue-600 dark:data-[selected=true]:!text-blue-400 transition-colors duration-300"
               />
             </Tabs>
@@ -243,6 +283,16 @@ const ResumeGeneratorPage: React.FC = () => {
             )}
             {$resume.enhancedResume && (
               <ResumeDisplaySection title="Enhanced Resume" content={$resume.enhancedResume} />
+            )}
+          </CustomTabPanel>
+          <CustomTabPanel value={currentTab} index={2}> {/* New Tab Panel for Portfolio */}
+            <PortfolioGeneratorSection
+              onGeneratePortfolio={handleGeneratePortfolio}
+              loading={$resume.loading.portfolio}
+              currentResumeContent={$resume.resumeContent}
+            />
+            {$resume.generatedPortfolioHtml && (
+              <PortfolioDisplaySection title="Generated Portfolio" htmlContent={$resume.generatedPortfolioHtml} />
             )}
           </CustomTabPanel>
         </Box>
