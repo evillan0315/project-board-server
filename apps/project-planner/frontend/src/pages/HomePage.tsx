@@ -1,33 +1,28 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Layout } from '~/components/Layout';
+import { Typography, Box, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
   return (
-    <Box
-      className='flex flex-col items-center justify-center min-h-screen-minus-navbar'
-      sx={{
-        py: 8,
-        textAlign: 'center',
-      }}
-    >
-      <Typography variant='h2' component='h1' gutterBottom>
-        Welcome to the AI Project Planner!
-      </Typography>
-      <Typography variant='h5' component='p' paragraph sx={{ maxWidth: '800px' }}>
-        Harness the power of AI to streamline your project management. Generate plans, manage tasks, and automate workflows with intelligent assistance.
-      </Typography>
-      <Button
-        component={Link}
-        to='/planner'
-        variant='contained'
-        color='primary'
-        size='large'
-        sx={{ mt: 4 }}
-      >
-        Get Started
-      </Button>
-    </Box>
+    <Layout>
+      <Box className="flex flex-col items-center justify-center min-h-[80vh] p-4 text-center">
+        <Typography variant="h3" component="h1" gutterBottom className="font-bold text-blue-600 dark:text-blue-400">
+          Welcome to the Project Planner
+        </Typography>
+        <Typography variant="h6" component="p" className="mb-8 text-gray-700 dark:text-gray-300">
+          Your AI-powered assistant for project planning and code generation.
+        </Typography>
+        <Box className="flex gap-4">
+          <Button variant="contained" color="primary" component={Link} to="/planner" size="large">
+            Start Planning
+          </Button>
+          <Button variant="outlined" color="secondary" component={Link} to="/tts" size="large">
+            Try TTS Generator
+          </Button>
+        </Box>
+      </Box>
+    </Layout>
   );
 };
 

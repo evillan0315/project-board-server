@@ -3155,6 +3155,57 @@
         ]
       }
     },
+    "/api/utils/html-to-pdf": {
+      "post": {
+        "description": "Converts the provided HTML string into a PDF file. Requires Puppeteer to be installed on the server.",
+        "operationId": "UtilsController_htmlToPdf",
+        "parameters": [
+          {
+            "name": "filename",
+            "required": false,
+            "in": "query",
+            "description": "Optional: Desired filename for the downloaded PDF file (e.g., \"report\"). Default is \"document\".",
+            "schema": {
+              "example": "my_document",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HtmlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PDF file generated successfully.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request: Invalid HTML content or missing parameters."
+          },
+          "500": {
+            "description": "Internal Server Error: Failed to convert to PDF."
+          }
+        },
+        "summary": "Convert HTML content to a PDF document",
+        "tags": [
+          "Utilities"
+        ]
+      }
+    },
     "/api/encoding/base64/encode": {
       "post": {
         "operationId": "EncodingController_encodeToBase64",
@@ -5514,7 +5565,9 @@
                 "SCREENSHOT_ANALYSIS",
                 "WEB_SCRAPE_ANALYSIS",
                 "OTHER",
-                "PLAYWRIGHT_TASK_ANALYSIS"
+                "PLAYWRIGHT_TASK_ANALYSIS",
+                "PORTFOLIO_GENERATION",
+                "COVER_LETTER_GENERATION"
               ],
               "type": "string"
             }
@@ -5625,7 +5678,9 @@
                 "SCREENSHOT_ANALYSIS",
                 "WEB_SCRAPE_ANALYSIS",
                 "OTHER",
-                "PLAYWRIGHT_TASK_ANALYSIS"
+                "PLAYWRIGHT_TASK_ANALYSIS",
+                "PORTFOLIO_GENERATION",
+                "COVER_LETTER_GENERATION"
               ]
             }
           }
@@ -6610,6 +6665,92 @@
           }
         ],
         "summary": "Enhance an existing resume or a specific section using Google Gemini",
+        "tags": [
+          "Resume"
+        ]
+      }
+    },
+    "/api/resume/generate-portfolio": {
+      "post": {
+        "operationId": "ResumeController_generatePortfolio",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneratePortfolioDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Portfolio generated successfully as HTML.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or missing resume content."
+          },
+          "500": {
+            "description": "Internal server error during Gemini API call."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate a professional HTML portfolio webpage based on resume content using Google Gemini",
+        "tags": [
+          "Resume"
+        ]
+      }
+    },
+    "/api/resume/generate-cover-letter": {
+      "post": {
+        "operationId": "ResumeController_generateCoverLetter",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateCoverLetterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cover letter generated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input: missing resume content or job description."
+          },
+          "500": {
+            "description": "Internal server error during Gemini API call."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate a professional cover letter tailored to a job description using Google Gemini",
         "tags": [
           "Resume"
         ]
@@ -18037,8 +18178,22 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Generate a new plan from a structured LLM input",
         "tags": [
           "AI Planner"
@@ -18062,8 +18217,22 @@
         "responses": {
           "200": {
             "description": "The plan details."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get a plan by ID",
         "tags": [
           "AI Planner"
@@ -18087,8 +18256,22 @@
         "responses": {
           "200": {
             "description": "The chunks of the plan."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Get chunks of a plan by ID",
         "tags": [
           "AI Planner"
@@ -18121,8 +18304,22 @@
         "responses": {
           "201": {
             "description": "The chunk has been successfully applied."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Apply a chunk of a plan by ID and index",
         "tags": [
           "AI Planner"
@@ -18135,11 +18332,11 @@
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "The plan to apply",
+          "description": "The ID of the plan to apply, and optionally a project root.",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreatePlannerDto"
+                "$ref": "#/components/schemas/ApplyExistingPlanRequestDto"
               }
             }
           }
@@ -18147,9 +18344,23 @@
         "responses": {
           "201": {
             "description": "The plan has been successfully applied."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
           }
         },
-        "summary": "Apply a plan",
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Apply a plan by its ID",
         "tags": [
           "AI Planner"
         ]
@@ -23732,7 +23943,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-10-30T07:26:11.069Z",
+            "example": "2025-10-31T15:40:08.201Z",
             "format": "date-time"
           },
           "requestType": {
@@ -23765,7 +23976,9 @@
               "SCREENSHOT_ANALYSIS",
               "WEB_SCRAPE_ANALYSIS",
               "OTHER",
-              "PLAYWRIGHT_TASK_ANALYSIS"
+              "PLAYWRIGHT_TASK_ANALYSIS",
+              "PORTFOLIO_GENERATION",
+              "COVER_LETTER_GENERATION"
             ],
             "example": "TEXT_WITH_IMAGE"
           },
@@ -24128,6 +24341,71 @@
         },
         "required": [
           "resumeContent"
+        ]
+      },
+      "GeneratePortfolioDto": {
+        "type": "object",
+        "properties": {
+          "resumeContent": {
+            "type": "string",
+            "description": "The plain text content of the resume to generate the portfolio from.",
+            "example": "John Doe\nSoftware Engineer Experience:...",
+            "minLength": 1
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Optional: A specific prompt to guide the AI on the style or focus of the portfolio (e.g., \"minimalist design\", \"focus on machine learning projects\").",
+            "example": "Generate a portfolio with a dark theme, focusing on web development projects."
+          },
+          "systemInstruction": {
+            "type": "string",
+            "description": "Optional: Custom system instruction to guide the AI model on how to generate the portfolio. Overrides default instructions.",
+            "example": "Ensure the portfolio is a single HTML file with inline CSS and no external scripts."
+          },
+          "conversationId": {
+            "type": "string",
+            "description": "Optional: An existing conversation ID to maintain context with the AI model for continued interaction.",
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        },
+        "required": [
+          "resumeContent"
+        ]
+      },
+      "GenerateCoverLetterDto": {
+        "type": "object",
+        "properties": {
+          "resumeContent": {
+            "type": "string",
+            "description": "The plain text content of the resume to be used as context for the cover letter.",
+            "example": "John Doe\nSoftware Engineer\nExperience:\n- Developed X using Y...\nSkills: Z",
+            "minLength": 1
+          },
+          "jobDescription": {
+            "type": "string",
+            "description": "The full plain text job description the cover letter should be tailored to.",
+            "example": "We are looking for a software engineer with strong React and Node.js skills...",
+            "minLength": 1
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Optional: A specific prompt to guide the AI on the tone, focus, or style of the cover letter (e.g., \"emphasize leadership skills\", \"write a concise letter\").",
+            "example": "Focus on my experience with cloud platforms and scalable architectures."
+          },
+          "systemInstruction": {
+            "type": "string",
+            "description": "Optional: Custom system instruction to guide the AI model for nuanced cover letter generation. Overrides default instructions.",
+            "example": "Generate a cover letter strictly in a formal tone, without any informal language."
+          },
+          "conversationId": {
+            "type": "string",
+            "description": "Optional: An existing conversation ID to maintain context with the AI model for continued interaction.",
+            "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        },
+        "required": [
+          "resumeContent",
+          "jobDescription"
         ]
       },
       "LaunchInstanceDto": {
@@ -25962,7 +26240,9 @@
               "SCREENSHOT_ANALYSIS",
               "WEB_SCRAPE_ANALYSIS",
               "OTHER",
-              "PLAYWRIGHT_TASK_ANALYSIS"
+              "PLAYWRIGHT_TASK_ANALYSIS",
+              "PORTFOLIO_GENERATION",
+              "COVER_LETTER_GENERATION"
             ],
             "example": "LLM_GENERATION"
           }
@@ -27679,79 +27959,21 @@
           }
         }
       },
-      "FileChangeDto": {
+      "ApplyExistingPlanRequestDto": {
         "type": "object",
         "properties": {
-          "filePath": {
+          "planId": {
             "type": "string",
-            "description": "Absolute or relative path of the file to be changed.",
-            "example": "src/components/WelcomeMessage.tsx"
+            "description": "The ID of the plan to apply."
           },
-          "action": {
+          "projectRoot": {
             "type": "string",
-            "enum": [
-              "ADD",
-              "MODIFY",
-              "DELETE",
-              "REPAIR",
-              "ANALYZE",
-              "INSTALL",
-              "RUN"
-            ],
-            "description": "Type of operation to perform on the file.",
-            "example": "ADD"
-          },
-          "diff": {
-            "type": "string",
-            "description": "Optional unified diff to apply instead of providing full newContent.",
-            "example": "--- a/src/old.ts\n+++ b/src/old.ts\n@@ ..."
-          },
-          "newContent": {
-            "type": "string",
-            "description": "New content for ADD, MODIFY, or REPAIR operations when diff is not provided.",
-            "example": "import React from \"react\";\n\nconst WelcomeMessage = () => <div>Hello, AI User!</div>;\n\nexport default WelcomeMessage;"
-          },
-          "reason": {
-            "type": "string",
-            "description": "Brief explanation or justification for this file change.",
-            "example": "New component to display a welcome message."
+            "description": "Optional project root path to apply the plan to. If not provided, uses the default configured path.",
+            "example": "/path/to/my/project"
           }
         },
         "required": [
-          "filePath",
-          "action"
-        ]
-      },
-      "CreatePlannerDto": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "description": "High-level title for the overall changes or response.",
-            "example": "Implement User Authentication Module"
-          },
-          "summary": {
-            "type": "string",
-            "description": "Concise summary describing the overall changes or solution.",
-            "example": "Implemented a new React component `WelcomeMessage.tsx` to display a greeting message."
-          },
-          "thoughtProcess": {
-            "type": "string",
-            "description": "Detailed reasoning behind the proposed changes.",
-            "example": "The user requested a React component, so I created a functional component in TypeScript and placed it in `src/components`."
-          },
-          "changes": {
-            "description": "List of proposed file changes generated by the LLM.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FileChangeDto"
-            }
-          }
-        },
-        "required": [
-          "title",
-          "summary",
-          "changes"
+          "planId"
         ]
       },
       "GitStatusFileDto": {

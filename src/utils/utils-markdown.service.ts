@@ -359,7 +359,7 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
         margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' },
       });
 
-      return pdfBuffer;
+      return pdfBuffer as Buffer;
     } catch (error) {
       console.error(`HTML to PDF conversion failed: ${error.message}`, error);
       throw new Error(`Failed to convert HTML to PDF: ${error.message}`);

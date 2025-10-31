@@ -1,18 +1,17 @@
-import React from 'react';
-import { Box } from '@mui/material';
-import { Navbar } from './Navbar';
+import React, { ReactNode } from 'react';
+import Navbar from './Navbar';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div className="flex flex-col min-h-screen">
       <Navbar />
-      <Box component='main' sx={{ flexGrow: 1 }}>
+      <main className="flex-grow dark:bg-gray-900 dark:text-white transition-colors duration-200">
         {children}
-      </Box>
-    </Box>
+      </main>
+    </div>
   );
 };

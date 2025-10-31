@@ -1,220 +1,136 @@
-# Google Gemini Text-to-Speech Frontend: Developer Guide
+# Developer Guide
 
-This document provides a comprehensive guide for developers working with the Google Gemini Text-to-Speech (TTS) frontend application. It covers architecture, setup, development practices, and integration details.
+This guide is for developers who want to understand, contribute to, or extend the Google Gemini TTS & AI Code Planner frontend application.
 
-## Table of Contents
+## 1. Project Setup
 
-1.  [Introduction](#1-introduction)
-2.  [Key Features](#2-key-features)
-3.  [Technologies Used](#3-technologies-used)
-4.  [Project Structure](#4-project-structure)
-5.  [Getting Started](#5-getting-started)
-    *   [Prerequisites](#prerequisites)
-    *   [Installation](#installation)
-    *   [Configuration](#configuration)
-    *   [Running the Application](#running-the-application)
-    *   [Building for Production](#building-for-production)
-6.  [Backend Integration](#6-backend-integration)
-7.  [Customization](#7-customization)
-8.  [Linting & Formatting](#8-linting--formatting)
-9.  [Deployment](#9-deployment)
-10. [Future Enhancements / Roadmap](#10-future-enhancements--roadmap)
+Refer to the [Getting Started section in README.md](../README.md#getting-started) for initial setup, prerequisites, and installation instructions.
 
----
+### 1.1 Environment Variables
 
-## 1. Introduction
-
-The Google Gemini TTS Generator Frontend is a React/Vite application designed to provide a user-friendly interface for interacting with a Google Gemini Text-to-Speech backend service. It enables users to convert text into speech, configure multiple speakers with distinct voices, and manage language settings, all while offering robust authentication capabilities.
-
-For an in-depth understanding of the application's design principles, architectural components, and data flows, please refer to the [Overview and Architecture document](OVERVIEW_ARCHITECTURE.md).
-
-## 2. Key Features
-
-*   **Robust Authentication:** Seamless integration with JWT-based authentication, Google OAuth2, and GitHub OAuth2 provided by the associated backend server.
-*   **Dynamic Text Input:** Accepts arbitrary text input for synthesis, supporting multi-line and structured content.
-*   **Flexible Multi-Speaker Configuration:** Allows dynamic addition/removal of speaker profiles, enabling specification of AI prompt speaker names and corresponding Google voice names (e.g., 'Kore', 'Puck').
-*   **Language Localization:** Supports setting the `languageCode` for speech output, defaulting to 'en-US'.
-*   **Integrated Audio Playback:** Streams and plays the generated `.wav` audio file directly within the browser, offering standard controls.
-*   **Comprehensive Feedback:** Implements visual loading states and detailed error handling mechanisms during API interactions.
-
-## 3. Technologies Used
-
-*   **React**: A declarative, component-based JavaScript library for building user interfaces.
-*   **Vite**: A next-generation frontend tooling that provides an extremely fast development experience and optimized build process.
-*   **TypeScript**: A superset of JavaScript that adds static types, enhancing code quality, maintainability, and developer experience.
-*   **Material UI (MUI v6)**: A comprehensive React UI component library based on Google's Material Design. Used for consistent, accessible, and aesthetically pleasing UI elements.
-*   **Tailwind CSS (v4)**: A utility-first CSS framework for rapidly building custom designs without leaving your HTML/JSX. Used primarily for layout, spacing, and responsive design.
-*   **Nanostores**: A minimalist, performant, and testable state management library. Utilized for global application state like authentication, theme, and TTS generation parameters.
-*   **Axios**: A popular promise-based HTTP client for making API requests to the backend server.
-*   **React Router DOM (v6)**: A standard library for declarative routing in React applications, managing navigation between different views.
-*   **ESLint & Prettier**: Integrated for code linting, static analysis, and consistent code formatting across the project.
-
-## 4. Project Structure
-
-The application follows a modular and feature-sliced structure within the `src` directory:
-
-```
-src/
-├── api/                  # Services for interacting with backend API endpoints
-│   ├── authService.ts    # Functions for authentication-related API calls
-│   └── geminiTtsService.ts # Functions for Google Gemini TTS API calls
-├── App.tsx               # Main application component, handles routing
-├── components/           # Reusable UI components
-│   ├── Layout.tsx        # Provides a consistent page layout (e.g., Navbar, main content area)
-│   └── ThemeToggle.tsx   # Component to switch between light/dark themes
-├── hooks/                # Custom React hooks for encapsulating logic
-│   └── useAuth.ts        # Hook for managing authentication state and actions
-├── index.css             # Global CSS styles (likely includes Tailwind base styles)
-├── main.tsx              # Entry point of the React application
-├── pages/                # Top-level components representing distinct application views
-│   ├── AuthCallback.tsx  # Handles OAuth2 redirects and token processing
-│   ├── LoginPage.tsx     # User login interface
-│   └── TtsGeneratorPage.tsx # Main page for text-to-speech generation
-├── stores/               # Nanostores for global state management
-│   ├── authStore.ts      # Manages user authentication status and data
-│   ├── themeStore.ts     # Manages application theme (light/dark)
-│   └── ttsStore.ts       # Manages state related to TTS generation (text, speakers, audio)
-├── theme/                # Material UI theme configuration
-│   └── index.ts          # Defines custom MUI palette, typography, etc.
-├── types/                # TypeScript type definitions and interfaces
-│   ├── auth.ts           # Types for authentication data (user, tokens)
-│   └── tts.ts            # Types for TTS requests and responses (speakers, voices)
-└── vite-env.d.ts         # Vite-specific environment type declarations
-```
-
-## 5. Getting Started
-
-This section details how to set up, run, and build the application for development and production environments.
-
-### Prerequisites
-
-*   **Node.js**: Version 18 or higher.
-*   **pnpm**: Recommended package manager. Install with `npm install -g pnpm`.
-*   **Backend Server**: The associated backend server (`project-board-server`) must be running and accessible, typically at `http://localhost:3000`, with its authentication and Google TTS modules configured.
-
-### Installation
-
-1.  **Clone the repository**: If you haven't already, clone the mono-repository:
-    ```bash
-    git clone https://github.com/evillan0315/project-board-server.git
-    cd project-board-server
-    ```
-2.  **Navigate to the frontend application directory**: `cd apps/text-to-speech`
-3.  **Install dependencies**: `pnpm install`
-4.  **Initialize Tailwind CSS**: `pnpm run tailwind:init`
-
-### Configuration
-
-Create a `.env` file in the `apps/text-to-speech` directory for local development.
+Ensure your `.env` file in `apps/text-to-speech` is correctly configured:
 
 ```env
-VITE_APP_API_BASE_URL=http://localhost:3000
+VITE_APP_API_BASE_URL=http://localhost:5000/api # URL of the backend API
+VITE_FRONTEND_PORT=3003 # Port for OAuth callbacks
+VITE_BASE_DIR=/media/eddie/Data/projects/nestJS/nest-modules/project-board-server/apps/text-to-speech # ABSOLUTE path to THIS project's root for AI Planner
+VITE_PREVIEW_APP_URL=http://localhost:3002 # (Optional) URL for Vite preview if different
 ```
 
-*   `VITE_APP_API_BASE_URL`: This environment variable specifies the base URL of your backend API. Ensure it matches the address where your `project-board-server` is running.
+**`VITE_BASE_DIR` Importance**: This variable is critical for the AI Code Planner. It tells the backend the absolute path to your local `text-to-speech` project, allowing the AI to scan relevant files and apply changes. **Change this to your actual project path.**
 
-#### Backend OAuth Configuration
+### 1.2 Linting & Formatting
 
-For Google and GitHub OAuth to function correctly, ensure the backend's (`project-board-server/.env`) OAuth callback URLs are configured to point to this frontend application's `AuthCallback` route. The frontend's default callback route is `/auth/callback`.
+The project uses ESLint and Prettier for code quality and consistency.
 
-Example backend `.env` configuration:
+*   **Lint:** `pnpm run lint`
+*   **Fix Linting Issues:** `pnpm run lint:fix`
+*   **Format Code:** `pnpm run format`
 
-```env
-# ... other backend configs
+It's recommended to integrate these tools with your IDE (e.g., VS Code extensions for ESLint and Prettier).
 
-# Google OAuth2 Credentials
-GOOGLE_CLIENT_ID='your_google_client_id'
-GOOGLE_CLIENT_SECRET='your_google_client_secret'
-GOOGLE_CALLBACK_URL='http://localhost:3002/auth/callback' # Must match this frontend's callback route
+## 2. Architecture Overview
 
-# GitHub OAuth2 Credentials
-GITHUB_CLIENT_ID='your_github_client_id'
-GITHUB_CLIENT_SECRET='your_github_client_secret'
-GITHUB_CALLBACK_URL='http://localhost:3002/auth/callback' # Must match this frontend's callback route
+The frontend is a single-page application (SPA) built with React and Vite. It communicates with a NestJS backend for authentication, TTS, and AI Planner functionalities.
 
-# Frontend URL reference for backend redirects
-FRONTEND_URL='http://localhost:3002'
-```
+*   **Technology Stack**:
+    *   **React 18**: UI Library for building user interfaces.
+    *   **Vite**: Fast build tool and development server.
+    *   **TypeScript**: Statically typed JavaScript for enhanced code quality.
+    *   **Material UI v6**: Comprehensive React UI component library.
+    *   **Tailwind CSS v4**: Utility-first CSS framework for responsive design.
+    *   **Nanostores**: Small, fast, and simple state management library.
+    *   **React Router DOM v6**: For client-side routing.
+    *   **Axios**: Promise-based HTTP client for API requests.
+    *   **path-browserify**: Polyfill for Node.js `path` module for browser compatibility.
 
-The `vite.config.ts` configures the development server to run on `port: 3002`. It is crucial that the `FRONTEND_URL` and OAuth callback URLs specified in the backend's `.env` match this actual running port (e.g., `http://localhost:3002`).
+### 2.1 Project Structure
 
-### Running the Application
+Refer to the [Project Structure in README.md](../README.md#project-structure) for a high-level overview of directories and their contents. Key directories include:
 
-To start the development server:
+*   `src/api`: Centralized location for all API service calls (e.g., `authService.ts`, `geminiTtsService.ts`, `plannerService.ts`).
+*   `src/components`: Reusable UI components.
+    *   `src/components/planner`: Houses the complex AI Planner components, stores, and related logic.
+*   `src/pages`: Top-level components mapped to routes by React Router.
+*   `src/stores`: Nanostores for application-wide state (e.g., `authStore.ts`, `ttsStore.ts`, `themeStore.ts`, `plannerStore.ts`).
+*   `src/hooks`: Custom React hooks for encapsulating reusable logic.
+*   `src/types`: Global TypeScript interface and type definitions.
+*   `src/theme`: Material UI theme configuration.
 
-```bash
-pnpm run dev
-```
+## 3. State Management with Nanostores
 
-This command will typically launch the application at `http://localhost:3002` (as configured in `vite.config.ts`). You can then navigate to `/login` to authenticate.
+Nanostores is used for global state management due to its simplicity and performance.
 
-### Building for Production
+*   **Atoms**: State is stored in `atom`s, which are simple observable objects.
+    *   Example: `authStore.ts` manages authentication state (`isLoggedIn`, `token`, `user`).
+*   **Actions**: Functions that modify an atom's state. They are typically co-located with the store definition.
+    *   Example: `loginUser`, `logoutUser`, `fetchUserProfile` in `authStore.ts`.
+*   **Hooks**: `useStore` from `@nanostores/react` is used in components to subscribe to and read store values.
+    *   Example: `const { isLoggedIn, user } = useStore(authStore);`
 
-To compile the application for production deployment:
+**Best Practices:**
+*   Define interfaces for store states at the top of the file.
+*   Keep store logic (atom definition, actions) in separate `*.ts` files within the `stores` directory (or feature-specific `stores` directory like `planner/stores`).
+*   Use selector functions (like `getAuthToken()`) for computed state or to prevent direct store access outside of explicit actions.
 
-```bash
-pnpm run build
-```
+## 4. Styling (Material UI & Tailwind CSS)
 
-The compiled assets will be generated in the `dist/` directory, ready for static serving.
+The project combines Material UI for components and Tailwind CSS for utility-first styling.
 
-## 6. Backend Integration
+*   **Material UI (`@mui/material`)**:
+    *   Used for structural UI components (Buttons, TextFields, Cards, AppBars, etc.).
+    *   The global theme is defined in `src/theme/index.ts`.
+    *   The `sx` prop is used for custom styling within MUI components. **Rule**: Avoid inline `sx` objects; define `sx` constants or functions at the top of the component file for maintainability.
+*   **Tailwind CSS (`@tailwindcss/vite`)**:
+    *   Used for layout, spacing, flexbox, grid, and other utility-first styling.
+    *   Integrated via Vite and configured in `tailwind.config.js`.
+    *   Classes are applied directly to elements using the `className` prop.
+    *   **Rule**: Prefer Tailwind for layout and basic styling; use MUI's `sx` for component-specific overrides or theme-dependent styles.
 
-This frontend is designed to work with a NestJS backend (likely `project-board-server`) and interacts with the following REST API endpoints:
+## 5. API Interaction
 
-*   `POST /api/auth/login`: Authenticates user with email and password.
-*   `POST /api/auth/logout`: Invalidates the server-side session/cookie.
-*   `GET /api/auth/google`: Initiates Google OAuth2 login flow.
-*   `GET /api/auth/github`: Initiates GitHub OAuth2 login flow.
-*   `GET /api/auth/me`: Fetches the profile of the currently authenticated user.
-*   `POST /api/google-tts/generate`: **Primary TTS generation endpoint.**
-    *   **Description:** Generates speech audio from text using Google Gemini's TTS model, supporting multiple speakers and language codes.
-    *   **Request Body (JSON):**
-        ```json
-        {
-          "prompt": "Eddie: AI is changing everything!\nMarionette: And it's influencing fashion too.",
-          "speakers": [
-            { "speaker": "Eddie", "voiceName": "en-US-Studio-F" },
-            { "speaker": "Marionette", "voiceName": "en-US-Studio-B" }
-          ],
-          "languageCode": "en-US" // Optional, defaults to backend's configured default if not provided
-        }
-        ```
-    *   **Response:** A binary `.wav` audio file stream (`application/octet-stream` or `audio/wav` content type). The frontend handles this by creating a `Blob` and then a `URL` for the `audio` element.
+All API interactions are encapsulated in services within the `src/api` and `src/components/planner/api` directories.
 
-## 7. Customization
+*   **Axios**: The `axios` library is used for making HTTP requests.
+*   **Authentication**:
+    *   `authService.ts` handles user login, logout, and profile fetching.
+    *   `getAuthToken()` from `authStore.ts` provides the JWT token for authenticated requests.
+    *   All authenticated requests include `Authorization: Bearer <token>` in their headers.
+*   **Error Handling**: Services implement try-catch blocks to handle `axios` errors and provide meaningful messages to the UI.
 
-*   **Material UI Theme**: Modify `src/theme/index.ts` to adjust colors, typography, spacing, and other design tokens to match brand guidelines.
-*   **Tailwind CSS**: Customize `tailwind.config.js` for extending Tailwind's default utility classes, defining custom components, or adding new design system elements.
-*   **API Endpoints**: If the backend API routes change, update the `VITE_APP_API_BASE_URL` in `.env` and the specific paths within `src/api/*.ts` files.
-*   **Voice Names**: The `voiceName` values in speaker configurations are dependent on the voices supported by your Google Gemini TTS setup and exposed by the backend. Refer to Google's official documentation or your backend service's configuration for a list of valid voice names.
-*   **Language Codes**: Add or modify available language codes within the `TtsGeneratorPage.tsx` or related `ttsStore` if the backend supports additional languages.
+## 6. Routing (React Router DOM)
 
-## 8. Linting & Formatting
+Client-side routing is handled by `react-router-dom`.
 
-The project enforces code quality and consistency using ESLint and Prettier.
+*   Routes are defined in `src/App.tsx`.
+*   The `Layout` component wraps all routes to provide a consistent header and basic structure.
+*   `Link` and `useNavigate` are used for navigation.
 
-*   **ESLint (`eslint.config.ts`)**: Configured for TypeScript, React, and React Hooks. It uses `@typescript-eslint/eslint-plugin`, `eslint-plugin-react`, `eslint-plugin-react-hooks`, and `eslint-plugin-unused-imports` for comprehensive static analysis.
-    *   `pnpm run lint`: Runs ESLint to check for issues.
-    *   `pnpm run lint:fix`: Automatically fixes fixable ESLint issues.
-*   **Prettier**: Integrated with ESLint (`eslint-plugin-prettier` and `eslint-config-prettier`) to ensure consistent code formatting.
-    *   `pnpm run format`: Formats all `.ts` and `.tsx` files in the `src` directory.
+## 7. Adding New Features
 
-The `eslint.config.ts` explicitly disables `react/react-in-jsx-scope` due to React 17+ JSX transform, `react/prop-types` (TypeScript handles this), and `typescript-eslint/no-unused-vars` in favor of `eslint-plugin-unused-imports`.
+1.  **Understand the Architecture**: Familiarize yourself with the existing project structure and patterns.
+2.  **Create API Services**: If interacting with a new backend endpoint, create or extend a service in `src/api` (or `src/components/planner/api` for planner-related features).
+3.  **Define Types**: Create or update TypeScript interfaces/types in `src/types` or `src/components/planner/types`.
+4.  **Manage State**: For global or complex feature state, consider a new Nanostore in `src/stores` (or `src/components/planner/stores`).
+5.  **Build Components**: Create functional React components for your UI in `src/components` or `src/pages`.
+6.  **Update Routing**: Add new routes to `src/App.tsx` if necessary.
+7.  **Test**: Manually test your new feature and consider adding automated tests (though not currently implemented in this project).
 
-## 9. Deployment
+## 8. Contribution Guidelines
 
-Refer to the following dedicated documentation files for deployment instructions:
+Please refer to the [CONTRIBUTING.md](../CONTRIBUTING.md) file for detailed contribution guidelines, including branching strategy, commit message conventions, and pull request process.
 
-*   `docs/DEPLOYMENT.md`: General deployment guidelines for Docker and Kubernetes.
-*   `docs/VERCEL_GITHUB_ACTIONS.md`: Specific instructions for deploying to Vercel using GitHub Actions.
-*   `docs/OVERVIEW_ARCHITECTURE.md`: Provides details on the overarching architecture and deployment considerations.
+## 9. Troubleshooting
 
-## 10. Future Enhancements / Roadmap
-
-*   **User Profiles**: Expand user profile management beyond basic authentication.
-*   **Saved Generations**: Allow users to save generated audio files or text prompts for later use.
-*   **Advanced Voice Customization**: Expose more Google Gemini TTS parameters (e.g., speaking rate, pitch, SSML support).
-*   **Error Logging & Monitoring**: Integrate with client-side error tracking tools.
-*   **Internationalization (i18n)**: Support multiple UI languages.
-*   **Integration Tests**: Implement end-to-end and integration tests to ensure system stability.
+*   **Authentication Errors**:
+    *   Ensure your `VITE_APP_API_BASE_URL` in `.env` is correct.
+    *   Verify backend is running and accessible.
+    *   Check backend console for any OAuth or JWT-related errors.
+    *   Ensure OAuth callback URLs are correctly configured in both frontend and backend `.env` files.
+*   **AI Code Planner Errors**:
+    *   Verify `VITE_BASE_DIR` in your frontend `.env` is the correct **absolute path** to your `text-to-speech` project root. This is the most common issue.
+    *   Check if the backend `project-board-server` is running and its own `.env` is configured correctly for AI model access.
+    *   Review the AI Instructions and Expected Output Format in the drawers for any syntax errors or inconsistencies.
+*   **"Root element with ID 'root' not found"**: Ensure your `index.html` has `<div id="root"></div>`.
+*   **Styling Issues**: Check `tailwind.config.js` and `src/index.css` for proper Tailwind integration. For MUI issues, inspect the theme in `src/theme/index.ts`.
+*   **Dependencies**: Run `pnpm install` if you encounter module not found errors.

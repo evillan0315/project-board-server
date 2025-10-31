@@ -1,27 +1,49 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec as _exec } from 'child_process';
-import { promisify } from 'util';
+import { promisify }  from 'util';
 import { FileChangeDto } from './dto';
 import { FileAction as PrismaFileAction } from '@prisma/client';
 import { FileActionLabel } from '@/common/constants/file-action-map';
 import { ConfigService } from '@nestjs/config';
 import { GitService } from '@/git/git.service';
+
 const exec = promisify(_exec);
+
 @Injectable()
 export class ExecutorService {
+  private readonly logger = new Logger(ExecutorService.name);
   private readonly repoPath: string;
+
   constructor(
     private readonly configService: ConfigService,
     private readonly gitService: GitService,
   ) {
-    this.repoPath =
-      this.configService.get<string>('BASE_DIR') || process.cwd();
+    this.repoPath = this.configService.get<string>('BASE_DIR') || process.cwd();
   }
-  async snapshotAndApply(planId: string, changes: FileChangeDto[]) {
+
+  async snapshotAndApply(planTitle: string, changes: FileChangeDto[], projectRoot?: string) {
+    const effectiveRepoPath = projectRoot ? path.resolve(projectRoot) : this.repoPath;
     const branch = `ai/plan-${Date.now()}`;
-    const effectiveRepoPath = path.resolve(this.repoPath);
+    
+    try {
+      // Check if it's a Git repository
+      await this.gitService.getStatus(effectiveRepoPath);
+    } catch (e) {
+      if (e instanceof BadRequestException && e.message.includes('not a Git repository')) {
+        return {
+          ok: false,
+          error: `Project root '${effectiveRepoPath}' is not a Git repository. Cannot apply changes.`, 
+        };
+      } else {
+        return {
+          ok: false,
+          error: `Failed pre-check for Git repository: ${e.message}`, 
+        };
+      }
+    }
+
     try {
       await this.gitService.createBranch(branch, effectiveRepoPath);
     } catch (e) {
@@ -32,26 +54,30 @@ export class ExecutorService {
         } catch (checkoutError) {
           return {
             ok: false,
-            error: `Failed to create or checkout branch ${branch}: ${checkoutError.message}`,
+            error: `Failed to create or checkout branch ${branch}: ${checkoutError.message}`, 
           };
         }
       } else {
         return {
           ok: false,
-          error: `Failed to create branch ${branch}: ${e.message}`,
+          error: `Failed to create branch ${branch}: ${e.message}`, 
         };
       }
     }
+
     // Snapshot current HEAD (commit any unstaged changes briefly to make a clean snapshot)
     await this.gitService.stageFiles(['.'], effectiveRepoPath);
-    await this.gitService.commit(`snapshot before ${planId}`, effectiveRepoPath).catch(() => {});
+    await this.gitService.commit(`snapshot before applying AI plan: ${planTitle}`, effectiveRepoPath).catch(() => {});
     const snapshot = await this.gitService.getHeadCommitHash(effectiveRepoPath);
+
     const results: any[] = [];
+
     try {
       for (const ch of changes) {
         // Map Prisma enum (e.g. 'ADD') to lower-case string ('add')
         const action = FileActionLabel[ch.action as PrismaFileAction];
         const abs = path.join(effectiveRepoPath, ch.filePath);
+
         if (action === 'add' || action === 'modify' || action === 'repair') {
           await fs.promises.mkdir(path.dirname(abs), { recursive: true });
           if (ch.diff) {
@@ -67,7 +93,7 @@ export class ExecutorService {
               results.push({
                 file: ch.filePath,
                 ok: false,
-                error: `Failed to apply diff: ${String(e)}`,
+                error: `Failed to apply diff: ${String(e)}`, 
               });
             }
           } else {
@@ -93,6 +119,34 @@ export class ExecutorService {
               error: String(e),
             });
           }
+        } else if (action === 'install' || action === 'run') {
+          // For 'install' or 'run' actions, execute a shell command
+          if (ch.newContent) { // Assuming command is in newContent
+            try {
+              const { stdout, stderr } = await exec(ch.newContent, { cwd: effectiveRepoPath });
+              results.push({
+                file: ch.filePath, // Use file path as context, though not a file operation
+                action: action,
+                ok: true,
+                stdout: stdout,
+                stderr: stderr,
+              });
+            } catch (e) {
+              results.push({
+                file: ch.filePath,
+                action: action,
+                ok: false,
+                error: String(e),
+              });
+            }
+          } else {
+            results.push({
+              file: ch.filePath,
+              action: action,
+              ok: false,
+              error: 'No command provided for install/run action.',
+            });
+          }
         } else {
           results.push({
             file: ch.filePath,
@@ -101,6 +155,7 @@ export class ExecutorService {
           });
         }
       }
+      this.logger.log(effectiveRepoPath, 'TypeScript check effectiveRepoPath')
       // TypeScript check (if project is TS)
       const tsconfig = path.join(effectiveRepoPath, 'tsconfig.json');
       if (fs.existsSync(tsconfig)) {
@@ -116,15 +171,16 @@ export class ExecutorService {
           };
         }
       }
+
       // Lint (run npm run lint if provided; otherwise try eslint)
       try {
-        const pkg =
-          JSON.parse(
-            await fs.promises.readFile(
-              path.join(effectiveRepoPath, 'package.json'),
-              'utf-8',
-            ),
-          ).scripts || {};
+        const pkg = JSON.parse(
+          await fs.promises.readFile(
+            path.join(effectiveRepoPath, 'package.json'),
+            'utf-8',
+          ),
+        ).scripts || {};
+
         if (pkg.lint) {
           await exec('npm run lint', { cwd: effectiveRepoPath });
         } else if (
@@ -138,10 +194,12 @@ export class ExecutorService {
         // record lint failure — do not rollback automatically
         results.push({ lint: 'failed', error: String(e) });
       }
+
       // Commit changes
       await this.gitService.stageFiles(['.'], effectiveRepoPath);
-      await this.gitService.commit(`Apply AI plan ${planId}`, effectiveRepoPath).catch(() => {});
+      await this.gitService.commit(`Apply AI plan ${planTitle}`, effectiveRepoPath).catch(() => {});
       const newHead = await this.gitService.getHeadCommitHash(effectiveRepoPath);
+
       return { ok: true, results, snapshot, newHead };
     } catch (err) {
       // rollback to snapshot on any error
@@ -149,7 +207,7 @@ export class ExecutorService {
         await this.gitService.resetHard(snapshot, effectiveRepoPath);
       } catch (rollbackErr) {
         // Log if rollback itself fails
-        //         console.error(`Failed to rollback to snapshot: ${rollbackErr.message}`);
+        this.logger.error(`Failed to rollback to snapshot: ${rollbackErr.message}`);
       }
       return { ok: false, error: String(err), snapshot };
     }

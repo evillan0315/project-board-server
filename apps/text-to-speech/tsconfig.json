@@ -22,7 +22,12 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "esModuleInterop": true,
-    "preserveSymlinks": true
+    "preserveSymlinks": true,
+    
+     "baseUrl": ".", // Base directory for resolving non-relative module names
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"],
   "references": [{"path": "./tsconfig.node.json"}]

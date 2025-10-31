@@ -25,12 +25,12 @@ export default defineConfig(({ mode }) => {
       port: 4173, // Default preview server port
     },
     server: {
-      port: 3002,
+      port: 3003,
       proxy: {
         '/api': {
           target: env.VITE_APP_API_BASE_URL,
           changeOrigin: true,
-          // Removed rewrite: (path) => path.replace(/^\/api/, ''), to correctly proxy /api calls
+          rewrite: (path) => path.replace(/^\/api/, ''), 
         },
       },
       cors: {

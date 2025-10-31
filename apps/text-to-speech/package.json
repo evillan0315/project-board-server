@@ -14,13 +14,14 @@
   },
   "dependencies": {
     "@emotion/react": "^11.11.4",
-    "@emotion/styled":"^11.11.5",
+    "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^6",
     "@mui/material": "^6",
     "@nanostores/react": "^0.7.2",
     "axios": "^1.7.2",
     "clsx": "^2.1.1",
     "nanostores": "^0.10.3",
+    "path-browserify": "^1.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.25.1",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.6.0",
+    "@tailwindcss/vite": "^4.0.0-alpha.17",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
@@ -43,7 +45,6 @@
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.5",
     "tailwindcss": "^4",
-    "@tailwindcss/vite": "^4.0.0-alpha.17",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
   }

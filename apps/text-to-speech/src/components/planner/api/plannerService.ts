@@ -1,18 +1,18 @@
 import axios from 'axios';
 import { authStore } from '@/stores/authStore';
-import type { ApplyPlanResult, GeneratePlanResponse, LlmInput, Plan } from '../types';
+import type { IApplyPlanResult, IGeneratePlanResponse, ILlmInput, IPlan } from '../types'; // Updated imports
 
 const API_BASE_URL = '/api';
 
 const getAuthHeaders = () => {
-  const token = authStore.get().jwtToken;
+  const token = authStore.get().token; // Corrected from jwtToken to token
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 export const plannerService = {
-  async generatePlan(llmInput: LlmInput): Promise<GeneratePlanResponse> {
+  async generatePlan(llmInput: ILlmInput): Promise<IGeneratePlanResponse> {
     try {
-      const response = await axios.post<GeneratePlanResponse>(
+      const response = await axios.post<IGeneratePlanResponse>(
         `${API_BASE_URL}/plan`,
         llmInput,
         { headers: getAuthHeaders() },
@@ -26,9 +26,9 @@ export const plannerService = {
     }
   },
 
-  async getPlan(planId: string): Promise<{ plan: Plan }> {
+  async getPlan(planId: string): Promise<{ plan: IPlan }> { // Updated return type
     try {
-      const response = await axios.get<{ plan: Plan }>(
+      const response = await axios.get<{ plan: IPlan }>(
         `${API_BASE_URL}/plan/${planId}`,
         { headers: getAuthHeaders() },
       );
@@ -41,11 +41,12 @@ export const plannerService = {
     }
   },
 
-  async applyPlan(plan: Plan): Promise<ApplyPlanResult> {
+  async applyPlan(plan: IPlan, projectRoot?: string): Promise<IApplyPlanResult> { // Updated parameter type
     try {
-      const response = await axios.post<ApplyPlanResult>(
+      // Backend expects { planId: string, projectRoot?: string } in ApplyExistingPlanRequestDto
+      const response = await axios.post<{ result: IApplyPlanResult }>(
         `${API_BASE_URL}/plan/apply`,
-        { plan }, // Backend expects { plan: PlanDto }
+        { planId: plan.id, projectRoot }, // Corrected payload to match backend DTO
         { headers: getAuthHeaders() },
       );
       return response.data.result; // Backend returns { ok: true, result: ApplyPlanResult }

@@ -148,6 +148,7 @@ MAIL_FROM='"My App" <your-gmail-account@gmail.com>' # Display name and sender em
 BASE_URL='http://localhost:3000'
 BACKEND_URL='http://localhost:3000'
 FRONTEND_URL='http://localhost:3001' # Your frontend URL for OAuth redirects and proxy CORS/CSP
+PLANNER_FRONTEND_URL='http://localhost:3002' # Your new Project Planner frontend URL
 
 # Proxy Service Configuration
 # ALLOWED_PROXY_DOMAINS: Comma-separated list of hostnames/domains the proxy is allowed to fetch content from.

@@ -19,6 +19,7 @@ const getInitialTheme = (): 'light' | 'dark' => {
   return 'light'; // Ultimate fallback
 };
 
+// themeAtom is the primary store for theme state, used consistently across the app.
 export const themeAtom = atom<ThemeState>({
   theme: getInitialTheme(),
 });

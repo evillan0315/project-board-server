@@ -1,6 +1,26 @@
-export interface IAuthUser {
+/**
+ * Represents credentials for email/password login.
+ */
+export interface LoginCredentials {
+  email: string;
+  passwordHash: string; // Typically password is sent, backend handles hashing.
+}
+
+/**
+ * Represents the profile of an authenticated user.
+ */
+export interface UserProfile {
   id: string;
   email: string;
-  username?: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
+  roles?: string[];
+}
+
+/**
+ * Represents the response received after a successful login or token validation.
+ */
+export interface AuthResponse {
+  token: string;
+  user: UserProfile;
 }

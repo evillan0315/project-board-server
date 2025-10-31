@@ -25,6 +25,8 @@ import {
   OptimizationResultDto,
   GenerateResumeDto,
   EnhanceResumeDto,
+  GeneratePortfolioDto, // New: Import GeneratePortfolioDto
+  GenerateCoverLetterDto, // New: Import GenerateCoverLetterDto
 } from '../google/google-gemini/google-gemini-file/dto';
 import {
   ApiConsumes,
@@ -94,13 +96,13 @@ export class ResumeController {
 
     if (!providerAccount) {
       throw new UnauthorizedException(
-        `${providerName} account not linked for this user.`,
+        `${providerName} account not linked for this user.`, 
       );
     }
 
     if (!providerAccount.access_token) {
       throw new UnauthorizedException(
-        `${providerName} access token not found for this account.`,
+        `${providerName} access token not found for this account.`, 
       );
     }
 
@@ -354,5 +356,93 @@ export class ResumeController {
       );
     }
     return this.googleGeminiFileService.enhanceResume(enhanceResumeDto);
+  }
+
+  @Post('generate-portfolio') // New endpoint for portfolio generation
+  @ApiOperation({
+    summary:
+      'Generate a professional HTML portfolio webpage based on resume content using Google Gemini',
+  })
+  @ApiBody({ type: GeneratePortfolioDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Portfolio generated successfully as HTML.',
+    type: String,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid input or missing resume content.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error during Gemini API call.',
+  })
+  async generatePortfolio(
+    @Req() req: Request,
+    @Body() generatePortfolioDto: GeneratePortfolioDto,
+  ): Promise<string> {
+    // Ensure user has a linked Google account for Gemini access
+    const { appUsername, providerAccessToken } =
+      await this.getProviderAccountData(req, 'google'); // Ensure 'google' provider is used for Gemini
+
+    if (
+      !generatePortfolioDto.resumeContent ||
+      generatePortfolioDto.resumeContent.trim() === ''
+    ) {
+      throw new BadRequestException(
+        'Resume content is required to generate a portfolio.',
+      );
+    }
+    return this.googleGeminiFileService.generatePortfolio(generatePortfolioDto);
+  }
+
+  @Post('generate-cover-letter') // New endpoint for cover letter generation
+  @ApiOperation({
+    summary:
+      'Generate a professional cover letter tailored to a job description using Google Gemini',
+  })
+  @ApiBody({ type: GenerateCoverLetterDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Cover letter generated successfully.',
+    type: String,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid input: missing resume content or job description.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error during Gemini API call.',
+  })
+  async generateCoverLetter(
+    @Req() req: Request,
+    @Body() generateCoverLetterDto: GenerateCoverLetterDto,
+  ): Promise<string> {
+    // Ensure user has a linked Google account for Gemini access
+    const { appUsername, providerAccessToken } =
+      await this.getProviderAccountData(req, 'google'); // Ensure 'google' provider is used for Gemini
+
+    if (
+      !generateCoverLetterDto.resumeContent ||
+      generateCoverLetterDto.resumeContent.trim() === ''
+    ) {
+      throw new BadRequestException(
+        'Resume content is required to generate a cover letter.',
+      );
+    }
+    if (
+      !generateCoverLetterDto.jobDescription ||
+      generateCoverLetterDto.jobDescription.trim() === ''
+    ) {
+      throw new BadRequestException(
+        'Job description is required to generate a cover letter.',
+      );
+    }
+
+    return this.googleGeminiFileService.generateCoverLetter(
+      generateCoverLetterDto,
+    );
   }
 }

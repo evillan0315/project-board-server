@@ -36,6 +36,8 @@ import { UploadImageDto } from './dto/upload-image.dto';
 import { FormatCodeDto } from './dto/format-code.dto';
 import { HtmlDto } from './dto/html.dto';
 import { ImportExportDetectorService } from './import-export-detector.service';
+import { DetectImportsExportsDto } from './dto/detect-imports-exports.dto';
+import { DetectedImportExportStatementDto } from './dto/detected-import-export-statement.dto';
 
 class FixJsonDto {
   /** The raw JSON string that may be invalid or broken */
@@ -724,7 +726,7 @@ export class UtilsController {
       );
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${outputFilename}"`, // Escaped double quotes
+        `attachment; filename="${outputFilename}"`,
       );
       res.send(docxBuffer);
     } catch (error) {
@@ -797,7 +799,7 @@ export class UtilsController {
       );
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${outputFilename}"`, // Escaped double quotes
+        `attachment; filename="${outputFilename}"`,
       );
       res.send(docxBuffer);
     } catch (error) {
@@ -861,7 +863,7 @@ export class UtilsController {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${outputFilename}"`, // Escaped double quotes
+        `attachment; filename="${outputFilename}"`,
       );
       res.send(pdfBuffer);
     } catch (error) {

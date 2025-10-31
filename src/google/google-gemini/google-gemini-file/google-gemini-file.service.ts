@@ -16,6 +16,8 @@ import {
   OptimizationResultDto,
   GenerateVideoDto,
   VideoGenerationResultDto,
+  GeneratePortfolioDto, // New: Import GeneratePortfolioDto
+  GenerateCoverLetterDto, // New: Import GenerateCoverLetterDto
 } from './dto';
 
 import { ModuleControlService } from '../../../module-control/module-control.service';
@@ -150,7 +152,7 @@ export class GoogleGeminiFileService {
           errorData,
         );
         throw new InternalServerErrorException(
-          `Gemini API error: ${errorData.error?.message || 'Unknown API error'}`,
+          `Gemini API error: ${errorData.error?.message || 'Unknown API error'}`, 
         );
       }
 
@@ -483,9 +485,7 @@ export class GoogleGeminiFileService {
   }
 
   async generateResume(generateResumeDto: GenerateResumeDto): Promise<string> {
-    const defaultSystemInstruction = `You are an expert resume writer. Generate a professional and comprehensive resume in Markdown format based on the user's requirements. Ensure proper headings, bullet points for experience/achievements, and appropriate sections (e.g., Summary, Experience, Education, Skills, Projects). Focus on clarity, conciseness, and impact. Do not include any introductory or concluding remarks outside the resume itself.
-
-Follow this markdown format:
+    const defaultSystemInstruction = `You are an expert resume writer. Generate a professional and comprehensive resume in Markdown format based on the user's requirements. Ensure proper headings, bullet points for experience/achievements, and appropriate sections (e.g., Summary, Experience, Education, Skills, Projects). Focus on clarity, conciseness, and impact. Do not include any introductory or concluding remarks outside the resume itself.\n\nFollow this markdown format:
 ---
 name: Alex Techpro
 email: alex.techpro@example.com
@@ -644,6 +644,57 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
     }) as Promise<string>;
   }
 
+  // New: Method to generate a portfolio
+  async generatePortfolio(
+    generatePortfolioDto: GeneratePortfolioDto,
+  ): Promise<string> {
+    const defaultSystemInstruction = `You are an expert web developer and portfolio designer. Your task is to generate a professional, modern, and clean single-page HTML portfolio website based on the provided resume content and any specific instructions. The output MUST be a complete HTML file, including <head>, <style> (for inline CSS using Tailwind CSS utility classes or direct CSS for more complex styles), and <body>. Do NOT include <script> tags for external JavaScript.\n\nFocus on:
+- Creating a visually appealing and responsive layout.
+- Highlighting key skills, experience, and projects from the resume.
+- Using clear, concise language.
+- Ensuring the HTML is well-structured and semantic.
+- Incorporating a contact section.\n\nUse Tailwind CSS utility classes extensively for styling and layout. Apply a dark theme by default, with an option to switch to a light theme (though the theme switching logic itself should NOT be included in the generated HTML, only the default styling).  The primary colors should be shades of blue-grey or indigo for backgrounds/main elements and subtle accent colors like teal or light blue for highlights.\n\nOnly return the full HTML code. Do NOT include any introductory or concluding text, explanations, or markdown code blocks outside the HTML itself.`;
+
+    const prompt = generatePortfolioDto.prompt
+      ? `Generate a portfolio based on the following resume content, with these additional instructions: ${generatePortfolioDto.prompt}\n\nResume Content:\n\n${generatePortfolioDto.resumeContent}`
+      : `Generate a portfolio based on the following resume content:\n\n${generatePortfolioDto.resumeContent}`;
+
+    return this._performGeminiOperation({
+      dto: { ...generatePortfolioDto, prompt: prompt },
+      requestType: RequestType.PORTFOLIO_GENERATION,
+      getContents: (dto) => [{
+        role: 'user', 
+        parts: [{ text: dto.prompt }],
+      }],
+      defaultSystemInstruction: defaultSystemInstruction,
+    }) as Promise<string>;
+  }
+
+  // NEW: Method to generate a cover letter
+  async generateCoverLetter(
+    generateCoverLetterDto: GenerateCoverLetterDto,
+  ): Promise<string> {
+    const defaultSystemInstruction = `You are an expert cover letter writer. Your task is to generate a compelling and professional cover letter in Markdown format, tailored to a specific job description and based on the provided resume content. The output should be a complete cover letter, including a salutation, introductory paragraph, body paragraphs highlighting relevant skills and experiences, and a closing. Do NOT include any introductory or concluding remarks outside the cover letter itself. Focus on:
+- Customizing the letter to directly address the job description's requirements.
+- Highlighting key achievements and skills from the resume that align with the job.
+- Maintaining a professional and persuasive tone.
+- Ensuring conciseness and clarity.\n\nOnly return the full cover letter text. Do NOT include any markdown code blocks, explanations, or additional commentary outside the letter itself.`;
+
+    const prompt = generateCoverLetterDto.prompt
+      ? `Generate a cover letter based on the following resume and job description, with these additional instructions: ${generateCoverLetterDto.prompt}\n\nResume Content:\n\n${generateCoverLetterDto.resumeContent}\n\nJob Description:\n\n${generateCoverLetterDto.jobDescription}`
+      : `Generate a cover letter based on the following resume content and job description:\n\nResume Content:\n\n${generateCoverLetterDto.resumeContent}\n\nJob Description:\n\n${generateCoverLetterDto.jobDescription}`;
+
+    return this._performGeminiOperation({
+      dto: { ...generateCoverLetterDto, prompt: prompt },
+      requestType: RequestType.COVER_LETTER_GENERATION,
+      getContents: (dto) => [{
+        role: 'user',
+        parts: [{ text: dto.prompt }],
+      }],
+      defaultSystemInstruction: defaultSystemInstruction,
+    }) as Promise<string>;
+  }
+
   private async _pollVideoOperation(operationName: string): Promise<any> {
     // Ensure API key is present before making the request
     if (!this.GEMINI_API_KEY) {
@@ -670,7 +721,7 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
             `Veo operation status error (${statusResponse.status}): ${JSON.stringify(errorData)}`,
           );
           throw new InternalServerErrorException(
-            `Veo operation status error: ${errorData.error?.message || 'Unknown API error'}`,
+            `Veo operation status error: ${errorData.error?.message || 'Unknown API error'}`, 
           );
         }
 
@@ -690,7 +741,7 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
               `Veo operation ${operationName} failed: ${JSON.stringify(statusResult.error)}`,
             );
             throw new InternalServerErrorException(
-              `Video generation operation failed: ${statusResult.error.message || 'Unknown error'}`,
+              `Video generation operation failed: ${statusResult.error.message || 'Unknown error'}`, 
             );
           } else {
             this.logger.error(
@@ -701,7 +752,8 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
             );
           }
         }
-      } catch (error) {
+      }
+      catch (error) {
         if (error instanceof InternalServerErrorException) {
           throw error;
         }
@@ -719,7 +771,7 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
       );
     }
     throw new InternalServerErrorException(
-      `Video generation operation timed out after ${this.POLLING_TIMEOUT_MS / 1000} seconds.`,
+      `Video generation operation timed out after ${this.POLLING_TIMEOUT_MS / 1000} seconds.`, 
     );
   }
 
@@ -776,7 +828,7 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
           `Failed to initiate Veo video generation (${initialResponse.status}): ${JSON.stringify(errorData)}`,
         );
         throw new InternalServerErrorException(
-          `Failed to initiate video generation: ${errorData.error?.message || 'Unknown API error'}`,
+          `Failed to initiate video generation: ${errorData.error?.message || 'Unknown API error'}`, 
         );
       }
 

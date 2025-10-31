@@ -1,9 +1,6 @@
-// FilePath: src/modules/planner/planner.controller.ts
-// Title: REST controller for planner endpoints
-// Reason: Expose endpoints to create, retrieve and apply plans and plan chunks
-import { Controller, Post, Body, Param, Get, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, UseGuards, Req } from '@nestjs/common';
 import { PlannerService } from './planner.service';
-import { CreatePlannerDto as PlanDto } from './dto';
+import { GeneratedPlanDto, ApplyExistingPlanRequestDto } from './dto'; // Changed PlanDto to GeneratedPlanDto, added ApplyExistingPlanRequestDto
 import {
   ApiOperation,
   ApiResponse,
@@ -16,7 +13,9 @@ import { LlmInputDto } from '@/llm/dto/llm-input.dto';
 import { JwtAuthGuard } from '@/auth/auth.guard';
 import { RolesGuard } from '@/auth/guards/roles.guard';
 import { Roles } from '@/auth/decorators/roles.decorator';
+import { CurrentUser } from '@/auth/decorators/current-user.decorator'; // Import CurrentUser decorator
 import { Role } from '@prisma/client';
+import { Request } from 'express';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,8 +49,11 @@ export class PlannerController {
     },
   })
   @Post()
-  async generatePlan(@Body() llmInput: LlmInputDto) {
-    const result = await this.planner.planFromPrompt(llmInput);
+  async generatePlan(
+    @Body() llmInput: LlmInputDto,
+    @CurrentUser('id') userId: string, // Inject userId from JWT payload
+  ) {
+    const result = await this.planner.planFromPrompt(llmInput, userId);
     return result;
   }
 
@@ -87,18 +89,21 @@ export class PlannerController {
     return res;
   }
 
-  @ApiOperation({ summary: 'Apply a plan' })
+  @ApiOperation({ summary: 'Apply a plan by its ID' })
   @ApiBody({
-    type: PlanDto,
-    description: 'The plan to apply',
+    type: ApplyExistingPlanRequestDto,
+    description: 'The ID of the plan to apply, and optionally a project root.',
   })
   @ApiResponse({
     status: 201,
     description: 'The plan has been successfully applied.',
   })
   @Post('apply')
-  async applyPlan(@Body() body: { plan: PlanDto }) {
-    const result = await this.planner.applyPlan(body.plan);
+  async applyPlan(
+    @Body() body: ApplyExistingPlanRequestDto,
+    @CurrentUser('id') userId: string, // userId is no longer directly used in service applyPlan but kept here if other logic needed it
+  ) {
+    const result = await this.planner.applyPlan(body.planId, body.projectRoot);
     return result;
   }
 }

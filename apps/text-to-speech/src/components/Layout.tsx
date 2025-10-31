@@ -5,8 +5,9 @@ import { ThemeToggle } from './ThemeToggle';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-import LoginIcon from '@mui/icons-material/Login'; // Import LoginIcon
-import LogoutIcon from '@mui/icons-material/Logout'; // Import LogoutIcon
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
+import AddRoadIcon from '@mui/icons-material/AddRoad'; // New: Import AddRoadIcon for Planner
 
 interface LayoutProps {
   children: ReactNode;
@@ -28,10 +29,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Stack direction="row" alignItems="center" spacing={1}>
                 <RecordVoiceOverIcon sx={{ fontSize: 30 }} /> { /* Adjusted size for navbar */}
                 <Typography variant="h6" component="div" sx={{ color: 'inherit' }}>
-                  Gemini TTS Generator
+                  Gemini AI Suite
                 </Typography>
               </Stack>
             </RouterLink>
+
+            {/* New: Navigation links to feature landing pages */}
+            <Box sx={{ display: 'flex', alignItems: 'center', ml: 4 }}>
+              <Button component={RouterLink} to="/tts" color="inherit" sx={{ mr: 1 }}
+                startIcon={<RecordVoiceOverIcon fontSize="small" />} size="small">
+                TTS
+              </Button>
+              <Button component={RouterLink} to="/planner" color="inherit"
+                startIcon={<AddRoadIcon fontSize="small" />} size="small">
+                AI Planner
+              </Button>
+            </Box>
           </Box>
 
           {/* Right section: Auth controls and Theme Toggle */}

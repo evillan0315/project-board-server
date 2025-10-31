@@ -64,6 +64,7 @@ model User {
   PlaywrightTask     PlaywrightTask[]
   members            Member[] // Add reverse relation from Member
   Diff               Diff[]
+  Plan               Plan[] // Add relation to Plan model
 }
 
 // New Member model based on IMemberFull interface
@@ -151,6 +152,7 @@ model Documentation {
   createdById String
   createdBy   User          @relation(fields: [createdById], references: [id])
   LlmResponse LlmResponse[]
+  Plan        Plan[]
 }
 
 model File {
@@ -687,6 +689,7 @@ model LlmRequest {
 
   // relations
   response LlmResponse?
+  Plan     Plan[]
 }
 
 model LlmResponse {
@@ -695,7 +698,7 @@ model LlmResponse {
   updatedAt DateTime @updatedAt
 
   title          String
-  summary        String
+  summary        String?
   thoughtProcess String?
   projectRoot    String
   requestId      String     @unique
@@ -704,12 +707,12 @@ model LlmResponse {
   changes ProposedFileChange[]
 
   createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
-  documentationId String
-  documentation   Documentation @relation(fields: [documentationId], references: [id])
-
+  documentation   String?        @db.Text // Store documentation content directly
   gitInstructions String[]
+  Documentation   Documentation? @relation(fields: [documentationId], references: [id])
+  documentationId String?
 }
 
 model Diff {
@@ -757,6 +760,56 @@ model ExecutionSnapshot {
 
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])
+}
+
+// New Plan model for persistence in PlannerService
+model Plan {
+  id                     String         @id @default(uuid())
+  title                  String
+  summary                String?
+  thoughtProcess         String?
+  documentation          Documentation? @relation(fields: [documentationId], references: [id])
+  documentationId        String?
+  gitInstructions        String[]       @default([])
+  llmRequest             LlmRequest?    @relation(fields: [llmRequestId], references: [id])
+  llmRequestId           String?
+  llmInput               Json? // Stores the input that generated this plan
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  lastExecutionStatus    String? // e.g., 'SUCCESS', 'FAILURE'
+  lastExecutionError     String?        @db.Text
+  lastExecutionTimestamp DateTime?
+
+  // Relation to User
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  // Relation to FileChanges (One-to-Many)
+  changes FileChange[]
+
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+// New FileChange model for persistence in PlannerService (related to Plan)
+model FileChange {
+  id         String     @id @default(uuid())
+  filePath   String
+  action     FileAction
+  newContent String?    @db.Text
+  diff       String?    @db.Text
+  reason     String?
+  createdAt  DateTime   @default(now())
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  // Optional: createdBy if you want to track who approved/modified a change within a plan
+  // createdById String?
+  // createdBy   User?        @relation(fields: [createdById], references: [id])
+
+  @@index([planId])
+  @@index([filePath])
 }
 
 enum ConversationStatus {
@@ -873,6 +926,8 @@ enum RequestType {
   WEB_SCRAPE_ANALYSIS      @map("WEB_SCRAPE_ANALYSIS")
   OTHER
   PLAYWRIGHT_TASK_ANALYSIS
+  PORTFOLIO_GENERATION
+  COVER_LETTER_GENERATION
 }
 
 enum TerminalSessionStatus {

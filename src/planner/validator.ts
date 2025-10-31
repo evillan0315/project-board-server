@@ -3,7 +3,6 @@
 // Reason: Ensure incoming plan objects from LLMs conform to Prisma FileAction and application contract.
 import { z } from 'zod';
 import { FileAction as PrismaFileAction } from '@prisma/client';
-// import { FileActionLabel } from '@/common/constants/file-action-map'; // \u2190 keep only if used elsewhere
 
 /**
  * Map Zod enum directly to Prisma FileAction enum
@@ -19,23 +18,26 @@ export const FileChangeSchema = z.object({
   reason: z.string().optional(),
 });
 
-export const PlanSchema = z.object({
-  planId: z.string().optional(), // Added for database persistence
+/**
+ * Schema for validating the raw output from the LLM.
+ * This corresponds to the `GeneratedPlanDto`.
+ */
+export const GeneratedPlanSchema = z.object({
   title: z.string().min(1, 'title is required'),
   summary: z.string().optional(),
   thoughtProcess: z.string().optional(),
-  documentation: z.string().optional(),
+  documentation: z.string().optional(), // LLM outputs content as a string directly
   gitInstructions: z.array(z.string()).optional(),
   changes: z.array(FileChangeSchema).min(0),
 });
 
 export type FileChange = z.infer<typeof FileChangeSchema>;
-export type Plan = z.infer<typeof PlanSchema>;
+export type GeneratedPlan = z.infer<typeof GeneratedPlanSchema>;
 
 /**
- * Validate an arbitrary object and return a strongly-typed Plan.
+ * Validate an arbitrary object against the GeneratedPlanSchema and return a strongly-typed GeneratedPlan.
  * Throws ZodError if validation fails.
  */
-export function validatePlan(obj: unknown): Plan {
-  return PlanSchema.parse(obj);
+export function validatePlan(obj: unknown): GeneratedPlan {
+  return GeneratedPlanSchema.parse(obj);
 }

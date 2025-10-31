@@ -1,16 +1,16 @@
 import React from 'react';
 import { IconButton } from '@mui/material';
-import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import { useStore } from '@nanostores/react';
-import { themeStore, toggleTheme } from '@/stores/snackbarStore'; // Using snackbarStore for now, will replace with proper themeStore
+import { themeStore, toggleTheme } from '../stores/themeStore'; // Corrected import name to themeStore
 
 export const ThemeToggle: React.FC = () => {
-  const { mode } = useStore(themeStore);
+  const { theme } = useStore(themeStore); // Corrected store usage
 
   return (
-    <IconButton onClick={toggleTheme} color='inherit' size='large'>
-      {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+    <IconButton onClick={toggleTheme} color="inherit">
+      {theme === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
     </IconButton>
   );
 };

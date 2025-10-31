@@ -17,5 +17,6 @@ import { JsonFixModule } from '../utils/json-fix/json-fix.module';
   ],
   providers: [LlmService],
   controllers: [LlmController],
+  exports: [LlmService],
 })
 export class LlmModule {}

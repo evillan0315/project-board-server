@@ -8,3 +8,5 @@ export * from './optimization-result.dto';
 export * from './enhance-resume.dto';
 export * from './generate-video.dto';
 export * from './video-generation-result.dto';
+export * from './generate-portfolio.dto';
+export * from './generate-cover-letter.dto'; // New: Export GenerateCoverLetterDto

@@ -163,13 +163,8 @@ export const TtsGeneratorPage: React.FC = () => {
           sx={{ mb: 3 }}
           className="flex items-center justify-between"
         >
-          You are not logged in. Please{' '}
-          <RouterLink to="/login" style={{ textDecoration: 'none' }}>
-            <Button variant="contained" color="primary" size="small">
-              Login
-            </Button>
-          </RouterLink>{' '}
-          to generate speech.
+          You are not logged in. Please log in to generate speech.
+          {/* Removed direct RouterLink to login, as Layout provides a global login button */}
         </Alert>
       )}
 

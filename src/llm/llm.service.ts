@@ -13,9 +13,9 @@ import {
   LlmInputDto,
   LlmOutputDto,
   ProposedFileChangeDto,
-  FileAction,
   LlmReportErrorDto,
 } from './dto'; // Import LlmReportErrorDto
+
 import { ScannedFileDto } from '../file/dto/scan-file.dto';
 import { GenerateTextDto } from '../google/google-gemini/google-gemini-file/dto/generate-text.dto';
 import { GoogleGeminiFileService } from '../google/google-gemini/google-gemini-file/google-gemini-file.service';
@@ -23,7 +23,7 @@ import { ModuleControlService } from '../module-control/module-control.service';
 import { FileService } from '../file/file.service';
 import { UtilsService } from '../utils/utils.service';
 import { JsonFixService } from '../utils/json-fix/json-fix.service';
-import { RequestType } from '@prisma/client';
+import { RequestType, FileAction } from '@prisma/client';
 @Injectable()
 export class LlmService implements OnModuleInit {
   private readonly logger = new Logger(LlmService.name);
@@ -170,7 +170,7 @@ Please respond in a structured JSON format that adheres to the \`LlmOutputDto\` 
     //return jsonString.replace(/\"/g, '"');
     return jsonString;
   }
-  private static extractJsonFromMarkdown(text: string): string {
+  public static extractJsonFromMarkdown(text: string): string {
     const jsonBlockRegex = /```json\n([\s\S]*?)\n```/;
     const match = text.match(jsonBlockRegex);
     if (match && match[1]) {

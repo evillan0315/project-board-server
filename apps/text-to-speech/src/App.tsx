@@ -5,12 +5,16 @@ import { getMuiTheme } from './theme';
 import { Layout } from './components/Layout';
 import { TtsGeneratorPage } from './pages/TtsGeneratorPage';
 import { AuthCallback } from './pages/AuthCallback';
-import { LoginPage } from './pages/LoginPage'; // Import LoginPage
+import { PlannerPage } from './pages/PlannerPage';
+import { LoginPage } from './pages/LoginPage';
+import { HomePage } from './pages/HomePage'; // New: Import HomePage
+import { TtsLandingPage } from './pages/TtsLandingPage'; // New: Import TtsLandingPage
+import { PlannerLandingPage } from './pages/PlannerLandingPage'; // New: Import PlannerLandingPage
 import { themeAtom } from './stores/themeStore';
 import { useStore } from '@nanostores/react';
 import { useMemo } from 'react';
 import { nanoid } from 'nanoid';
-import { initAuth } from './stores/authStore'; // Import initAuth
+import { initAuth } from './stores/authStore';
 
 // Initialize authentication store on app start
 initAuth();
@@ -27,13 +31,16 @@ function App() {
       <CssBaseline />
       <Layout>
         <Routes>
-          <Route path="/" element={<TtsGeneratorPage />} />
-          <Route path="/login" element={<LoginPage />} /> { /* Add login route */ }
+          <Route path="/" element={<HomePage />} /> {/* New: Homepage as root */}
+          <Route path="/tts" element={<TtsLandingPage />} /> {/* New: TTS Landing Page */}
+          <Route path="/tts-generator" element={<TtsGeneratorPage />} /> {/* Modified: Actual TTS Generator */}
+          <Route path="/planner" element={<PlannerLandingPage />} /> {/* New: Planner Landing Page */}
+          <Route path="/planner-generator" element={<PlannerPage />} /> {/* Modified: Actual Planner Page */}
+          <Route path="/login" element={<LoginPage />} />
           <Route
             path="/auth/callback"
             element={<AuthCallback key={nanoid()} />} // Use nanoid for unique key on callback
           />
-          { /* Add other routes here if needed */ }
         </Routes>
       </Layout>
     </ThemeProvider>

@@ -10,4 +10,6 @@ html, body, #root {
 
 body {
   font-family: 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased; /* For macOS Chrome/Safari */
+  -moz-osx-font-smoothing: grayscale; /* For macOS Firefox */
 }

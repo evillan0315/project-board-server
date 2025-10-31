@@ -1,95 +1,107 @@
-# Google Gemini Text-to-Speech Generator: User Guide
+# User Guide
 
-Welcome to the Google Gemini Text-to-Speech Generator! This application allows you to convert written text into natural-sounding speech using advanced AI models. You can customize the speech with multiple speakers, select different voices, and play the generated audio directly in your browser.
+This guide provides instructions on how to effectively use the Google Gemini TTS & AI Code Planner frontend application.
 
-## Key Features
+## 1. Authentication
 
-*   **Secure Authentication**: Log in using your email/password, Google, or GitHub accounts.
-*   **Simple Text Input**: Easily type or paste the text you want to convert to speech.
-*   **Multi-Speaker Support**: Define multiple speakers within your text and assign unique AI voices to each for dynamic conversations.
-*   **Language Selection**: Choose the language for your speech output (e.g., English, Spanish).
-*   **Instant Audio Playback**: Listen to your generated audio immediately after synthesis.
-*   **Clear Feedback**: See loading indicators and error messages to understand the application's status.
+Before accessing most features, you need to log in.
 
-## Getting Started
+1.  **Navigate to the Login Page:** Click the "Login" button in the top right corner of the navigation bar, or navigate directly to `/login`.
+2.  **Login Options:**
+    *   **Email & Password:** Enter your registered email and password. If you don't have an account, you can register (if the backend supports it, a "Register" link will be available).
+    *   **Google / GitHub OAuth:** Click the "Sign in with Google" or "Sign in with GitHub" buttons. You will be redirected to the respective OAuth provider's login page, and then back to the application upon successful authentication.
 
-To use the TTS Generator, you first need to log in.
+Once logged in, your user name or email will appear in the navigation bar.
 
-1.  **Access the Application**: Navigate to the application's URL (e.g., `http://localhost:3002` if running locally, or your deployed URL).
-2.  **Login**: You will be redirected to the login page. You can choose to:
-    *   **Login with Email and Password**: If you have an existing account on the backend system.
-    *   **Login with Google**: Use your Google account for a quick login.
-    *   **Login with GitHub**: Use your GitHub account for authentication.
-3.  **Authentication Callback**: After logging in with Google or GitHub, you will be redirected back to the application. If successful, you'll be taken to the TTS generation page.
+## 2. Google Gemini Text-to-Speech (TTS) Generator
 
-## Using the Text-to-Speech Generator
+This feature allows you to convert text into natural-sounding speech using Google Gemini's advanced TTS models.
 
-Once logged in, you can start generating speech:
+### 2.1 Accessing the TTS Generator
 
-### 1. Input Your Text
+1.  From the homepage (`/`), click on the "Text-to-Speech Generator" card, or navigate directly to the TTS Landing Page (`/tts`) and then click "Start Generating Speech", or directly to the generator page (`/tts-generator`).
 
-In the main text area, type or paste the content you want to convert.
-For multi-speaker output, format your text by prefixing each speaker's lines with their name followed by a colon, like this:
+### 2.2 Generating Speech
 
-```
-Eddie: Hello, how are you today?
-Marionette: I am doing great, Eddie!
-```
+1.  **Text Prompt:**
+    *   Enter the text you want to convert to speech in the large "Text Prompt" text area.
+    *   **For multiple speakers:** Use the format `SpeakerName: Your text here.` for each segment of dialogue.
+        *   Example: `Eddie: Hello, world! Marionette: How are you doing today?`
 
-### 2. Configure Speakers
+2.  **Language Code:**
+    *   Select or type a [BCP-47 language code](https://datatracker.ietf.org/doc/html/bcp47) in the "Language Code" field (e.g., `en-US` for US English, `es-ES` for Spanish (Spain)). The default is `en-US`.
 
-Below the text input, you will find the "Speaker Configuration" section.
+3.  **Speakers Configuration:**
+    *   **Default Speakers:** By default, two speakers ("Eddie" and "Marionette" with default voices) are provided.
+    *   **Add Speaker:** Click the "Add Speaker" button to add a new speaker row.
+    *   **Configure Speaker:**
+        *   **Speaker Name:** Enter a unique name for your speaker (e.g., `CharacterA`). This name is used in your "Text Prompt" to assign dialogue.
+        *   **Voice Name:** Select or type a valid voice name. Valid voice names depend on the Google Gemini TTS API and your backend's configuration. Common examples include `kore`, `puck`, `fenrir`, `zephyr`. If an invalid voice name is used, the backend will return an error.
+    *   **Remove Speaker:** Click the trash can icon next to a speaker row to remove it. (You must have at least one speaker.)
+    *   Ensure that the speaker names used in your "Text Prompt" exactly match the `Speaker Name` configured in this section.
 
-*   **Add Speaker**: Click the "Add Speaker" button to add a new speaker profile.
-*   **Speaker Name**: Enter a name for the speaker (e.g., "Eddie", "Marionette"). This name should match the prefixes you use in your text input.
-*   **Voice Name**: Select an AI voice for this speaker. Examples include `en-US-Studio-F` or `en-US-Studio-B`. The available voices depend on the backend configuration and Google Gemini's offerings.
-*   **Remove Speaker**: Click the trashcan icon next to a speaker to remove their profile.
+4.  **Generate Speech:**
+    *   Once your prompt, language, and speakers are configured, click the "Generate Speech" button.
+    *   A loading indicator will show while the audio is being generated.
+    *   Any errors (e.g., authentication, invalid voice names, API issues) will be displayed in an alert.
 
-**Important**: Ensure that every speaker name you use in your text input has a corresponding entry in the "Speaker Configuration" with an assigned voice.
+5.  **Playback:**
+    *   Upon successful generation, an audio player will appear below the generator, allowing you to listen to the synthesized speech.
 
-### 3. Select Language
+## 3. AI Code Planner
 
-Choose the desired language code for the speech output from the dropdown menu (e.g., `en-US` for US English).
+This feature allows you to describe desired code changes in natural language, generate a structured plan of modifications, and apply them directly to your local project.
 
-### 4. Generate Speech
+### 3.1 Accessing the AI Code Planner
 
-Once your text is entered, speakers are configured, and language is selected, click the "Generate Speech" button.
+1.  From the homepage (`/`), click on the "AI Code Planner" card, or navigate directly to the AI Planner Landing Page (`/planner`) and then click "Start Planning Code", or directly to the planner page (`/planner-generator`).
 
-*   The application will display a loading indicator while processing your request.
-*   Upon successful generation, an audio player will appear, and the generated `.wav` file will automatically start playing.
+### 3.2 Generating a Code Plan
 
-### 5. Playback and Control
+1.  **Enter your prompt for the AI:**
+    *   In the main text area, clearly describe the code changes you want the AI to make. Be as specific as possible.
+        *   Example: "Add a new Material UI `Card` component to `src/pages/HomePage.tsx` to showcase a 'New Feature' with an `Analytics` icon. This card should link to `/new-feature`."
+        *   Example: "Refactor the `authService.ts` file to use `fetch` instead of `axios` for all API calls."
 
-Use the audio player to:
+2.  **Configure Project Context (Optional but Recommended):**
+    *   **Select Project Root Directory** (Folder Open Icon):
+        *   Click the folder icon. A drawer will open, displaying the current project root path.
+        *   Manually type or paste the absolute path to your frontend project's root directory (e.g., `/media/eddie/Data/projects/nestJS/nest-modules/project-board-server/apps/text-to-speech`). This is crucial for the AI to correctly locate files.
+        *   Click "Go" to update the path.
+        *   Click "Select" in the drawer's footer to confirm and close.
+    *   **Manage AI Scan Paths** (Road/Fork Icon):
+        *   Click the road/fork icon. A drawer will open to manage which directories/files the AI should scan for context.
+        *   **Suggested Paths:** Select from the list of common project directories/files (e.g., `src`, `public`, `package.json`, `README.md`).
+        *   **Enter External Path:** If `allowExternalPaths` is enabled, you can manually add paths not in the suggestions. Type a path and click the "Add Path" icon.
+        *   **Remove Path:** Click the 'x' on any chip to remove a selected path.
+        *   Click "Confirm" in the drawer's footer to save changes.
+    *   **Edit AI Instructions (System Prompt)** (Description Icon):
+        *   Click the description icon. A drawer will open allowing you to customize the AI's system instructions (the "prompt" that defines its role and rules). This is pre-filled with best practices but can be modified for specific behaviors.
+        *   Edit the Markdown content, then click "Save".
+    *   **Edit Expected Output Format (JSON Schema)** (Schema Icon):
+        *   Click the schema icon. A drawer will open to define the exact JSON schema the AI should adhere to for its plan output.
+        *   Edit the JSON schema, then click "Save".
 
-*   Play/Pause the audio.
-*   Adjust the volume.
-*   Seek through the audio.
-*   Download the `.wav` file (usually available via the audio player's context menu or controls).
+3.  **Generate Plan:**
+    *   Once your prompt and configurations are set, click the "Generate Plan" button.
+    *   A loading indicator will appear while the AI processes your request and generates the plan.
+    *   Any errors from the AI or backend will be displayed.
 
-## Troubleshooting
+### 3.3 Reviewing and Applying a Plan
 
-*   **"Authentication Failed" / Cannot Log In**:
-    *   Ensure your internet connection is stable.
-    *   If using Google/GitHub, check if your accounts are properly linked or authorized.
-    *   If self-hosting, ensure the backend server is running and configured correctly.
-*   **"No Audio / Error Generating Speech"**:
-    *   Check your text input for any unusual characters or formatting.
-    *   Verify that all speaker names in your text have corresponding configurations with valid `Voice Name`s.
-    *   Ensure the selected `Language Code` is correct.
-    *   Check the browser's developer console for any error messages (for advanced users).
-    *   If self-hosting, ensure the backend server is running and accessible.
-*   **Playback Issues**:
-    *   Check your device's volume.
-    *   Try refreshing the page.
+1.  **Plan Display:**
+    *   If successful, the generated plan will appear in a detailed format below the generator. This includes:
+        *   **Title & Summary:** High-level overview of the plan.
+        *   **Thought Process:** The AI's reasoning behind the proposed changes.
+        *   **Documentation:** Any extended notes or recommendations from the AI.
+        *   **File Changes:** A table listing each proposed file operation (ADD, MODIFY, DELETE, REPAIR, ANALYZE), the file path, and a reason.
+        *   **Git Instructions:** Suggested Git commands to stage and commit the changes.
 
-If you encounter persistent issues, please contact your system administrator or refer to the developer documentation for more technical details.
+2.  **Apply Plan:**
+    *   After carefully reviewing the plan, click the "Apply Plan" button at the bottom of the plan display.
+    *   A confirmation/status message will appear.
+    *   If successful, the AI's proposed changes will be applied directly to the files in your `VITE_BASE_DIR` project.
+    *   **Important:** Always review the plan thoroughly before applying, and consider committing your current work beforehand.
 
-## Frequently Asked Questions (FAQ)
-
-*   **Can I use any voice name?** No, voice names must be valid voices supported by Google Gemini's Text-to-Speech service and configured in the backend.
-*   **What if I don't configure a speaker name used in the text?** The generation might fail or produce unexpected results. Always configure all speakers used in your text.
-*   **Is there a limit to the text length?** There might be limits imposed by the backend or the underlying Google Gemini API. Long texts might take longer to process.
-*   **Can I download the generated audio?** Yes, most modern browser audio players allow you to download the audio file directly.
-
-Thank you for using the Google Gemini Text-to-Speech Generator!
+3.  **Clear Plan:**
+    *   Click the "Clear Plan" button to reset the planner state and start a new plan.

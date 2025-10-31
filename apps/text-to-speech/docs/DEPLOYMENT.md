@@ -1,121 +1,142 @@
-# Deployment Guide: Docker and Kubernetes for Text-to-Speech Frontend
+# Deployment Guide
 
-This document outlines how to containerize the `text-to-speech` frontend application using Docker and deploy it to a Kubernetes cluster.
+This document outlines the steps to deploy the `text-to-speech` frontend application. This guide focuses on general production deployment considerations. For specific CI/CD setups, refer to `VERCEL_GITHUB_ACTIONS.md` if applicable.
 
-**For Vercel-specific deployments using GitHub Actions, please refer to the [Vercel Deployment Guide](VERCEL_GITHUB_ACTIONS.md).**
+## 1. Building for Production
 
-## 1. Dockerization
+First, you need to build the optimized production bundle of your application.
 
-### Overview
-
-The application is Dockerized using a multi-stage build `Dockerfile`. This approach separates the build environment from the runtime environment, resulting in a smaller, more secure final image. Nginx is used to serve the static React application and proxy API requests to the backend.
-
-### `Dockerfile` Explanation
-
-```dockerfile
-# Stage 1: Build the React application
-FROM node:22-alpine as build-stage
-WORKDIR /app
-RUN npm install -g pnpm
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm run build
-
-# Stage 2: Serve the application with Nginx
-FROM nginx:alpine as production-stage
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+```bash
+pnpm run build
 ```
 
-**Key Points:**
+This command will:
+*   Run TypeScript compilation (`tsc -b`).
+*   Execute Vite's build process (`vite build`).
+*   Output the production-ready static assets (HTML, CSS, JavaScript, images) into the `dist/` directory at the project root (`apps/text-to-speech/dist`).
 
-*   **`build-stage`**: Uses `node:22-alpine` to install `pnpm`, dependencies, and build the React application. The output (static files) is placed in `/app/dist`.
-*   **`production-stage`**: Uses a lightweight `nginx:alpine` image. It copies a custom `nginx.conf` and the built static assets from the `build-stage` into Nginx's serving directory (`/usr/share/nginx/html`).
-*   **`EXPOSE 80`**: Indicates that the container listens on port 80.
-*   **`CMD ["nginx", "-g", "daemon off;"]`**: Starts the Nginx server in the foreground.
+## 2. Environment Variables for Production
 
-### `nginx.conf` Explanation
+Ensure your production environment has the correct environment variables. These are typically set on your hosting platform (e.g., Vercel, Netlify, Docker, Kubernetes).
+
+*   `VITE_APP_API_BASE_URL`: **Crucial.** This must be the public URL of your deployed backend server (e.g., `https://your-backend-api.com/api`).
+*   `VITE_FRONTEND_PORT`: The port your frontend application will be served from (e.g., `80` or `443` for public web servers). This is primarily used by the backend for OAuth callback URLs during the login process.
+*   `VITE_BASE_DIR`: **Crucial for AI Code Planner.** This is the **absolute path** to the `text-to-speech` project root on the machine where the backend is running. This is typically only relevant if your backend application is deployed on a server that has direct access to the `text-to-speech` project's files (e.g., in a development or local server setup, or a very specific monorepo deployment strategy). In most standard production deployments, the frontend and backend are separate, and the backend would *not* have direct access to the frontend's local files. For typical production, you might need to reconsider how the AI Planner applies changes or provide a different mechanism if direct file system access isn't feasible or desired. **For standard frontend deployments, this variable often won't be used by the frontend itself, but the backend still requires it to apply plans.**
+
+**Example `.env` (production values):**
+
+```env
+VITE_APP_API_BASE_URL=https://your-backend-api.com/api
+VITE_FRONTEND_PORT=443 # Or 80 for HTTP
+# VITE_BASE_DIR might be omitted on frontend production builds,
+# or set to a relevant path if the frontend is deployed alongside a backend that needs it.
+# For standalone frontend deployments, this variable is only for the backend's context.
+```
+
+**Backend OAuth Configuration for Production:**
+
+Just like in development, ensure your backend's `.env` or configuration for production sets the OAuth callback URLs to your deployed frontend's URL:
+
+```env
+# ... other backend configs
+GOOGLE_CALLBACK_URL='https://your-frontend-app.com/auth/callback'
+GITHUB_CALLBACK_URL='https://your-frontend-app.com/auth/callback'
+FRONTEND_URL='https://your-frontend-app.com'
+```
+
+## 3. Serving the Frontend
+
+The `dist/` directory contains static assets that can be served by any static file server (e.g., Nginx, Apache, Vercel, Netlify, Cloudflare Pages, Firebase Hosting).
+
+### 3.1 Using a Simple HTTP Server (for testing production build)
+
+You can locally test your production build using a simple HTTP server (like `serve`).
+
+1.  **Install `serve` globally (if you don't have it):**
+    ```bash
+    pnpm add -g serve
+    # or npm install -g serve
+    ```
+2.  **Serve the `dist` directory:**
+    ```bash
+    serve -s dist -l 3003
+    ```
+    This will serve your application from `http://localhost:3003`.
+
+### 3.2 Using Nginx
+
+For a production web server like Nginx, you would configure a server block to serve the static files.
+
+Example Nginx configuration (replace `your-frontend-app.com` and `/path/to/your/app/dist`):
 
 ```nginx
 server {
     listen 80;
-    server_tokens off;
-    root /usr/share/nginx/html;
+    server_name your-frontend-app.com;
 
     location / {
-        try_files $uri $uri/ /index.html;
+        root /path/to/your/app/dist; # Absolute path to your `dist` folder
+        try_files $uri $uri/ /index.html; # Essential for SPA routing
     }
 
+    # Optional: Proxy API requests to your backend
     location /api/ {
-        proxy_pass $API_BASE_URL;
+        proxy_pass http://localhost:5000/; # Adjust to your backend's actual address
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_redirect off;
     }
 
-    location ~ /\. {
-        deny all;
-    }
+    # Optional: SSL configuration
+    # listen 443 ssl;
+    # ssl_certificate /etc/nginx/ssl/your-frontend-app.com.crt;
+    # ssl_certificate_key /etc/nginx/ssl/your-frontend-app.com.key;
 }
 ```
 
-**Key Points:**
+### 3.3 Cloud Hosting Platforms (Vercel, Netlify, etc.)
 
-*   **`listen 80`**: Nginx listens for HTTP requests on port 80.
-*   **`root /usr/share/nginx/html`**: Specifies the directory where static files (your built React app) are located.
-*   **`location /`**: Configures Nginx to serve `index.html` for all non-existent paths, which is essential for client-side routing in single-page applications (SPAs).
-*   **`location /api/`**: This is crucial for backend communication. Any request starting with `/api/` is proxied to the `API_BASE_URL`. This `API_BASE_URL` is expected to be provided as an environment variable to the Nginx container (e.g., via Kubernetes Deployment or Docker run command). This ensures that frontend calls like `/api/auth/login` are correctly routed to the backend.
-*   **`proxy_set_header`**: These headers are important for the backend to correctly identify the client's IP, host, and protocol.
-*   **`location ~ /\. `**: Denies access to dotfiles (e.g., `.env`, `.git`).
+These platforms are ideal for deploying Vite SPAs.
 
-### Building the Docker Image
+1.  **Connect Repository:** Link your GitHub/GitLab/Bitbucket repository to your chosen platform.
+2.  **Build Command:** Configure the build command as `pnpm run build` (or `npm run build` / `yarn build`).
+3.  **Output Directory:** Set the output directory to `dist/`.
+4.  **Environment Variables:** Set your production `VITE_APP_API_BASE_URL` and `VITE_FRONTEND_PORT` (if required by the backend's OAuth callback logic) in the platform's settings.
+5.  **Deployment:** The platform will automatically build and deploy your application on every push to your main branch.
 
-To build the Docker image, navigate to the `text-to-speech` directory (where the `Dockerfile` is located) and run:
+### 3.4 Docker
 
-```bash
-docker build -t text-to-speech-frontend:latest .
-```
+You can containerize your frontend application using Docker. A `Dockerfile` is provided in the project root.
 
-### Running the Docker Image Locally
+1.  **Build the Docker image:**
+    ```bash
+    docker build -t text-to-speech-frontend .
+    ```
+2.  **Run the Docker container:**
+    ```bash
+    docker run -p 3003:80 text-to-speech-frontend
+    ```
+    This will map container port 80 to host port 3003. You can then access the application at `http://localhost:3003`.
 
-You can test the Docker image locally. Remember to set the `API_BASE_URL` environment variable so Nginx can proxy requests to your backend (which should be running separately, e.g., on `http://localhost:3000`).
+    **Note**: You'll need to pass environment variables to the container (e.g., `VITE_APP_API_BASE_URL`) using `-e` flags in the `docker run` command or by defining them in a `.env` file for Docker Compose.
 
-```bash
-docker run -p 80:80 -e API_BASE_URL="http://host.docker.internal:3000/api" text-to-speech-frontend:latest
-```
+## 4. Kubernetes Deployment
 
-*   `-p 80:80`: Maps container port 80 to host port 80.
-*   `-e API_BASE_URL="http://host.docker.internal:3000/api"`: Sets the `API_BASE_URL` environment variable inside the container. `host.docker.internal` is a special DNS name for Docker Desktop that resolves to the host's IP address. Adjust the port (`3000`) and path (`/api`) to match your backend service.
+Refer to the `kubernetes/` folder for example Kubernetes deployment and service configurations for the frontend. These typically involve:
+*   **Deployment**: Specifying the Docker image, replica count, and resource requests/limits.
+*   **Service**: Defining how to expose the frontend (e.g., ClusterIP, NodePort, LoadBalancer).
+*   **Ingress**: (Optional) For external access and routing, often combined with an Ingress Controller (like Nginx Ingress).
 
-Now, you should be able to access the frontend at `http://localhost`.
-
-## 2. Kubernetes Deployment
-
-### Overview
-
-The Kubernetes deployment consists of two main resources:
-
-1.  **Deployment**: Manages the stateless frontend application pods.
-2.  **Service**: Exposes the frontend application internally within the Kubernetes cluster.
-
-These configurations are located in the `kubernetes/` directory.
-
-### `kubernetes/deployment.yaml` Explanation
+Example `kubernetes/deployment.yaml` snippet (ensure image name and environment variables are updated):
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: text-to-speech-frontend
-  labels:
-    app: text-to-speech-frontend
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: text-to-speech-frontend
@@ -125,78 +146,21 @@ spec:
         app: text-to-speech-frontend
     spec:
       containers:
-      - name: frontend
-        image: text-to-speech-frontend:latest # TODO: Replace with your actual image registry and tag
-        ports:
-        - containerPort: 80
-        env:
-        - name: API_BASE_URL
-          value: "http://project-board-server-backend:5000" # TODO: Replace with your backend service details
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
+        - name: frontend
+          image: your-docker-registry/text-to-speech-frontend:latest # Update with your image
+          ports:
+            - containerPort: 80 # The port your Nginx/server inside Docker listens on
+          env:
+            - name: VITE_APP_API_BASE_URL
+              value: "https://your-backend-api.com/api" # Production API URL
+            # Add other necessary VITE_ variables here
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
 ```
 
-**Key Points:**
-
-*   **`metadata.name`**: Unique name for the deployment.
-*   **`spec.replicas: 2`**: Ensures that two instances (pods) of your frontend application are running for high availability.
-*   **`spec.selector`**: Defines how the Deployment finds which pods to manage.
-*   **`spec.template.spec.containers[0].image`**: Specifies the Docker image to use. **Crucially, you must replace `text-to-speech-frontend:latest` with the path to your image in a Docker registry (e.g., `your-docker-registry/text-to-speech-frontend:v1.0.0`) after pushing your built image.**
-*   **`spec.template.spec.containers[0].ports[0].containerPort: 80`**: The container listens on port 80, as configured in Nginx.
-*   **`spec.template.spec.containers[0].env[0].name: API_BASE_URL`**: This environment variable is passed to the Nginx container, allowing Nginx to proxy `/api` requests to the correct backend service within the Kubernetes cluster. The `value` `http://project-board-server-backend:5000` assumes your backend service is named `project-board-server-backend` and listens on port `5000` (which is a common port for NestJS applications).
-*   **`resources`**: Defines CPU and memory requests and limits for the container, helping Kubernetes schedule and manage resources effectively.
-
-### `kubernetes/service.yaml` Explanation
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: text-to-speech-frontend-service
-  labels:
-    app: text-to-speech-frontend
-spec:
-  selector:
-    app: text-to-speech-frontend
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: ClusterIP
-```
-
-**Key Points:**
-
-*   **`metadata.name`**: Unique name for the service.
-*   **`spec.selector`**: Matches pods with the label `app: text-to-speech-frontend`, directing traffic to them.
-*   **`spec.ports`**: Configures the service to listen on `port: 80` and forward traffic to `targetPort: 80` on the pods.
-*   **`type: ClusterIP`**: Makes the service only reachable from within the Kubernetes cluster. For external access, you would typically use an Ingress controller configured with an Ingress resource.
-
-### Applying to Kubernetes
-
-After building and pushing your Docker image to a registry (and updating the `deployment.yaml` with the correct image path), you can apply these configurations to your Kubernetes cluster:
-
-```bash
-# Apply the deployment
-kubectl apply -f kubernetes/deployment.yaml
-
-# Apply the service
-kubectl apply -f kubernetes/service.yaml
-```
-
-### Verification
-
-Check the status of your deployment and service:
-
-```bash
-kubectl get deployments
-kubectl get pods
-kubectl get services
-```
-
-To access the frontend externally, you would need an Ingress resource that routes external traffic to the `text-to-speech-frontend-service`.
+Remember to update `VITE_APP_API_BASE_URL` and other environment variables in your Kubernetes manifest.

@@ -20,10 +20,10 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useStore } from '@nanostores/react';
 import { plannerStore, setApplyStatus } from './stores/plannerStore';
 import { plannerService } from './api/plannerService';
-import { Plan } from './types';
+import { IPlan } from './types'; // Updated import
 
 interface PlanDisplayProps {
-  plan: Plan;
+  plan: IPlan; // Updated prop type
 }
 
 const styles = {
@@ -66,13 +66,13 @@ const PlanDisplay: React.FC<PlanDisplayProps> = ({ plan }) => {
   const { applyStatus, applyError } = useStore(plannerStore);
 
   const handleApplyPlan = async () => {
-    if (!plan || !plan.planId) {
+    if (!plan || !plan.id) { // Use plan.id instead of plan.planId
       setApplyStatus('failure', 'No plan available to apply or plan ID is missing.');
       return;
     }
     setApplyStatus('applying');
     try {
-      const result = await plannerService.applyPlan(plan);
+      const result = await plannerService.applyPlan(plan); // Pass the entire plan object
       if (result.ok) {
         setApplyStatus('success');
       } else {
@@ -80,6 +80,8 @@ const PlanDisplay: React.FC<PlanDisplayProps> = ({ plan }) => {
       }
     } catch (err: any) {
       setApplyStatus('failure', err.message || 'An unexpected error occurred during application.');
+    } finally {
+      // Ensure loading state is reset
     }
   };
 
