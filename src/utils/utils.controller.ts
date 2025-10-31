@@ -36,8 +36,6 @@ import { UploadImageDto } from './dto/upload-image.dto';
 import { FormatCodeDto } from './dto/format-code.dto';
 import { HtmlDto } from './dto/html.dto';
 import { ImportExportDetectorService } from './import-export-detector.service';
-import { DetectImportsExportsDto } from './dto/detect-imports-exports.dto';
-import { DetectedImportExportStatementDto } from './dto/detected-import-export-statement.dto';
 
 class FixJsonDto {
   /** The raw JSON string that may be invalid or broken */
@@ -726,7 +724,7 @@ export class UtilsController {
       );
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${outputFilename}"`,
+        `attachment; filename="${outputFilename}"`, // Escaped double quotes
       );
       res.send(docxBuffer);
     } catch (error) {
@@ -799,7 +797,7 @@ export class UtilsController {
       );
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${outputFilename}"`,
+        `attachment; filename="${outputFilename}"`, // Escaped double quotes
       );
       res.send(docxBuffer);
     } catch (error) {
@@ -811,6 +809,64 @@ export class UtilsController {
       }
       throw new HttpException(
         `Failed to convert HTML to DOCX: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('html-to-pdf')
+  @ApiOperation({
+    summary: 'Convert HTML content to a PDF document',
+    description:
+      'Converts the provided HTML string into a PDF file. Requires Puppeteer to be installed on the server.',
+  })
+  @ApiBody({ type: HtmlDto })
+  @ApiQuery({
+    name: 'filename',
+    required: false,
+    type: String,
+    description:
+      'Optional: Desired filename for the downloaded PDF file (e.g., "report"). Default is "document".',
+    example: 'my_document',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'PDF file generated successfully.',
+    content: {
+      'application/pdf': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request: Invalid HTML content or missing parameters.',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal Server Error: Failed to convert to PDF.',
+  })
+  async htmlToPdf(
+    @Body() body: HtmlDto,
+    @Res() res: Response,
+    @Query('filename') filename?: string,
+  ) {
+    try {
+      const pdfBuffer = await this.markdownUtilService.htmlToPdf(body.html);
+      const outputFilename = `${filename || 'document'}.pdf`;
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${outputFilename}"`, // Escaped double quotes
+      );
+      res.send(pdfBuffer);
+    } catch (error) {
+      throw new HttpException(
+        `Failed to convert HTML to PDF: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

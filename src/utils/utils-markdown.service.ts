@@ -11,6 +11,7 @@ import { convert } from 'html-to-text';
 import { execFile } from 'child_process'; // For Pandoc execution
 import { promisify } from 'util'; // For promisifying execFile
 import * as os from 'os'; // For temporary directory handling
+import puppeteer from 'puppeteer'; // New import for PDF generation
 
 // Promisify execFile for async/await usage
 const execFilePromise = promisify(execFile);
@@ -215,7 +216,6 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
    * Converts Markdown content to a DOCX (Microsoft Word Document) file.
    * This method relies on 'Pandoc' being installed and accessible in the system's PATH.
    * It supports only the modern '.docx' format, not the older '.doc' format.
-   *
    * @param markdown The Markdown string to convert.
    * @param baseFileName Optional base name for the internal temporary files (without extension).
    *                     A unique ID will be used if not provided. The returned Buffer
@@ -276,7 +276,6 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
    * Converts HTML content to a DOCX (Microsoft Word Document) file.
    * This method relies on 'Pandoc' being installed and accessible in the system's PATH.
    * It supports only the modern '.docx' format, not the older '.doc' format.
-   *
    * @param html The HTML string to convert.
    * @param baseFileName Optional base name for the internal temporary files (without extension).
    *                     A unique ID will be used if not provided. The returned Buffer
@@ -322,6 +321,50 @@ export class MarkdownUtilService implements OnModuleInit, OnModuleDestroy {
         .catch((err) =>
           console.warn(`Failed to remove temp file ${outputFilePath}:`, err),
         );
+    }
+  }
+
+  /**
+   * Converts HTML content to a PDF document.
+   * This method requires 'puppeteer' to be installed (e.g., `npm install puppeteer`).
+   * @param html The HTML string to convert.
+   * @param baseFileName Optional base name for the internal temporary files (without extension).
+   *                     A unique ID will be used if not provided. The returned Buffer
+   *                     is the file content, the caller is responsible for saving it
+   *                     with the desired final name.
+   * @returns A Promise that resolves to a Buffer containing the PDF file content.
+   * @throws Error if puppeteer fails or the temporary directory is not initialized.
+   */
+  async htmlToPdf(html: string, baseFileName?: string): Promise<Buffer> {
+    if (!this.tempDir) {
+      throw new Error(
+        'Temporary directory not initialized. MarkdownUtilService setup might have failed.',
+      );
+    }
+
+    const browser = await puppeteer.launch({
+      headless: true, // Run in headless mode
+      args: ['--no-sandbox', '--disable-setuid-sandbox'], // Recommended for Docker/CI environments
+    });
+    const page = await browser.newPage();
+
+    try {
+      // Set HTML content directly
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      // Generate PDF
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' },
+      });
+
+      return pdfBuffer;
+    } catch (error) {
+      console.error(`HTML to PDF conversion failed: ${error.message}`, error);
+      throw new Error(`Failed to convert HTML to PDF: ${error.message}`);
+    } finally {
+      await browser.close();
     }
   }
 }
