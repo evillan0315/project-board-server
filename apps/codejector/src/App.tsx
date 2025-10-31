@@ -8,7 +8,7 @@ import {
 } from 'react-router-dom';
 import Layout from './components/Layout';
 import Loading from './components/Loading';
-import CustomSnackbar from '@/components/Snackbar';
+import Snackbar from '@/components/Snackbar';
 import { useStore } from '@nanostores/react';
 import { snackbarState, hideGlobalSnackbar } from '@/stores/snackbarStore';
 import { authStore } from '@/stores/authStore';
@@ -509,7 +509,7 @@ const App: React.FC = () => {
   return (
     <>
       <RouterProvider router={router} />
-      <CustomSnackbar
+      <Snackbar
         open={snackbar.open}
         message={snackbar.message}
         severity={snackbar.severity}

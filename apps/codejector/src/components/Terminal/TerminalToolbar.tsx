@@ -69,11 +69,9 @@ export const TerminalToolbar: React.FC<TerminalToolbarProps> = ({
         color: theme.palette.text.primary,
         border: 0,
         borderBottom: `1px solid`,
-        
+        borderColor: `${theme.palette.divider}`,
         borderRadius: 0,
         boxShadow: 0,
-        borderTop: '1px solid',
-        borderColor: theme.palette.divider,
         height: '36px',
         ...sx,
       }}

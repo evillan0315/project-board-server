@@ -4,11 +4,9 @@ declare module '@mui/material/styles' {
   interface Palette {
     codeBlockBackground: string;
     inlineCodeBackground: string;
-    foreground: { main: string };
   }
   interface PaletteOptions {
     codeBlockBackground?: string;
     inlineCodeBackground?: string;
-    foreground?: { main: string };
   }
 }

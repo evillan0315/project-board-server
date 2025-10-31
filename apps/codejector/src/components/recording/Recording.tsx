@@ -55,6 +55,7 @@ import { getFileStreamUrl } from '@/api/media';
 import { recordingApi } from './api/recording';
 import { ffmpegApi } from '@/api/ffmpeg'; // Import new ffmpegApi
 import { setLoading, isLoading } from '@/stores/loadingStore';
+import { showGlobalSnackbar as showSnackbar } from '@/stores/snackbarStore'; // New import
 import {
   StartCameraRecordingDto,
   RecordingItem,
@@ -417,6 +418,24 @@ export function Recording() {
     setIsRecordingSettingsDialogOpen(false);
   };
 
+  const handleShareRecording = (recording: RecordingItem) => {
+    showSnackbar({
+      message: `Sharing recording: ${recording.name}`,
+      severity: 'info',
+    });
+    // TODO: Implement actual sharing logic (e.g., generate shareable link, open share dialog)
+    console.log('Share recording:', recording);
+  };
+
+  const handleUploadToGoogleDrive = (recording: RecordingItem) => {
+    showSnackbar({
+      message: `Uploading recording to Google Drive: ${recording.name}`,
+      severity: 'info',
+    });
+    // TODO: Implement actual Google Drive upload logic (e.g., API call to backend service)
+    console.log('Upload to Google Drive:', recording);
+  };
+
   // Prepare filter options for TableListToolbar
   const typeFilterOptions: FilterOption[] = RECORDING_TYPES.map((type) => ({
     value: type,
@@ -484,6 +503,8 @@ export function Recording() {
         sortOrder={sortOrder}
         onConvertToGif={handleConvertToGif}
         onStopRecording={handleStopRecording} // New prop
+        onShare={handleShareRecording} // New prop
+        onUploadToGoogleDrive={handleUploadToGoogleDrive} // New prop
       />
 
       <RecordingInfoDrawer

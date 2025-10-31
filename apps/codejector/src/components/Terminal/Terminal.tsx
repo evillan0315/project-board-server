@@ -102,16 +102,16 @@ export const XTerminal: React.FC<XTerminalProps> = ({
         try {
           const webglAddon = new WebglAddon();
           term.loadAddon(webglAddon);
-          //console.log('[XTerminal] WebGL renderer enabled.');
+          console.log('[XTerminal] WebGL renderer enabled.');
         } catch (err) {
-          //console.warn('[XTerminal] WebGL not available:', err);
+          console.warn('[XTerminal] WebGL not available:', err);
         }
 
         setTimeout(() => {
           try {
             fitAddon.fit();
           } catch (err) {
-            //console.warn('[XTerminal] Fit skipped:', err);
+            console.warn('[XTerminal] Fit skipped:', err);
           }
         }, 100);
 
@@ -149,7 +149,7 @@ export const XTerminal: React.FC<XTerminalProps> = ({
           if (domEvent.key === 'Enter') {
             terminalSocketService.sendInput('\r'); // Send Carriage Return to PTY
           } else if (domEvent.key === 'Backspace') {
-            //terminalSocketService.sendInput('\x7F'); // Send ASCII DELETE to PTY
+            terminalSocketService.sendInput('\x7F'); // Send ASCII DELETE to PTY
           } else if (domEvent.key === 'Tab') {
             terminalSocketService.sendInput('\t'); // Send Tab to PTY
           } else if (domEvent.key === 'ArrowUp') {

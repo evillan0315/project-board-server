@@ -15,6 +15,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import InfoIcon from '@mui/icons-material/Info';
 import GifIcon from '@mui/icons-material/Gif';
 import StopCircle from '@mui/icons-material/StopCircle';
+import ShareIcon from '@mui/icons-material/Share'; // New import
+import DriveFileMoveIcon from '@mui/icons-material/DriveFileMove'; // New import
 
 import VideocamIcon from '@mui/icons-material/Videocam';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
@@ -46,6 +48,8 @@ interface RecordingsTableProps {
   onView: (recording: RecordingItem) => void;
   onConvertToGif: (recording: RecordingItem) => void;
   onStopRecording: (id: string, type: RecordingType) => void;
+  onShare: (recording: RecordingItem) => void; // New prop
+  onUploadToGoogleDrive: (recording: RecordingItem) => void; // New prop
 }
 
 // Styles for the stop recording icon, matching color of RecordingControls stop button
@@ -75,6 +79,8 @@ const RecordingsTable: React.FC<RecordingsTableProps> = ({
   onView,
   onConvertToGif,
   onStopRecording,
+  onShare,
+  onUploadToGoogleDrive,
 }) => {
   const theme = useTheme();
   const sortBy = useStore(recordingsSortByStore);
@@ -258,6 +264,20 @@ const RecordingsTable: React.FC<RecordingsTableProps> = ({
               <GifIcon />
             </IconButton>
           )}
+          <IconButton
+            onClick={() => onShare(recording)}
+            color="secondary"
+            title="Share Recording"
+          >
+            <ShareIcon />
+          </IconButton>
+          <IconButton
+            onClick={() => onUploadToGoogleDrive(recording)}
+            color="success"
+            title="Upload to Google Drive"
+          >
+            <DriveFileMoveIcon />
+          </IconButton>
           <IconButton
             onClick={() => onView(recording)}
             color="info"

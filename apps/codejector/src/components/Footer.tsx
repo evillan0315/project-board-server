@@ -156,10 +156,9 @@ const Footer = () => {
       <Box
         className="flex justify-between items-center w-full"
         sx={{
-          //bgcolor: theme.palette.background.paper,
+          bgcolor: theme.palette.background.paper,
           borderTop: `1px solid ${theme.palette.divider}`,
           zIndex: theme.zIndex.appBar + 1,
-          maxHeight: '49px'
         }}
       >
         <Box className="flex justify-start items-center flex-grow ">

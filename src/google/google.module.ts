@@ -18,6 +18,7 @@ import { ConversationModule } from '../conversation/conversation.module';
 import { GoogleGeminiLiveModule } from './google-gemini-live/google-gemini-live.module';
 import { GoogleTranslatorService } from './google-translator/google-translator.service';
 import { GoogleTranslatorController } from './google-translator/google-translator.controller';
+import { GoogleDriveModule } from './google-drive/google-drive.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { GoogleTranslatorController } from './google-translator/google-translato
     UtilsModule,
     ConversationModule,
     GoogleGeminiLiveModule,
+    GoogleDriveModule,
   ],
   controllers: [
     GoogleGeminiController,

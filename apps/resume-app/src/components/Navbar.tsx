@@ -24,15 +24,24 @@ const Navbar: React.FC = () => {
 
   return (
     <AppBar position="static" color="primary">
-      <Toolbar className="flex justify-between items-center max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-        <Typography
-          variant="h6"
-          component={Link}
-          to="/"
-          sx={{ textDecoration: 'none', color: 'inherit', fontWeight: 'bold' }}
-        >
-          Resume AI
-        </Typography>
+      <Toolbar className="flex justify-between items-center max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2">
+        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Box className="flex flex-col items-start">
+            <Typography
+              variant="h5"
+              component="h1"
+              className="!font-extrabold !text-gray-50 dark:!text-gray-100 transition-colors duration-300"
+            >
+              Resume AI Assistant
+            </Typography>
+            <Typography
+              variant="body2"
+              className="!text-gray-300 dark:!text-gray-400 transition-colors duration-300 hidden sm:block"
+            >
+              Optimize, Generate, and Enhance Your Resume with AI
+            </Typography>
+          </Box>
+        </Link>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <ThemeSwitcher />
           {loading ? (

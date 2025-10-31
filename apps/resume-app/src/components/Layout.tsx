@@ -22,15 +22,8 @@ const Layout: React.FC = () => {
           <LinearProgress />
         </Box>
       )}
-      <header className="w-full max-w-4xl mb-8 mt-8">
-        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 text-center transition-colors duration-300">
-          Resume AI Assistant
-        </h1>
-        <p className="mt-2 text-center text-gray-600 dark:text-gray-400 transition-colors duration-300">
-          Optimize, Generate, and Enhance Your Resume with AI
-        </p>
-      </header>
-      <main className="flex-grow w-full max-w-7xl bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8 mb-8 transition-colors duration-300">
+      {/* Header content moved to Navbar.tsx */}
+      <main className="flex-grow w-full max-w-7xl bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8 mb-8 mt-8 transition-colors duration-300">
         <Outlet />
       </main>
       <footer className="w-full max-w-4xl mt-auto text-center text-gray-500 dark:text-gray-400 text-sm py-4 transition-colors duration-300">

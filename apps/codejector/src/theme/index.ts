@@ -63,9 +63,6 @@ export const getAppTheme = (mode: PaletteMode) => {
       // Custom colors for code blocks
       codeBlockBackground: mode === 'dark' ? '#282c34' : '#f6f8fa',
       inlineCodeBackground: mode === 'dark' ? '#424242' : '#e0e0e0',
-      foreground: {
-        main: mode === 'dark' ? '#f0f0f0' : '#333333',
-      },
     },
     typography: {
       fontFamily: ['Inter', 'sans-serif'].join(','),
