@@ -6,6 +6,7 @@
 /screenshots
 /resume
 /cookies
+postgres/data/
 # Logs
 logs
 *.log
