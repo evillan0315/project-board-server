@@ -19,7 +19,7 @@ import { Request } from 'express';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@ApiTags('AI Planner')
+@ApiTags('Plan')
 @Controller('api/plan')
 @Roles(Role.ADMIN, Role.DEVELOPER) // Restrict access to ADMIN and DEVELOPER users
 export class PlannerController {

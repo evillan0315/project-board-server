@@ -18196,7 +18196,7 @@
         ],
         "summary": "Generate a new plan from a structured LLM input",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       }
     },
@@ -18235,7 +18235,7 @@
         ],
         "summary": "Get a plan by ID",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       }
     },
@@ -18274,7 +18274,7 @@
         ],
         "summary": "Get chunks of a plan by ID",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       }
     },
@@ -18322,7 +18322,7 @@
         ],
         "summary": "Apply a chunk of a plan by ID and index",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       }
     },
@@ -18362,7 +18362,7 @@
         ],
         "summary": "Apply a plan by its ID",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       }
     },
@@ -22029,6 +22029,387 @@
           "ExecutionSnapshot"
         ]
       }
+    },
+    "/api/planner": {
+      "post": {
+        "operationId": "PlanController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePlanDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Plan",
+        "tags": [
+          "AI Planner"
+        ]
+      },
+      "get": {
+        "operationId": "PlanController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Plan records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreatePlanDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Plan records",
+        "tags": [
+          "AI Planner"
+        ]
+      }
+    },
+    "/api/planner/paginated": {
+      "get": {
+        "operationId": "PlanController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "title",
+            "required": false,
+            "in": "query",
+            "description": "Filter by title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summary",
+            "required": false,
+            "in": "query",
+            "description": "Filter by summary",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "thoughtProcess",
+            "required": false,
+            "in": "query",
+            "description": "Filter by thoughtProcess",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentationId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by documentationId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "gitInstructions",
+            "required": false,
+            "in": "query",
+            "description": "Filter by gitInstructions",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "llmRequestId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by llmRequestId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "llmInput",
+            "required": false,
+            "in": "query",
+            "description": "Filter by llmInput",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "lastExecutionStatus",
+            "required": false,
+            "in": "query",
+            "description": "Filter by lastExecutionStatus",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lastExecutionError",
+            "required": false,
+            "in": "query",
+            "description": "Filter by lastExecutionError",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lastExecutionTimestamp",
+            "required": false,
+            "in": "query",
+            "description": "Filter by lastExecutionTimestamp",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationPlanResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Plan records",
+        "tags": [
+          "AI Planner"
+        ]
+      }
+    },
+    "/api/planner/{id}": {
+      "get": {
+        "operationId": "PlanController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePlanDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Plan by ID",
+        "tags": [
+          "AI Planner"
+        ]
+      },
+      "patch": {
+        "operationId": "PlanController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatePlanDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Plan by ID",
+        "tags": [
+          "AI Planner"
+        ]
+      },
+      "delete": {
+        "operationId": "PlanController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Plan by ID",
+        "tags": [
+          "AI Planner"
+        ]
+      }
     }
   },
   "info": {
@@ -23943,7 +24324,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-11-24T04:10:30.716Z",
+            "example": "2025-11-24T05:39:40.572Z",
             "format": "date-time"
           },
           "requestType": {
@@ -29570,6 +29951,146 @@
           "appliedChanges": {
             "type": "object",
             "description": "appliedChanges field"
+          }
+        }
+      },
+      "CreatePlanDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "summary": {
+            "type": "string",
+            "description": "summary field"
+          },
+          "thoughtProcess": {
+            "type": "string",
+            "description": "thoughtProcess field"
+          },
+          "documentationId": {
+            "type": "string",
+            "description": "documentationId field"
+          },
+          "gitInstructions": {
+            "description": "gitInstructions field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "llmRequestId": {
+            "type": "string",
+            "description": "llmRequestId field"
+          },
+          "llmInput": {
+            "type": "object",
+            "description": "llmInput field"
+          },
+          "lastExecutionStatus": {
+            "type": "string",
+            "description": "lastExecutionStatus field"
+          },
+          "lastExecutionError": {
+            "type": "string",
+            "description": "lastExecutionError field"
+          },
+          "lastExecutionTimestamp": {
+            "format": "date-time",
+            "type": "string",
+            "description": "lastExecutionTimestamp field"
+          }
+        },
+        "required": [
+          "title",
+          "summary",
+          "thoughtProcess",
+          "documentationId",
+          "gitInstructions",
+          "llmRequestId",
+          "llmInput",
+          "lastExecutionStatus",
+          "lastExecutionError",
+          "lastExecutionTimestamp"
+        ]
+      },
+      "PaginationPlanResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePlanDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdatePlanDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "summary": {
+            "type": "string",
+            "description": "summary field"
+          },
+          "thoughtProcess": {
+            "type": "string",
+            "description": "thoughtProcess field"
+          },
+          "documentationId": {
+            "type": "string",
+            "description": "documentationId field"
+          },
+          "gitInstructions": {
+            "description": "gitInstructions field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "llmRequestId": {
+            "type": "string",
+            "description": "llmRequestId field"
+          },
+          "llmInput": {
+            "type": "object",
+            "description": "llmInput field"
+          },
+          "lastExecutionStatus": {
+            "type": "string",
+            "description": "lastExecutionStatus field"
+          },
+          "lastExecutionError": {
+            "type": "string",
+            "description": "lastExecutionError field"
+          },
+          "lastExecutionTimestamp": {
+            "format": "date-time",
+            "type": "string",
+            "description": "lastExecutionTimestamp field"
           }
         }
       }

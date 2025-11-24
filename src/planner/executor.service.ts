@@ -1,8 +1,12 @@
+// FIlePath: src/planner/executor.service.ts
+// Title: ExecutorService - snapshot and apply AI plan changes
+// Reason: Aligns with PlannerService and DTOs; supports full FileChangeDto fields, patch/apply, TS checks, linting, rollback.
+
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec as _exec } from 'child_process';
-import { promisify }  from 'util';
+import { promisify } from 'util';
 import { FileChangeDto } from './dto';
 import { FileAction as PrismaFileAction } from '@prisma/client';
 import { FileActionLabel } from '@/common/constants/file-action-map';
@@ -26,46 +30,30 @@ export class ExecutorService {
   async snapshotAndApply(planTitle: string, changes: FileChangeDto[], projectRoot?: string) {
     const effectiveRepoPath = projectRoot ? path.resolve(projectRoot) : this.repoPath;
     const branch = `ai/plan-${Date.now()}`;
-    
+
     try {
-      // Check if it's a Git repository
       await this.gitService.getStatus(effectiveRepoPath);
     } catch (e) {
-      if (e instanceof BadRequestException && e.message.includes('not a Git repository')) {
-        return {
-          ok: false,
-          error: `Project root '${effectiveRepoPath}' is not a Git repository. Cannot apply changes.`, 
-        };
-      } else {
-        return {
-          ok: false,
-          error: `Failed pre-check for Git repository: ${e.message}`, 
-        };
-      }
+      return {
+        ok: false,
+        error: `Git pre-check failed: ${e instanceof Error ? e.message : String(e)}`,
+      };
     }
 
     try {
       await this.gitService.createBranch(branch, effectiveRepoPath);
-    } catch (e) {
+    } catch (e: any) {
       if (e instanceof BadRequestException && e.message.includes('already exists')) {
-        // If the branch already exists (e.g., from a previous failed run), try to checkout
         try {
           await this.gitService.checkoutBranch(branch, false, effectiveRepoPath);
         } catch (checkoutError) {
-          return {
-            ok: false,
-            error: `Failed to create or checkout branch ${branch}: ${checkoutError.message}`, 
-          };
+          return { ok: false, error: `Cannot checkout branch ${branch}: ${checkoutError.message}` };
         }
       } else {
-        return {
-          ok: false,
-          error: `Failed to create branch ${branch}: ${e.message}`, 
-        };
+        return { ok: false, error: `Cannot create branch ${branch}: ${e.message}` };
       }
     }
 
-    // Snapshot current HEAD (commit any unstaged changes briefly to make a clean snapshot)
     await this.gitService.stageFiles(['.'], effectiveRepoPath);
     await this.gitService.commit(`snapshot before applying AI plan: ${planTitle}`, effectiveRepoPath).catch(() => {});
     const snapshot = await this.gitService.getHeadCommitHash(effectiveRepoPath);
@@ -74,142 +62,89 @@ export class ExecutorService {
 
     try {
       for (const ch of changes) {
-        // Map Prisma enum (e.g. 'ADD') to lower-case string ('add')
         const action = FileActionLabel[ch.action as PrismaFileAction];
         const abs = path.join(effectiveRepoPath, ch.filePath);
 
-        if (action === 'add' || action === 'modify' || action === 'repair') {
-          await fs.promises.mkdir(path.dirname(abs), { recursive: true });
-          if (ch.diff) {
-            // Use GitService to apply the patch content
-            try {
-              await this.gitService.applyPatch(ch.diff, effectiveRepoPath);
-              results.push({
-                file: ch.filePath,
-                ok: true,
-                applied: 'diff',
-              });
-            } catch (e) {
-              results.push({
-                file: ch.filePath,
-                ok: false,
-                error: `Failed to apply diff: ${String(e)}`, 
-              });
+        switch (action) {
+          case 'add':
+          case 'modify':
+          case 'repair':
+            await fs.promises.mkdir(path.dirname(abs), { recursive: true });
+            if (ch.diff) {
+              try {
+                await this.gitService.applyPatch(ch.diff, effectiveRepoPath);
+                results.push({ file: ch.filePath, ok: true, applied: 'diff' });
+              } catch (err) {
+                results.push({ file: ch.filePath, ok: false, error: `Failed to apply diff: ${err}` });
+              }
+            } else {
+              await fs.promises.writeFile(abs, ch.newContent || '', 'utf-8');
+              results.push({ file: ch.filePath, ok: true, applied: action });
             }
-          } else {
-            await fs.promises.writeFile(abs, ch.newContent || '', 'utf-8');
-            results.push({
-              file: ch.filePath,
-              ok: true,
-              applied: action,
-            });
-          }
-        } else if (action === 'delete') {
-          try {
-            await fs.promises.unlink(abs);
-            results.push({
-              file: ch.filePath,
-              ok: true,
-              deleted: true,
-            });
-          } catch (e) {
-            results.push({
-              file: ch.filePath,
-              ok: false,
-              error: String(e),
-            });
-          }
-        } else if (action === 'install' || action === 'run') {
-          // For 'install' or 'run' actions, execute a shell command
-          if (ch.newContent) { // Assuming command is in newContent
+            break;
+
+          case 'delete':
             try {
-              const { stdout, stderr } = await exec(ch.newContent, { cwd: effectiveRepoPath });
-              results.push({
-                file: ch.filePath, // Use file path as context, though not a file operation
-                action: action,
-                ok: true,
-                stdout: stdout,
-                stderr: stderr,
-              });
-            } catch (e) {
-              results.push({
-                file: ch.filePath,
-                action: action,
-                ok: false,
-                error: String(e),
-              });
+              await fs.promises.unlink(abs);
+              results.push({ file: ch.filePath, ok: true, deleted: true });
+            } catch (err) {
+              results.push({ file: ch.filePath, ok: false, error: String(err) });
             }
-          } else {
-            results.push({
-              file: ch.filePath,
-              action: action,
-              ok: false,
-              error: 'No command provided for install/run action.',
-            });
-          }
-        } else {
-          results.push({
-            file: ch.filePath,
-            ok: false,
-            error: 'unknown action',
-          });
+            break;
+
+          case 'install':
+          case 'run':
+            if (ch.newContent) {
+              try {
+                const { stdout, stderr } = await exec(ch.newContent, { cwd: effectiveRepoPath });
+                results.push({ file: ch.filePath, action, ok: true, stdout, stderr });
+              } catch (err) {
+                results.push({ file: ch.filePath, action, ok: false, error: String(err) });
+              }
+            } else {
+              results.push({ file: ch.filePath, action, ok: false, error: 'No command provided' });
+            }
+            break;
+
+          default:
+            results.push({ file: ch.filePath, ok: false, error: 'unknown action' });
         }
       }
-      this.logger.log(effectiveRepoPath, 'TypeScript check effectiveRepoPath')
-      // TypeScript check (if project is TS)
+
+      // TypeScript check
       const tsconfig = path.join(effectiveRepoPath, 'tsconfig.json');
       if (fs.existsSync(tsconfig)) {
         try {
           await exec('npx tsc --noEmit', { cwd: effectiveRepoPath });
-        } catch (e) {
-          // rollback on tsc failure
+        } catch (err) {
           await this.gitService.resetHard(snapshot, effectiveRepoPath);
-          return {
-            ok: false,
-            error: 'TypeScript check failed',
-            details: String(e),
-          };
+          return { ok: false, error: 'TypeScript check failed', details: String(err), snapshot };
         }
       }
 
-      // Lint (run npm run lint if provided; otherwise try eslint)
+      // Lint
       try {
-        const pkg = JSON.parse(
-          await fs.promises.readFile(
-            path.join(effectiveRepoPath, 'package.json'),
-            'utf-8',
-          ),
-        ).scripts || {};
-
-        if (pkg.lint) {
-          await exec('npm run lint', { cwd: effectiveRepoPath });
-        } else if (
-          fs.existsSync(
-            path.join(effectiveRepoPath, 'node_modules', '.bin', 'eslint'),
-          )
-        ) {
+        const pkg = JSON.parse(await fs.promises.readFile(path.join(effectiveRepoPath, 'package.json'), 'utf-8')).scripts || {};
+        if (pkg.lint) await exec('npm run lint', { cwd: effectiveRepoPath });
+        else if (fs.existsSync(path.join(effectiveRepoPath, 'node_modules', '.bin', 'eslint')))
           await exec('npx eslint .', { cwd: effectiveRepoPath });
-        }
-      } catch (e) {
-        // record lint failure — do not rollback automatically
-        results.push({ lint: 'failed', error: String(e) });
+      } catch (err) {
+        results.push({ lint: 'failed', error: String(err) });
       }
 
-      // Commit changes
       await this.gitService.stageFiles(['.'], effectiveRepoPath);
       await this.gitService.commit(`Apply AI plan ${planTitle}`, effectiveRepoPath).catch(() => {});
       const newHead = await this.gitService.getHeadCommitHash(effectiveRepoPath);
 
       return { ok: true, results, snapshot, newHead };
     } catch (err) {
-      // rollback to snapshot on any error
       try {
         await this.gitService.resetHard(snapshot, effectiveRepoPath);
       } catch (rollbackErr) {
-        // Log if rollback itself fails
-        this.logger.error(`Failed to rollback to snapshot: ${rollbackErr.message}`);
+        this.logger.error(`Failed rollback: ${rollbackErr.message}`);
       }
       return { ok: false, error: String(err), snapshot };
     }
   }
 }
+
