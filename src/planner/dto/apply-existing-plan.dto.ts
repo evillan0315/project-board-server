@@ -8,7 +8,8 @@ export class ApplyExistingPlanRequestDto {
   planId: string;
 
   @ApiPropertyOptional({
-    description: 'Optional project root path to apply the plan to. If not provided, uses the default configured path.',
+    description:
+      'Optional project root path to apply the plan to. If not provided, uses the default configured path.',
     example: '/path/to/my/project',
   })
   @IsOptional()

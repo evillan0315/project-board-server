@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,24 @@ import {
 } from './dto/create-llm-response.dto';
 import { UpdateLlmResponseDto } from './dto/update-llm-response.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'LlmResponse'
-)
+@ApiTags('LlmResponse')
 @Controller('api/llm-response')
 export class LlmResponseController {
   constructor(private readonly llmResponseService: LlmResponseService) {}
-  
-  
-  
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new LlmResponse' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateLlmResponseDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateLlmResponseDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +76,12 @@ export class LlmResponseController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all LlmResponse records' })
-  @ApiOkResponse({ description: 'List of LlmResponse records.', type: [CreateLlmResponseDto] })
+  @ApiOkResponse({
+    description: 'List of LlmResponse records.',
+    type: [CreateLlmResponseDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,28 +93,23 @@ export class LlmResponseController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated LlmResponse records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationLlmResponseResultDto,
-})
-findAllPaginated(@Query() query: PaginationLlmResponseQueryDto) {
-  return this.llmResponseService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated LlmResponse records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationLlmResponseResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationLlmResponseQueryDto) {
+    return this.llmResponseService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find LlmResponse by ID' })
   @ApiOkResponse({ description: 'Record found.', type: CreateLlmResponseDto })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -135,11 +124,12 @@ findAllPaginated(@Query() query: PaginationLlmResponseQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update LlmResponse by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateLlmResponseDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateLlmResponseDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +143,7 @@ findAllPaginated(@Query() query: PaginationLlmResponseQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete LlmResponse by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +153,3 @@ findAllPaginated(@Query() query: PaginationLlmResponseQueryDto) {
     return this.llmResponseService.remove(id);
   }
 }
-

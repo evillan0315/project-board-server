@@ -86,6 +86,7 @@ import { LlmResponseModule } from './llm-response/llm-response.module';
 import { LlmRequestModule } from './llm-request/llm-request.module';
 import { ExecutionSnapshotModule } from './execution-snapshot/execution-snapshot.module';
 import { PlanModule } from './plan/plan.module';
+import { FileChangeModule } from './file-change/file-change.module';
 
 /**
  * The root module of the NestJS application.
@@ -257,6 +258,7 @@ import { PlanModule } from './plan/plan.module';
     LlmRequestModule,
     ExecutionSnapshotModule,
     PlanModule,
+    FileChangeModule,
   ],
   /**
    * Controllers defined in this module.  Controllers handle incoming requests and route them to appropriate handlers.

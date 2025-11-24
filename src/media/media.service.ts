@@ -336,7 +336,9 @@ export class MediaService {
           if (!isNaN(parsedDate.getTime())) {
             releaseDate = parsedDate;
           } else {
-            this.logger.warn(`Invalid release_date for album '${albumTitle}': ${metadata.release_date}`);
+            this.logger.warn(
+              `Invalid release_date for album '${albumTitle}': ${metadata.release_date}`,
+            );
           }
         }
 

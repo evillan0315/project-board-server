@@ -38,20 +38,20 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/enums/user-role.enum';
 
-import { PlanService } from './plan.service';
+import { FileChangeService } from './file-change.service';
 import {
-  CreatePlanDto,
-  PaginationPlanResultDto,
-  PaginationPlanQueryDto,
-} from './dto/create-plan.dto';
-import { UpdatePlanDto } from './dto/update-plan.dto';
+  CreateFileChangeDto,
+  PaginationFileChangeResultDto,
+  PaginationFileChangeQueryDto,
+} from './dto/create-file-change.dto';
+import { UpdateFileChangeDto } from './dto/update-file-change.dto';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('Plan')
-@Controller('api/planner')
-export class PlanController {
-  constructor(private readonly planService: PlanService) {}
+@Controller('api/file-change')
+export class FileChangeController {
+  constructor(private readonly fileChangeService: FileChangeService) {}
 
   // ───────────────────────────────────────────────────────────
   // CREATE
@@ -59,16 +59,16 @@ export class PlanController {
 
   @Post()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Create a new Plan' })
+  @ApiOperation({ summary: 'Create a new FileChange' })
   @ApiCreatedResponse({
     description: 'Successfully created.',
-    type: CreatePlanDto,
+    type: CreateFileChangeDto,
   })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
-  create(@Body() dto: CreatePlanDto) {
-    return this.planService.create(dto);
+  create(@Body() dto: CreateFileChangeDto) {
+    return this.fileChangeService.create(dto);
   }
 
   // ───────────────────────────────────────────────────────────
@@ -77,15 +77,15 @@ export class PlanController {
 
   @Get()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Retrieve all Plan records' })
+  @ApiOperation({ summary: 'Retrieve all FileChange records' })
   @ApiOkResponse({
-    description: 'List of Plan records.',
-    type: [CreatePlanDto],
+    description: 'List of FileChange records.',
+    type: [CreateFileChangeDto],
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
-    return this.planService.findAll();
+    return this.fileChangeService.findAll();
   }
 
   // ───────────────────────────────────────────────────────────
@@ -94,14 +94,14 @@ export class PlanController {
 
   @Get('paginated')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Paginated Plan records' })
+  @ApiOperation({ summary: 'Paginated FileChange records' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Paginated results',
-    type: PaginationPlanResultDto,
+    type: PaginationFileChangeResultDto,
   })
-  findAllPaginated(@Query() query: PaginationPlanQueryDto) {
-    return this.planService.findAllPaginated(query);
+  findAllPaginated(@Query() query: PaginationFileChangeQueryDto) {
+    return this.fileChangeService.findAllPaginated(query);
   }
 
   // ───────────────────────────────────────────────────────────
@@ -110,13 +110,13 @@ export class PlanController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Find Plan by ID' })
-  @ApiOkResponse({ description: 'Record found.', type: CreatePlanDto })
+  @ApiOperation({ summary: 'Find FileChange by ID' })
+  @ApiOkResponse({ description: 'Record found.', type: CreateFileChangeDto })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findOne(@Param('id') id: string) {
-    return this.planService.findOne(id);
+    return this.fileChangeService.findOne(id);
   }
 
   // ───────────────────────────────────────────────────────────
@@ -125,14 +125,17 @@ export class PlanController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update Plan by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdatePlanDto })
+  @ApiOperation({ summary: 'Update FileChange by ID' })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateFileChangeDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
-  update(@Param('id') id: string, @Body() dto: UpdatePlanDto) {
-    return this.planService.update(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateFileChangeDto) {
+    return this.fileChangeService.update(id, dto);
   }
 
   // ───────────────────────────────────────────────────────────
@@ -141,12 +144,12 @@ export class PlanController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Delete Plan by ID' })
+  @ApiOperation({ summary: 'Delete FileChange by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   remove(@Param('id') id: string) {
-    return this.planService.remove(id);
+    return this.fileChangeService.remove(id);
   }
 }

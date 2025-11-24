@@ -46,10 +46,17 @@ export class FfmpegController {
   @Roles(UserRole.ADMIN, UserRole.USER)
   @ApiOperation({
     summary: 'List available audio and video input devices for recording.',
-    description: 'Retrieves a list of detected microphones and cameras on the server, which can be used for recording.',
+    description:
+      'Retrieves a list of detected microphones and cameras on the server, which can be used for recording.',
   })
-  @ApiOkResponse({ description: 'List of available devices.', type: DevicesListDto })
-  @ApiResponse({ status: HttpStatus.INTERNAL_SERVER_ERROR, description: 'Failed to list devices.' })
+  @ApiOkResponse({
+    description: 'List of available devices.',
+    type: DevicesListDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to list devices.',
+  })
   async listDevices(): Promise<DevicesListDto> {
     return this.ffmpegService.listInputDevices();
   }

@@ -6,10 +6,6 @@ import { ModuleControlModule } from '../module-control/module-control.module';
 @Module({
   imports: [PrismaModule, ModuleControlModule],
   controllers: [LlmRequestController],
-  providers: [
-      LlmRequestService,
-      
-    ]
+  providers: [LlmRequestService],
 })
 export class LlmRequestModule {}
-

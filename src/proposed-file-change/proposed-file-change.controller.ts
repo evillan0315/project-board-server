@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,26 @@ import {
 } from './dto/create-proposed-file-change.dto';
 import { UpdateProposedFileChangeDto } from './dto/update-proposed-file-change.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'ProposedFileChange'
-)
+@ApiTags('ProposedFileChange')
 @Controller('api/proposed-file-change')
 export class ProposedFileChangeController {
-  constructor(private readonly proposedFileChangeService: ProposedFileChangeService) {}
-  
-  
-  
+  constructor(
+    private readonly proposedFileChangeService: ProposedFileChangeService,
+  ) {}
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new ProposedFileChange' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateProposedFileChangeDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateProposedFileChangeDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +78,12 @@ export class ProposedFileChangeController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all ProposedFileChange records' })
-  @ApiOkResponse({ description: 'List of ProposedFileChange records.', type: [CreateProposedFileChangeDto] })
+  @ApiOkResponse({
+    description: 'List of ProposedFileChange records.',
+    type: [CreateProposedFileChangeDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,30 +95,28 @@ export class ProposedFileChangeController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated ProposedFileChange records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationProposedFileChangeResultDto,
-})
-findAllPaginated(@Query() query: PaginationProposedFileChangeQueryDto) {
-  return this.proposedFileChangeService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated ProposedFileChange records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationProposedFileChangeResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationProposedFileChangeQueryDto) {
+    return this.proposedFileChangeService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find ProposedFileChange by ID' })
-  @ApiOkResponse({ description: 'Record found.', type: CreateProposedFileChangeDto })
+  @ApiOkResponse({
+    description: 'Record found.',
+    type: CreateProposedFileChangeDto,
+  })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -135,11 +129,12 @@ findAllPaginated(@Query() query: PaginationProposedFileChangeQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update ProposedFileChange by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateProposedFileChangeDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateProposedFileChangeDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +148,7 @@ findAllPaginated(@Query() query: PaginationProposedFileChangeQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete ProposedFileChange by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +158,3 @@ findAllPaginated(@Query() query: PaginationProposedFileChangeQueryDto) {
     return this.proposedFileChangeService.remove(id);
   }
 }
-

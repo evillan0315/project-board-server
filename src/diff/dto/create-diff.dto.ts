@@ -16,17 +16,14 @@ import { Type } from 'class-transformer';
 
 export class CreateDiffDto {
   @ApiProperty({ description: 'filePath field' })
-    @IsString()
-    filePath: string;
+  @IsString()
+  filePath: string;
   @ApiProperty({ description: 'diff field' })
-    @IsString()
-    diff: string;
+  @IsString()
+  diff: string;
   @ApiProperty({ description: 'proposedFileChangeId field' })
-    @IsString()
-    proposedFileChangeId: string;
-
-
-
+  @IsString()
+  proposedFileChangeId: string;
 }
 
 export class PaginationDiffResultDto {
@@ -60,25 +57,15 @@ export class PaginationDiffQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by filePath' })
   filePath?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by diff' })
   diff?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by proposedFileChangeId' })
   proposedFileChangeId?: string;
-
-
-
 }
-

@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,26 @@ import {
 } from './dto/create-execution-snapshot.dto';
 import { UpdateExecutionSnapshotDto } from './dto/update-execution-snapshot.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'ExecutionSnapshot'
-)
+@ApiTags('Plan')
 @Controller('api/execution-snapshot')
 export class ExecutionSnapshotController {
-  constructor(private readonly executionSnapshotService: ExecutionSnapshotService) {}
-  
-  
-  
+  constructor(
+    private readonly executionSnapshotService: ExecutionSnapshotService,
+  ) {}
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new ExecutionSnapshot' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateExecutionSnapshotDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateExecutionSnapshotDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +78,12 @@ export class ExecutionSnapshotController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all ExecutionSnapshot records' })
-  @ApiOkResponse({ description: 'List of ExecutionSnapshot records.', type: [CreateExecutionSnapshotDto] })
+  @ApiOkResponse({
+    description: 'List of ExecutionSnapshot records.',
+    type: [CreateExecutionSnapshotDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,30 +95,28 @@ export class ExecutionSnapshotController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated ExecutionSnapshot records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationExecutionSnapshotResultDto,
-})
-findAllPaginated(@Query() query: PaginationExecutionSnapshotQueryDto) {
-  return this.executionSnapshotService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated ExecutionSnapshot records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationExecutionSnapshotResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationExecutionSnapshotQueryDto) {
+    return this.executionSnapshotService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find ExecutionSnapshot by ID' })
-  @ApiOkResponse({ description: 'Record found.', type: CreateExecutionSnapshotDto })
+  @ApiOkResponse({
+    description: 'Record found.',
+    type: CreateExecutionSnapshotDto,
+  })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -135,11 +129,12 @@ findAllPaginated(@Query() query: PaginationExecutionSnapshotQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update ExecutionSnapshot by ID' })
-  @ApiOkResponse({ description: 'Successfully updated.', type: UpdateExecutionSnapshotDto })
+  @ApiOkResponse({
+    description: 'Successfully updated.',
+    type: UpdateExecutionSnapshotDto,
+  })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
@@ -153,9 +148,7 @@ findAllPaginated(@Query() query: PaginationExecutionSnapshotQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete ExecutionSnapshot by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +158,3 @@ findAllPaginated(@Query() query: PaginationExecutionSnapshotQueryDto) {
     return this.executionSnapshotService.remove(id);
   }
 }
-

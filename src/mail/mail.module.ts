@@ -24,7 +24,9 @@ import { join } from 'path';
           },
         },
         defaults: {
-          from: configService.get<string>('MAIL_FROM') || `"Support" <${configService.get<string>('MAIL_USER')}>`,
+          from:
+            configService.get<string>('MAIL_FROM') ||
+            `"Support" <${configService.get<string>('MAIL_USER')}>`,
         },
         template: {
           dir: join(__dirname, '../../views/mail'),
@@ -38,4 +40,3 @@ import { join } from 'path';
   exports: [MailService],
 })
 export class MailModule {}
-

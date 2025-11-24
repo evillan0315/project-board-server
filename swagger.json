@@ -18142,42 +18142,33 @@
         ]
       }
     },
-    "/api/plan": {
+    "/api/plan/create": {
       "post": {
-        "operationId": "PlannerController_generatePlan",
+        "operationId": "PlannerController_createPlan",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "The structured input for generating a plan.",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LlmInputDto"
+                "$ref": "#/components/schemas/GeneratedPlanDto"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "The plan has been successfully generated.",
+            "description": "Plan successfully created.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "planId": {
-                      "type": "string",
-                      "description": "The ID of the generated plan.",
-                      "example": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
-                    },
-                    "plan": {
-                      "type": "object",
-                      "description": "The generated plan object."
-                    }
-                  }
+                  "$ref": "#/components/schemas/GeneratedPlanDto"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Validation failed."
           },
           "401": {
             "description": "Unauthorized"
@@ -18194,7 +18185,46 @@
             "bearer": []
           }
         ],
-        "summary": "Generate a new plan from a structured LLM input",
+        "summary": "Create a new Plan",
+        "tags": [
+          "Plan"
+        ]
+      }
+    },
+    "/api/plan/generate": {
+      "post": {
+        "operationId": "PlannerController_generatePlan",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LlmInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Plan successfully generated."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate a plan from LLM input",
         "tags": [
           "Plan"
         ]
@@ -18208,7 +18238,6 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The ID of the plan",
             "schema": {
               "type": "string"
             }
@@ -18216,7 +18245,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The plan details."
+            "description": ""
           },
           "401": {
             "description": "Unauthorized"
@@ -18247,7 +18276,6 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The ID of the plan",
             "schema": {
               "type": "string"
             }
@@ -18255,7 +18283,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The chunks of the plan."
+            "description": ""
           },
           "401": {
             "description": "Unauthorized"
@@ -18272,7 +18300,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get chunks of a plan by ID",
+        "summary": "Get plan chunks by ID",
         "tags": [
           "Plan"
         ]
@@ -18286,7 +18314,6 @@
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The ID of the plan",
             "schema": {
               "type": "string"
             }
@@ -18295,7 +18322,6 @@
             "name": "index",
             "required": true,
             "in": "path",
-            "description": "The index of the chunk to apply",
             "schema": {
               "type": "string"
             }
@@ -18303,7 +18329,7 @@
         ],
         "responses": {
           "201": {
-            "description": "The chunk has been successfully applied."
+            "description": ""
           },
           "401": {
             "description": "Unauthorized"
@@ -18320,7 +18346,7 @@
             "bearer": []
           }
         ],
-        "summary": "Apply a chunk of a plan by ID and index",
+        "summary": "Apply a chunk of a plan",
         "tags": [
           "Plan"
         ]
@@ -18332,7 +18358,6 @@
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "The ID of the plan to apply, and optionally a project root.",
           "content": {
             "application/json": {
               "schema": {
@@ -18343,7 +18368,7 @@
         },
         "responses": {
           "201": {
-            "description": "The plan has been successfully applied."
+            "description": ""
           },
           "401": {
             "description": "Unauthorized"
@@ -18360,7 +18385,90 @@
             "bearer": []
           }
         ],
-        "summary": "Apply a plan by its ID",
+        "summary": "Apply a full plan",
+        "tags": [
+          "Plan"
+        ]
+      }
+    },
+    "/api/plan/execute-chunk": {
+      "post": {
+        "operationId": "PlannerController_executeChunk",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Array of file changes to execute",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FileChangeDto"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Directly execute a list of changes",
+        "tags": [
+          "Plan"
+        ]
+      }
+    },
+    "/api/plan/validate": {
+      "post": {
+        "operationId": "PlannerController_validatePlanEndpoint",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Plan object to validate",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneratedPlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Validate a plan object against schema",
         "tags": [
           "Plan"
         ]
@@ -19114,6 +19222,450 @@
         "summary": "Get the Git diff for a specific file",
         "tags": [
           "Git Management"
+        ]
+      }
+    },
+    "/api/planner": {
+      "post": {
+        "operationId": "PlanController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePlanDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new Plan",
+        "tags": [
+          "Plan"
+        ]
+      },
+      "get": {
+        "operationId": "PlanController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of Plan records.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreatePlanDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all Plan records",
+        "tags": [
+          "Plan"
+        ]
+      }
+    },
+    "/api/planner/paginated": {
+      "get": {
+        "operationId": "PlanController_findAllPaginated",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "title",
+            "required": false,
+            "in": "query",
+            "description": "Filter by title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "summary",
+            "required": false,
+            "in": "query",
+            "description": "Filter by summary",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "thoughtProcess",
+            "required": false,
+            "in": "query",
+            "description": "Filter by thoughtProcess",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assumptions",
+            "required": false,
+            "in": "query",
+            "description": "Filter by assumptions",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "estimatedEffortMinutes",
+            "required": false,
+            "in": "query",
+            "description": "Filter by estimatedEffortMinutes",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "confidence",
+            "required": false,
+            "in": "query",
+            "description": "Filter by confidence",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "documentationId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by documentationId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "gitInstructions",
+            "required": false,
+            "in": "query",
+            "description": "Filter by gitInstructions",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "llmRequestId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by llmRequestId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "llmInput",
+            "required": false,
+            "in": "query",
+            "description": "Filter by llmInput",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "lastExecutionStatus",
+            "required": false,
+            "in": "query",
+            "description": "Filter by lastExecutionStatus",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lastExecutionError",
+            "required": false,
+            "in": "query",
+            "description": "Filter by lastExecutionError",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lastExecutionTimestamp",
+            "required": false,
+            "in": "query",
+            "description": "Filter by lastExecutionTimestamp",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectRoot",
+            "required": false,
+            "in": "query",
+            "description": "Filter by projectRoot",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buildScripts",
+            "required": false,
+            "in": "query",
+            "description": "Filter by buildScripts",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "metadata",
+            "required": false,
+            "in": "query",
+            "description": "Filter by metadata",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          },
+          {
+            "name": "error",
+            "required": false,
+            "in": "query",
+            "description": "Filter by error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationPlanResultDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Paginated Plan records",
+        "tags": [
+          "Plan"
+        ]
+      }
+    },
+    "/api/planner/{id}": {
+      "get": {
+        "operationId": "PlanController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePlanDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Find Plan by ID",
+        "tags": [
+          "Plan"
+        ]
+      },
+      "patch": {
+        "operationId": "PlanController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatePlanDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update Plan by ID",
+        "tags": [
+          "Plan"
+        ]
+      },
+      "delete": {
+        "operationId": "PlanController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully deleted."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient role"
+          },
+          "404": {
+            "description": "Record not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete Plan by ID",
+        "tags": [
+          "Plan"
         ]
       }
     },
@@ -21743,7 +22295,7 @@
         ],
         "summary": "Create a new ExecutionSnapshot",
         "tags": [
-          "ExecutionSnapshot"
+          "Plan"
         ]
       },
       "get": {
@@ -21780,7 +22332,7 @@
         ],
         "summary": "Retrieve all ExecutionSnapshot records",
         "tags": [
-          "ExecutionSnapshot"
+          "Plan"
         ]
       }
     },
@@ -21880,7 +22432,7 @@
         ],
         "summary": "Paginated ExecutionSnapshot records",
         "tags": [
-          "ExecutionSnapshot"
+          "Plan"
         ]
       }
     },
@@ -21928,7 +22480,7 @@
         ],
         "summary": "Find ExecutionSnapshot by ID",
         "tags": [
-          "ExecutionSnapshot"
+          "Plan"
         ]
       },
       "patch": {
@@ -21987,7 +22539,7 @@
         ],
         "summary": "Update ExecutionSnapshot by ID",
         "tags": [
-          "ExecutionSnapshot"
+          "Plan"
         ]
       },
       "delete": {
@@ -22026,20 +22578,20 @@
         ],
         "summary": "Delete ExecutionSnapshot by ID",
         "tags": [
-          "ExecutionSnapshot"
+          "Plan"
         ]
       }
     },
-    "/api/planner": {
+    "/api/file-change": {
       "post": {
-        "operationId": "PlanController_create",
+        "operationId": "FileChangeController_create",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreatePlanDto"
+                "$ref": "#/components/schemas/CreateFileChangeDto"
               }
             }
           }
@@ -22050,7 +22602,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreatePlanDto"
+                  "$ref": "#/components/schemas/CreateFileChangeDto"
                 }
               }
             }
@@ -22073,23 +22625,23 @@
             "bearer": []
           }
         ],
-        "summary": "Create a new Plan",
+        "summary": "Create a new FileChange",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       },
       "get": {
-        "operationId": "PlanController_findAll",
+        "operationId": "FileChangeController_findAll",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "List of Plan records.",
+            "description": "List of FileChange records.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/CreatePlanDto"
+                    "$ref": "#/components/schemas/CreateFileChangeDto"
                   }
                 }
               }
@@ -22110,15 +22662,15 @@
             "bearer": []
           }
         ],
-        "summary": "Retrieve all Plan records",
+        "summary": "Retrieve all FileChange records",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       }
     },
-    "/api/planner/paginated": {
+    "/api/file-change/paginated": {
       "get": {
-        "operationId": "PlanController_findAllPaginated",
+        "operationId": "FileChangeController_findAllPaginated",
         "parameters": [
           {
             "name": "page",
@@ -22139,46 +22691,73 @@
             }
           },
           {
-            "name": "title",
+            "name": "planId",
             "required": false,
             "in": "query",
-            "description": "Filter by title",
+            "description": "Filter by planId",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "summary",
+            "name": "index",
             "required": false,
             "in": "query",
-            "description": "Filter by summary",
+            "description": "Filter by index",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "filePath",
+            "required": false,
+            "in": "query",
+            "description": "Filter by filePath",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "thoughtProcess",
+            "name": "reason",
             "required": false,
             "in": "query",
-            "description": "Filter by thoughtProcess",
+            "description": "Filter by reason",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "documentationId",
+            "name": "diff",
             "required": false,
             "in": "query",
-            "description": "Filter by documentationId",
+            "description": "Filter by diff",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "gitInstructions",
+            "name": "oldContent",
             "required": false,
             "in": "query",
-            "description": "Filter by gitInstructions",
+            "description": "Filter by oldContent",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "newContent",
+            "required": false,
+            "in": "query",
+            "description": "Filter by newContent",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "testsAdded",
+            "required": false,
+            "in": "query",
+            "description": "Filter by testsAdded",
             "schema": {
               "type": "array",
               "items": {
@@ -22187,49 +22766,12 @@
             }
           },
           {
-            "name": "llmRequestId",
+            "name": "estimatedMinutes",
             "required": false,
             "in": "query",
-            "description": "Filter by llmRequestId",
+            "description": "Filter by estimatedMinutes",
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "llmInput",
-            "required": false,
-            "in": "query",
-            "description": "Filter by llmInput",
-            "schema": {
-              "$ref": "#/components/schemas/Object"
-            }
-          },
-          {
-            "name": "lastExecutionStatus",
-            "required": false,
-            "in": "query",
-            "description": "Filter by lastExecutionStatus",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "lastExecutionError",
-            "required": false,
-            "in": "query",
-            "description": "Filter by lastExecutionError",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "lastExecutionTimestamp",
-            "required": false,
-            "in": "query",
-            "description": "Filter by lastExecutionTimestamp",
-            "schema": {
-              "format": "date-time",
-              "type": "string"
+              "type": "number"
             }
           }
         ],
@@ -22239,7 +22781,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginationPlanResultDto"
+                  "$ref": "#/components/schemas/PaginationFileChangeResultDto"
                 }
               }
             }
@@ -22259,15 +22801,15 @@
             "bearer": []
           }
         ],
-        "summary": "Paginated Plan records",
+        "summary": "Paginated FileChange records",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       }
     },
-    "/api/planner/{id}": {
+    "/api/file-change/{id}": {
       "get": {
-        "operationId": "PlanController_findOne",
+        "operationId": "FileChangeController_findOne",
         "parameters": [
           {
             "name": "id",
@@ -22284,7 +22826,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreatePlanDto"
+                  "$ref": "#/components/schemas/CreateFileChangeDto"
                 }
               }
             }
@@ -22307,13 +22849,13 @@
             "bearer": []
           }
         ],
-        "summary": "Find Plan by ID",
+        "summary": "Find FileChange by ID",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       },
       "patch": {
-        "operationId": "PlanController_update",
+        "operationId": "FileChangeController_update",
         "parameters": [
           {
             "name": "id",
@@ -22329,7 +22871,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdatePlanDto"
+                "$ref": "#/components/schemas/UpdateFileChangeDto"
               }
             }
           }
@@ -22340,7 +22882,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UpdatePlanDto"
+                  "$ref": "#/components/schemas/UpdateFileChangeDto"
                 }
               }
             }
@@ -22366,13 +22908,13 @@
             "bearer": []
           }
         ],
-        "summary": "Update Plan by ID",
+        "summary": "Update FileChange by ID",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       },
       "delete": {
-        "operationId": "PlanController_remove",
+        "operationId": "FileChangeController_remove",
         "parameters": [
           {
             "name": "id",
@@ -22405,9 +22947,9 @@
             "bearer": []
           }
         ],
-        "summary": "Delete Plan by ID",
+        "summary": "Delete FileChange by ID",
         "tags": [
-          "AI Planner"
+          "Plan"
         ]
       }
     }
@@ -24324,7 +24866,7 @@
           "createdAt": {
             "type": "string",
             "description": "Timestamp indicating when the message was created",
-            "example": "2025-11-24T07:24:24.333Z",
+            "example": "2025-11-24T19:48:47.202Z",
             "format": "date-time"
           },
           "requestType": {
@@ -28340,6 +28882,236 @@
           }
         }
       },
+      "FileChangeDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Optional order index",
+            "example": 0
+          },
+          "filePath": {
+            "type": "string",
+            "description": "File path",
+            "example": "src/components/Welcome.tsx"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "ADD",
+              "MODIFY",
+              "DELETE",
+              "REPAIR",
+              "ANALYZE",
+              "INSTALL",
+              "RUN"
+            ],
+            "description": "Type of file change",
+            "example": "ADD"
+          },
+          "diff": {
+            "type": "string",
+            "description": "Unified diff",
+            "example": "--- a/file.ts\n+++ b/file.ts\n@@ ..."
+          },
+          "newContent": {
+            "type": "string",
+            "description": "Full new content for ADD/replace",
+            "example": "import..."
+          },
+          "oldContent": {
+            "type": "string",
+            "description": "Sample old content",
+            "example": "const greeting = \"Hi\";"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for change",
+            "example": "Add new component."
+          },
+          "testsAdded": {
+            "description": "Paths to tests added",
+            "example": [
+              "tests/components/Welcome.spec.tsx"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "estimatedMinutes": {
+            "type": "number",
+            "description": "Estimated effort in minutes",
+            "example": 15
+          }
+        },
+        "required": [
+          "filePath",
+          "action"
+        ]
+      },
+      "TestsDto": {
+        "type": "object",
+        "properties": {
+          "add": {
+            "description": "Added test paths",
+            "example": [
+              "tests/add.spec.ts"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "modify": {
+            "description": "Modified test paths",
+            "example": [
+              "tests/modify.spec.ts"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          }
+        }
+      },
+      "GeneratedPlanDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "summary": {
+            "type": "string",
+            "description": "summary field"
+          },
+          "thoughtProcess": {
+            "type": "string",
+            "description": "thoughtProcess field"
+          },
+          "assumptions": {
+            "type": "string",
+            "description": "assumptions field"
+          },
+          "estimatedEffortMinutes": {
+            "type": "number",
+            "description": "estimatedEffortMinutes field"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "confidence field"
+          },
+          "documentationId": {
+            "type": "string",
+            "description": "documentationId field"
+          },
+          "gitInstructions": {
+            "description": "gitInstructions field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "llmRequestId": {
+            "type": "string",
+            "description": "llmRequestId field"
+          },
+          "llmInput": {
+            "type": "object",
+            "description": "llmInput field"
+          },
+          "lastExecutionStatus": {
+            "type": "string",
+            "description": "lastExecutionStatus field"
+          },
+          "lastExecutionError": {
+            "type": "string",
+            "description": "lastExecutionError field"
+          },
+          "lastExecutionTimestamp": {
+            "format": "date-time",
+            "type": "string",
+            "description": "lastExecutionTimestamp field"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "projectRoot field"
+          },
+          "buildScripts": {
+            "type": "string",
+            "description": "buildScripts field"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "metadata field"
+          },
+          "error": {
+            "type": "string",
+            "description": "error field"
+          },
+          "id": {
+            "type": "string",
+            "description": "Plan ID",
+            "example": "plan_01G..."
+          },
+          "changes": {
+            "description": "File changes",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileChangeDto"
+            }
+          },
+          "tests": {
+            "description": "Tests summary",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TestsDto"
+              }
+            ]
+          },
+          "documentation": {
+            "type": "object",
+            "description": "Optional documentation content",
+            "example": "Full documentation text",
+            "nullable": true
+          },
+          "createdById": {
+            "type": "string",
+            "description": "Created by user ID"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Plan creation timestamp"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Plan last update timestamp"
+          }
+        },
+        "required": [
+          "title",
+          "summary",
+          "thoughtProcess",
+          "assumptions",
+          "estimatedEffortMinutes",
+          "confidence",
+          "documentationId",
+          "gitInstructions",
+          "llmRequestId",
+          "llmInput",
+          "lastExecutionStatus",
+          "lastExecutionError",
+          "lastExecutionTimestamp",
+          "projectRoot",
+          "buildScripts",
+          "metadata",
+          "error",
+          "changes"
+        ]
+      },
       "ApplyExistingPlanRequestDto": {
         "type": "object",
         "properties": {
@@ -28820,6 +29592,209 @@
         "required": [
           "diff"
         ]
+      },
+      "CreatePlanDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "summary": {
+            "type": "string",
+            "description": "summary field"
+          },
+          "thoughtProcess": {
+            "type": "string",
+            "description": "thoughtProcess field"
+          },
+          "assumptions": {
+            "type": "string",
+            "description": "assumptions field"
+          },
+          "estimatedEffortMinutes": {
+            "type": "number",
+            "description": "estimatedEffortMinutes field"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "confidence field"
+          },
+          "documentationId": {
+            "type": "string",
+            "description": "documentationId field"
+          },
+          "gitInstructions": {
+            "description": "gitInstructions field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "llmRequestId": {
+            "type": "string",
+            "description": "llmRequestId field"
+          },
+          "llmInput": {
+            "type": "object",
+            "description": "llmInput field"
+          },
+          "lastExecutionStatus": {
+            "type": "string",
+            "description": "lastExecutionStatus field"
+          },
+          "lastExecutionError": {
+            "type": "string",
+            "description": "lastExecutionError field"
+          },
+          "lastExecutionTimestamp": {
+            "format": "date-time",
+            "type": "string",
+            "description": "lastExecutionTimestamp field"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "projectRoot field"
+          },
+          "buildScripts": {
+            "type": "string",
+            "description": "buildScripts field"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "metadata field"
+          },
+          "error": {
+            "type": "string",
+            "description": "error field"
+          }
+        },
+        "required": [
+          "title",
+          "summary",
+          "thoughtProcess",
+          "assumptions",
+          "estimatedEffortMinutes",
+          "confidence",
+          "documentationId",
+          "gitInstructions",
+          "llmRequestId",
+          "llmInput",
+          "lastExecutionStatus",
+          "lastExecutionError",
+          "lastExecutionTimestamp",
+          "projectRoot",
+          "buildScripts",
+          "metadata",
+          "error"
+        ]
+      },
+      "PaginationPlanResultDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreatePlanDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
+      "UpdatePlanDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "title field"
+          },
+          "summary": {
+            "type": "string",
+            "description": "summary field"
+          },
+          "thoughtProcess": {
+            "type": "string",
+            "description": "thoughtProcess field"
+          },
+          "assumptions": {
+            "type": "string",
+            "description": "assumptions field"
+          },
+          "estimatedEffortMinutes": {
+            "type": "number",
+            "description": "estimatedEffortMinutes field"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "confidence field"
+          },
+          "documentationId": {
+            "type": "string",
+            "description": "documentationId field"
+          },
+          "gitInstructions": {
+            "description": "gitInstructions field",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "llmRequestId": {
+            "type": "string",
+            "description": "llmRequestId field"
+          },
+          "llmInput": {
+            "type": "object",
+            "description": "llmInput field"
+          },
+          "lastExecutionStatus": {
+            "type": "string",
+            "description": "lastExecutionStatus field"
+          },
+          "lastExecutionError": {
+            "type": "string",
+            "description": "lastExecutionError field"
+          },
+          "lastExecutionTimestamp": {
+            "format": "date-time",
+            "type": "string",
+            "description": "lastExecutionTimestamp field"
+          },
+          "projectRoot": {
+            "type": "string",
+            "description": "projectRoot field"
+          },
+          "buildScripts": {
+            "type": "string",
+            "description": "buildScripts field"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "metadata field"
+          },
+          "error": {
+            "type": "string",
+            "description": "error field"
+          }
+        }
       },
       "CreateLogsDto": {
         "type": "object",
@@ -29954,74 +30929,68 @@
           }
         }
       },
-      "CreatePlanDto": {
+      "CreateFileChangeDto": {
         "type": "object",
         "properties": {
-          "title": {
+          "planId": {
             "type": "string",
-            "description": "title field"
+            "description": "planId field"
           },
-          "summary": {
+          "index": {
+            "type": "number",
+            "description": "index field"
+          },
+          "filePath": {
             "type": "string",
-            "description": "summary field"
+            "description": "filePath field"
           },
-          "thoughtProcess": {
+          "reason": {
             "type": "string",
-            "description": "thoughtProcess field"
+            "description": "reason field"
           },
-          "documentationId": {
+          "diff": {
             "type": "string",
-            "description": "documentationId field"
+            "description": "diff field"
           },
-          "gitInstructions": {
-            "description": "gitInstructions field",
+          "oldContent": {
+            "type": "string",
+            "description": "oldContent field"
+          },
+          "newContent": {
+            "type": "string",
+            "description": "newContent field"
+          },
+          "testsAdded": {
+            "description": "testsAdded field",
             "type": "array",
             "items": {
               "type": "string"
             }
           },
-          "llmRequestId": {
-            "type": "string",
-            "description": "llmRequestId field"
-          },
-          "llmInput": {
-            "type": "object",
-            "description": "llmInput field"
-          },
-          "lastExecutionStatus": {
-            "type": "string",
-            "description": "lastExecutionStatus field"
-          },
-          "lastExecutionError": {
-            "type": "string",
-            "description": "lastExecutionError field"
-          },
-          "lastExecutionTimestamp": {
-            "format": "date-time",
-            "type": "string",
-            "description": "lastExecutionTimestamp field"
+          "estimatedMinutes": {
+            "type": "number",
+            "description": "estimatedMinutes field"
           }
         },
         "required": [
-          "title",
-          "summary",
-          "thoughtProcess",
-          "documentationId",
-          "gitInstructions",
-          "llmRequestId",
-          "llmInput",
-          "lastExecutionStatus",
-          "lastExecutionError",
-          "lastExecutionTimestamp"
+          "planId",
+          "index",
+          "filePath",
+          "reason",
+          "diff",
+          "oldContent",
+          "newContent",
+          "testsAdded",
+          "estimatedMinutes"
         ]
       },
-      "PaginationPlanResultDto": {
+      "PaginationFileChangeResultDto": {
         "type": "object",
         "properties": {
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/CreatePlanDto"
+              "$ref": "#/components/schemas/CreateFileChangeDto"
             }
           },
           "total": {
@@ -30045,52 +31014,47 @@
           "totalPages"
         ]
       },
-      "UpdatePlanDto": {
+      "UpdateFileChangeDto": {
         "type": "object",
         "properties": {
-          "title": {
+          "planId": {
             "type": "string",
-            "description": "title field"
+            "description": "planId field"
           },
-          "summary": {
+          "index": {
+            "type": "number",
+            "description": "index field"
+          },
+          "filePath": {
             "type": "string",
-            "description": "summary field"
+            "description": "filePath field"
           },
-          "thoughtProcess": {
+          "reason": {
             "type": "string",
-            "description": "thoughtProcess field"
+            "description": "reason field"
           },
-          "documentationId": {
+          "diff": {
             "type": "string",
-            "description": "documentationId field"
+            "description": "diff field"
           },
-          "gitInstructions": {
-            "description": "gitInstructions field",
+          "oldContent": {
+            "type": "string",
+            "description": "oldContent field"
+          },
+          "newContent": {
+            "type": "string",
+            "description": "newContent field"
+          },
+          "testsAdded": {
+            "description": "testsAdded field",
             "type": "array",
             "items": {
               "type": "string"
             }
           },
-          "llmRequestId": {
-            "type": "string",
-            "description": "llmRequestId field"
-          },
-          "llmInput": {
-            "type": "object",
-            "description": "llmInput field"
-          },
-          "lastExecutionStatus": {
-            "type": "string",
-            "description": "lastExecutionStatus field"
-          },
-          "lastExecutionError": {
-            "type": "string",
-            "description": "lastExecutionError field"
-          },
-          "lastExecutionTimestamp": {
-            "format": "date-time",
-            "type": "string",
-            "description": "lastExecutionTimestamp field"
+          "estimatedMinutes": {
+            "type": "number",
+            "description": "estimatedMinutes field"
           }
         }
       }

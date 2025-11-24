@@ -1,6 +1,24 @@
-import { Controller, Post, Body, Param, Get, UseGuards, Req } from '@nestjs/common';
+// FIlePath: src/planner/planner.controller.ts
+// Title: PlannerController with endpoints for creating, applying, and validating plans
+// Reason: Optimized routes and aligned with PlannerService & GeneratedPlanDto
+
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Get,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { PlannerService } from './planner.service';
-import { GeneratedPlanDto, ApplyExistingPlanRequestDto } from './dto'; // Changed PlanDto to GeneratedPlanDto, added ApplyExistingPlanRequestDto
+import {
+  GeneratedPlanDto,
+  FileChangeDto,
+  ApplyExistingPlanRequestDto,
+} from './dto';
+import { LlmInputDto } from '@/llm/dto/llm-input.dto';
+import { validatePlan } from './validator';
 import {
   ApiOperation,
   ApiResponse,
@@ -8,102 +26,115 @@ import {
   ApiParam,
   ApiBody,
   ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiBadRequestResponse,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
-import { LlmInputDto } from '@/llm/dto/llm-input.dto';
 import { JwtAuthGuard } from '@/auth/auth.guard';
 import { RolesGuard } from '@/auth/guards/roles.guard';
 import { Roles } from '@/auth/decorators/roles.decorator';
-import { CurrentUser } from '@/auth/decorators/current-user.decorator'; // Import CurrentUser decorator
+import { CurrentUser } from '@/auth/decorators/current-user.decorator';
 import { Role } from '@prisma/client';
-import { Request } from 'express';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('Plan')
 @Controller('api/plan')
-@Roles(Role.ADMIN, Role.DEVELOPER) // Restrict access to ADMIN and DEVELOPER users
+@Roles(Role.ADMIN, Role.DEVELOPER)
 export class PlannerController {
   constructor(private readonly planner: PlannerService) {}
 
-  @ApiOperation({ summary: 'Generate a new plan from a structured LLM input' })
-  @ApiBody({
-    type: LlmInputDto,
-    description: 'The structured input for generating a plan.',
+  /** Create a plan from structured LLM input and persist */
+  @Post('create')
+  @ApiOperation({ summary: 'Create a new Plan' })
+  @ApiCreatedResponse({
+    description: 'Plan successfully created.',
+    type: GeneratedPlanDto,
   })
-  @ApiResponse({
-    status: 201,
-    description: 'The plan has been successfully generated.',
-    schema: {
-      type: 'object',
-      properties: {
-        planId: {
-          type: 'string',
-          description: 'The ID of the generated plan.',
-          example: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-        },
-        plan: {
-          type: 'object',
-          description: 'The generated plan object.',
-        },
-      },
-    },
-  })
-  @Post()
-  async generatePlan(
-    @Body() llmInput: LlmInputDto,
-    @CurrentUser('id') userId: string, // Inject userId from JWT payload
-  ) {
-    const result = await this.planner.planFromPrompt(llmInput, userId);
-    return result;
+  @ApiBadRequestResponse({ description: 'Validation failed.' })
+  createPlan(@Body() dto: GeneratedPlanDto, @CurrentUser('id') userId: string) {
+    return this.planner.createPlan(dto, dto.llmInput as LlmInputDto, userId);
   }
 
-  @ApiOperation({ summary: 'Get a plan by ID' })
-  @ApiParam({ name: 'id', description: 'The ID of the plan' })
-  @ApiResponse({ status: 200, description: 'The plan details.' })
+  /** Generate a new plan from an LLM prompt */
+  @Post('generate')
+  @ApiOperation({ summary: 'Generate a plan from LLM input' })
+  @ApiBody({ type: LlmInputDto })
+  @ApiResponse({ status: 201, description: 'Plan successfully generated.' })
+  async generatePlan(
+    @Body() llmInput: LlmInputDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    const rawPlanJson = await this.planner.generatePlan(llmInput);
+    if (!rawPlanJson)
+      throw new BadRequestException('LLM did not return a plan.');
+    return { rawPlanJson };
+  }
+
+  /** Get a plan by ID */
   @Get(':id')
+  @ApiOperation({ summary: 'Get a plan by ID' })
+  @ApiParam({ name: 'id' })
   async getPlan(@Param('id') id: string) {
     const plan = await this.planner.getPlan(id);
     return { plan };
   }
 
-  @ApiOperation({ summary: 'Get chunks of a plan by ID' })
-  @ApiParam({ name: 'id', description: 'The ID of the plan' })
-  @ApiResponse({ status: 200, description: 'The chunks of the plan.' })
+  /** Get chunks of a plan by ID */
   @Get(':id/chunks')
+  @ApiOperation({ summary: 'Get plan chunks by ID' })
+  @ApiParam({ name: 'id' })
   async getChunks(@Param('id') id: string) {
     const chunks = await this.planner.chunkPlan(id);
     return { chunks };
   }
 
-  @ApiOperation({ summary: 'Apply a chunk of a plan by ID and index' })
-  @ApiParam({ name: 'id', description: 'The ID of the plan' })
-  @ApiParam({ name: 'index', description: 'The index of the chunk to apply' })
-  @ApiResponse({
-    status: 201,
-    description: 'The chunk has been successfully applied.',
-  })
+  /** Apply a chunk of a plan by index */
   @Post(':id/apply-chunk/:index')
+  @ApiOperation({ summary: 'Apply a chunk of a plan' })
+  @ApiParam({ name: 'id' })
+  @ApiParam({ name: 'index' })
   async applyChunk(@Param('id') id: string, @Param('index') index: string) {
     const idx = parseInt(index, 10);
-    const res = await this.planner.applyChunk(id, idx);
-    return res;
+    return await this.planner.applyChunk(id, idx);
   }
 
-  @ApiOperation({ summary: 'Apply a plan by its ID' })
-  @ApiBody({
-    type: ApplyExistingPlanRequestDto,
-    description: 'The ID of the plan to apply, and optionally a project root.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'The plan has been successfully applied.',
-  })
+  /** Apply a full plan */
   @Post('apply')
-  async applyPlan(
-    @Body() body: ApplyExistingPlanRequestDto,
-    @CurrentUser('id') userId: string, // userId is no longer directly used in service applyPlan but kept here if other logic needed it
-  ) {
-    const result = await this.planner.applyPlan(body.planId, body.projectRoot);
-    return result;
+  @ApiOperation({ summary: 'Apply a full plan' })
+  @ApiBody({ type: ApplyExistingPlanRequestDto })
+  async applyPlan(@Body() body: ApplyExistingPlanRequestDto) {
+    return await this.planner.applyPlan(body.planId, body.projectRoot);
+  }
+
+  /** Directly execute a list of changes (for testing executor) */
+  @Post('execute-chunk')
+  @ApiOperation({ summary: 'Directly execute a list of changes' })
+  @ApiBody({
+    type: [FileChangeDto],
+    description: 'Array of file changes to execute',
+  })
+  async executeChunk(@Body() changes: FileChangeDto[]) {
+    if (!Array.isArray(changes)) {
+      throw new BadRequestException('Invalid changes array');
+    }
+    return await this.planner['executor'].snapshotAndApply(
+      'manual-execution',
+      changes,
+    );
+  }
+
+  /** Validate a plan object without persisting */
+  @Post('validate')
+  @ApiOperation({ summary: 'Validate a plan object against schema' })
+  @ApiBody({ type: GeneratedPlanDto, description: 'Plan object to validate' })
+  async validatePlanEndpoint(@Body() plan: any) {
+    try {
+      const validated = validatePlan(plan);
+      return { ok: true, validated };
+    } catch (err: any) {
+      return { ok: false, error: err?.message ?? 'Validation failed' };
+    }
   }
 }

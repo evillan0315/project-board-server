@@ -1,5 +1,13 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { spawn, ChildProcessWithoutNullStreams, spawnSync } from 'child_process';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
+import {
+  spawn,
+  ChildProcessWithoutNullStreams,
+  spawnSync,
+} from 'child_process';
 import { DeviceDto, DevicesListDto, DeviceType } from './dto/device.dto';
 
 @Injectable()
@@ -19,25 +27,43 @@ export class FfmpegService {
     try {
       if (platform === 'darwin') {
         // macOS uses avfoundation
-        const output = await this._executeFfmpegListDevices(['-f', 'avfoundation', '-list_devices', 'true', '-i', '""']);
-        ({ audio: audioInputDevices, video: videoInputDevices } = this._parseMacDevices(output));
+        const output = await this._executeFfmpegListDevices([
+          '-f',
+          'avfoundation',
+          '-list_devices',
+          'true',
+          '-i',
+          '""',
+        ]);
+        ({ audio: audioInputDevices, video: videoInputDevices } =
+          this._parseMacDevices(output));
       } else if (platform === 'win32') {
         // Windows uses dshow
-        const output = await this._executeFfmpegListDevices(['-f', 'dshow', '-list_devices', 'true', '-i', 'dummy']);
-        ({ audio: audioInputDevices, video: videoInputDevices } = this._parseWinDevices(output));
+        const output = await this._executeFfmpegListDevices([
+          '-f',
+          'dshow',
+          '-list_devices',
+          'true',
+          '-i',
+          'dummy',
+        ]);
+        ({ audio: audioInputDevices, video: videoInputDevices } =
+          this._parseWinDevices(output));
       } else if (platform === 'linux') {
         // Linux can use v4l2 for video, pulse or alsa for audio
         // Attempt to list audio devices via PulseAudio directly, which is more reliable than ffmpeg on some systems
         audioInputDevices = await this._listLinuxAudioDevices();
         videoInputDevices = await this._listLinuxVideoDevices();
-
       } else {
         throw new InternalServerErrorException(
           `Unsupported operating system for device listing: ${platform}`,
         );
       }
     } catch (error) {
-      this.logger.error(`Failed to list devices on ${platform}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to list devices on ${platform}: ${error.message}`,
+        error.stack,
+      );
       // Still return empty arrays rather than throwing, so frontend can show 'no devices'
       return { audioInputDevices: [], videoInputDevices: [] };
     }
@@ -49,7 +75,9 @@ export class FfmpegService {
     return new Promise((resolve, reject) => {
       // For some FFmpeg list_devices commands, the output is on stderr, not stdout.
       // We use 'null' for stdout to ignore it, and capture stderr.
-      const ffmpeg = spawn('ffmpeg', args, { stdio: ['inherit', 'pipe', 'pipe'] });
+      const ffmpeg = spawn('ffmpeg', args, {
+        stdio: ['inherit', 'pipe', 'pipe'],
+      });
       let stderrOutput = '';
 
       ffmpeg.stderr.on('data', (data) => {
@@ -57,7 +85,8 @@ export class FfmpegService {
       });
 
       ffmpeg.on('close', (code) => {
-        if (code === 0 || code === 1) { // ffmpeg -list_devices often exits with 1 even on success
+        if (code === 0 || code === 1) {
+          // ffmpeg -list_devices often exits with 1 even on success
           resolve(stderrOutput);
         } else {
           reject(new Error(`FFmpeg exited with code ${code}: ${stderrOutput}`));
@@ -70,7 +99,10 @@ export class FfmpegService {
     });
   }
 
-  private _parseMacDevices(output: string): { audio: DeviceDto[]; video: DeviceDto[] } {
+  private _parseMacDevices(output: string): {
+    audio: DeviceDto[];
+    video: DeviceDto[];
+  } {
     const audioDevices: DeviceDto[] = [];
     const videoDevices: DeviceDto[] = [];
     let parsingAudio = false;
@@ -103,7 +135,10 @@ export class FfmpegService {
     return { audio: audioDevices, video: videoDevices };
   }
 
-  private _parseWinDevices(output: string): { audio: DeviceDto[]; video: DeviceDto[] } {
+  private _parseWinDevices(output: string): {
+    audio: DeviceDto[];
+    video: DeviceDto[];
+  } {
     const audioDevices: DeviceDto[] = [];
     const videoDevices: DeviceDto[] = [];
 
@@ -151,22 +186,34 @@ export class FfmpegService {
             const id = parts[1]; // e.g., alsa_input.pci-0000_00_1b.0.analog-stereo
             // Attempt to get a more user-friendly name if available, otherwise use ID
             const name = parts.length > 8 ? parts[8].replace(/\./g, ' ') : id; // Simple heuristic
-            if (id.includes('input')) { // Filter for input devices
+            if (id.includes('input')) {
+              // Filter for input devices
               audioDevices.push({ id, name, type: DeviceType.AUDIO_INPUT });
             }
           }
         }
       } else {
-        this.logger.warn(`pactl list short sources failed: ${pactlList.stderr.toString()}`);
+        this.logger.warn(
+          `pactl list short sources failed: ${pactlList.stderr.toString()}`,
+        );
       }
     } catch (e) {
-      this.logger.warn(`Could not use pactl to list audio devices: ${e.message}`);
+      this.logger.warn(
+        `Could not use pactl to list audio devices: ${e.message}`,
+      );
     }
 
     // Fallback to ffmpeg -list_devices (less reliable for Linux)
     if (audioDevices.length === 0) {
       try {
-        const output = await this._executeFfmpegListDevices(['-f', 'alsa', '-list_devices', 'true', '-i', 'null']); // Try ALSA
+        const output = await this._executeFfmpegListDevices([
+          '-f',
+          'alsa',
+          '-list_devices',
+          'true',
+          '-i',
+          'null',
+        ]); // Try ALSA
         const lines = output.split('\n');
         for (const line of lines) {
           const match = line.match(/Card (\d+): ([^\n]+)/); // Matches "Card X: Name"
@@ -174,7 +221,9 @@ export class FfmpegService {
           if (match) {
             const cardName = match[2];
             // Try to find devices associated with this card
-            const deviceLines = lines.filter(l => l.includes(`Card ${match[1]}:`));
+            const deviceLines = lines.filter((l) =>
+              l.includes(`Card ${match[1]}:`),
+            );
             for (const devLine of deviceLines) {
               const subMatch = devLine.match(/Device (\d+): (.+)/);
               if (subMatch) {
@@ -191,8 +240,16 @@ export class FfmpegService {
     }
 
     // Add a 'default' option if no specific devices are found, or if PulseAudio is the main system.
-    if (!audioDevices.some(d => d.id === 'default' || d.name === 'Default Audio Input')) {
-        audioDevices.unshift({ id: 'default', name: 'Default Audio Input', type: DeviceType.AUDIO_INPUT });
+    if (
+      !audioDevices.some(
+        (d) => d.id === 'default' || d.name === 'Default Audio Input',
+      )
+    ) {
+      audioDevices.unshift({
+        id: 'default',
+        name: 'Default Audio Input',
+        type: DeviceType.AUDIO_INPUT,
+      });
     }
     return audioDevices;
   }
@@ -214,15 +271,23 @@ export class FfmpegService {
           const devicePathMatch = line.match(/\s*(\/dev\/video\d+)/); // ESCAPED FORWARD SLASHES
           if (devicePathMatch && currentDeviceName) {
             const id = devicePathMatch[1];
-            videoDevices.push({ id, name: currentDeviceName, type: DeviceType.VIDEO_INPUT });
+            videoDevices.push({
+              id,
+              name: currentDeviceName,
+              type: DeviceType.VIDEO_INPUT,
+            });
             currentDeviceName = null; // Reset for next device
           }
         }
       } else {
-        this.logger.warn(`v4l2-ctl --list-devices failed: ${v4l2ctlList.stderr.toString()}`);
+        this.logger.warn(
+          `v4l2-ctl --list-devices failed: ${v4l2ctlList.stderr.toString()}`,
+        );
       }
     } catch (e) {
-      this.logger.warn(`Could not use v4l2-ctl to list video devices: ${e.message}`);
+      this.logger.warn(
+        `Could not use v4l2-ctl to list video devices: ${e.message}`,
+      );
       // Fallback to scanning /dev/video* directly if v4l2-ctl fails
       try {
         const fs = require('fs/promises');
@@ -230,17 +295,31 @@ export class FfmpegService {
         for (const file of files) {
           if (file.startsWith('video')) {
             const id = `/dev/${file}`;
-            videoDevices.push({ id, name: `Video Device (${id})`, type: DeviceType.VIDEO_INPUT });
+            videoDevices.push({
+              id,
+              name: `Video Device (${id})`,
+              type: DeviceType.VIDEO_INPUT,
+            });
           }
         }
       } catch (err) {
-        this.logger.warn(`Failed to scan /dev for video devices: ${err.message}`);
+        this.logger.warn(
+          `Failed to scan /dev for video devices: ${err.message}`,
+        );
       }
     }
 
     // Add a 'default' option if no specific devices are found.
-    if (!videoDevices.some(d => d.id === 'default' || d.name === 'Default Video Input')) {
-        videoDevices.unshift({ id: 'default', name: 'Default Video Input', type: DeviceType.VIDEO_INPUT });
+    if (
+      !videoDevices.some(
+        (d) => d.id === 'default' || d.name === 'Default Video Input',
+      )
+    ) {
+      videoDevices.unshift({
+        id: 'default',
+        name: 'Default Video Input',
+        type: DeviceType.VIDEO_INPUT,
+      });
     }
     return videoDevices;
   }
@@ -415,8 +494,7 @@ export class FfmpegService {
       ffmpeg.on('close', (code) => {
         if (code === 0) {
           resolve();
-        }
-        else {
+        } else {
           reject(new Error(`FFmpeg exited with code ${code}`));
         }
       });
@@ -452,7 +530,9 @@ export class FfmpegService {
         outputPath,
       );
 
-      this.logger.log(`Starting camera recording with command: ffmpeg ${ffmpegArgs.join(' ')}`);
+      this.logger.log(
+        `Starting camera recording with command: ffmpeg ${ffmpegArgs.join(' ')}`,
+      );
 
       const ffmpegProcess = spawn('ffmpeg', ffmpegArgs);
 
@@ -476,7 +556,11 @@ export class FfmpegService {
       });
 
       ffmpegProcess.on('error', (err) => {
-        reject(new InternalServerErrorException(`Failed to start FFmpeg camera recording: ${err.message}`));
+        reject(
+          new InternalServerErrorException(
+            `Failed to start FFmpeg camera recording: ${err.message}`,
+          ),
+        );
       });
 
       // Give ffmpeg a moment to start and ensure it hasn't immediately errored
@@ -484,8 +568,12 @@ export class FfmpegService {
         if (ffmpegProcess.pid) {
           resolve(ffmpegProcess);
         } else {
-          reject(new InternalServerErrorException('FFmpeg camera recording process did not start.'));
-        }              
+          reject(
+            new InternalServerErrorException(
+              'FFmpeg camera recording process did not start.',
+            ),
+          );
+        }
       }, 1000); // Wait 1 second to confirm process is running
     });
   }
@@ -527,7 +615,10 @@ export class FfmpegService {
       // '0' refers to the first video input, '0' after ':' refers to the first audio input.
       // FFmpeg avfoundation requires video and audio device IDs to be specified together as N:M
       // A single '0' or 'default' will usually refer to the first available camera/mic.
-      const inputString = cameraDevice && audioInputDevice ? `${cameraDevice}:${audioInputDevice}` : '0:0';
+      const inputString =
+        cameraDevice && audioInputDevice
+          ? `${cameraDevice}:${audioInputDevice}`
+          : '0:0';
       this.logger.debug(`macOS camera input: ${inputString}`);
       return [
         '-f',
@@ -545,7 +636,8 @@ export class FfmpegService {
       // Windows uses dshow (DirectShow).
       // You might need to list devices: ffmpeg -list_devices true -f dshow -i dummy
       const videoInput = cameraDevice || 'video=Integrated Camera'; // Example default
-      const audioInput = audioInputDevice || 'audio=Microphone (Realtek(R) Audio)'; // Use new param or example default
+      const audioInput =
+        audioInputDevice || 'audio=Microphone (Realtek(R) Audio)'; // Use new param or example default
       this.logger.debug(`Windows camera input: ${videoInput} | ${audioInput}`);
 
       return [
@@ -563,7 +655,8 @@ export class FfmpegService {
       // You might need to list devices: ffmpeg -f v4l2 -list_formats all -i /dev/video0
       // For audio: pactl list sources or arecord -L
       const videoInput = cameraDevice || '/dev/video0'; // Default video device
-      const audioInput = audioInputDevice || process.env.AUDIO_DEVICE || 'default'; // Prioritize DTO, then env, then 'default'
+      const audioInput =
+        audioInputDevice || process.env.AUDIO_DEVICE || 'default'; // Prioritize DTO, then env, then 'default'
       this.logger.debug(`Linux camera input: ${videoInput} | ${audioInput}`);
 
       return [

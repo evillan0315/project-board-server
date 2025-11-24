@@ -16,31 +16,28 @@ import { Type } from 'class-transformer';
 
 export class CreateLlmRequestDto {
   @ApiProperty({ description: 'userPrompt field' })
-    @IsString()
-    userPrompt: string;
+  @IsString()
+  userPrompt: string;
   @ApiProperty({ description: 'projectRoot field' })
-    @IsString()
-    projectRoot: string;
+  @IsString()
+  projectRoot: string;
   @ApiProperty({ description: 'scanPaths field' })
-    @IsString()
-    scanPaths: string[];
+  @IsString()
+  scanPaths: string[];
   @ApiProperty({ description: 'additionalInstructions field' })
-    @IsString()
-    additionalInstructions: string;
+  @IsString()
+  additionalInstructions: string;
   @ApiProperty({ description: 'expectedOutputFormat field' })
-    @IsString()
-    expectedOutputFormat: string;
+  @IsString()
+  expectedOutputFormat: string;
   @ApiProperty({ description: 'schemaId field' })
-    @IsOptional()
-    @IsString()
-    schemaId: string;
+  @IsOptional()
+  @IsString()
+  schemaId: string;
   @ApiProperty({ description: 'schemaVersion field' })
-    @IsOptional()
-    @IsInt()
-    schemaVersion: number;
-
-
-
+  @IsOptional()
+  @IsInt()
+  schemaVersion: number;
 }
 
 export class PaginationLlmRequestResultDto {
@@ -74,48 +71,31 @@ export class PaginationLlmRequestQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by userPrompt' })
   userPrompt?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by projectRoot' })
   projectRoot?: string;
   @IsOptional()
-  
   @ApiPropertyOptional({ description: 'Filter by scanPaths' })
   scanPaths?: string[];
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by additionalInstructions' })
   additionalInstructions?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by expectedOutputFormat' })
   expectedOutputFormat?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by schemaId' })
   schemaId?: string;
   @IsOptional()
-  
   @Type(() => Number)
   @IsNumber()
-  
   @ApiPropertyOptional({ description: 'Filter by schemaVersion' })
   schemaVersion?: number;
-
-
-
 }
-

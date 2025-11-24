@@ -16,7 +16,11 @@ export class MailService {
     private readonly configService: ConfigService,
   ) {}
 
-  async sendVerificationEmail(to: string, name: string, verificationLink: string) {
+  async sendVerificationEmail(
+    to: string,
+    name: string,
+    verificationLink: string,
+  ) {
     const mailOptions = {
       from: this.configService.get<string>('MAIL_FROM'),
       to,
@@ -58,4 +62,3 @@ export class MailService {
     }
   }
 }
-

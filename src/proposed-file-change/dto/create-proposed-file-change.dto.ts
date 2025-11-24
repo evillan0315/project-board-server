@@ -16,22 +16,19 @@ import { Type } from 'class-transformer';
 
 export class CreateProposedFileChangeDto {
   @ApiProperty({ description: 'filePath field' })
-    @IsString()
-    filePath: string;
+  @IsString()
+  filePath: string;
   @ApiProperty({ description: 'newContent field' })
-    @IsOptional()
-    @IsString()
-    newContent: string;
+  @IsOptional()
+  @IsString()
+  newContent: string;
   @ApiProperty({ description: 'reason field' })
-    @IsOptional()
-    @IsString()
-    reason: string;
+  @IsOptional()
+  @IsString()
+  reason: string;
   @ApiProperty({ description: 'responseId field' })
-    @IsString()
-    responseId: string;
-
-
-
+  @IsString()
+  responseId: string;
 }
 
 export class PaginationProposedFileChangeResultDto {
@@ -65,31 +62,19 @@ export class PaginationProposedFileChangeQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by filePath' })
   filePath?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by newContent' })
   newContent?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by reason' })
   reason?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by responseId' })
   responseId?: string;
-
-
-
 }
-

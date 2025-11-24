@@ -163,7 +163,9 @@ export class RecordingController {
 
   @Post('screenshot')
   @Roles(UserRole.ADMIN, UserRole.USER)
-  @ApiOperation({ summary: 'Capture a screenshot of the desktop window screen.' })
+  @ApiOperation({
+    summary: 'Capture a screenshot of the desktop window screen.',
+  })
   @ApiCreatedResponse({
     description: 'Screenshot captured and saved successfully.',
     type: ScreenshotResponseDto,

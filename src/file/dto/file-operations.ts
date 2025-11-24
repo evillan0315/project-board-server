@@ -1,7 +1,7 @@
 import { IsArray, IsDefined, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { ProposedFileChangeDto } from 'src/llm/dto'; // Assuming this path is correct
+import { ProposedFileChangeDto } from '@/llm/dto'; // Assuming this path is correct
 
 export class ApplyChangesDto {
   @ApiProperty({

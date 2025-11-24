@@ -7,7 +7,10 @@ export enum DeviceType {
 }
 
 export class DeviceDto {
-  @ApiProperty({ description: 'Unique identifier for the device (e.g., /dev/video0, default, Microphone)' })
+  @ApiProperty({
+    description:
+      'Unique identifier for the device (e.g., /dev/video0, default, Microphone)',
+  })
   @IsString()
   id: string;
 
@@ -15,17 +18,26 @@ export class DeviceDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ enum: DeviceType, description: 'Type of the device (audioinput or videoinput)' })
+  @ApiProperty({
+    enum: DeviceType,
+    description: 'Type of the device (audioinput or videoinput)',
+  })
   @IsEnum(DeviceType)
   type: DeviceType;
 }
 
 export class DevicesListDto {
-  @ApiProperty({ type: [DeviceDto], description: 'List of available audio input devices (microphones)' })
+  @ApiProperty({
+    type: [DeviceDto],
+    description: 'List of available audio input devices (microphones)',
+  })
   @IsArray()
   audioInputDevices: DeviceDto[];
 
-  @ApiProperty({ type: [DeviceDto], description: 'List of available video input devices (cameras)' })
+  @ApiProperty({
+    type: [DeviceDto],
+    description: 'List of available video input devices (cameras)',
+  })
   @IsArray()
   videoInputDevices: DeviceDto[];
 }

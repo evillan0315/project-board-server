@@ -80,13 +80,12 @@ export class RecordingService {
   async getRecordingStatus(
     userId: string,
     id?: string,
-  ):
-    Promise<{
-      id: string;
-      recording: boolean;
-      file: string | null;
-      startedAt: string | null;
-    }> {
+  ): Promise<{
+    id: string;
+    recording: boolean;
+    file: string | null;
+    startedAt: string | null;
+  }> {
     let recordingEntity: Recording | null = null;
 
     if (id) {
@@ -113,7 +112,8 @@ export class RecordingService {
 
     // Check if the process is actually still running in-memory
     const activeRecord = this.activeRecordings.get(recordingEntity.id);
-    const isRunning = activeRecord && activeRecord.process.pid && !activeRecord.process.killed;
+    const isRunning =
+      activeRecord && activeRecord.process.pid && !activeRecord.process.killed;
 
     return {
       id: recordingEntity.id,
@@ -121,7 +121,8 @@ export class RecordingService {
       file: recordingEntity.path,
       startedAt: isRunning
         ? new Date(activeRecord.startTime).toISOString()
-        : (recordingEntity.data as RecordingData)?.startedAt?.toString() || null,
+        : (recordingEntity.data as RecordingData)?.startedAt?.toString() ||
+          null,
     };
   }
 
@@ -133,11 +134,10 @@ export class RecordingService {
   async getMetadata(
     userId: string,
     file: string,
-  ):
-    Promise<{
-      size: number;
-      modified: string;
-    }> {
+  ): Promise<{
+    size: number;
+    modified: string;
+  }> {
     // Ensure the file is within the user's directory for security
     const baseDir = join(process.cwd(), 'downloads', 'recordings', userId);
     const filePath = file.includes('/') ? file : join(baseDir, file);
@@ -157,7 +157,9 @@ export class RecordingService {
       if (error.code === 'ENOENT') {
         throw new NotFoundException(`File not found: ${file}`);
       }
-      this.logger.error(`Error getting metadata for ${filePath}: ${error.message}`);
+      this.logger.error(
+        `Error getting metadata for ${filePath}: ${error.message}`,
+      );
       throw new InternalServerErrorException(
         `Failed to retrieve file metadata: ${error.message}`,
       );
@@ -190,8 +192,7 @@ export class RecordingService {
   async cleanupOld(
     userId: string,
     days: number = 7,
-  ):
-    Promise<{
+  ): Promise<{
     deleted: string[];
   }> {
     const dir = join(process.cwd(), 'downloads', 'recordings', userId);
@@ -315,7 +316,9 @@ export class RecordingService {
       dto.enableAudio || false,
       dto.audioDevice,
     );
-    this.logger.log(`Starting screen recording: ${outputFile} with args: ${ffmpegArgs.join(' ')}`);
+    this.logger.log(
+      `Starting screen recording: ${outputFile} with args: ${ffmpegArgs.join(' ')}`,
+    );
 
     const recordingProcess = spawn('ffmpeg', ffmpegArgs);
 
@@ -376,8 +379,7 @@ export class RecordingService {
   async stopRecording(
     userId: string,
     id: string,
-  ):
-    Promise<{
+  ): Promise<{
     id: string;
     status: string;
     path: string;
@@ -418,7 +420,9 @@ export class RecordingService {
 
     if (!updatedRecording) {
       // This should ideally not happen if an activeRecord was found, but for type safety and robustness:
-      throw new NotFoundException(`Recording with ID ${id} not found after stopping.`);
+      throw new NotFoundException(
+        `Recording with ID ${id} not found after stopping.`,
+      );
     }
 
     return {
@@ -449,7 +453,10 @@ export class RecordingService {
     );
     await mkdir(screenshotsDir, { recursive: true });
 
-    const tempPngPath = join(screenshotsDir, `temp_screenshot_${Date.now()}.png`);
+    const tempPngPath = join(
+      screenshotsDir,
+      `temp_screenshot_${Date.now()}.png`,
+    );
     const outputFileName = `screenshot_${Date.now()}.${format}`;
     const finalOutputPath = join(screenshotsDir, outputFileName);
 
@@ -479,7 +486,11 @@ export class RecordingService {
             `FFmpeg screenshot failed with code ${code}: ${stderrOutput}`,
           );
           // Attempt to clean up the temporary file if it was created before failing
-          try { await unlink(tempPngPath); } catch (e) { /* ignore */ }
+          try {
+            await unlink(tempPngPath);
+          } catch (e) {
+            /* ignore */
+          }
           return reject(
             new InternalServerErrorException(
               `Failed to capture screenshot: ${stderrOutput}`,
@@ -531,7 +542,11 @@ export class RecordingService {
             err.stack,
           );
           // Attempt to clean up temp file if conversion failed
-          try { await unlink(tempPngPath); } catch (e) { /* ignore */ }
+          try {
+            await unlink(tempPngPath);
+          } catch (e) {
+            /* ignore */
+          }
           reject(
             new InternalServerErrorException(
               `Failed to process screenshot: ${err.message}`,
@@ -593,7 +608,11 @@ export class RecordingService {
           );
           // Potentially emit this via WebSocket for real-time client updates
         },
-        { resolution: dto.resolution, fps: dto.fps, audioDevice: dto.audioDevice },
+        {
+          resolution: dto.resolution,
+          fps: dto.fps,
+          audioDevice: dto.audioDevice,
+        },
       );
 
       const pid = String(recordingProcess.pid);
@@ -696,7 +715,9 @@ export class RecordingService {
 
     if (!updatedRecording) {
       // This should ideally not happen if an activeRecord was found, but for type safety and robustness:
-      throw new NotFoundException(`Recording with ID ${id} not found after stopping.`);
+      throw new NotFoundException(
+        `Recording with ID ${id} not found after stopping.`,
+      );
     }
 
     return {
@@ -728,7 +749,7 @@ export class RecordingService {
           data: {
             status: exitCode === 0 || exitCode === 255 ? 'finished' : 'failed',
             data: {
-              ...(currentRecording.data as RecordingData || {}),
+              ...((currentRecording.data as RecordingData) || {}),
               stoppedAt: new Date().toISOString(),
               exitCode,
             },
@@ -772,7 +793,7 @@ export class RecordingService {
         data: {
           status: exitCode === 0 ? 'finished' : 'failed',
           data: {
-            ...(currentRecording.data as RecordingData || {}),
+            ...((currentRecording.data as RecordingData) || {}),
             stoppedAt: new Date().toISOString(),
             duration,
             fileSize,
@@ -804,13 +825,20 @@ export class RecordingService {
     const platform = process.platform;
     const ffmpegInputArgs: string[] = [];
     const ffmpegOutputArgs: string[] = [
-      '-c:v', 'libx264',
-      '-preset', 'ultrafast',
-      '-tune', 'zerolatency',
-      '-pix_fmt', 'yuv420p',
-      '-b:v', '1M',
-      '-r', '30',
-      '-movflags', '+faststart',
+      '-c:v',
+      'libx264',
+      '-preset',
+      'ultrafast',
+      '-tune',
+      'zerolatency',
+      '-pix_fmt',
+      'yuv420p',
+      '-b:v',
+      '1M',
+      '-r',
+      '30',
+      '-movflags',
+      '+faststart',
       '-y', // Overwrite output file if it exists
       outputFile,
     ];
@@ -820,59 +848,104 @@ export class RecordingService {
       // For avfoundation, video device 1 is typically the primary display.
       // Audio device 0 is usually the default microphone.
       if (enableAudio) {
-        ffmpegInputArgs.push('-f', 'avfoundation', '-framerate', '30', '-i', `1:${audioDevice || '0'}`);
+        ffmpegInputArgs.push(
+          '-f',
+          'avfoundation',
+          '-framerate',
+          '30',
+          '-i',
+          `1:${audioDevice || '0'}`,
+        );
         ffmpegOutputArgs.unshift('-c:a', 'aac', '-b:a', '128k', '-ar', '44100');
       } else {
-        ffmpegInputArgs.push('-f', 'avfoundation', '-framerate', '30', '-i', '1'); // Video only
+        ffmpegInputArgs.push(
+          '-f',
+          'avfoundation',
+          '-framerate',
+          '30',
+          '-i',
+          '1',
+        ); // Video only
         ffmpegOutputArgs.unshift('-an'); // Disable audio in output
       }
     } else if (platform === 'win32') {
       // Windows - Use gdigrab for screen, dshow for audio
       ffmpegInputArgs.push(
-        '-f', 'gdigrab',
-        '-framerate', '30',
-        '-i', 'desktop',
+        '-f',
+        'gdigrab',
+        '-framerate',
+        '30',
+        '-i',
+        'desktop',
       );
       if (enableAudio) {
         ffmpegInputArgs.push(
-          '-f', 'dshow',
-          '-i', `audio=${audioDevice || 'virtual-audio-capturer'}`, // Requires a virtual audio device or specific device name
+          '-f',
+          'dshow',
+          '-i',
+          `audio=${audioDevice || 'virtual-audio-capturer'}`, // Requires a virtual audio device or specific device name
         );
         ffmpegOutputArgs.unshift('-c:a', 'aac', '-b:a', '128k', '-ar', '44100');
       } else {
         ffmpegOutputArgs.unshift('-an'); // Disable audio in output
       }
-    } else { // Linux
+    } else {
+      // Linux
       try {
         const { execSync } = require('child_process');
         // Attempt to get full screen resolution via xrandr
-        const xrandrOutput = execSync('xrandr | grep \"\\*\" | cut -d\" \" -f4').toString().trim();
+        const xrandrOutput = execSync('xrandr | grep \"\\*\" | cut -d\" \" -f4')
+          .toString()
+          .trim();
         const fullResolution = xrandrOutput || '1920x1080';
         const display = process.env.DISPLAY || ':0.0';
 
         ffmpegInputArgs.push(
-          '-video_size', fullResolution,
-          '-framerate', '30',
-          '-f', 'x11grab',
-          '-i', `${display}`,
+          '-video_size',
+          fullResolution,
+          '-framerate',
+          '30',
+          '-f',
+          'x11grab',
+          '-i',
+          `${display}`,
         );
         if (enableAudio) {
           ffmpegInputArgs.push('-f', 'pulse', '-i', audioDevice || 'default');
-          ffmpegOutputArgs.unshift('-c:a', 'aac', '-b:a', '128k', '-ar', '44100');
+          ffmpegOutputArgs.unshift(
+            '-c:a',
+            'aac',
+            '-b:a',
+            '128k',
+            '-ar',
+            '44100',
+          );
         } else {
           ffmpegOutputArgs.unshift('-an');
         }
       } catch (e) {
-        this.logger.warn(`Failed to detect display resolution with xrandr: ${e.message}. Using default.`);
+        this.logger.warn(
+          `Failed to detect display resolution with xrandr: ${e.message}. Using default.`,
+        );
         // Fallback for Linux if xrandr fails or is not available
         ffmpegInputArgs.push(
-          '-f', 'x11grab',
-          '-framerate', '30',
-          '-i', ':0.0', // Default display
+          '-f',
+          'x11grab',
+          '-framerate',
+          '30',
+          '-i',
+          ':0.0', // Default display
         );
         if (enableAudio) {
           ffmpegInputArgs.push('-f', 'pulse', '-i', audioDevice || 'default');
-          ffmpegOutputArgs.unshift('-c:a', 'aac', '-b:a', '128k', '-ar', '44100');
+          ffmpegOutputArgs.unshift(
+            '-c:a',
+            'aac',
+            '-b:a',
+            '128k',
+            '-ar',
+            '44100',
+          );
         } else {
           ffmpegOutputArgs.unshift('-an');
         }
@@ -893,29 +966,66 @@ export class RecordingService {
     if (platform === 'darwin') {
       // macOS - Use avfoundation for screen capture. Display '1' usually refers to the main screen.
       // It captures one frame and outputs to file.
-      ffmpegArgs.push('-f', 'avfoundation', '-i', '1', '-vframes', '1', '-y', outputFile);
+      ffmpegArgs.push(
+        '-f',
+        'avfoundation',
+        '-i',
+        '1',
+        '-vframes',
+        '1',
+        '-y',
+        outputFile,
+      );
     } else if (platform === 'win32') {
       // Windows - Use gdigrab for screen capture. 'desktop' captures the entire desktop.
-      ffmpegArgs.push('-f', 'gdigrab', '-i', 'desktop', '-vframes', '1', '-y', outputFile);
-    } else { // Linux
+      ffmpegArgs.push(
+        '-f',
+        'gdigrab',
+        '-i',
+        'desktop',
+        '-vframes',
+        '1',
+        '-y',
+        outputFile,
+      );
+    } else {
+      // Linux
       try {
         const { execSync } = require('child_process');
         // Attempt to get full screen resolution via xrandr
-        const xrandrOutput = execSync('xrandr | grep \"\\*\" | cut -d\" \" -f4').toString().trim();
+        const xrandrOutput = execSync('xrandr | grep \"\\*\" | cut -d\" \" -f4')
+          .toString()
+          .trim();
         const fullResolution = xrandrOutput || '1920x1080';
         const display = process.env.DISPLAY || ':0.0';
 
         ffmpegArgs.push(
-          '-f', 'x11grab',
-          '-video_size', fullResolution,
-          '-i', `${display}`,
-          '-vframes', '1',
-          '-y', outputFile,
+          '-f',
+          'x11grab',
+          '-video_size',
+          fullResolution,
+          '-i',
+          `${display}`,
+          '-vframes',
+          '1',
+          '-y',
+          outputFile,
         );
       } catch (e) {
-        this.logger.warn(`Failed to detect display resolution with xrandr for screenshot: ${e.message}. Using default.`);
+        this.logger.warn(
+          `Failed to detect display resolution with xrandr for screenshot: ${e.message}. Using default.`,
+        );
         // Fallback for Linux if xrandr fails or is not available
-        ffmpegArgs.push('-f', 'x11grab', '-i', ':0.0', '-vframes', '1', '-y', outputFile);
+        ffmpegArgs.push(
+          '-f',
+          'x11grab',
+          '-i',
+          ':0.0',
+          '-vframes',
+          '1',
+          '-y',
+          outputFile,
+        );
       }
     }
     return ffmpegArgs;

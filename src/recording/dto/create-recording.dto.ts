@@ -84,7 +84,9 @@ export class ScreenshotDto {
 }
 
 export class ScreenshotResponseDto {
-  @ApiProperty({ description: 'The ID of the recording entry in the database.' })
+  @ApiProperty({
+    description: 'The ID of the recording entry in the database.',
+  })
   id: string;
 
   @ApiProperty({

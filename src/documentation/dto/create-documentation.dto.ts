@@ -16,14 +16,11 @@ import { Type } from 'class-transformer';
 
 export class CreateDocumentationDto {
   @ApiProperty({ description: 'name field' })
-    @IsString()
-    name: string;
+  @IsString()
+  name: string;
   @ApiProperty({ description: 'content field' })
-    @IsString()
-    content: string;
-
-
-
+  @IsString()
+  content: string;
 }
 
 export class PaginationDocumentationResultDto {
@@ -57,19 +54,11 @@ export class PaginationDocumentationQueryDto {
   pageSize?: number = 10;
 
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by name' })
   name?: string;
   @IsOptional()
-  
   @IsString()
-  
   @ApiPropertyOptional({ description: 'Filter by content' })
   content?: string;
-
-
-
 }
-

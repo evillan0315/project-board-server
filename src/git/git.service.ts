@@ -126,7 +126,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -135,7 +135,7 @@ export class GitService {
     } catch (error) {
       this.logger.error(`Failed to stage files: ${error.message}`, error.stack);
       throw new InternalServerErrorException(
-        `Failed to stage files: ${error.message}`, 
+        `Failed to stage files: ${error.message}`,
       );
     }
   }
@@ -150,7 +150,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -162,7 +162,7 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to unstage files: ${error.message}`, 
+        `Failed to unstage files: ${error.message}`,
       );
     }
   }
@@ -174,7 +174,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -186,7 +186,7 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to reset staged changes: ${error.message}`, 
+        `Failed to reset staged changes: ${error.message}`,
       );
     }
   }
@@ -198,7 +198,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -224,7 +224,7 @@ export class GitService {
         throw error;
       }
       throw new InternalServerErrorException(
-        `Failed to perform hard reset: ${error.message}`, 
+        `Failed to perform hard reset: ${error.message}`,
       );
     }
   }
@@ -236,7 +236,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -245,7 +245,7 @@ export class GitService {
     } catch (error) {
       this.logger.error(`Failed to commit: ${error.message}`, error.stack);
       throw new InternalServerErrorException(
-        `Failed to commit: ${error.message}`, 
+        `Failed to commit: ${error.message}`,
       );
     }
   }
@@ -257,7 +257,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -268,32 +268,46 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to get HEAD commit hash: ${error.message}`, 
+        `Failed to get HEAD commit hash: ${error.message}`,
       );
     }
   }
 
-  async applyPatch(patchContent: string, projectRoot?: string): Promise<string> {
+  async applyPatch(
+    patchContent: string,
+    projectRoot?: string,
+  ): Promise<string> {
     const effectiveRoot = projectRoot
       ? path.resolve(projectRoot)
       : this.DEFAULT_PROJECT_ROOT;
 
-    if (!(await this.isGitRepository(this.getGit(effectiveRoot), effectiveRoot))) {
+    if (
+      !(await this.isGitRepository(this.getGit(effectiveRoot), effectiveRoot))
+    ) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
 
     try {
       // Create a temporary patch file
-      const tempPatchPath = path.join(effectiveRoot, `.temp-ai-patch-${Date.now()}.patch`);
+      const tempPatchPath = path.join(
+        effectiveRoot,
+        `.temp-ai-patch-${Date.now()}.patch`,
+      );
       await fs.promises.writeFile(tempPatchPath, patchContent, 'utf-8');
 
       // Apply the patch using child_process.exec
-      const { stdout, stderr } = await exec(`git apply ${tempPatchPath}`, { cwd: effectiveRoot });
+      const { stdout, stderr } = await exec(`git apply ${tempPatchPath}`, {
+        cwd: effectiveRoot,
+      });
 
       // Clean up the temporary patch file
-      await fs.promises.unlink(tempPatchPath).catch(e => this.logger.warn(`Failed to delete temp patch file: ${e.message}`));
+      await fs.promises
+        .unlink(tempPatchPath)
+        .catch((e) =>
+          this.logger.warn(`Failed to delete temp patch file: ${e.message}`),
+        );
 
       if (stderr) {
         this.logger.warn(`git apply stderr: ${stderr}`);
@@ -302,7 +316,7 @@ export class GitService {
     } catch (error) {
       this.logger.error(`Failed to apply patch: ${error.message}`, error.stack);
       throw new InternalServerErrorException(
-        `Failed to apply patch: ${error.message}`, 
+        `Failed to apply patch: ${error.message}`,
       );
     }
   }
@@ -314,7 +328,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -328,7 +342,7 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to get Git diff for file: ${error.message}`, 
+        `Failed to get Git diff for file: ${error.message}`,
       );
     }
   }
@@ -340,7 +354,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -366,7 +380,7 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to get branches: ${error.message}`, 
+        `Failed to get branches: ${error.message}`,
       );
     }
   }
@@ -381,7 +395,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -393,7 +407,7 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to create branch: ${error.message}`, 
+        `Failed to create branch: ${error.message}`,
       );
     }
   }
@@ -409,7 +423,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -456,7 +470,7 @@ export class GitService {
         throw error;
       }
       throw new InternalServerErrorException(
-        `Failed to checkout branch: ${error.message}`, 
+        `Failed to checkout branch: ${error.message}`,
       );
     }
   }
@@ -472,7 +486,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -484,7 +498,7 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to delete branch: ${error.message}`, 
+        `Failed to delete branch: ${error.message}`,
       );
     }
   }
@@ -499,7 +513,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -534,7 +548,7 @@ export class GitService {
         throw error;
       }
       throw new InternalServerErrorException(
-        `Failed to revert commit: ${error.message}`, 
+        `Failed to revert commit: ${error.message}`,
       );
     }
   }
@@ -549,7 +563,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -561,7 +575,7 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to undo changes for file: ${error.message}`, 
+        `Failed to undo changes for file: ${error.message}`,
       );
     }
   }
@@ -577,7 +591,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -601,7 +615,7 @@ export class GitService {
         throw error;
       }
       throw new InternalServerErrorException(
-        `Failed to create snapshot: ${error.message}`, 
+        `Failed to create snapshot: ${error.message}`,
       );
     }
   }
@@ -616,7 +630,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -638,7 +652,7 @@ export class GitService {
         throw error;
       }
       throw new InternalServerErrorException(
-        `Failed to restore snapshot: ${error.message}`, 
+        `Failed to restore snapshot: ${error.message}`,
       );
     }
   }
@@ -650,7 +664,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -662,7 +676,7 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to list snapshots: ${error.message}`, 
+        `Failed to list snapshots: ${error.message}`,
       );
     }
   }
@@ -677,7 +691,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -698,7 +712,7 @@ export class GitService {
         throw error;
       }
       throw new InternalServerErrorException(
-        `Failed to delete snapshot: ${error.message}`, 
+        `Failed to delete snapshot: ${error.message}`,
       );
     }
   }
@@ -710,7 +724,7 @@ export class GitService {
       : this.DEFAULT_PROJECT_ROOT;
     if (!(await this.isGitRepository(git, effectiveRoot))) {
       throw new BadRequestException(
-        `Directory \'${effectiveRoot}\' is not a Git repository.`, 
+        `Directory \'${effectiveRoot}\' is not a Git repository.`,
       );
     }
     try {
@@ -728,7 +742,7 @@ export class GitService {
         error.stack,
       );
       throw new InternalServerErrorException(
-        `Failed to get commit log: ${error.message}`, 
+        `Failed to get commit log: ${error.message}`,
       );
     }
   }

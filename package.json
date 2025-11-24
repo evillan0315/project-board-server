@@ -140,6 +140,7 @@
     "potrace": "^2.1.8",
     "puppeteer": "^24.12.1",
     "recursive-readdir": "^2.2.3",
+    "redocly": "^1.0.0",
     "reflect-metadata": "^0.2.2",
     "rehype-stringify": "^10.0.1",
     "remark-parse": "^11.0.0",

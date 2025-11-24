@@ -57,7 +57,7 @@ import { JwtAuthGuard } from '../auth/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/enums/user-role.enum';
-import { ProposedFileChangeDto } from 'src/llm/dto'; // Import ProposedFileChangeDto
+
 import { ApplyChangesDto } from './dto/file-operations'; // Import ApplyChangesDto
 
 @ApiBearerAuth()

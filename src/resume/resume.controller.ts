@@ -96,13 +96,13 @@ export class ResumeController {
 
     if (!providerAccount) {
       throw new UnauthorizedException(
-        `${providerName} account not linked for this user.`, 
+        `${providerName} account not linked for this user.`,
       );
     }
 
     if (!providerAccount.access_token) {
       throw new UnauthorizedException(
-        `${providerName} access token not found for this account.`, 
+        `${providerName} access token not found for this account.`,
       );
     }
 
@@ -409,8 +409,7 @@ export class ResumeController {
   })
   @ApiResponse({
     status: 400,
-    description:
-      'Invalid input: missing resume content or job description.',
+    description: 'Invalid input: missing resume content or job description.',
   })
   @ApiResponse({
     status: 500,

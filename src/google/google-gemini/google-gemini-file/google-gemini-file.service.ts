@@ -152,7 +152,7 @@ export class GoogleGeminiFileService {
           errorData,
         );
         throw new InternalServerErrorException(
-          `Gemini API error: ${errorData.error?.message || 'Unknown API error'}`, 
+          `Gemini API error: ${errorData.error?.message || 'Unknown API error'}`,
         );
       }
 
@@ -662,10 +662,12 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
     return this._performGeminiOperation({
       dto: { ...generatePortfolioDto, prompt: prompt },
       requestType: RequestType.PORTFOLIO_GENERATION,
-      getContents: (dto) => [{
-        role: 'user', 
-        parts: [{ text: dto.prompt }],
-      }],
+      getContents: (dto) => [
+        {
+          role: 'user',
+          parts: [{ text: dto.prompt }],
+        },
+      ],
       defaultSystemInstruction: defaultSystemInstruction,
     }) as Promise<string>;
   }
@@ -687,10 +689,12 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
     return this._performGeminiOperation({
       dto: { ...generateCoverLetterDto, prompt: prompt },
       requestType: RequestType.COVER_LETTER_GENERATION,
-      getContents: (dto) => [{
-        role: 'user',
-        parts: [{ text: dto.prompt }],
-      }],
+      getContents: (dto) => [
+        {
+          role: 'user',
+          parts: [{ text: dto.prompt }],
+        },
+      ],
       defaultSystemInstruction: defaultSystemInstruction,
     }) as Promise<string>;
   }
@@ -721,7 +725,7 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
             `Veo operation status error (${statusResponse.status}): ${JSON.stringify(errorData)}`,
           );
           throw new InternalServerErrorException(
-            `Veo operation status error: ${errorData.error?.message || 'Unknown API error'}`, 
+            `Veo operation status error: ${errorData.error?.message || 'Unknown API error'}`,
           );
         }
 
@@ -741,7 +745,7 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
               `Veo operation ${operationName} failed: ${JSON.stringify(statusResult.error)}`,
             );
             throw new InternalServerErrorException(
-              `Video generation operation failed: ${statusResult.error.message || 'Unknown error'}`, 
+              `Video generation operation failed: ${statusResult.error.message || 'Unknown error'}`,
             );
           } else {
             this.logger.error(
@@ -752,8 +756,7 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
             );
           }
         }
-      }
-      catch (error) {
+      } catch (error) {
         if (error instanceof InternalServerErrorException) {
           throw error;
         }
@@ -771,7 +774,7 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
       );
     }
     throw new InternalServerErrorException(
-      `Video generation operation timed out after ${this.POLLING_TIMEOUT_MS / 1000} seconds.`, 
+      `Video generation operation timed out after ${this.POLLING_TIMEOUT_MS / 1000} seconds.`,
     );
   }
 
@@ -828,7 +831,7 @@ Ensure the JSON is perfectly parsable. If no specific suggestion for a category,
           `Failed to initiate Veo video generation (${initialResponse.status}): ${JSON.stringify(errorData)}`,
         );
         throw new InternalServerErrorException(
-          `Failed to initiate video generation: ${errorData.error?.message || 'Unknown API error'}`, 
+          `Failed to initiate video generation: ${errorData.error?.message || 'Unknown API error'}`,
         );
       }
 

@@ -14,7 +14,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,7 +29,7 @@ import {
   ApiQuery,
   ApiResponse,
   ApiConsumes,
-  ApiBody
+  ApiBody,
 } from '@nestjs/swagger';
 import axios from 'axios';
 
@@ -46,31 +46,24 @@ import {
 } from './dto/create-diff.dto';
 import { UpdateDiffDto } from './dto/update-diff.dto';
 
-
-
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-
-
-@ApiTags(
-  'Diff'
-)
+@ApiTags('Diff')
 @Controller('api/diff')
 export class DiffController {
   constructor(private readonly diffService: DiffService) {}
-  
-  
-  
+
   // ───────────────────────────────────────────────────────────
   // CREATE
   // ───────────────────────────────────────────────────────────
 
   @Post()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Create a new Diff' })
-  @ApiCreatedResponse({ description: 'Successfully created.', type: CreateDiffDto })
+  @ApiCreatedResponse({
+    description: 'Successfully created.',
+    type: CreateDiffDto,
+  })
   @ApiBadRequestResponse({ description: 'Validation failed.' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
@@ -83,11 +76,12 @@ export class DiffController {
   // ───────────────────────────────────────────────────────────
 
   @Get()
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Retrieve all Diff records' })
-  @ApiOkResponse({ description: 'List of Diff records.', type: [CreateDiffDto] })
+  @ApiOkResponse({
+    description: 'List of Diff records.',
+    type: [CreateDiffDto],
+  })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
   @ApiForbiddenResponse({ description: 'Forbidden.' })
   findAll() {
@@ -99,28 +93,23 @@ export class DiffController {
   // ───────────────────────────────────────────────────────────
 
   @Get('paginated')
-
-@Roles(UserRole.ADMIN)
-
-@ApiOperation({ summary: 'Paginated Diff records' })
-@ApiResponse({
-  status: HttpStatus.OK,
-  description: 'Paginated results',
-  type: PaginationDiffResultDto,
-})
-findAllPaginated(@Query() query: PaginationDiffQueryDto) {
-  return this.diffService.findAllPaginated(query);
-}
-
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Paginated Diff records' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Paginated results',
+    type: PaginationDiffResultDto,
+  })
+  findAllPaginated(@Query() query: PaginationDiffQueryDto) {
+    return this.diffService.findAllPaginated(query);
+  }
 
   // ───────────────────────────────────────────────────────────
   // FIND ONE
   // ───────────────────────────────────────────────────────────
 
   @Get(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Find Diff by ID' })
   @ApiOkResponse({ description: 'Record found.', type: CreateDiffDto })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -135,9 +124,7 @@ findAllPaginated(@Query() query: PaginationDiffQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Patch(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Update Diff by ID' })
   @ApiOkResponse({ description: 'Successfully updated.', type: UpdateDiffDto })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
@@ -153,9 +140,7 @@ findAllPaginated(@Query() query: PaginationDiffQueryDto) {
   // ───────────────────────────────────────────────────────────
 
   @Delete(':id')
-  
   @Roles(UserRole.ADMIN)
-  
   @ApiOperation({ summary: 'Delete Diff by ID' })
   @ApiOkResponse({ description: 'Successfully deleted.' })
   @ApiNotFoundResponse({ description: 'Record not found.' })
@@ -165,4 +150,3 @@ findAllPaginated(@Query() query: PaginationDiffQueryDto) {
     return this.diffService.remove(id);
   }
 }
-

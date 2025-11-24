@@ -38,4 +38,5 @@ export const protectedModels = [
   'Diff',
   'ExecutionSnapshot',
   'Plan',
+  'FileChange',
 ];

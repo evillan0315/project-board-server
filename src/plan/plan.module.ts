@@ -6,10 +6,7 @@ import { ModuleControlModule } from '../module-control/module-control.module';
 @Module({
   imports: [PrismaModule, ModuleControlModule],
   controllers: [PlanController],
-  providers: [
-      PlanService,
-      
-    ]
+  providers: [PlanService],
+  exports: [PlanService],
 })
 export class PlanModule {}
-

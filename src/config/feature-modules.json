@@ -39,6 +39,7 @@
     { "name": "LlmRequestModule", "enabled": true },
     { "name": "DiffModule", "enabled": true },
     { "name": "ExecutionSnapshotModule", "enabled": true },
-    { "name": "PlanModule", "enabled": true }
+    { "name": "PlanModule", "enabled": true },
+    { "name": "FileChangeModule", "enabled": true }
   ]
 }

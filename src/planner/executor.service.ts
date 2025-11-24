@@ -1,3 +1,7 @@
+// FIlePath: src/executor/executor.service.ts
+// Title: ExecutorService - snapshot and apply AI plan changes (with robust patch fallback and safe path resolution)
+// Reason: Improve safety, correctness, and observability when applying AI-generated file diffs and content.
+
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -11,51 +15,55 @@ import { GitService } from '@/git/git.service';
 
 const exec = promisify(_exec);
 
-/**
- * Normalizes the change file path and guarantees that it is always
- * resolved under the repository path (no duplicated prefix, no accidental absolute escapes).
- */
 export function resolveChangePath(
   effectiveRepoPath: string,
   changeFilePath: string,
 ): string {
   const repo = path.resolve(effectiveRepoPath || process.cwd());
+
+  // If no file path provided, return repo root
   if (!changeFilePath) return repo;
 
+  // Normalize input
+  const input = changeFilePath.trim();
+
+  // If absolute path, try to make it repo-relative if it's inside the repo;
+  // otherwise, strip root to create a pseudo-relative path that preserves tree structure.
   let normalized: string;
-
-  // If absolute path, try to convert to a path relative to repo when possible.
-  if (path.isAbsolute(changeFilePath)) {
-    const abs = path.resolve(changeFilePath);
-
-    // If abs is inside the repository (exact match or repo + separator), make it repo-relative.
+  if (path.isAbsolute(input)) {
+    const abs = path.resolve(input);
     const repoWithSep = repo.endsWith(path.sep) ? repo : repo + path.sep;
     if (abs === repo || abs.startsWith(repoWithSep)) {
-      normalized = path.relative(repo, abs);
+      normalized = path.relative(repo, abs); // repo-relative
     } else {
-      // If outside repo, treat as pseudo-relative by stripping leading separator
-      // (keeps files inside repo under a path that mirrors the absolute location).
-      normalized = path.relative(path.parse(abs).root, abs); // strips the root (e.g. leading '/' or 'C:\')
+      // Turn absolute path like /etc/foo into etc/foo (strip root)
+      normalized = path.relative(path.parse(abs).root, abs);
     }
   } else {
-    normalized = changeFilePath;
+    normalized = input;
   }
 
-  // Remove any accidental leading separators
+  // Remove leading slashes/backslashes that may remain and normalize
   normalized = normalized.replace(/^[/\\]+/, '');
-
-  // Build final path and normalize
   const finalPath = path.normalize(path.join(repo, normalized));
 
-  // Safety: ensure finalPath is inside repo. If not, place file in repo root using basename.
+  // Security: ensure finalPath is inside repo; if not, fallback to repo/basename(normalized)
   const finalWithSep = repo.endsWith(path.sep) ? repo : repo + path.sep;
   if (finalPath === repo || finalPath.startsWith(finalWithSep)) {
     return finalPath;
   }
 
-  // Fallback: avoid writing outside repo by using repo + basename(normalized)
   return path.join(repo, path.basename(normalized));
 }
+
+type SnapshotApplyResult = {
+  ok: boolean;
+  results: Array<Record<string, any>>;
+  snapshot?: string | null;
+  newHead?: string | null;
+  error?: string;
+  details?: string;
+};
 
 @Injectable()
 export class ExecutorService {
@@ -70,37 +78,35 @@ export class ExecutorService {
   }
 
   /**
-   * Snapshot current HEAD (committing any staged/unstaged changes minimally),
-   * create a branch for the plan application, apply every change using the best
-   * available method (git patch via GitService or direct fs writes), run optional
-   * checks (tsc, lint), then commit and return result summary including snapshot/newHead.
+   * Snapshot, apply changes, run checks, commit, and return structured result.
    */
   async snapshotAndApply(
     planTitle: string,
     changes: FileChangeDto[],
     projectRoot?: string,
-  ) {
+  ): Promise<SnapshotApplyResult> {
     const effectiveRepoPath = projectRoot
       ? path.resolve(projectRoot)
       : this.repoPath;
     const branch = `ai/plan-${Date.now()}`;
+    const results: SnapshotApplyResult['results'] = [];
 
-    // Preflight: ensure repo status accessible
+    // Preflight: ensure repo accessible
     try {
       await this.gitService.getStatus(effectiveRepoPath);
     } catch (e: any) {
-      if (
-        e instanceof BadRequestException &&
-        String(e.message).includes('not a Git repository')
-      ) {
+      const message = String(e?.message ?? e);
+      if (message.includes('not a Git repository')) {
         return {
           ok: false,
           error: `Project root '${effectiveRepoPath}' is not a Git repository. Cannot apply changes.`,
+          results,
         };
       }
       return {
         ok: false,
-        error: `Failed pre-check for Git repository: ${String(e?.message ?? e)}`,
+        error: `Failed pre-check for Git repository: ${message}`,
+        results,
       };
     }
 
@@ -120,19 +126,20 @@ export class ExecutorService {
           return {
             ok: false,
             error: `Failed to create or checkout branch ${branch}: ${String(checkoutErr?.message ?? checkoutErr)}`,
+            results,
           };
         }
       } else {
         return {
           ok: false,
           error: `Failed to create branch ${branch}: ${msg}`,
+          results,
         };
       }
     }
 
-    // Make a minimal snapshot commit so we can rollback to a known commit
+    // Snapshot: stage + commit a minimal snapshot to enable rollback
     try {
-      // Stage everything to ensure reproducible snapshot; allow commit to fail (no changes)
       await this.gitService.stageFiles(['.'], effectiveRepoPath);
       await this.gitService
         .commit(
@@ -141,7 +148,6 @@ export class ExecutorService {
         )
         .catch(() => {});
     } catch (e: any) {
-      // Not fatal — continue, but log
       this.logger.warn(
         'Snapshot commit step failed (continuing):',
         String(e?.message ?? e),
@@ -158,137 +164,118 @@ export class ExecutorService {
       );
     }
 
-    const results: Array<any> = [];
+    // small utility helpers
+    const ensureDirFor = async (filePath: string) =>
+      fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+    const writeTempPatch = async (content: string | undefined) => {
+      const tempPatchName = `.temp-ai-patch-${Date.now()}.patch`;
+      const tempPatchPath = path.join(effectiveRepoPath, tempPatchName);
+      try {
+        await fs.promises.writeFile(tempPatchPath, content ?? '', 'utf-8');
+        return tempPatchPath;
+      } catch (werr: any) {
+        this.logger.warn(
+          `Failed to write temp patch file ${tempPatchPath}: ${String(werr?.message ?? werr)}`,
+        );
+        return null;
+      }
+    };
 
     try {
       for (const ch of changes || []) {
-        // Map Prisma enum (e.g. 'ADD') to lower-case label ('add') via map used in planner
-        const actionLabel = FileActionLabel[ch.action as PrismaFileAction];
-        const abs = path.join(effectiveRepoPath, ch.filePath);
+        // Safely map action label (fall back to string)
+        const actionLabel = (
+          FileActionLabel[ch.action as PrismaFileAction] ??
+          String(ch.action ?? 'unknown')
+        ).toLowerCase();
+        const abs = resolveChangePath(effectiveRepoPath, ch.filePath ?? '');
 
         this.logger.log(
           `Applying action=${actionLabel} file=${ch.filePath} -> abs=${abs}`,
         );
 
-        // Ensure directory exists for file operations (except delete or run)
-        const ensureDirFor = (filePath: string) =>
-          fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-
+        // Handle create/modify/repair
         if (
           actionLabel === 'add' ||
           actionLabel === 'modify' ||
           actionLabel === 'repair'
         ) {
           await ensureDirFor(abs);
-          if (ch.newContent) {
-            // --- replace the inner try/catch around this.gitService.applyPatch(ch.diff, effectiveRepoPath)
-            // with the code below -- keep surrounding context the same.
 
+          // Prefer applying diff if provided; otherwise write newContent
+          if (ch.diff) {
+            // Try gitService.applyPatch first
             try {
-              let appliedMethod = 'new-content';
-
-
-              // If newContent provided, verify; otherwise just try to read current file for sanity
+              await this.gitService.applyPatch(ch.diff, effectiveRepoPath);
+              // Verify & possibly overwrite with provided newContent
               if (ch.newContent != null) {
                 try {
-                  const currentContent = await fs.promises.readFile(
-                    abs,
-                    'utf-8',
-                  );
-                  if (currentContent !== ch.newContent) {
+                  const current = await fs.promises.readFile(abs, 'utf-8');
+                  if (current !== ch.newContent) {
                     this.logger.warn(
-                      `Patch applied successfully to ${ch.filePath}, but resulting content differs from provided newContent (length: ${currentContent.length} vs ${ch.newContent.length}). Overwriting to ensure correctness.`,
+                      `Applied diff for ${ch.filePath} but content differs from provided newContent; overwriting to guarantee correctness.`,
                     );
                     await fs.promises.writeFile(abs, ch.newContent, 'utf-8');
-                    appliedMethod = 'diff+overwrite';
+                    results.push({
+                      file: ch.filePath,
+                      ok: true,
+                      applied: 'diff+overwrite',
+                    });
+                    continue;
                   }
-                  
-                } catch (readErr: any) {
-                  this.logger.warn(
-                    `Failed to verify content after patch for ${ch.filePath}: ${readErr.message}`,
-                  );
-                  this.logger.log(
-                    `Adding ${ch.filePath}: ${ch.newContent}`,
-                  );
-                  await fs.promises.writeFile(abs, ch.newContent, 'utf-8');
-                }
-              } else {
-                // Best-effort: try to read the file to ensure something changed / file exists
-                try {
-                  await fs.promises.access(abs, fs.constants.R_OK);
                 } catch {
-                  // not fatal — file may be newly created under a different path; keep going
+                  // If reading fails, attempt to write provided content
+                  if (ch.newContent != null) {
+                    await fs.promises.writeFile(abs, ch.newContent, 'utf-8');
+                    results.push({
+                      file: ch.filePath,
+                      ok: true,
+                      applied: 'diff+overwrite-on-read-fail',
+                    });
+                    continue;
+                  }
                 }
               }
-              if (ch.diff) {
-                // Primary: try the GitService helper (keeps existing behavior)
-                await this.gitService.applyPatch(ch.diff, effectiveRepoPath);
-                appliedMethod = 'diff';
-              }
-
-              results.push({
-                file: ch.filePath,
-                ok: true,
-                applied: appliedMethod,
-              });
+              // Diff applied and verified or nothing to verify
+              results.push({ file: ch.filePath, ok: true, applied: 'diff' });
+              continue;
             } catch (applyErr: any) {
-              // Fallback strategy when applyPatch fails
-              const tempPatchName = `.temp-ai-patch-${Date.now()}.patch`;
-              const tempPatchPath = path.join(effectiveRepoPath, tempPatchName);
-
-              try {
-                // Persist the patch for debugging (consistent with existing behavior)
-                await fs.promises.writeFile(
-                  tempPatchPath,
-                  ch.newContent,
-                  'utf-8',
-                );
-                this.logger.warn(
-                  `Primary patch apply failed; temp patch written to ${tempPatchPath}. Attempting fallback git/patch apply...`,
-                );
-              } catch (werr: any) {
-                this.logger.warn(
-                  `Failed to write temp patch file ${tempPatchPath}: ${String(werr?.message ?? werr)}`,
-                );
-              }
-
+              this.logger.warn(
+                `gitService.applyPatch failed for ${ch.filePath}: ${String(applyErr?.message ?? applyErr)}`,
+              );
+              // Fallbacks below
+              const tempPatchPath = await writeTempPatch(ch.diff);
               let fallbackApplied = false;
               let appliedMethod = `diff-failed:${String(applyErr?.message ?? applyErr)}`;
 
-              // Try git apply with different -p strip levels (0..3)
-              for (let strip = 0; strip <= 3 && !fallbackApplied; strip++) {
-                try {
-                  this.logger.debug(
-                    `Attempting git apply -p${strip} for ${tempPatchPath}`,
-                  );
-                  await exec(
-                    `git apply -p${strip} --reject --whitespace=fix "${tempPatchPath}"`,
-                    {
-                      cwd: effectiveRepoPath,
-                      timeout: 1000 * 60 * 2,
-                    },
-                  );
-                  fallbackApplied = true;
-                  appliedMethod = `diff+gitapply-p${strip}`;
-                  this.logger.log(
-                    `Fallback git apply succeeded with -p${strip} for ${ch.filePath}`,
-                  );
-                  break;
-                } catch (gerr: any) {
-                  this.logger.debug(
-                    `git apply -p${strip} failed: ${String(gerr?.message ?? gerr)}`,
-                  );
+              // Try git apply -p0..3
+              if (tempPatchPath) {
+                for (let strip = 0; strip <= 3 && !fallbackApplied; strip++) {
+                  try {
+                    await exec(
+                      `git apply -p${strip} --reject --whitespace=fix "${tempPatchPath}"`,
+                      {
+                        cwd: effectiveRepoPath,
+                        timeout: 1000 * 60 * 2,
+                      },
+                    );
+                    fallbackApplied = true;
+                    appliedMethod = `diff+gitapply-p${strip}`;
+                    this.logger.log(
+                      `Fallback git apply succeeded with -p${strip} for ${ch.filePath}`,
+                    );
+                  } catch (gerr: any) {
+                    this.logger.debug(
+                      `git apply -p${strip} failed: ${String(gerr?.message ?? gerr)}`,
+                    );
+                  }
                 }
               }
 
-              // If git apply didn't work, try system 'patch' (some environments have more tolerant 'patch' behavior)
-              if (!fallbackApplied) {
+              // Try system patch if git apply didn't succeed
+              if (!fallbackApplied && tempPatchPath) {
                 for (let strip = 0; strip <= 3 && !fallbackApplied; strip++) {
                   try {
-                    this.logger.debug(
-                      `Attempting system 'patch' -p${strip} for ${tempPatchPath}`,
-                    );
-                    // Use shell redirection to pipe the patch to patch command
                     await exec(`patch -p${strip} < "${tempPatchPath}"`, {
                       cwd: effectiveRepoPath,
                       timeout: 1000 * 60 * 2,
@@ -298,7 +285,6 @@ export class ExecutorService {
                     this.logger.log(
                       `Fallback 'patch' succeeded with -p${strip} for ${ch.filePath}`,
                     );
-                    break;
                   } catch (perr: any) {
                     this.logger.debug(
                       `patch -p${strip} failed: ${String(perr?.message ?? perr)}`,
@@ -307,15 +293,12 @@ export class ExecutorService {
                 }
               }
 
+              // If any fallback applied, verify/overwrite with newContent if needed
               if (fallbackApplied) {
-                // Attempt to verify if we can read the file; if newContent provided earlier we'd have overwritten.
                 if (ch.newContent != null) {
                   try {
-                    const currentContent = await fs.promises.readFile(
-                      abs,
-                      'utf-8',
-                    );
-                    if (currentContent !== ch.newContent) {
+                    const current = await fs.promises.readFile(abs, 'utf-8');
+                    if (current !== ch.newContent) {
                       this.logger.warn(
                         `Fallback apply produced content differing from provided newContent for ${ch.filePath} — overwriting to ensure correctness.`,
                       );
@@ -328,31 +311,55 @@ export class ExecutorService {
                     );
                   }
                 }
-
                 results.push({
                   file: ch.filePath,
                   ok: true,
                   applied: appliedMethod,
                   tempPatch: tempPatchPath,
                 });
-              } else {
-                // No fallback succeeded — preserve the original apply error and the temp patch path
-                results.push({
-                  file: ch.filePath,
-                  ok: false,
-                  error: `Failed to apply diff: ${String(applyErr?.message ?? applyErr)}. Temp patch preserved at ${tempPatchPath}. See server logs for a preview and errors.`,
-                  tempPatch: tempPatchPath,
-                });
+                continue;
               }
-            }
-          } else {
-            // No diff -> write newContent (possibly overwrite)
+
+              // All diff methods failed -> fallthrough to write newContent if present
+              if (!fallbackApplied && ch.newContent != null) {
+                try {
+                  await fs.promises.writeFile(abs, ch.newContent, 'utf-8');
+                  results.push({
+                    file: ch.filePath,
+                    ok: true,
+                    applied: 'write-newContent-after-diff-fail',
+                    tempPatch: tempPatchPath,
+                  });
+                } catch (we: any) {
+                  results.push({
+                    file: ch.filePath,
+                    ok: false,
+                    error: `Failed to write newContent after diff failure: ${String(we?.message ?? we)}`,
+                    tempPatch: tempPatchPath,
+                  });
+                }
+                continue;
+              }
+
+              // Nothing left to try for this change
+              results.push({
+                file: ch.filePath,
+                ok: false,
+                error: `Failed to apply diff: ${String(applyErr?.message ?? applyErr)}`,
+                tempPatch: tempPatchPath,
+              });
+              continue;
+            } // end diff apply catch
+          } // end if ch.diff
+
+          // If no diff or diff process didn't finish it, fall back to writing newContent
+          if (ch.newContent != null) {
             try {
-              await fs.promises.writeFile(abs, ch.newContent ?? '', 'utf-8');
+              await fs.promises.writeFile(abs, ch.newContent, 'utf-8');
               results.push({
                 file: ch.filePath,
                 ok: true,
-                applied: actionLabel,
+                applied: 'write-newContent',
               });
             } catch (e: any) {
               results.push({
@@ -361,8 +368,29 @@ export class ExecutorService {
                 error: String(e?.message ?? e),
               });
             }
+            continue;
           }
-        } else if (actionLabel === 'delete') {
+
+          // If neither diff nor newContent provided, attempt a best-effort access check
+          try {
+            await fs.promises.access(abs, fs.constants.R_OK);
+            results.push({
+              file: ch.filePath,
+              ok: true,
+              applied: 'no-op-access-check',
+            });
+          } catch {
+            results.push({
+              file: ch.filePath,
+              ok: false,
+              error: 'No diff or newContent; file missing or no-op',
+            });
+          }
+          continue;
+        } // end add/modify/repair
+
+        // DELETE
+        if (actionLabel === 'delete') {
           try {
             if (fs.existsSync(abs)) {
               await fs.promises.unlink(abs);
@@ -381,24 +409,27 @@ export class ExecutorService {
               error: String(e?.message ?? e),
             });
           }
-        } else if (actionLabel === 'install' || actionLabel === 'run') {
-          // Treat newContent as shell command
+          continue;
+        }
+
+        // INSTALL / RUN (treat newContent as command)
+        if (actionLabel === 'install' || actionLabel === 'run') {
           if (
             ch.newContent &&
             typeof ch.newContent === 'string' &&
-            ch.newContent.trim().length > 0
+            ch.newContent.trim()
           ) {
             try {
               const { stdout, stderr } = await exec(ch.newContent, {
                 cwd: effectiveRepoPath,
                 timeout: 1000 * 60 * 10,
-              }); // 10m timeout
+              });
               results.push({
                 file: ch.filePath ?? null,
                 action: actionLabel,
                 ok: true,
-                stdout: stdout,
-                stderr: stderr,
+                stdout: String(stdout ?? ''),
+                stderr: String(stderr ?? ''),
               });
             } catch (e: any) {
               results.push({
@@ -416,26 +447,28 @@ export class ExecutorService {
               error: 'No command provided for install/run action.',
             });
           }
-        } else {
-          results.push({
-            file: ch.filePath,
-            ok: false,
-            error: `Unknown action '${String(ch.action)}'`,
-          });
+          continue;
         }
+
+        // Unknown action
+        results.push({
+          file: ch.filePath,
+          ok: false,
+          error: `Unknown action '${String(ch.action)}'`,
+        });
       } // end for changes
 
-      // After applying file operations, run TypeScript check if applicable
+      // Run TypeScript check if tsconfig exists
       const tsconfig = path.join(effectiveRepoPath, 'tsconfig.json');
+      this.logger.debug(`projectRoot: ${projectRoot}`);
+      this.logger.debug(`effectiveRepoPath: ${effectiveRepoPath}`);
+      this.logger.debug(`tsconfig: ${tsconfig}`);
 
-      this.logger.log(`projectRoot: ${projectRoot}`);
-      this.logger.log(`effectiveRepoPath: ${effectiveRepoPath}`);
-      this.logger.log(`tsconfig: ${tsconfig}`);
       if (fs.existsSync(tsconfig)) {
         try {
-          await exec('npx tsc --noEmit ', { cwd: effectiveRepoPath });
+          await exec('npx tsc --noEmit', { cwd: effectiveRepoPath });
         } catch (e: any) {
-          // rollback on tsc failure
+          // rollback to snapshot on tsc failure
           this.logger.warn(
             'TypeScript check failed; attempting rollback to snapshot.',
           );
@@ -458,7 +491,7 @@ export class ExecutorService {
         }
       }
 
-      // Linting: try package.json script then eslint
+      // Linting: best-effort
       try {
         const pkgPath = path.join(effectiveRepoPath, 'package.json');
         if (fs.existsSync(pkgPath)) {
@@ -474,11 +507,11 @@ export class ExecutorService {
           }
         }
       } catch (e: any) {
-        // Non-fatal: report lint failure in results
+        // Non-fatal; record result
         results.push({ lint: 'failed', error: String(e?.message ?? e) });
       }
 
-      // Stage and commit changes from this branch
+      // Stage and commit
       try {
         await this.gitService.stageFiles(['.'], effectiveRepoPath);
         await this.gitService
@@ -503,7 +536,7 @@ export class ExecutorService {
 
       return { ok: true, results, snapshot, newHead };
     } catch (err: any) {
-      // On any unexpected error, attempt rollback to snapshot
+      // Attempt rollback and return error
       this.logger.error(
         'Unhandled error during snapshotAndApply:',
         String(err?.message ?? err),
