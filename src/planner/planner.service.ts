@@ -6,7 +6,7 @@ import { Injectable, NotFoundException, InternalServerErrorException, BadRequest
 import { LlmService } from '@/llm/llm.service';
 import { ExecutorService } from './executor.service';
 import { FileChangeDto, GeneratedPlanDto } from './dto'; // Changed CreatePlannerDto to GeneratedPlanDto
-import { PlanDto } from './types'; // Import the full PlanDto from types
+
 import { validatePlan } from './validator';
 import { LlmInputDto } from '@/llm/dto/llm-input.dto';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -26,7 +26,7 @@ export class PlannerService {
   async planFromPrompt(
     llmInput: LlmInputDto,
     userId: string, // Added userId for createdById relation
-  ): Promise<{ planId: string; plan: PlanDto }> {
+  ): Promise<{ planId: string; plan: GeneratedPlanDto }> {
     const genPlan = await this.llm.generateContent(llmInput);
     this.logger.log(genPlan);
     this.logger.log('\n--- genPlan received by LLM ---');
@@ -45,14 +45,39 @@ export class PlannerService {
       });
       documentationId = newDoc.id;
     }
+    let thoughtProcessValue: string | null = null;
+    if (Array.isArray(rawPlan.thoughtProcess)) {
+      thoughtProcessValue = rawPlan.thoughtProcess.join("\n");
+    } else if (typeof rawPlan.thoughtProcess === "string") {
+      thoughtProcessValue = rawPlan.thoughtProcess;
+    } else if (rawPlan.thoughtProcess != null) {
+      try {
+        thoughtProcessValue = JSON.stringify(rawPlan.thoughtProcess);
+      } catch {
+        thoughtProcessValue = String(rawPlan.thoughtProcess);
+      }
+    }
+
+    let gitInstructionsValue: string[] = [];
+    if (Array.isArray(rawPlan.gitInstructions)) {
+      gitInstructionsValue = rawPlan.gitInstructions.map((g: any) => (g == null ? "" : String(g)));
+    } else if (typeof rawPlan.gitInstructions === "string") {
+      gitInstructionsValue = [rawPlan.gitInstructions];
+    } else if (rawPlan.gitInstructions == null) {
+      gitInstructionsValue = [];
+    } else {
+      // fallback: stringify and wrap
+      gitInstructionsValue = [String(rawPlan.gitInstructions)];
+    }
+    
     const createdPlan = await this.prisma.plan.create({
       data: {
         title: rawPlan.title,
         summary: rawPlan.summary,
-        thoughtProcess: rawPlan.thoughtProcess,
+        thoughtProcess: thoughtProcessValue,
         // Removed redundant `documentation: { connect: ... }` when documentationId is directly set
         documentationId: documentationId,
-        gitInstructions: rawPlan.gitInstructions || [],
+        gitInstructions: gitInstructionsValue,
         llmInput: llmInput as any, // Store the input for reference
         createdById: userId, // Set the creator
         changes: {
@@ -70,7 +95,7 @@ export class PlannerService {
     this.logger.log('\n--- created plan id:  ---', createdPlan?.id);
     this.logger.log(createdPlan);
     // Convert Prisma Plan to DTO structure for consistent output
-    const planDto: PlanDto = {
+    const planDto: GeneratedPlanDto = {
       id: createdPlan.id,
       title: createdPlan.title,
       summary: createdPlan.summary || undefined,
@@ -98,7 +123,7 @@ export class PlannerService {
   /**
    * Retrieve a previously generated plan by its ID from the database.
    */
-  async getPlan(planId: string): Promise<PlanDto> {
+  async getPlan(planId: string): Promise<GeneratedPlanDto> {
     const plan = await this.prisma.plan.findUnique({
       where: { id: planId },
       include: { changes: true, documentation: true, createdBy: true }, // Include related data
@@ -106,7 +131,7 @@ export class PlannerService {
     if (!plan) {
       throw new NotFoundException(`Plan with ID ${planId} not found`);
     }
-    const planDto: PlanDto = {
+    const planDto: GeneratedPlanDto = {
       id: plan.id,
       title: plan.title,
       summary: plan.summary || undefined,
