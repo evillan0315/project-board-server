@@ -745,71 +745,90 @@ model ProposedFileChange {
   diff Diff?
 }
 
-model ExecutionSnapshot {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  planId  String
-  success Boolean
-  error   String?
-
-  // git commit hash or diff for rollback
-  commitHash String?
-
-  appliedChanges Json?
-
-  createdById String
-  createdBy   User   @relation(fields: [createdById], references: [id])
-}
-
-// New Plan model for persistence in PlannerService
 model Plan {
-  id                     String         @id @default(uuid())
+  id                     String              @id @default(uuid())
   title                  String
   summary                String?
-  thoughtProcess         String?
-  documentation          Documentation? @relation(fields: [documentationId], references: [id])
+  thoughtProcess         String?             @db.Text
+  assumptions            String?
+  estimatedEffortMinutes Int?
+  confidence             Int?
   documentationId        String?
-  gitInstructions        String[]       @default([])
-  llmRequest             LlmRequest?    @relation(fields: [llmRequestId], references: [id])
+  documentation          Documentation?      @relation(fields: [documentationId], references: [id])
+  gitInstructions        String[]            @default([])
   llmRequestId           String?
-  llmInput               Json? // Stores the input that generated this plan
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
+  llmRequest             LlmRequest?         @relation(fields: [llmRequestId], references: [id])
+  llmInput               Json? // Stores the input that generated this plan (ILlmInput)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
   lastExecutionStatus    String? // e.g., 'SUCCESS', 'FAILURE'
-  lastExecutionError     String?        @db.Text
+  lastExecutionError     String?             @db.Text
   lastExecutionTimestamp DateTime?
-
-  // Relation to User
-  createdById String?
-  createdBy   User?   @relation(fields: [createdById], references: [id])
-
+  createdById            String?
+  createdBy              User?               @relation(fields: [createdById], references: [id])
+  projectRoot            String?
+  buildScripts           String?
   // Relation to FileChanges (One-to-Many)
-  changes FileChange[]
+  changes                FileChange[]
+  metadata               Json?
+  error                  String?
+  ExecutionSnapshot      ExecutionSnapshot[]
 
   @@index([createdById])
   @@index([createdAt])
 }
 
-// New FileChange model for persistence in PlannerService (related to Plan)
 model FileChange {
-  id         String     @id @default(uuid())
-  filePath   String
-  action     FileAction
-  newContent String?    @db.Text
-  diff       String?    @db.Text
-  reason     String?
-  createdAt  DateTime   @default(now())
+  id     String @id @default(uuid())
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  // Order and file info
+  index    Int? // order of change in plan
+  filePath String
+  action   FileAction
+  reason   String?    @db.Text
+
+  // Content artifacts
+  diff             String?  @db.Text // unified diff / patch (for modify/repair)
+  oldContent       String?  @db.Text
+  newContent       String?  @db.Text // full content for adds or replacements
+  testsAdded       String[] @default([]) // relative paths to new/updated tests
+  estimatedMinutes Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([planId])
+  @@index([filePath])
+}
+
+/**
+ * ExecutionSnapshot
+ * - Stores a record of attempting to apply a Plan (or subset of its changes).
+ * - Keeps commitHash and appliedChanges (JSON) to support rollbacks and auditing.
+ */
+model ExecutionSnapshot {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
 
   planId String
   plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
 
-  // Optional: createdBy if you want to track who approved/modified a change within a plan
-  // createdById String?
-  // createdBy   User?        @relation(fields: [createdById], references: [id])
+  success Boolean
+  error   String? @db.Text
+
+  // git commit hash or diff for rollback
+  commitHash String?
+
+  // store applied change details (file-level results, diffs, metadata)
+  appliedChanges Json?
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
 
   @@index([planId])
-  @@index([filePath])
+  @@index([createdById])
+  @@index([createdAt])
 }
 
 enum ConversationStatus {

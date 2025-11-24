@@ -67,7 +67,33 @@ export class ExecutorService {
 
         switch (action) {
           case 'add':
+            await fs.promises.mkdir(path.dirname(abs), { recursive: true });
+            if (ch.diff) {
+              try {
+                await this.gitService.applyPatch(ch.diff, effectiveRepoPath);
+                results.push({ file: ch.filePath, ok: true, applied: 'diff' });
+              } catch (err) {
+                results.push({ file: ch.filePath, ok: false, error: `Failed to apply diff: ${err}` });
+              }
+            } else {
+              await fs.promises.writeFile(abs, ch.newContent || '', 'utf-8');
+              results.push({ file: ch.filePath, ok: true, applied: action });
+            }
+            break;
           case 'modify':
+            await fs.promises.mkdir(path.dirname(abs), { recursive: true });
+            if (ch.diff) {
+              try {
+                await this.gitService.applyPatch(ch.diff, effectiveRepoPath);
+                results.push({ file: ch.filePath, ok: true, applied: 'diff' });
+              } catch (err) {
+                results.push({ file: ch.filePath, ok: false, error: `Failed to apply diff: ${err}` });
+              }
+            } else {
+              await fs.promises.writeFile(abs, ch.newContent || '', 'utf-8');
+              results.push({ file: ch.filePath, ok: true, applied: action });
+            }
+            break;
           case 'repair':
             await fs.promises.mkdir(path.dirname(abs), { recursive: true });
             if (ch.diff) {

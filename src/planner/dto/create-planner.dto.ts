@@ -55,10 +55,8 @@ export class FileChangeDto {
   reason?: string | null;
 
   @ApiPropertyOptional({ description: 'Paths to tests added', example: ['tests/components/Welcome.spec.tsx'], isArray: true })
-  @IsArray()
-  @IsString({ each: true })
   @IsOptional()
-  testsAdded?: string[] | null;
+  testsAdded?: any;
 
   @ApiPropertyOptional({ description: 'Estimated effort in minutes', example: 15 })
   @IsInt()

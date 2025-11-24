@@ -62,14 +62,7 @@ export class PlannerService {
       assumptionsValue = JSON.stringify(rawPlan.assumptions);
     }
     
-    let testsValue: string | null = null;
-    if (Array.isArray(rawPlan.tests)) {
-      testsValue = rawPlan.tests.join('\n');
-    } else if (typeof rawPlan.tests === 'string') {
-      testsValue = rawPlan.tests;
-    } else if (rawPlan.tests != null) {
-      testsValue = JSON.stringify(rawPlan.tests);
-    }
+    
 
     const createdPlan = await this.prisma.plan.create({
       data: {
@@ -81,14 +74,15 @@ export class PlannerService {
         llmInput: llmInput as any,
         createdById: userId,
         changes: {
-          create: rawPlan.changes.map((change, index) => ({
+          create: rawPlan.changes.map((change, index: number) => ({
             index,
             filePath: change.filePath,
             action: change.action,
             newContent: change.newContent,
             diff: change.diff,
             reason: change.reason,
-            estimatedMinutes: change.estimatedMinutes
+            estimatedMinutes: change.estimatedMinutes,
+            //testsAdded: change.testsAdded as any,
           })),
         },
         estimatedEffortMinutes: rawPlan.estimatedEffortMinutes,
@@ -113,17 +107,18 @@ export class PlannerService {
       lastExecutionError: createdPlan.lastExecutionError || undefined,
       lastExecutionTimestamp: createdPlan.lastExecutionTimestamp || undefined,
       createdById: createdPlan.createdById || undefined,
-      changes: createdPlan.changes.map((change, index) => ({
-        index: change.index,
+      changes: createdPlan.changes.map(change => ({
+        index: change.index || undefined,
         filePath: change.filePath,
         action: change.action as FileAction,
         newContent: change.newContent || undefined,
         diff: change.diff || undefined,
         reason: change.reason || undefined,
+        estimatedMinutes: change.estimatedMinutes || undefined,
+        //testsAdded: change.testsAdded || undefined,
       })),
       estimatedEffortMinutes: createdPlan.estimatedEffortMinutes || undefined,
       confidence: createdPlan.confidence || undefined,
-      tests: testsValue,
       projectRoot: createdPlan.projectRoot || undefined,
     };
 
@@ -152,13 +147,15 @@ export class PlannerService {
       lastExecutionError: plan.lastExecutionError || undefined,
       lastExecutionTimestamp: plan.lastExecutionTimestamp || undefined,
       createdById: plan.createdById || undefined,
-      changes: plan.changes.map((change, index) => ({
-        index: change.index,
+      changes: plan.changes.map(change => ({
+        index: change.index || undefined,
         filePath: change.filePath,
         action: change.action as FileAction,
         newContent: change.newContent || undefined,
         diff: change.diff || undefined,
         reason: change.reason || undefined,
+        estimatedMinutes: change.estimatedMinutes || undefined,
+        ///testsAdded: change.testsAdded || undefined,
       })),
       estimatedEffortMinutes: plan.estimatedEffortMinutes || undefined,
       confidence: plan.confidence || undefined,
